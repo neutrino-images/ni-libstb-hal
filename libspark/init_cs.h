@@ -1,2 +1,2 @@
-#warning using init_cs.h from libtriple
-#include "init_td.h"
+#warning using init_cs.h from libspark
+#include "init_lib.h"

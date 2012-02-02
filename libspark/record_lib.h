@@ -2,7 +2,7 @@
 #define __RECORD_TD_H
 
 #include <pthread.h>
-#include "dmx_td.h"
+#include "dmx_lib.h"
 
 typedef enum {
 	RECORD_RUNNING,

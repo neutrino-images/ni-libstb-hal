@@ -9,11 +9,11 @@
 #include <cstdio>
 #include <string>
 #include <hardware/tddevices.h>
-#include "dmx_td.h"
+#include "dmx_lib.h"
 #include "lt_debug.h"
 
 /* Ugh... see comment in destructor for details... */
-#include "video_td.h"
+#include "video_lib.h"
 extern cVideo *videoDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)

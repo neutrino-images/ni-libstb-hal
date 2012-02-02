@@ -31,7 +31,7 @@
 
 #include <avs/avs_inf.h>
 #include <clip/clipinfo.h>
-#include "video_td.h"
+#include "video_lib.h"
 #include <hardware/tddevices.h>
 #define VIDEO_DEVICE "/dev/" DEVICE_NAME_VIDEO
 #include "lt_debug.h"

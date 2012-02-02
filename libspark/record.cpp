@@ -6,7 +6,7 @@
 #include <inttypes.h>
 #include <cstdio>
 #include <cstring>
-#include "record_td.h"
+#include "record_lib.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_RECORD, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_RECORD, this, args)

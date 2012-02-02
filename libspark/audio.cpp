@@ -8,7 +8,7 @@
 #include <hardware/tddevices.h>
 #include <avs/avs_inf.h>
 #define AUDIO_DEVICE "/dev/" DEVICE_NAME_AUDIO
-#include "audio_td.h"
+#include "audio_lib.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_AUDIO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_AUDIO, this, args)

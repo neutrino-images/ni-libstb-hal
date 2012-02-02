@@ -40,7 +40,7 @@
 #include "lt_dfbinput.h"
 
 /* needed for videodecoder watchdog */
-#include "video_td.h"
+#include "video_lib.h"
 extern cVideo *videoDecoder;
 
 /* same defines as in neutrino's rcinput.h */

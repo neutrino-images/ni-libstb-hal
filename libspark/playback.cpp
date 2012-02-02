@@ -6,10 +6,10 @@
 #include <unistd.h>
 
 #include <cstring>
-#include "playback_td.h"
-#include "dmx_td.h"
-#include "audio_td.h"
-#include "video_td.h"
+#include "playback_lib.h"
+#include "dmx_lib.h"
+#include "audio_lib.h"
+#include "video_lib.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_PLAYBACK, this, args)
 #define lt_info(args...)  _lt_info(TRIPLE_DEBUG_PLAYBACK, this, args)

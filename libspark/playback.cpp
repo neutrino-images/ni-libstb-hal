@@ -15,8 +15,7 @@
 #define lt_info(args...)  _lt_info(TRIPLE_DEBUG_PLAYBACK, this, args)
 #define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_PLAYBACK, NULL, args)
 
-#include <tddevices.h>
-#define DVR	"/dev/" DEVICE_NAME_PVR
+#define DVR	"/dev/dvb/adapter0/pvr0"
 
 static int mp_syncPES(uint8_t *, int, bool quiet = false);
 static int sync_ts(uint8_t *, int);
@@ -252,6 +251,7 @@ static void *start_playthread(void *c)
 
 void cPlayback::playthread(void)
 {
+#if 0
 	thread_started = true;
 	int ret, towrite;
 	dvrfd = open(DVR, O_WRONLY);
@@ -343,12 +343,13 @@ void cPlayback::playthread(void)
 
 	pthread_cleanup_pop(1);
 	pthread_exit(NULL);
+#endif
 }
 
 static void playthread_cleanup_handler(void *)
 {
 	lt_info_c("%s\n", __FUNCTION__);
-	ioctl(audioDemux->getFD(), DEMUX_SELECT_SOURCE, INPUT_FROM_CHANNEL0);
+//	ioctl(audioDemux->getFD(), DEMUX_SELECT_SOURCE, INPUT_FROM_CHANNEL0);
 	audioDemux->Stop();
 	videoDemux->Stop();
 	audioDecoder->Stop();

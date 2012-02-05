@@ -1,15 +1,15 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-
-#include <hardware/tddevices.h>
-#include <avs/avs_inf.h>
-#define AUDIO_DEVICE "/dev/" DEVICE_NAME_AUDIO
+#include <linux/dvb/audio.h>
 #include "audio_lib.h"
 #include "lt_debug.h"
+
+#define AUDIO_DEVICE	"/dev/dvb/adapter0/audio0"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_AUDIO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_AUDIO, this, args)
 
@@ -60,28 +60,25 @@ void cAudio::closeDevice(void)
 int cAudio::do_mute(bool enable, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __FUNCTION__, enable, remember);
-	int avsfd;
-	int ret;
+	char str[4];
+
 	if (remember)
 		Muted = enable;
-	ret = ioctl(fd, MPEG_AUD_SET_MUTE, enable);
-	if (ret < 0)
-		lt_info("%s(%d) failed (%m)\n", __FUNCTION__, (int)enable);
 
-	/* are we using alternative DSP / mixer? */
-	if (clipfd != -1 || mixer_fd != -1)
-		setVolume(volume,volume); /* considers "Muted" variable, "remember"
-					     is basically always true in this context */
-	avsfd = open("/dev/stb/tdsystem", O_RDONLY);
-	if (avsfd >= 0)
+	sprintf(str, "%d", Muted);
+
+	int f = open("/proc/stb/audio/j1_mute", O_RDWR);
+	write(f, str, strlen(str));
+	close(f);
+
+	if (!enable)
 	{
-		if (enable)
-			ioctl(avsfd, IOC_AVS_SET_VOLUME, 31);
-		else
-			ioctl(avsfd, IOC_AVS_SET_VOLUME, 0);
-		close(avsfd);
+		f = open("/proc/stb/avs/0/volume", O_RDWR);
+		read(f, str, 4);
+		write(f, str, strlen(str));
+		close(f);
 	}
-	return ret;
+	return 0;
 }
 
 int map_volume(const int volume)
@@ -90,19 +87,18 @@ int map_volume(const int volume)
 	if (vol > 100)
 		vol = 100;
 
-//	vol = (invlog63[volume] + 1) / 2;
-	vol = 31 - vol * 31 / 100;
+	vol = 63 - vol * 63 / 100;
 	return vol;
 }
 
+
 int cAudio::setVolume(unsigned int left, unsigned int right)
 {
-//	int avsfd;
-	int ret;
-	int vl = map_volume(left);
-	int vr = map_volume(right);
+	lt_debug("%s(%d, %d)\n", __func__, left, right);
+
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
+#if 0
 	if (clipfd != -1 && mixer_fd != -1) {
 		int tmp = 0;
 		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
@@ -113,50 +109,26 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
-//	if (settings.volume_type == CControld::TYPE_OST || forcetype == (int)CControld::TYPE_OST)
-	{
-		AUDVOL vol;
-		vol.frontleft  = vl;
-		vol.frontright = vr;
-		vol.rearleft   = vl;
-		vol.rearright  = vr;
-		vol.center     = v;
-		vol.lfe        = v;
-		ret = ioctl(fd, MPEG_AUD_SET_VOL, &vol);
-		if (ret < 0)
-			lt_info("setVolume MPEG_AUD_SET_VOL failed (%m)\n");
-		return ret;
-	}
-#if 0
-	else if (settings.volume_type == CControld::TYPE_AVS || forcetype == (int)CControld::TYPE_AVS)
-	{
-		if ((avsfd = open(AVS_DEVICE, O_RDWR)) < 0)
-			perror("[controld] " AVS_DEVICE);
-		else {
-			if (ioctl(avsfd, IOC_AVS_SET_VOLUME, v))
-				perror("[controld] IOC_AVS_SET_VOLUME");
-			close(avsfd);
-			return 0;
-		}
-	}
-	fprintf(stderr, "CAudio::setVolume: invalid settings.volume_type = %d\n", settings.volume_type);
-	return -1;
 #endif
+	char str[4];
+	sprintf(str, "%d", v);
+
+	int f = open("/proc/stb/avs/0/volume", O_RDWR);
+	write(f, str, strlen(str));
+	close(f);
+	return 0;
 }
 
 int cAudio::Start(void)
 {
 	int ret;
-	ret = ioctl(fd, MPEG_AUD_PLAY);
-	/* this seems to be not strictly necessary since neutrino
-	   re-mutes all the time, but is certainly more correct */
-	ioctl(fd, MPEG_AUD_SET_MUTE, Muted);
+	ret = ioctl(fd, AUDIO_PLAY);
 	return ret;
 }
 
 int cAudio::Stop(void)
 {
-	return ioctl(fd, MPEG_AUD_STOP);
+	return ioctl(fd, AUDIO_STOP);
 }
 
 bool cAudio::Pause(bool /*Pcm*/)
@@ -167,6 +139,7 @@ bool cAudio::Pause(bool /*Pcm*/)
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
 	lt_debug("%s %d\n", __FUNCTION__, Mode);
+#if 0
 	switch (Mode)
 	{
 		case 0:
@@ -176,24 +149,41 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 			ioctl(fd, MPEG_AUD_SYNC_ON);
 			break;
 	}
+#endif
 };
 
+//AUDIO_ENCODING_AC3
+#define AUDIO_STREAMTYPE_AC3 0
+//AUDIO_ENCODING_MPEG2
+#define AUDIO_STREAMTYPE_MPEG 1
+//AUDIO_ENCODING_DTS
+#define AUDIO_STREAMTYPE_DTS 2
+
+#define AUDIO_ENCODING_LPCM 2
+#define AUDIO_ENCODING_LPCMA 11
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
-	int bypass_disable;
+	int bypass = AUDIO_STREAMTYPE_MPEG;
 	lt_debug("%s %d\n", __FUNCTION__, type);
 	StreamType = type;
 
-	if (StreamType != AUDIO_FMT_DOLBY_DIGITAL && StreamType != AUDIO_FMT_MPEG && StreamType != AUDIO_FMT_MPG1)
-		lt_info("%s unhandled AUDIO_FORMAT %d\n", __FUNCTION__, StreamType);
+	switch (type)
+	{
+		case AUDIO_FMT_DOLBY_DIGITAL:
+			bypass = AUDIO_STREAMTYPE_AC3;
+			break;
+		case AUDIO_FMT_DTS:
+			bypass = AUDIO_STREAMTYPE_DTS;
+			break;
+		case AUDIO_FMT_MPEG:
+		default:
+			break;
+	}
 
-	bypass_disable = (StreamType != AUDIO_FMT_DOLBY_DIGITAL);
-	setBypassMode(bypass_disable);
-
-	if (StreamType == AUDIO_FMT_MPEG)
-		ioctl(fd, MPEG_AUD_SET_STREAM_TYPE, AUD_STREAM_TYPE_PES);
-	if (StreamType == AUDIO_FMT_MPG1)
-		ioctl(fd, MPEG_AUD_SET_STREAM_TYPE, AUD_STREAM_TYPE_MPEG1);
+	// Normaly the encoding should be set using AUDIO_SET_ENCODING
+	// But as we implemented the behavior to bypass (cause of e2) this is correct here
+	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
+		lt_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
 };
 
 int cAudio::setChannel(int channel)
@@ -336,6 +326,12 @@ int cAudio::StopClip()
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
 	lt_debug("%s\n", __FUNCTION__);
+	type = 0;
+	layer = 0;
+	freq = 0;
+	bitrate = 0;
+	mode = 0;
+#if 0
 	unsigned int atype;
 	static const int freq_mpg[] = {44100, 48000, 32000, 0};
 	static const int freq_ac3[] = {48000, 44100, 32000, 0};
@@ -373,6 +369,7 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 			freq = 0;
 	}
 	//fprintf(stderr, "type: %d layer: %d freq: %d bitrate: %d mode: %d\n", type, layer, freq, bitrate, mode);
+#endif
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
@@ -395,20 +392,13 @@ void cAudio::EnableAnalogOut(bool enable)
 	lt_debug("%s %d\n", __FUNCTION__, enable);
 };
 
+#define AUDIO_BYPASS_ON  0
+#define AUDIO_BYPASS_OFF 1
 void cAudio::setBypassMode(bool disable)
 {
 	lt_debug("%s %d\n", __FUNCTION__, disable);
-	/* disable = true: audio is MPEG, disable = false: audio is AC3 */
-	if (disable)
-	{
-		ioctl(fd, MPEG_AUD_SET_MODE, AUD_MODE_MPEG);
-		return;
-	}
-	/* dvb2001 does always set AUD_MODE_DTS before setting AUD_MODE_AC3,
-	   this might be some workaround, so we do the same... */
-	ioctl(fd, MPEG_AUD_SET_MODE, AUD_MODE_DTS);
-	ioctl(fd, MPEG_AUD_SET_MODE, AUD_MODE_AC3);
+	int mode = disable ? AUDIO_BYPASS_OFF : AUDIO_BYPASS_ON;
+	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, mode) < 0)
+		lt_info("%s AUDIO_SET_BYPASS_MODE %d: %m\n", __func__, mode);
 	return;
-	/* all those ioctl aways return "invalid argument", but they seem to
-	   work anyway, so there's no use in checking the return value */
 }

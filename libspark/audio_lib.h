@@ -3,8 +3,6 @@
 #ifndef _AUDIO_TD_H_
 #define _AUDIO_TD_H_
 
-#include <hardware/aud/aud_inf.h>
-
 typedef enum
 {
   AUDIO_SYNC_WITH_PTS,

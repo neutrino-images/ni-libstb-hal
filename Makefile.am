@@ -22,5 +22,6 @@ endif
 if BOXTYPE_SPARK
 SUBDIRS += libspark
 libstb_hal_a_LIBADD += \
-	libspark/audio.o
+	libspark/audio.o \
+	libspark/video.o
 endif

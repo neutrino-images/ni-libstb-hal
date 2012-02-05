@@ -1,21 +1,20 @@
 #ifndef _VIDEO_TD_H
 #define _VIDEO_TD_H
 
-#include <hardware/vid/vid_inf.h>
-#define video_format_t          vidDispSize_t
-//#define video_displayformat_t   vidDispMode_t
-
+#include <linux/dvb/video.h>
 
 typedef enum {
-	ANALOG_SD_RGB_SCART = 0x00,
-	ANALOG_SD_YPRPB_SCART,
-	ANALOG_HD_RGB_SCART,
-	ANALOG_HD_YPRPB_SCART,
-	ANALOG_SD_RGB_CINCH = 0x80,
+	ANALOG_SD_RGB_CINCH = 0x00,
 	ANALOG_SD_YPRPB_CINCH,
 	ANALOG_HD_RGB_CINCH,
 	ANALOG_HD_YPRPB_CINCH,
+	ANALOG_SD_RGB_SCART = 0x10,
+	ANALOG_SD_YPRPB_SCART,
+	ANALOG_HD_RGB_SCART,
+	ANALOG_HD_YPRPB_SCART,
+	ANALOG_SCART_MASK = 0x10
 } analog_mode_t;
+
 
 typedef enum {
 	VIDEO_FORMAT_MPEG2 = 0,
@@ -77,18 +76,21 @@ typedef enum {
 } VIDEO_PLAY_MODE;
 
 typedef enum {
-	VIDEO_STD_NTSC	= VID_DISPFMT_NTSC,	/* 0 */
-	VIDEO_STD_PAL	= VID_DISPFMT_PAL,	/* 1 */
-	VIDEO_STD_SECAM	= VID_DISPFMT_SECAM,	/* 4 */
-	VIDEO_STD_1080I50 = VIDEO_STD_PAL,	/* hack, this is used in neutrino settings default */
-	VIDEO_STD_MAX = VIDEO_STD_SECAM
+	VIDEO_STD_NTSC,
+	VIDEO_STD_SECAM,
+	VIDEO_STD_PAL,
+	VIDEO_STD_480P,
+	VIDEO_STD_576P,
+	VIDEO_STD_720P60,
+	VIDEO_STD_1080I60,
+	VIDEO_STD_720P50,
+	VIDEO_STD_1080I50,
+	VIDEO_STD_1080P30,
+	VIDEO_STD_1080P24,
+	VIDEO_STD_1080P25,
+	VIDEO_STD_AUTO,
+	VIDEO_STD_MAX = VIDEO_STD_AUTO
 } VIDEO_STD;
-
-typedef enum {
-	VIDEO_STOPPED, /* Video is stopped */
-	VIDEO_PLAYING, /* Video is currently playing */
-	VIDEO_FREEZED  /* Video is freezed */
-} video_play_state_t;
 
 /* not used, for dummy functions */
 typedef enum {
@@ -116,8 +118,8 @@ class cVideo
 		/* apparently we cannot query the driver's state
 		   => remember it */
 		video_play_state_t playstate;
-		vidDispMode_t croppingMode;
-		vidOutFmt_t outputformat;
+		int /*vidDispMode_t*/ croppingMode;
+		int /*vidOutFmt_t*/ outputformat;
 		int scartvoltage;
 		int z[2]; /* zoomvalue for 4:3 (0) and 16:9 (1) in percent */
 		int *zoomvalue;
@@ -148,7 +150,7 @@ class cVideo
 		int setAspectRatio(int aspect, int mode);
 
 		/* cropping mode */
-		int setCroppingMode(vidDispMode_t x = VID_DISPMODE_NORM);
+		int setCroppingMode(int x = 0 /*vidDispMode_t x = VID_DISPMODE_NORM*/);
 
 		/* get play state */
 		int getPlayState(void);

@@ -1,9 +1,15 @@
 noinst_LIBRARIES = libstb-hal.a
 libstb_hal_a_SOURCES =
 SUBDIRS = common
+bin_PROGRAMS = libstb-hal-test
 
 libstb_hal_a_LIBADD = \
 	common/lt_debug.o
+
+libstb_hal_test_SOURCES = libtest.cpp
+libstb_hal_test_LDADD = \
+	libstb-hal.a \
+	@DIRECTFB_LIBS@
 
 # there has to be a better way to do this...
 if BOXTYPE_TRIPLE

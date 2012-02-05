@@ -3,15 +3,9 @@
 
 #include <cstdlib>
 #include <vector>
-extern "C" {
 #include <inttypes.h>
 #include <sys/ioctl.h>
-#include <hardware/xp/xp_osd_user.h>
-}
-#if defined DMX_FILTER_SIZE
-#undef DMX_FILTER_SIZE
-#endif
-#define DMX_FILTER_SIZE FILTER_LENGTH
+#include <linux/dvb/dmx.h>
 
 typedef enum
 {
@@ -41,8 +35,8 @@ class cDemux
 		uint64_t last_measure, last_data;
 		DMX_CHANNEL_TYPE dmx_type;
 		std::vector<pes_pids> pesfds;
-		struct demux_filter_para s_flt;
-		demux_pes_para p_flt;
+		struct dmx_sct_filter_params s_flt;
+		struct dmx_pes_filter_params p_flt;
 	public:
 
 		bool Open(DMX_CHANNEL_TYPE pes_type, void * x = NULL, int y = 0);

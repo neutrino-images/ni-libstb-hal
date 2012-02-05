@@ -1,6 +1,6 @@
 /*
  * Simulate a linux input device via uinput
- * Get td remote events via DirectFB and inject them via uinput
+ * Get lirc remote events, decode with IRMP and inject them via uinput
  *
  * (C) 2012 Stefan Seyfried
  *
@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* the C++ compiler does not like this code, so let's put it into a
+/* the C++ compiler did not like this code, so let's put it into a
  * separate file and compile with gcc insead of g++...
  */
 
@@ -35,13 +35,14 @@
 #include <linux/ioctl.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include <inttypes.h>
+#include <errno.h>
 
-#include <directfb.h>
 #include "lt_dfbinput.h"
-
-/* needed for videodecoder watchdog */
-#include "video_lib.h"
-extern cVideo *videoDecoder;
+extern "C" {
+#include "irmp.h"
+}
+static uint8_t IRMP_PIN;
 
 /* same defines as in neutrino's rcinput.h */
 #define KEY_TTTV	KEY_FN_1
@@ -55,18 +56,63 @@ extern cVideo *videoDecoder;
 #define KEY_ZOOMOUT	KEY_FN_F
 #endif
 
-#define DFBCHECK(x...)                                                \
-	err = x;                                                      \
-	if (err != DFB_OK) {                                          \
-		fprintf(stderr, "%s <%d>:\n\t", __FILE__, __LINE__ ); \
-		DirectFBErrorFatal(#x, err );                         \
-	}
+typedef struct {
+	uint16_t ir;	/* IR command */
+	int code;	/* input key code */
+} key_map_t;
 
-typedef struct _DeviceInfo DeviceInfo;
-struct _DeviceInfo {
-	DFBInputDeviceID           device_id;
-	DFBInputDeviceDescription  desc;
-	DeviceInfo                *next;
+static const key_map_t key_map[] = {
+	{ 0x13, KEY_0 },
+	{ 0x1a, KEY_1 },
+	{ 0x1f, KEY_2 },
+	{ 0x58, KEY_3 },
+	{ 0x16, KEY_4 },
+	{ 0x1b, KEY_5 },
+	{ 0x54, KEY_6 },
+	{ 0x12, KEY_7 },
+	{ 0x17, KEY_8 },
+	{ 0x50, KEY_9 },
+	{ 0x5f, KEY_OK },
+	{ 0x59, KEY_TIME },
+	{ 0x43, KEY_FAVORITES },
+	{ 0x4f, KEY_SAT },
+	{ 0x0f, KEY_NEXT }, /* V.Format */
+	{ 0x1e, KEY_POWER },
+	{ 0x5a, KEY_MUTE },
+	{ 0x1c, KEY_MENU },
+	{ 0x5d, KEY_EPG },
+	{ 0x07, KEY_INFO },
+	{ 0x60, KEY_EXIT },
+	{ 0x48, KEY_PAGEUP },
+	{ 0x44, KEY_PAGEDOWN },
+	{ 0x02, KEY_LEFT },
+	{ 0x40, KEY_RIGHT },
+	{ 0x03, KEY_UP },
+	{ 0x5e, KEY_DOWN },
+	{ 0x0a, KEY_VOLUMEUP },
+	{ 0x06, KEY_VOLUMEDOWN },
+	{ 0x49, KEY_RED },
+	{ 0x4e, KEY_GREEN },
+	{ 0x11, KEY_YELLOW },
+	{ 0x4a, KEY_BLUE },
+	{ 0x4c, KEY_TV },	/* TV/Radio */
+	{ 0x5c, KEY_VIDEO },	/* FIND */
+	{ 0x19, KEY_AUDIO },	/* FOLDER */
+/*	KEY_AUX,
+	KEY_TEXT,
+	KEY_TTTV,
+	KEY_TTZOOM,
+	KEY_REVEAL,
+*/
+	{ 0x01, KEY_REWIND },
+	{ 0x53, KEY_FORWARD },
+	{ 0x22, KEY_STOP },
+	{ 0x4d, KEY_PAUSE },
+	{ 0x15, KEY_PLAY },
+/*	KEY_PREV, */
+//	KEY_EJECTCD,
+	{ 0x10, KEY_RECORD }
+/*	KEY_NEXT, */
 };
 
 static const int key_list[] = {
@@ -83,6 +129,7 @@ static const int key_list[] = {
 	KEY_OK,
 	KEY_TIME,
 	KEY_FAVORITES,
+	KEY_SAT,
 	KEY_ZOOMOUT,
 	KEY_ZOOMIN,
 	KEY_NEXT,
@@ -115,6 +162,7 @@ static const int key_list[] = {
 	KEY_REWIND,
 	KEY_STOP,
 	KEY_PAUSE,
+	KEY_PLAY,
 	KEY_FORWARD,
 /*	KEY_PREV, */
 	KEY_EJECTCD,
@@ -123,49 +171,38 @@ static const int key_list[] = {
 	-1
 };
 
-static IDirectFBEventBuffer *events;
-static DeviceInfo *inputs = NULL;
-
 static pthread_t thread;
 static int thread_running;
 
-static DFBEnumerationResult enum_input_device(DFBInputDeviceID device_id,
-					      DFBInputDeviceDescription desc,
-					      void *data)
-{
-	DeviceInfo **devices = (DeviceInfo **)data;
-	DeviceInfo  *device;
-
-	device = (DeviceInfo *)malloc(sizeof(DeviceInfo));
-
-	device->device_id = device_id;
-	device->desc      = desc;
-	device->next      = *devices;
-
-	*devices = device;
-
-	return DFENUM_OK;
-}
-
-static void *input_thread(void *data)
+static void *input_thread(void *)
 {
 	int uinput;
-	int i;
 	struct input_event u;
 	struct uinput_user_dev ud;
 	FILE *f;
+	int lircfd;
+	int pulse;
+	int i = 0;
+	int last_pulse = 1;
+	int last_code = -1;
+	uint32_t lircdata;	/* lirc_t to be correct... */
+	unsigned int count = 0;	/* how many timeouts? */
+	unsigned int nodec = 0;	/* how many timeouts since last decoded? */
+	IRMP_DATA d;
 
-	DFBResult err;
-	IDirectFB *dfb = (IDirectFB *)data;
-	fprintf(stderr, "DFB input converter thread starting...\n");
+	fprintf(stderr, "LIRC/IRMP input converter thread starting...\n");
 
 	/* modprobe does not complain if the module is already loaded... */
 	system("/sbin/modprobe uinput");
-	system("/sbin/modprobe evdev");
-	uinput = open("/dev/misc/uinput", O_WRONLY|O_NDELAY);
+	do {
+		usleep(100000); /* mdev needs some time to create the device? */
+		uinput = open("/dev/uinput", O_WRONLY|O_NDELAY);
+	} while (uinput < 0 && ++count < 100);
+
 	if (uinput < 0)
 	{
-		fprintf(stderr, "DFB input thread: unable to open /dev/misc/uinput (%m)\n");
+		fprintf(stderr, "LIRC/IRMP input thread: unable to open /dev/uinput (%m)\n");
+		thread_running = 2;
 		return NULL;
 	}
 
@@ -181,7 +218,7 @@ static void *input_thread(void *data)
 
 	/* configure the device */
 	memset(&ud, 0, sizeof(ud));
-	strncpy(ud.name, "Neutrino TD to Input Device converter", UINPUT_MAX_NAME_SIZE);
+	strncpy(ud.name, "Neutrino LIRC/IRMP to Input Device converter", UINPUT_MAX_NAME_SIZE);
 	ud.id.version = 0x42;
 	ud.id.vendor  = 0x1234;
 	ud.id.product = 0x5678;
@@ -190,7 +227,7 @@ static void *input_thread(void *data)
 
 	if (ioctl(uinput, UI_DEV_CREATE))
 	{
-		perror("DFB input thread UI_DEV_CREATE");
+		perror("LIRC/IRMP input thread UI_DEV_CREATE");
 		close(uinput);
 		return NULL;
 	}
@@ -226,7 +263,7 @@ static void *input_thread(void *data)
 					}
 					evdev = atoi(p + 6);
 					sprintf(newdev, "event%d", evdev);
-					fprintf(stderr, "DFB input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
+					fprintf(stderr, "LIRC/IRMP input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
 					unlink("/dev/input/nevis_ir");
 					symlink(newdev, "/dev/input/nevis_ir");
 					break;
@@ -243,119 +280,141 @@ static void *input_thread(void *data)
 	u.type = EV_KEY;
 	u.value = 0; /* initialize: first event wil be a key press */
 
-	dfb->EnumInputDevices(dfb, enum_input_device, &inputs);
-	DFBCHECK(dfb->CreateInputEventBuffer(dfb, DICAPS_ALL, DFB_FALSE, &events));
+	lircfd = open("/dev/lirc", O_RDONLY);
+	if (lircfd < 0)
+	{
+		perror ("open /dev/lirc");
+		goto out;
+	}
+	IRMP_PIN = 0xFF;
 
+/* 50 ms. This should be longer than the longest light pulse */
+#define POLL_MS		(100 * 1000)
+#define LIRC_PULSE	0x01000000
+#define LIRC_PULSE_MASK	0x00FFFFFF
+	fprintf(stderr, "LIRC/IRMP input converter going into main loop...\n");
+
+	/* TODO: ioctl to find out if we have a compatible LIRC_MODE2 device */
 	thread_running = 1;
 	while (thread_running)
 	{
-		/* check every 250ms (if a key is pressed on remote, we might
-		 * even check earlier, but it does not really hurt... */
-		if (videoDecoder)
-			videoDecoder->VideoParamWatchdog();
+		fd_set fds;
+		struct timeval tv;
+		int ret;
 
-		if (events->WaitForEventWithTimeout(events, 0, 250) == DFB_TIMEOUT)
-			continue;
-		DFBInputEvent e;
-		while (events->GetEvent(events, DFB_EVENT(&e)) == DFB_OK)
-		{
-#if 0
-			fprintf(stderr, "type: %x devid: %x flags: %03x "
-					"key_id: %4x key_sym: %4x keycode: %d\n",
-					e.type, e.device_id, e.flags,
-					e.key_id, e.key_symbol, e.key_code);
-#endif
-			switch (e.key_symbol)
-			{
-				/* will a lookup table be more efficient? */
-				case 0x0030: u.code = KEY_0;		break;
-				case 0x0031: u.code = KEY_1;		break;
-				case 0x0032: u.code = KEY_2;		break;
-				case 0x0033: u.code = KEY_3;		break;
-				case 0x0034: u.code = KEY_4;		break;
-				case 0x0035: u.code = KEY_5;		break;
-				case 0x0036: u.code = KEY_6;		break;
-				case 0x0037: u.code = KEY_7;		break;
-				case 0x0038: u.code = KEY_8;		break;
-				case 0x0039: u.code = KEY_9;		break;
-				case 0x000d: u.code = KEY_OK;		break;
-				case 0xf504: u.code = KEY_TIME;		break;
-				case 0xf01a: u.code = KEY_FAVORITES;	break; /* blue heart */
-				case 0xf021: u.code = KEY_ZOOMOUT;	break;
-				case 0xf022: u.code = KEY_ZOOMIN;	break;
-				case 0xf505: u.code = KEY_NEXT;		break; /* red hand */
-				case 0xf00f: u.code = KEY_POWER;	break;
-				case 0xf04e: u.code = KEY_MUTE;		break;
-				case 0xf012: u.code = KEY_MENU;		break;
-				case 0xf01b: u.code = KEY_EPG;		break;
-				case 0xf014: u.code = KEY_INFO;		break;
-				case 0x001b: u.code = KEY_EXIT;		break;
-				case 0xf046: u.code = KEY_PAGEUP;	break;
-				case 0xf047: u.code = KEY_PAGEDOWN;	break;
-				case 0xf000: u.code = KEY_LEFT;		break;
-				case 0xf001: u.code = KEY_RIGHT;	break;
-				case 0xf002: u.code = KEY_UP;		break;
-				case 0xf003: u.code = KEY_DOWN;		break;
-				case 0xf04c: u.code = KEY_VOLUMEUP;	break;
-				case 0xf04d: u.code = KEY_VOLUMEDOWN;	break;
-				case 0xf042: u.code = KEY_RED;		break;
-				case 0xf043: u.code = KEY_GREEN;	break;
-				case 0xf044: u.code = KEY_YELLOW;	break;
-				case 0xf045: u.code = KEY_BLUE;		break;
-				case 0xf027: u.code = KEY_TV;		break;
-				case 0xf035: u.code = KEY_VIDEO;	break;
-				case 0xf033: u.code = KEY_AUDIO;	break;
-				case 0xf034: u.code = KEY_AUX;		break;
-				case 0xf032: u.code = KEY_TEXT;		break;
-				case 0xf501: u.code = KEY_TTTV;		break;
-				case 0xf502: u.code = KEY_TTZOOM;	break;
-				case 0xf503: u.code = KEY_REVEAL;	break;
-				case 0xf059: u.code = KEY_REWIND;	break;
-				case 0xf052: u.code = KEY_STOP;		break;
-				case 0xf051: u.code = KEY_PAUSE;	break;
-				case 0xf05a: u.code = KEY_FORWARD;	break;
-			/*	case 0xf05b: u.code = KEY_PREV;		break; */
-				case 0xf057: u.code = KEY_EJECTCD;	break;
-				case 0xf056: u.code = KEY_RECORD;	break;
-			/*	case 0xf05c: u.code = KEY_NEXT;		break; */
-				default:
-					continue;
-			}
-			switch (e.type)
-			{
-				case 1: if (u.value < 2)	/* 1 = key press */
-						u.value++;	/* 2 = key repeat */
-					break;
-				case 2: u.value = 0; break;	/* 0 = key release */
-				default:
-					continue;
-			}
-			// fprintf(stderr, "uinput write: value: %d code: %d\n", u.value, u.code);
-			write(uinput, &u, sizeof(u));
+		FD_ZERO(&fds);
+		FD_SET(lircfd, &fds);
+		tv.tv_sec = 0;
+		tv.tv_usec = POLL_MS;
+		/* any singal can interrupt select. we rely on the linux-only feature
+		 * that the timeout is automatcally recalculated in this case! */
+		do {
+			ret = select(lircfd + 1, &fds, NULL, NULL, &tv);
+		} while (ret == -1 && errno == EINTR);
+
+		if (ret == -1) {
+			/* errno != EINTR... */
+			perror("lirmp: select");
+			break;
 		}
+
+		if (ret == 0)
+		{
+			count++;
+			nodec++;
+			lircdata = POLL_MS;	/* timeout */
+			pulse = !last_pulse;	/* lirc sends data on signal change */
+			if (last_code != -1 && nodec > 1)
+			{
+fprintf(stderr, "timeout!\n");
+				u.code = last_code;
+				u.value = 0;	/* release */
+				write(uinput, &u, sizeof(u));
+				last_code = -1;
+			}
+		}
+		else
+		{
+			if (read(lircfd, &lircdata, sizeof(lircdata)) != sizeof(lircdata))
+			{
+				perror("read");
+				break;
+			}
+			pulse = (lircdata & LIRC_PULSE);	/* we got light... */
+			last_pulse = pulse;
+			lircdata &= LIRC_PULSE_MASK;		/* how long the pulse was in microseconds */
+		}
+
+		if (ret && count)
+		{
+			if (count * POLL_MS > lircdata)
+				lircdata = 0;
+			else
+				lircdata -= count * POLL_MS;
+			count = 0;
+		}
+		//printf("lircdata: ret:%d c:%d %d\n", ret, ch - '0', lircdata);
+		lircdata /= (1000000 / F_INTERRUPTS);
+
+		if (pulse)
+			IRMP_PIN = 0x00;
+		else
+			IRMP_PIN = 0xff;
+
+		do {
+			(void) irmp_ISR (IRMP_PIN);
+			if (irmp_get_data (&d))
+			{
+				nodec = 0;
+				printf("protocol: %2d address: 0x%04x command: 0x%04x flags: %d\n",
+					d.protocol, d.address, d.command, d.flags);
+
+				/* todo: do we need to complete the loop if we already
+				 * detected the singal in this pulse? */
+				if (d.protocol == IRMP_NEC_PROTOCOL && d.address == 0x5a45)
+				{
+					for (i = 0; i < (int)(sizeof(key_map)/sizeof(key_map_t)); i++)
+					{
+						if (key_map[i].ir == d.command)
+						{
+							if (last_code != -1 && last_code != key_map[i].code)
+							{
+								u.code = last_code;
+								u.value = 0;
+								write(uinput, &u, sizeof(u));
+							}
+							u.code = key_map[i].code;
+							u.value = (d.flags & 0x1) + 1;
+							fprintf(stderr, "uinput write: value: %d code: %d\n", u.value, u.code);
+							last_code = u.code;
+							write(uinput, &u, sizeof(u));
+							break;
+						}
+					}
+				}
+			}
+		} while (lircdata-- > 0);
 	}
 	/* clean up */
+	close (lircfd);
+ out:
 	ioctl(uinput, UI_DEV_DESTROY);
-	while (inputs) {
-		DeviceInfo *next = inputs->next;
-		free(inputs);
-		inputs = next;
-	}
-	events->Release(events);
 	return NULL;
 }
 
-void start_input_thread(IDirectFB *dfb)
+void start_input_thread(void)
 {
-	if (pthread_create(&thread, 0, input_thread, dfb) != 0)
+	if (pthread_create(&thread, 0, input_thread, NULL) != 0)
 	{
-		perror("DFB input thread pthread_create");
+		perror("LIRC/IRMP input thread pthread_create");
 		thread_running = 0;
 		return;
 	}
 	/* wait until the device is created before continuing */
 	while (! thread_running)
 		usleep(1000);
+	if (thread_running == 2) /* failed... :-( */
+		thread_running = 0;
 }
 
 void stop_input_thread(void)

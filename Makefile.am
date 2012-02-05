@@ -25,6 +25,7 @@ libstb_hal_a_LIBADD += \
 	libspark/audio.o \
 	libspark/dmx.o \
 	libspark/irmp.o \
+	libspark/lt_dfbinput.o \
 	libspark/playback.o \
 	libspark/video.o
 endif

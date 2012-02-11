@@ -1,3 +1,4 @@
+#include <config.h>
 #if HAVE_TRIPLEDRAGON
 #include "../libtriple/pwrmngr.h"
 #elif HAVE_SPARK_HARDWARE

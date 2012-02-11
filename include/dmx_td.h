@@ -1,3 +1,4 @@
+#include <config.h>
 #if HAVE_TRIPLEDRAGON
 #include "../libtriple/dmx_td.h"
 #elif HAVE_SPARK_HARDWARE

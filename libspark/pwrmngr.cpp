@@ -8,8 +8,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <avs/avs_inf.h>
-
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_PWRMNGR, this, args)
 void cCpuFreqManager::Up(void) { lt_debug("%s\n", __FUNCTION__); }
 void cCpuFreqManager::Down(void) { lt_debug("%s\n", __FUNCTION__); }
@@ -45,6 +43,7 @@ bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 	   * f == 50000000 => min => standby
 	 */
 	lt_debug("%s(%lu) => set standby = %s\n", __FUNCTION__, f, f?"true":"false");
+#if 0
 	int fd = open("/dev/stb/tdsystem", O_RDONLY);
 	if (fd < 0)
 	{
@@ -65,6 +64,7 @@ bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 	}
 
 	close(fd);
+#endif
 	return true;
 }
 

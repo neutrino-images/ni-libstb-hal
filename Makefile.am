@@ -23,10 +23,13 @@ if BOXTYPE_SPARK
 SUBDIRS += libspark
 libstb_hal_a_LIBADD += \
 	libspark/audio.o \
+	libspark/ca.o \
 	libspark/dmx.o \
 	libspark/init.o \
 	libspark/irmp.o \
 	libspark/lt_dfbinput.o \
 	libspark/playback.o \
+	libspark/pwrmngr.o \
+	libspark/record.o \
 	libspark/video.o
 endif

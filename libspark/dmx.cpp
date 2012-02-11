@@ -94,6 +94,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	int flags = O_RDWR;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
+#if 0
 	if (pes_type == DMX_TP_CHANNEL)
 	{
 		if (num == 0) /* streaminfo measurement, let's cheat... */
@@ -119,6 +120,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 			devnum = dmx_tp_count;
 		}
 	}
+#endif
 	fd = open(devname[devnum], flags);
 	if (fd < 0)
 	{
@@ -130,13 +132,13 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	dmx_type = pes_type;
-
+#if 0
 	if (!pesfds.empty())
 	{
 		lt_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
 		return false;
 	}
-
+#endif
 	int n = DMX_SOURCE_FRONT0;
 	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
@@ -514,14 +516,13 @@ void cDemux::removePid(unsigned short Pid)
 
 void cDemux::getSTC(int64_t * STC)
 {
-	lt_debug("%s #%d\n", __FUNCTION__, num);
-	struct dmx_stc stc;
-	memset(&stc, 0, sizeof(dmx_stc));
-	stc.num = 0;
-	stc.base = 1;
-	if (ioctl(fd, DMX_GET_STC, &stc))
-		perror("cDemux::getSTC DMX_GET_STC");
-	*STC = (int64_t)stc.stc;
+	/* apparently I can only get the PTS of the video decoder,
+	 * but that's good enough for dvbsub */
+	lt_debug("%s #%d\n", __func__, num);
+	int64_t pts = 0;
+	if (videoDecoder)
+		pts = videoDecoder->GetPTS();
+	*STC = pts;
 }
 
 int cDemux::getUnit(void)

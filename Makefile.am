@@ -24,6 +24,7 @@ SUBDIRS += libspark
 libstb_hal_a_LIBADD += \
 	libspark/audio.o \
 	libspark/dmx.o \
+	libspark/init.o \
 	libspark/irmp.o \
 	libspark/lt_dfbinput.o \
 	libspark/playback.o \

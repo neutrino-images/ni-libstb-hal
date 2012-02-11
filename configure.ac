@@ -18,6 +18,7 @@ TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)
 
 AC_OUTPUT([
 Makefile
+common/Makefile
 libtriple/Makefile
 libspark/Makefile
 ])

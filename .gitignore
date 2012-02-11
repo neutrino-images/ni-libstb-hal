@@ -8,6 +8,7 @@
 /configure
 /depcomp
 /install-sh
+/common/Makefile.in
 /libspark/Makefile.in
 /libtriple/Makefile.in
 /ltmain.sh

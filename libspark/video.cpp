@@ -777,3 +777,11 @@ void cVideo::FastForwardMode(int mode)
 	fop(ioctl, MPEG_VID_FASTFORWARD, mode);
 #endif
 }
+
+int64_t cVideo::GetPTS(void)
+{
+	int64_t pts = 0;
+	if (ioctl(fd, VIDEO_GET_PTS, &pts) < 0)
+		lt_info("%s: GET_PTS failed (%m)\n", __func__);
+	return pts;
+}

@@ -112,6 +112,7 @@ typedef enum
 
 class cVideo
 {
+	friend class cDemux;
 	private:
 		/* video device */
 		int fd;
@@ -136,6 +137,7 @@ class cVideo
 		VIDEO_FRAME_RATE FrameRate;
 		void routeVideo(int standby);
 		int video_standby;
+		int64_t GetPTS(void);
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);

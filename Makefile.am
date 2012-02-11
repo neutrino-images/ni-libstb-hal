@@ -9,7 +9,12 @@ libstb_hal_a_LIBADD = \
 libstb_hal_test_SOURCES = libtest.cpp
 libstb_hal_test_LDADD = \
 	libstb-hal.a \
+	-lpthread
+
+if BOXTYPE_TRIPLE
+libstb_hal_test_LDADD += \
 	@DIRECTFB_LIBS@
+endif
 
 # there has to be a better way to do this...
 if BOXTYPE_TRIPLE

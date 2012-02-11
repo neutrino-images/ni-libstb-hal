@@ -1,10 +1,10 @@
 INCLUDES = \
-	-I$(top_srcdir)/common \
-	@DIRECTFB_CFLAGS@
+	-I$(top_srcdir)/common
 
 noinst_LIBRARIES = libspark.a
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
+AM_LDFLAGS = -lpthread
 
 libspark_a_SOURCES = \
 	irmp.c \
@@ -19,4 +19,3 @@ libspark_a_SOURCES = \
 	record.cpp
 
 AM_CPPFLAGS = -DF_INTERRUPTS=20000 -DIRMP_EMBED -DLIRC_IRMP
-

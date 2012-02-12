@@ -553,31 +553,38 @@ void cVideo::VideoParamWatchdog(void)
 #endif
 }
 
-void cVideo::Pig(int x, int y, int w, int h, int /*osd_w*/, int /*osd_h*/)
+void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 {
-#if 0
-	/* x = y = w = h = -1 -> reset / "hide" PIG */
+	char buffer[16];
+	int _x, _y, _w, _h;
+	/* the target "coordinates" seem to be in a PAL sized plane
+	 * TODO: check this in the driver sources */
+	int xres = 720; /* proc_get_hex("/proc/stb/vmpeg/0/xres") */
+	int yres = 576; /* proc_get_hex("/proc/stb/vmpeg/0/yres") */
+	lt_debug("%s: x:%d y:%d w:%d h:%d ow:%d oh:%d\n", __func__, x, y, w, h, osd_w, osd_h);
 	if (x == -1 && y == -1 && w == -1 && h == -1)
 	{
-		setZoom(-1);
-		setAspectRatio(-1, -1);
-		return;
+		_w = xres;
+		_h = yres;
+		_x = 0;
+		_y = 0;
 	}
-	SCALEINFO s;
-	memset(&s, 0, sizeof(s));
-	s.src.hori_size = 720;
-	s.src.vert_size = 576;
-	s.des.hori_off = x;
-	s.des.vert_off = y;
-	s.des.hori_size = w;
-	s.des.vert_size = h;
-	lt_debug("%s src: %d:%d:%d:%d dst: %d:%d:%d:%d", __FUNCTION__,
-		s.src.hori_off,s.src.vert_off,s.src.hori_size,s.src.vert_size,
-		s.des.hori_off,s.des.vert_off,s.des.hori_size,s.des.vert_size);
-	fop(ioctl, MPEG_VID_SET_DISPMODE, VID_DISPMODE_SCALE);
-	fop(ioctl, MPEG_VID_SCALE_ON);
-	fop(ioctl, MPEG_VID_SET_SCALE_POS, &s);
-#endif
+	else
+	{
+		_x = x * xres / osd_w;
+		_w = w * xres / osd_w;
+		_y = y * yres / osd_h;
+		_h = h * yres / osd_h;
+	}
+	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
+	sprintf(buffer, "%x", _x);
+	proc_put("/proc/stb/vmpeg/0/dst_left", buffer, strlen(buffer));
+	sprintf(buffer, "%x", _y);
+	proc_put("/proc/stb/vmpeg/0/dst_top", buffer, strlen(buffer));
+	sprintf(buffer, "%x", _w);
+	proc_put("/proc/stb/vmpeg/0/dst_width", buffer, strlen(buffer));
+	sprintf(buffer, "%x", _h);
+	proc_put("/proc/stb/vmpeg/0/dst_height", buffer, strlen(buffer));
 }
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)

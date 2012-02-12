@@ -277,28 +277,11 @@ int cVideo::setAspectRatio(int aspect, int mode)
 
 int cVideo::getAspectRatio(void)
 {
-	unsigned char buffer[2];
-	int n, f;
-	int ratio = 0; // 0 = 4:3, 1 = 16:9
-	f = open("/proc/stb/vmpeg/0/aspect", O_RDONLY);
-	n = read(f, buffer, 2);
-	close(f);
-	if (n > 0)
-		ratio = atoi((const char*) buffer);
+	int ratio = 0; /* proc: 0 = 4:3, 1 = 16:9 */
+	ratio = proc_get_hex("/proc/stb/vmpeg/0/aspect");
+	if (ratio >= 0)
+		return ratio * 2 + 1; /* return: 1 = 4:3, 3 = 16:9 */
 	return ratio;
-#if 0
-	switch (v.pel_aspect_ratio)
-	{
-		case VID_DISPSIZE_4x3:
-			return 1;
-		case VID_DISPSIZE_16x9:
-			return 3;
-		case VID_DISPSIZE_221x100:
-			return 4;
-		default:
-			return 0;
-	}
-#endif
 }
 
 int cVideo::setCroppingMode(int /*vidDispMode_t format*/)
@@ -682,35 +665,10 @@ void cVideo::Pig(int x, int y, int w, int h, int /*osd_w*/, int /*osd_h*/)
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)
 {
-	char buffer[10];
-	int n, f;
-
-	rate = 0;
-	width = 0;
-	height = 0;
-
-	f = open("/proc/stb/vmpeg/0/framerate", O_RDONLY);
-	n = read(f, buffer, 10);
-	close(f);
-
-	if (n > 0) {
-		sscanf(buffer, "%X", &rate);
-		rate = rate/1000;
-	}
-
-	f = open("/proc/stb/vmpeg/0/xres", O_RDONLY);
-	n = read(f, buffer, 10);
-	close(f);
-
-	if (n > 0)
-		sscanf(buffer, "%X", &width);
-
-	f = open("/proc/stb/vmpeg/0/yres", O_RDONLY);
-	n = read(f, buffer, 10);
-	close(f);
-
-	if (n > 0)
-		sscanf(buffer, "%X", &height);
+	rate = proc_get_hex("/proc/stb/vmpeg/0/framerate");
+	rate /= 1000;
+	width = proc_get_hex("/proc/stb/vmpeg/0/xres");
+	height = proc_get_hex("/proc/stb/vmpeg/0/yres");
 }
 
 void cVideo::SetSyncMode(AVSYNC_TYPE Mode)

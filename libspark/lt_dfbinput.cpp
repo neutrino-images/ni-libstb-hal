@@ -44,6 +44,10 @@ extern "C" {
 }
 static uint8_t IRMP_PIN;
 
+#include <lt_debug.h>
+#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
+#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+
 /* same defines as in neutrino's rcinput.h */
 #define KEY_TTTV	KEY_FN_1
 #define KEY_TTZOOM	KEY_FN_2
@@ -190,7 +194,7 @@ static void *input_thread(void *)
 	unsigned int nodec = 0;	/* how many timeouts since last decoded? */
 	IRMP_DATA d;
 
-	fprintf(stderr, "LIRC/IRMP input converter thread starting...\n");
+	lt_info("LIRC/IRMP input converter thread starting...\n");
 
 	/* modprobe does not complain if the module is already loaded... */
 	system("/sbin/modprobe uinput");
@@ -201,7 +205,7 @@ static void *input_thread(void *)
 
 	if (uinput < 0)
 	{
-		fprintf(stderr, "LIRC/IRMP input thread: unable to open /dev/uinput (%m)\n");
+		lt_info("LIRC/IRMP input thread: unable to open /dev/uinput (%m)\n");
 		thread_running = 2;
 		return NULL;
 	}
@@ -227,7 +231,7 @@ static void *input_thread(void *)
 
 	if (ioctl(uinput, UI_DEV_CREATE))
 	{
-		perror("LIRC/IRMP input thread UI_DEV_CREATE");
+		lt_info("LIRC/IRMP input thread UI_DEV_CREATE: %m\n");
 		close(uinput);
 		return NULL;
 	}
@@ -263,7 +267,7 @@ static void *input_thread(void *)
 					}
 					evdev = atoi(p + 6);
 					sprintf(newdev, "event%d", evdev);
-					fprintf(stderr, "LIRC/IRMP input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
+					lt_info("LIRC/IRMP input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
 					unlink("/dev/input/nevis_ir");
 					symlink(newdev, "/dev/input/nevis_ir");
 					break;
@@ -283,7 +287,7 @@ static void *input_thread(void *)
 	lircfd = open("/dev/lirc", O_RDONLY);
 	if (lircfd < 0)
 	{
-		perror ("open /dev/lirc");
+		lt_info("%s: open /dev/lirc: %m\n", __func__);
 		goto out;
 	}
 	IRMP_PIN = 0xFF;
@@ -292,7 +296,7 @@ static void *input_thread(void *)
 #define POLL_MS		(100 * 1000)
 #define LIRC_PULSE	0x01000000
 #define LIRC_PULSE_MASK	0x00FFFFFF
-	fprintf(stderr, "LIRC/IRMP input converter going into main loop...\n");
+	lt_info("LIRC/IRMP input converter going into main loop...\n");
 
 	/* TODO: ioctl to find out if we have a compatible LIRC_MODE2 device */
 	thread_running = 1;
@@ -314,7 +318,7 @@ static void *input_thread(void *)
 
 		if (ret == -1) {
 			/* errno != EINTR... */
-			perror("lirmp: select");
+			lt_info("%s: lirmp: lircfd select: %m\n", __func__);
 			break;
 		}
 
@@ -326,7 +330,7 @@ static void *input_thread(void *)
 			pulse = !last_pulse;	/* lirc sends data on signal change */
 			if (last_code != -1 && nodec > 1)
 			{
-fprintf(stderr, "timeout!\n");
+				// fprintf(stderr, "timeout!\n");
 				u.code = last_code;
 				u.value = 0;	/* release */
 				write(uinput, &u, sizeof(u));
@@ -366,7 +370,7 @@ fprintf(stderr, "timeout!\n");
 			if (irmp_get_data (&d))
 			{
 				nodec = 0;
-				printf("protocol: %2d address: 0x%04x command: 0x%04x flags: %d\n",
+				lt_debug("irmp_get_data proto: %2d addr: 0x%04x cmd: 0x%04x fl: %d\n",
 					d.protocol, d.address, d.command, d.flags);
 
 				/* todo: do we need to complete the loop if we already
@@ -385,7 +389,7 @@ fprintf(stderr, "timeout!\n");
 							}
 							u.code = key_map[i].code;
 							u.value = (d.flags & 0x1) + 1;
-							fprintf(stderr, "uinput write: value: %d code: %d\n", u.value, u.code);
+							//lt_debug("uinput write: value: %d code: %d\n", u.value, u.code);
 							last_code = u.code;
 							write(uinput, &u, sizeof(u));
 							break;
@@ -406,7 +410,7 @@ void start_input_thread(void)
 {
 	if (pthread_create(&thread, 0, input_thread, NULL) != 0)
 	{
-		perror("LIRC/IRMP input thread pthread_create");
+		lt_info("%s: LIRC/IRMP input thread pthread_create: %m\n", __func__);
 		thread_running = 0;
 		return;
 	}

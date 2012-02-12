@@ -51,7 +51,7 @@ void lt_debug_init(void)
 	int i = 0;
 	char *tmp = getenv("HAL_DEBUG");
 	if (! tmp)
-		*tmp = getenv("TRIPLE_DEBUG"); /* backwards compatibility... */
+		tmp = getenv("TRIPLE_DEBUG"); /* backwards compatibility... */
 	if (! tmp)
 		debuglevel = 0;
 	else

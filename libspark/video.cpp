@@ -64,6 +64,43 @@ static pthread_mutex_t stillp_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* debugging hacks */
 static bool noscart = false;
 
+static int proc_put(const char *path, const char *value, const int len)
+{
+	int ret, ret2;
+	int pfd = open(path, O_WRONLY);
+	if (pfd < 0)
+		return pfd;
+	ret = write(pfd, value, len);
+	ret2 = close(pfd);
+	if (ret2 < 0)
+		return ret2;
+	return ret;
+}
+
+static int proc_get(const char *path, char *value, const int len)
+{
+	int ret, ret2;
+	int pfd = open(path, O_RDONLY);
+	if (pfd < 0)
+		return pfd;
+	ret = read(pfd, value, len);
+	value[len-1] = '\0'; /* make sure string is terminated */
+	ret2 = close(pfd);
+	if (ret2 < 0)
+		return ret2;
+	return ret;
+}
+
+static unsigned int proc_get_hex(const char *path)
+{
+	unsigned int n, ret = 0;
+	char buf[16];
+	n = proc_get(path, buf, 16);
+	if (n > 0)
+		sscanf(buf, "%x", &ret);
+	return ret;
+}
+
 cVideo::cVideo(int, void *, void *)
 {
 	lt_debug("%s\n", __FUNCTION__);

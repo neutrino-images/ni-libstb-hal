@@ -38,7 +38,7 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#include "lt_dfbinput.h"
+#include "lirmp_input.h"
 extern "C" {
 #include "irmp.h"
 }

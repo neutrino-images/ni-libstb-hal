@@ -8,7 +8,7 @@ AM_LDFLAGS = -lpthread
 
 libspark_a_SOURCES = \
 	irmp.c \
-	lt_dfbinput.cpp \
+	lirmp_input.cpp \
 	dmx.cpp \
 	ca.cpp \
 	video.cpp \

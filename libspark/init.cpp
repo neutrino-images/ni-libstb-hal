@@ -9,7 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lt_dfbinput.h"
+#include "lirmp_input.h"
 #include "pwrmngr.h"
 
 #include "lt_debug.h"

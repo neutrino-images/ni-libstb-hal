@@ -38,7 +38,7 @@ libstb_hal_a_LIBADD += \
 	libspark/dmx.o \
 	libspark/init.o \
 	libspark/irmp.o \
-	libspark/lt_dfbinput.o \
+	libspark/lirmp_input.o \
 	libspark/playback.o \
 	libspark/pwrmngr.o \
 	libspark/record.o \

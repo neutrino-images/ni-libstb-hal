@@ -420,7 +420,7 @@ bool cDemux::pesFilter(const unsigned short pid)
 		break;
 	case DMX_TP_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;
-		p_flt.output  = DMX_OUT_TS_TAP;
+		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
 		break;
 	default:
 		lt_info("%s:%d invalid dmx_type %d!\n", dmx_type);
@@ -448,6 +448,7 @@ void *cDemux::getChannel()
 
 bool cDemux::addPid(unsigned short Pid)
 {
+	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
 	pes_pids pfd;
 	int ret;
 	struct dmx_pes_filter_params p;
@@ -458,6 +459,7 @@ bool cDemux::addPid(unsigned short Pid)
 	}
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
+#if 0
 	pfd.fd = open(devname[num], O_RDWR);
 	if (pfd.fd < 0)
 	{
@@ -489,6 +491,10 @@ bool cDemux::addPid(unsigned short Pid)
 	else
 		/* error! */
 		close(pfd.fd);
+#endif
+	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
+	if (ret < 0)
+		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
 	return (ret != -1);
 }
 

@@ -167,112 +167,29 @@ cVideo::~cVideo(void)
 
 int cVideo::setAspectRatio(int aspect, int mode)
 {
-	return 1;
-#if 0
-	static int _mode = -1;
-	static int _aspect = -1;
-	vidDispSize_t dsize = VID_DISPSIZE_UNKNOWN;
-	vidDispMode_t dmode = VID_DISPMODE_NORM;
-	/* 1 = 4:3, 3 = 16:9, 4 = 2.21:1, 0 = unknown */
-	int v_ar = getAspectRatio();
+	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
+	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
+	int n;
+	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
 
-	if (aspect != -1)
-		_aspect = aspect;
-	if (mode != -1)
-		_mode = mode;
-	lt_info("%s(%d, %d)_(%d, %d) v_ar %d\n", __FUNCTION__, aspect, mode, _aspect, _mode, v_ar);
-
-	/* values are hardcoded in neutrino_menue.cpp, "2" is 14:9 -> not used */
-	if (_aspect != -1)
+	if (aspect > 3 || aspect == 0)
+		lt_info("%s: invalid aspect: %d\n", __func__, aspect);
+	else if (aspect > 0) /* -1 == don't set */
 	{
-		switch(_aspect)
-		{
-		case 1:
-			dsize = VID_DISPSIZE_4x3;
-			scartvoltage = 12;
-			break;
-		case 3:
-			dsize = VID_DISPSIZE_16x9;
-			scartvoltage = 6;
-			break;
-		default:
-			break;
-		}
+		lt_debug("%s: /proc/stb/video/aspect -> %s\n", __func__, a[aspect]);
+		n = proc_put("/proc/stb/video/aspect", a[aspect], strlen(a[aspect]));
+		if (n < 0)
+			lt_info("%s: proc_put /proc/stb/video/aspect (%m)\n", __func__);
 	}
-	if (_mode != -1)
-	{
-		int zoom = 100 * 16 / 14; /* 16:9 vs 14:9 */
-		switch(_mode)
-		{
-		case DISPLAY_AR_MODE_NONE:
-			if (v_ar < 3)
-				dsize = VID_DISPSIZE_4x3;
-			else
-				dsize = VID_DISPSIZE_16x9;
-			break;
-		case DISPLAY_AR_MODE_LETTERBOX:
-			dmode = VID_DISPMODE_LETTERBOX;
-			break;
-		case DISPLAY_AR_MODE_PANSCAN:
-			zoom = 100 * 5 / 4;
-		case DISPLAY_AR_MODE_PANSCAN2:
-			if ((v_ar < 3 && _aspect == 3) || (v_ar >= 3 && _aspect == 1))
-			{
-				/* unfortunately, this partly reimplements the setZoom code... */
-				dsize = VID_DISPSIZE_UNKNOWN;
-				dmode = VID_DISPMODE_SCALE;
-				SCALEINFO s;
-				memset(&s, 0, sizeof(s));
-				if (v_ar < 3) { /* 4:3 */
-					s.src.hori_size = 720;
-					s.src.vert_size = 2 * 576 - 576 * zoom / 100;
-					s.des.hori_size = zoom * 720 * 3/4 / 100;
-					s.des.vert_size = 576;
-				} else {
-					s.src.hori_size = 2 * 720 - 720 * zoom / 100;
-					s.src.vert_size = 576;
-					s.des.hori_size = 720;
-					s.des.vert_size = zoom * 576 * 3/4 / 100;
-				}
-				s.des.vert_off = (576 - s.des.vert_size) / 2;
-				s.des.hori_off = (720 - s.des.hori_size) / 2;
-				lt_debug("PANSCAN2: %d%% src: %d:%d:%d:%d dst: %d:%d:%d:%d\n", zoom,
-					s.src.hori_off,s.src.vert_off,s.src.hori_size,s.src.vert_size,
-					s.des.hori_off,s.des.vert_off,s.des.hori_size,s.des.vert_size);
-				fop(ioctl, MPEG_VID_SCALE_ON);
-				fop(ioctl, MPEG_VID_SET_SCALE_POS, &s);
-			}
-		default:
-			break;
-		}
-		if (dmode != VID_DISPMODE_SCALE)
-			fop(ioctl, MPEG_VID_SCALE_OFF);
-		setCroppingMode(dmode);
-	}
-	const char *ds[] = { "4x3", "16x9", "2.21", "unknown" };
-	const char *d;
-	if (dsize >=0 && dsize < 4)
-		d = ds[dsize];
-	else
-		d = "invalid!";
-	lt_debug("%s dispsize(%d) (%s)\n", __FUNCTION__, dsize, d);
-	fop(ioctl, MPEG_VID_SET_DISPSIZE, dsize);
 
-	int avsfd = open("/dev/stb/tdsystem", O_RDONLY);
-	if (avsfd < 0)
-	{
-		perror("open tdsystem");
+	if (mode == -1)
 		return 0;
-	}
-	if (!noscart && scartvoltage > 0 && video_standby == 0)
-	{
-		lt_info("%s set SCART_PIN_8 to %dV\n", __FUNCTION__, scartvoltage);
-		if (ioctl(avsfd, IOC_AVS_SCART_PIN8_SET, scartvoltage) < 0)
-			perror("IOC_AVS_SCART_PIN8_SET");
-	}
-	close(avsfd);
+
+	lt_debug("%s: /proc/stb/video/policy -> %s\n", __func__, m[mode]);
+	n = proc_put("/proc/stb/video/policy", m[mode], strlen(m[mode]));
+	if (n < 0)
+		return 1;
 	return 0;
-#endif
 }
 
 int cVideo::getAspectRatio(void)

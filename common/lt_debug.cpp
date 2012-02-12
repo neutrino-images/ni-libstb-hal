@@ -49,7 +49,9 @@ void _lt_debug(int facility, const void *func, const char *fmt, ...)
 void lt_debug_init(void)
 {
 	int i = 0;
-	char *tmp = getenv("TRIPLE_DEBUG");
+	char *tmp = getenv("HAL_DEBUG");
+	if (! tmp)
+		*tmp = getenv("TRIPLE_DEBUG"); /* backwards compatibility... */
 	if (! tmp)
 		debuglevel = 0;
 	else
@@ -57,7 +59,7 @@ void lt_debug_init(void)
 
 	if (debuglevel == 0)
 	{
-		fprintf(stderr, "libtriple debug options can be set by exporting TRIPLE_DEBUG.\n");
+		fprintf(stderr, "libstb-hal debug options can be set by exporting HAL_DEBUG.\n");
 		fprintf(stderr, "The following values (or bitwise OR combinations) are valid:\n");
 		while (lt_facility[i]) {
 			fprintf(stderr, "\tcomponent: %s  0x%02x\n", lt_facility[i], 1 << i);
@@ -65,7 +67,7 @@ void lt_debug_init(void)
 		}
 		fprintf(stderr, "\tall components:    0x%02x\n", (1 << i) - 1);
 	} else {
-		fprintf(stderr, "libtriple debug is active for the following components:\n");
+		fprintf(stderr, "libstb-hal debug is active for the following components:\n");
 		while (lt_facility[i]) {
 			if (debuglevel & (1 << i))
 				fprintf(stderr, "%s ", lt_facility[i]);

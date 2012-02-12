@@ -109,10 +109,10 @@ static const key_map_t key_map[] = {
 	{ 0x22, KEY_STOP },
 	{ 0x4d, KEY_PAUSE },
 	{ 0x15, KEY_PLAY },
-/*	KEY_PREV, */
+	{ 0x20, KEY_PREVIOUS },
+	{ 0x23, KEY_NEXT },
 //	KEY_EJECTCD,
 	{ 0x10, KEY_RECORD }
-/*	KEY_NEXT, */
 };
 
 static const int key_list[] = {
@@ -154,20 +154,20 @@ static const int key_list[] = {
 	KEY_TV,
 	KEY_VIDEO,
 	KEY_AUDIO,
-	KEY_AUX,
-	KEY_TEXT,
-	KEY_TTTV,
-	KEY_TTZOOM,
-	KEY_REVEAL,
+//	KEY_AUX,
+//	KEY_TEXT,
+//	KEY_TTTV,
+//	KEY_TTZOOM,
+//	KEY_REVEAL,
 	KEY_REWIND,
 	KEY_STOP,
 	KEY_PAUSE,
 	KEY_PLAY,
 	KEY_FORWARD,
-/*	KEY_PREV, */
-	KEY_EJECTCD,
+	KEY_PREVIOUS,
+	KEY_NEXT,
+//	KEY_EJECTCD,
 	KEY_RECORD,
-/*	KEY_NEXT, */
 	-1
 };
 

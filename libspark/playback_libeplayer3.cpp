@@ -13,40 +13,12 @@ extern ManagerHandler_t		ManagerHandler;
 
 #include "playback_libeplayer3.h"
 
-static 	Context_t * player;
+static Context_t *player;
 
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
 
 static const char * FILENAME = "playback_libeplayer3.cpp";
-
-//
-void cPlayback::Attach(void)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-}
-
-void cPlayback::Detach(void)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-}
-
-bool cPlayback::SetAVDemuxChannel(bool On, bool Video, bool Audio)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-
-	return 0;
-}
-
-void cPlayback::PlaybackNotify (int  Event, void *pData, void *pTag)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-}
-
-void cPlayback::DMNotify(int Event, void *pTsBuf, void *Tag)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-}
 
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
@@ -342,12 +314,6 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	return true;
 }
 
-bool cPlayback::GetOffset(off64_t &offset)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	return true;
-}
-
 bool cPlayback::SetPosition(int position, bool absolute)
 {
 	printf("%s:%s %d\n", FILENAME, __FUNCTION__,position);
@@ -356,18 +322,6 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	if(player && player->playback)
 		player->playback->Command(player, PLAYBACK_SEEK, (void*)&pos);
 	return true;
-}
-
-void * cPlayback::GetHandle(void)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	return NULL;
-}
-
-void * cPlayback::GetDmHandle(void)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	return NULL;
 }
 
 void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language)
@@ -421,6 +375,7 @@ cPlayback::~cPlayback()
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 }
 
+#if 0
 bool cPlayback::IsPlaying(void) const
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -437,15 +392,4 @@ bool cPlayback::IsPlaying(void) const
 
 	return playing;
 }
-
-bool cPlayback::IsEnabled(void) const
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	return enabled;
-}
-
-int cPlayback::GetCurrPlaybackSpeed(void) const
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	return nPlaybackSpeed;
-}
+#endif

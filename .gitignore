@@ -9,6 +9,7 @@
 /depcomp
 /install-sh
 /common/Makefile.in
+/libeplayer3/Makefile.in
 /libspark/Makefile.in
 /libtriple/Makefile.in
 /ltmain.sh

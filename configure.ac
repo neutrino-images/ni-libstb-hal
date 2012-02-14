@@ -21,6 +21,7 @@ fi
 AC_OUTPUT([
 Makefile
 common/Makefile
+libeplayer3/Makefile
 libtriple/Makefile
 libspark/Makefile
 ])

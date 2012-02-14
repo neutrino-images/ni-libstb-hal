@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libeplayer3.la
 CXXFLAGS = -Wall
 
 INCLUDES = \
-	-Iinclude
+	-I$(srcdir)/include
 
 libeplayer3_la_SOURCES =  \
 	container/container.c container/container_ffmpeg.c container/text_srt.c \

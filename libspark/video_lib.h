@@ -122,10 +122,6 @@ class cVideo
 		int /*vidDispMode_t*/ croppingMode;
 		int /*vidOutFmt_t*/ outputformat;
 		int scartvoltage;
-		int z[2]; /* zoomvalue for 4:3 (0) and 16:9 (1) in percent */
-		int *zoomvalue;
-		void *blank_data[2]; /* we store two blank MPEGs (PAL/NTSC) in there */
-		int blank_size[2];
 
 		VIDEO_FORMAT	    StreamType;
 		VIDEO_DEFINITION       VideoDefinition;
@@ -182,7 +178,6 @@ class cVideo
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
 		void SetControl(int, int) { return; };
-		int setZoom(int);
 		void VideoParamWatchdog(void);
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);

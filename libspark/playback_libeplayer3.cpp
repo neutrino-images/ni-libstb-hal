@@ -2,9 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "playback_cs.h"
+#include <audio_lib.h>
+#include <video_lib.h>
 
-static const char * FILENAME = "playback_cs.cpp";
+#include <common.h>
+extern OutputHandler_t		OutputHandler;
+extern PlaybackHandler_t	PlaybackHandler;
+extern ContainerHandler_t	ContainerHandler;
+extern ManagerHandler_t		ManagerHandler;
+
+#include "playback_libeplayer3.h"
+
+static 	Context_t * player;
+
+extern cAudio *audioDecoder;
+extern cVideo *videoDecoder;
+
+static const char * FILENAME = "playback_libeplayer3.cpp";
 
 //
 void cPlayback::Attach(void)
@@ -42,6 +56,9 @@ bool cPlayback::Open(playmode_t PlayMode)
 		"PLAYMODE_FILE"
 	};
 
+	audioDecoder->closeDevice();
+	videoDecoder->closeDevice();
+
 	printf("%s:%s - PlayMode=%s\n", FILENAME, __FUNCTION__, aPLAYMODE[PlayMode]);
 	
 	player = (Context_t*) malloc(sizeof(Context_t));
@@ -72,11 +89,13 @@ void cPlayback::Close(void)
 
 //Dagobert: movieplayer does not call stop, it calls close ;)
 	Stop();
+	audioDecoder->openDevice();
+	videoDecoder->openDevice();
 
 }
 
 //Used by Fileplay
-bool cPlayback::Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3)
+bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned short apid, int ac3, unsigned int)
 {
 	bool ret = false;
 	bool isHTTP = false;

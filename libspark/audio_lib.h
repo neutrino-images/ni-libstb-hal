@@ -30,6 +30,7 @@ typedef enum
 
 class cAudio
 {
+	friend class cPlayback;
 	private:
 		int fd;
 		bool Muted;

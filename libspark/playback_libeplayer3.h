@@ -6,22 +6,10 @@
 /* (C) 2008 CoolStream International                                           */
 /*                                                                             */
 /*******************************************************************************/
-#ifndef __PLAYBACK_CS_H
-#define __PLAYBACK_CS_H
+#ifndef __HAL_PLAYBACK_H
+#define __HAL_PLAYBACK_H
 
 #include <string>
-
-#include <common.h>
-extern OutputHandler_t		OutputHandler;
-extern PlaybackHandler_t	PlaybackHandler;
-extern ContainerHandler_t	ContainerHandler;
-extern ManagerHandler_t		ManagerHandler;
-
-#ifndef CS_PLAYBACK_PDATA
-typedef struct {
-	int nothing;
-} CS_PLAYBACK_PDATA;
-#endif
 
 typedef enum {
 	PLAYMODE_TS = 0,
@@ -34,10 +22,6 @@ class cPlayback
 		int timeout;
 		pthread_cond_t read_cond;
 		pthread_mutex_t mutex;
-		CS_PLAYBACK_PDATA * privateData;
-#ifdef __sh__
-		Context_t * player;
-#endif
 		bool enabled;
 		bool paused;
 		bool playing;
@@ -57,7 +41,8 @@ class cPlayback
 		void DMNotify(int Event, void *pTsBuf, void *Tag);
 		bool Open(playmode_t PlayMode);
 		void Close(void);
-		bool Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3);
+		bool Start(char *filename, unsigned short vpid, int vtype, unsigned short apid,
+			   int ac3, unsigned int duration);
 		bool Stop(void);
 		bool SetAPid(unsigned short pid, bool ac3);
 		bool SetSpeed(int speed);

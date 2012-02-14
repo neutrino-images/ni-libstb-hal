@@ -39,7 +39,7 @@ libstb_hal_a_LIBADD += \
 	libspark/init.o \
 	libspark/irmp.o \
 	libspark/lirmp_input.o \
-	libspark/playback.o \
+	libspark/playback_libeplayer3.o \
 	libspark/pwrmngr.o \
 	libspark/record.o \
 	libspark/video.o

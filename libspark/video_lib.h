@@ -113,6 +113,7 @@ typedef enum
 class cVideo
 {
 	friend class cDemux;
+	friend class cPlayback;
 	private:
 		/* video device */
 		int fd;

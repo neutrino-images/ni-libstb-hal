@@ -1,5 +1,6 @@
 INCLUDES = \
-	-I$(top_srcdir)/common
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/libeplayer3/include
 
 noinst_LIBRARIES = libspark.a
 
@@ -14,7 +15,7 @@ libspark_a_SOURCES = \
 	video.cpp \
 	audio.cpp \
 	init.cpp \
-	playback.cpp \
+	playback_libeplayer3.cpp \
 	pwrmngr.cpp \
 	record.cpp
 

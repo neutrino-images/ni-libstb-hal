@@ -138,6 +138,9 @@ class cVideo
 		void routeVideo(int standby);
 		int video_standby;
 		int64_t GetPTS(void);
+
+		void openDevice(void);
+		void closeDevice(void);
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);

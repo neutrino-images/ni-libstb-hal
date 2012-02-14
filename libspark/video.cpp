@@ -104,11 +104,8 @@ static unsigned int proc_get_hex(const char *path)
 cVideo::cVideo(int, void *, void *)
 {
 	lt_debug("%s\n", __FUNCTION__);
-	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
-		lt_info("%s cannot open %s: %m\n", __FUNCTION__, VIDEO_DEVICE);
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 
-	playstate = VIDEO_STOPPED;
+	openDevice();
 	//croppingMode = VID_DISPMODE_NORM;
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
 	scartvoltage = -1;
@@ -152,7 +149,6 @@ cVideo::cVideo(int, void *, void *)
 
 cVideo::~cVideo(void)
 {
-	playstate = VIDEO_STOPPED;
 	for (int i = 0; i < 2; i++)
 	{
 		if (blank_data[i])
@@ -161,8 +157,23 @@ cVideo::~cVideo(void)
 	}
 	/* disable DACs and SCART voltage */
 	Standby(true);
+	closeDevice();
+}
+
+void cVideo::openDevice(void)
+{
+	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
+		lt_info("%s cannot open %s: %m\n", __FUNCTION__, VIDEO_DEVICE);
+	fcntl(fd, F_SETFD, FD_CLOEXEC);
+	playstate = VIDEO_STOPPED;
+}
+
+void cVideo::closeDevice(void)
+{
 	if (fd >= 0)
 		close(fd);
+	fd = -1;
+	playstate = VIDEO_STOPPED;
 }
 
 int cVideo::setAspectRatio(int aspect, int mode)

@@ -246,13 +246,13 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 
 void cVideo::ShowPicture(const char * fname)
 {
-	return;
-#if 0
-	lt_debug("%s(%s)\n", __FUNCTION__, fname);
+	lt_debug("%s(%s)\n", __func__, fname);
+	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 	char destname[512];
 	char cmd[512];
 	char *p;
-	void *data;
+	unsigned char *data;
 	int mfd;
 	struct stat st;
 	strcpy(destname, "/var/cache");
@@ -271,66 +271,54 @@ void cVideo::ShowPicture(const char * fname)
 	if (access(destname, R_OK))
 	{
 		/* it does not exist, so call ffmpeg to create it... */
-		sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 704x576 '%s' </dev/null",
+		sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 '%s' </dev/null",
 							fname, destname);
 		system(cmd); /* TODO: use libavcodec to directly convert it */
 	}
-	/* the mutex is a workaround: setBlank is apparently called from
-	   a differnt thread and takes slightly longer, so that the decoder
-	   was blanked immediately after displaying the image, which is not
-	   what we want. the mutex ensures proper ordering. */
-	pthread_mutex_lock(&stillp_mutex);
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
-		lt_info("%s cannot open %s: %m", __FUNCTION__, destname);
+		lt_info("%s cannot open %s: %m", __func__, destname);
 		goto out;
 	}
-	if (fstat(mfd, &st) != -1 && st.st_size > 0)
+	fstat(mfd, &st);
+
+	Stop(1);
+	closeDevice();
+	openDevice();
+	if (fd >= 0)
 	{
-		data = malloc(st.st_size);
-		if (! data)
-			lt_info("%s malloc failed (%m)\n", __FUNCTION__);
-		else if (read(mfd, data, st.st_size) != st.st_size)
-			lt_info("%s short read (%m)\n", __FUNCTION__);
-		else
+		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
+			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
+		bool seq_end_avail = false;
+		size_t pos=0;
+		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
+		if (! iframe)
 		{
-			BUFINFO buf;
-			buf.ulLen = st.st_size;
-			buf.ulStartAdrOff = (int)data;
-			Stop(false);
-			fop(ioctl, MPEG_VID_STILLP_WRITE, &buf);
+			lt_info("%s: malloc failed (%m)\n", __func__);
+			goto out;
 		}
-		free(data);
+		read(mfd, iframe, st.st_size);
+		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
+		ioctl(fd, VIDEO_PLAY);
+		ioctl(fd, VIDEO_CONTINUE);
+		ioctl(fd, VIDEO_CLEAR_BUFFER);
+		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
+			++pos;
+
+		if ((iframe[3] >> 4) != 0xE) // no pes header
+			write(fd, pes_header, sizeof(pes_header));
+		write(fd, iframe, st.st_size);
+		if (!seq_end_avail)
+			write(fd, seq_end, sizeof(seq_end));
+		memset(iframe, 0, 8192);
+		write(fd, iframe, 8192);
+		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+		free(iframe);
 	}
-	close(mfd);
  out:
-	pthread_mutex_unlock(&stillp_mutex);
+	close(mfd);
 	return;
-#endif
-#if 0
-	/* DirectFB based picviewer: works, but is slow and the infobar
-	   draws in the same plane */
-	int width;
-	int height;
-	if (!fname)
-		return;
-
-	IDirectFBImageProvider *provider;
-	DFBResult err = dfb->CreateImageProvider(dfb, fname, &provider);
-	if (err)
-	{
-		fprintf(stderr, "cVideo::ShowPicture: CreateImageProvider error!\n");
-		return;
-	}
-
-	DFBSurfaceDescription desc;
-	provider->GetSurfaceDescription (provider, &desc);
-	width = desc.width;
-	height = desc.height;
-	provider->RenderTo(provider, dfbdest, NULL);
-	provider->Release(provider);
-#endif
 }
 
 void cVideo::StopPicture()

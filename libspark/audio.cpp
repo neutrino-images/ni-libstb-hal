@@ -98,18 +98,16 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
-#if 0
 	if (clipfd != -1 && mixer_fd != -1) {
 		int tmp = 0;
 		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
 		if (! Muted)
 			tmp = left << 8 | right;
-		ret = ioctl(mixer_fd, MIXER_WRITE(mixer_num), &tmp);
+		int ret = ioctl(mixer_fd, MIXER_WRITE(mixer_num), &tmp);
 		if (ret == -1)
 			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
-#endif
 	char str[4];
 	sprintf(str, "%d", v);
 
@@ -206,24 +204,21 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	mixer_num = -1;
 	mixer_fd = -1;
 	/* a different DSP device can be given with DSP_DEVICE and MIX_DEVICE
-	 * if this device cannot be opened, we fall back to the internal TD OSS device
+	 * if this device cannot be opened, we fall back to the internal OSS device
 	 * Example:
-	 *   modprobe ohci-hcd
-	 *   modprobe audio
-	 *   export DSP_DEVICE=/dev/sound/dsp1
-	 *   export MIX_DEVICE=/dev/sound/mixer1
+	 *   modprobe snd-usb-audio
+	 *   export DSP_DEVICE=/dev/sound/dsp2
+	 *   export MIX_DEVICE=/dev/sound/mixer2
 	 *   neutrino
 	 */
 	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
 		if (dsp_dev)
 			lt_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-				" fall back to /dev/sound/dsp\n", __func__, dsp_dev);
-		dsp_dev = "/dev/sound/dsp";
+				" fall back to /dev/dsp1\n", __func__, dsp_dev);
+		dsp_dev = "/dev/dsp1";
 	}
 	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
-	clipfd = open(dsp_dev, O_WRONLY);
-	close(clipfd);
 	clipfd = open(dsp_dev, O_WRONLY);
 	if (clipfd < 0) {
 		lt_info("%s open %s: %m\n", dsp_dev, __FUNCTION__);

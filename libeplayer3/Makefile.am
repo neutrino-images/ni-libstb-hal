@@ -1,11 +1,11 @@
-lib_LTLIBRARIES = libeplayer3.la
+noinst_LIBRARIES = libeplayer3.a
 
 CXXFLAGS = -Wall
 
 INCLUDES = \
 	-I$(srcdir)/include
 
-libeplayer3_la_SOURCES =  \
+libeplayer3_a_SOURCES =  \
 	container/container.c container/container_ffmpeg.c container/text_srt.c \
     container/text_ssa.c container/container_ass.c \
 	manager/audio.c manager/manager.c manager/subtitle.c manager/video.c \
@@ -19,11 +19,13 @@ libeplayer3_la_SOURCES =  \
 AM_CFLAGS = -Wall -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 -D_LARGEFILE64_SOURCE
 
-libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 
+#libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
+
+LIBEPLAYER3_LIBS = libeplayer3.a -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 bin_PROGRAMS = eplayer3 meta
 eplayer3_SOURCES = tools/eplayer2.c
-eplayer3_LDADD =  -leplayer3 -lpthread -lass -lm -lpng
+eplayer3_LDADD = $(LIBEPLAYER3_LIBS)
 
 meta_SOURCES = tools/meta.c
-meta_LDADD =  -leplayer3 -lpthread -lass -lm -lpng
+meta_LDADD = $(LIBEPLAYER3_LIBS)

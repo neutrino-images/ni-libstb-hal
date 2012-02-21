@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2009-2011 Frank Meyer - frank(at)fli4l.de
  *
- * $Id: irmp.h,v 1.67 2011/09/22 10:19:44 fm Exp $
+ * $Id: irmp.h,v 1.70 2012/02/21 08:41:46 fm Exp $
  *
  * ATMEGA88 @ 8 MHz
  *
@@ -79,8 +79,9 @@ typedef uint8_t     PAUSE_LEN;
 #define IRMP_NEC42_PROTOCOL                     28              // NEC with 42 bits
 #define IRMP_LEGO_PROTOCOL                      29              // LEGO Power Functions RC
 #define IRMP_THOMSON_PROTOCOL                   30              // Thomson
+#define IRMP_GRUNDIG2_PROTOCOL                  31              // Grundig, e.g. TP400
 
-#define IRMP_N_PROTOCOLS                        30              // number of supported protocols
+#define IRMP_N_PROTOCOLS                        31              // number of supported protocols
 
 // some flags of struct IRMP_PARAMETER:
 #define IRMP_PARAM_FLAG_IS_MANCHESTER           0x01
@@ -136,8 +137,9 @@ typedef uint8_t     PAUSE_LEN;
 #define SAMSUNG_START_BIT_PULSE_TIME            4500.0e-6                       // 4500 usec pulse
 #define SAMSUNG_START_BIT_PAUSE_TIME            4500.0e-6                       // 4500 usec pause
 #define SAMSUNG_PULSE_TIME                       550.0e-6                       //  550 usec pulse
-#define SAMSUNG_1_PAUSE_TIME                    1450.0e-6                       // 1450 usec pause
-#define SAMSUNG_0_PAUSE_TIME                     450.0e-6                       //  450 usec pause
+#define SAMSUNG_1_PAUSE_TIME                    1650.0e-6                       // 1650 usec pause
+#define SAMSUNG_0_PAUSE_TIME                     550.0e-6                       //  550 usec pause
+
 #define SAMSUNG_FRAME_REPEAT_PAUSE_TIME           25.0e-3                       // frame repeat after 25ms
 #define SAMSUNG_ADDRESS_OFFSET                   0                              // skip 0 bits
 #define SAMSUNG_ADDRESS_LEN                     16                              // read 16 address bits
@@ -153,9 +155,9 @@ typedef uint8_t     PAUSE_LEN;
 #define SAMSUNG32_COMMAND_OFFSET                16                              // skip 16 bits
 #define SAMSUNG32_COMMAND_LEN                   16                              // read 16 command bits
 #define SAMSUNG32_COMPLETE_DATA_LEN             32                              // complete length
-#define SAMSUNG32_FRAMES                        2                               // SAMSUNG32 sends each frame 2 times
+#define SAMSUNG32_FRAMES                        1                               // SAMSUNG32 sends each frame 1 times
 #define SAMSUNG32_AUTO_REPETITION_PAUSE_TIME    47.0e-3                         // repetition after 47 ms
-#define SAMSUNG32_FRAME_REPEAT_PAUSE_TIME       47.0e-3                         // frame repeat after 40ms
+#define SAMSUNG32_FRAME_REPEAT_PAUSE_TIME       47.0e-3                         // frame repeat after 47ms
 
 #define MATSUSHITA_START_BIT_PULSE_TIME         3488.0e-6                       // 3488 usec pulse
 #define MATSUSHITA_START_BIT_PAUSE_TIME         3488.0e-6                       // 3488 usec pause
@@ -479,6 +481,20 @@ typedef uint8_t     PAUSE_LEN;
 #define THOMSON_STOP_BIT                        1                               // has stop bit
 #define THOMSON_LSB                             0                               // MSB...LSB
 #define THOMSON_FLAGS                           0                               // flags
+
+#define GRUNDIG2_START_BIT_PULSE_TIME            550.0e-6                       //   550 usec pulse
+#define GRUNDIG2_START_BIT_PAUSE_TIME           2700.0e-6                       //  2700 usec pause
+#define GRUNDIG2_BIT_PULSE_TIME                  550.0e-6                       //   550 usec short pulse
+#define GRUNDIG2_BIT_PAUSE_TIME                  550.0e-6                       //   550 usec short pause
+#define GRUNDIG2_FRAME_REPEAT_PAUSE_TIME         100.0e-3                       // frame repeat after 100ms
+#define GRUNDIG2_STOP_BIT                       0                               // has no stop bit
+#define GRUNDIG2_LSB                            1                               // MSB...LSB
+#define GRUNDIG2_FLAGS                          (IRMP_PARAM_FLAG_IS_MANCHESTER | IRMP_PARAM_FLAG_1ST_PULSE_IS_1)  // flags
+#define GRUNDIG2_ADDRESS_OFFSET                 0                               // skip 0 bits
+#define GRUNDIG2_ADDRESS_LEN                    0                               // read 0 bits
+#define GRUNDIG2_COMMAND_OFFSET                 0                               // skip 0 bits
+#define GRUNDIG2_COMMAND_LEN                    7                               // read 6 + 1 command bits, last bit is always 1
+#define GRUNDIG2_COMPLETE_DATA_LEN              7                               // complete length
 
 #define AUTO_FRAME_REPETITION_TIME              80.0e-3                         // SIRCS/SAMSUNG32/NUBERT: automatic repetition after 25-50ms
                                                                                 // KASEIKYO: automatic repetition after 75ms

@@ -375,7 +375,7 @@ static void *input_thread(void *)
 
 				/* todo: do we need to complete the loop if we already
 				 * detected the singal in this pulse? */
-				if (d.protocol == IRMP_NEC_PROTOCOL && d.address == 0x5a45)
+				if (d.protocol == IRMP_NEC_PROTOCOL && d.address == 0xba45)
 				{
 					for (i = 0; i < (int)(sizeof(key_map)/sizeof(key_map_t)); i++)
 					{

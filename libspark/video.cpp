@@ -210,13 +210,31 @@ int cVideo::setBlank(int)
 
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
-	lt_info("%s(%d, %d)\n", __func__, video_system, remember);
+	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
+	static const char *modes[] = {
+		"pal",		// VIDEO_STD_NTSC
+		"pal",		// VIDEO_STD_SECAM
+		"pal",		// VIDEO_STD_PAL
+		"480p",		// VIDEO_STD_480P
+		"576p50",	// VIDEO_STD_576P
+		"720p60",	// VIDEO_STD_720P60
+		"1080i60",	// VIDEO_STD_1080I60
+		"720p50",	// VIDEO_STD_720P50
+		"1080i50",	// VIDEO_STD_1080I50
+		"1080p30",	// VIDEO_STD_1080P30
+		"1080p24",	// VIDEO_STD_1080P24
+		"1080p25",	// VIDEO_STD_1080P25
+		"1080i50"	// VIDEO_STD_AUTO...
+	};
+
+	if (video_system > VIDEO_STD_MAX)
+	{
+		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", video_system, VIDEO_STD_MAX);
+		return -1;
+	}
+	if (proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system])) < 0)
+		return -1;
 	return 0;
-#if 0
-	if (video_system > VID_DISPFMT_SECAM || video_system < 0)
-		video_system = VID_DISPFMT_PAL;
-        return fop(ioctl, MPEG_VID_SET_DISPFMT, video_system);
-#endif
 }
 
 int cVideo::getPlayState(void)

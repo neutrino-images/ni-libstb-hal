@@ -716,7 +716,7 @@ typedef unsigned int16  uint16_t;
 #endif
 #define ANALYZE_PRINTF(...)                     { if (verbose)              { printf (__VA_ARGS__); } }
 #define ANALYZE_NEWLINE()                       { if (verbose)              { putchar ('\n');       } }
-static int                                      silent;
+static int                                      silent = TRUE;
 static int                                      time_counter;
 static int                                      verbose;
 #else

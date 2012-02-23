@@ -30,10 +30,12 @@
 #include <pthread.h>
 
 #include <linux/dvb/video.h>
+#include <linux/stmfb.h>
 #include "video_lib.h"
 #define VIDEO_DEVICE "/dev/dvb/adapter0/video0"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
+#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
 
 #define fop(cmd, args...) ({				\
@@ -95,6 +97,39 @@ static unsigned int proc_get_hex(const char *path)
 		sscanf(buf, "%x", &ret);
 	return ret;
 }
+
+static int hdmi_out(bool enable)
+{
+	struct stmfbio_output_configuration out;
+	int ret = -1;
+	int fb = open("/dev/fb0", O_RDWR);
+	if (fb < 0)
+	{
+		lt_debug_c("%s: can't open /dev/fb/0 (%m)\n", __func__);
+		return -1;
+	}
+	out.outputid = STMFBIO_OUTPUTID_MAIN;
+	if (ioctl(fb, STMFBIO_GET_OUTPUT_CONFIG, &out) < 0)
+	{
+		lt_debug_c("%s: STMFBIO_GET_OUTPUT_CONFIG (%m)\n", __func__);
+		goto out;
+	}
+	out.caps = STMFBIO_OUTPUT_CAPS_HDMI_CONFIG;
+	out.activate = STMFBIO_ACTIVATE_IMMEDIATE;
+	out.analogue_config = 0;
+	if (enable)
+		out.hdmi_config &= ~STMFBIO_OUTPUT_HDMI_DISABLED;
+	else
+		out.hdmi_config |= STMFBIO_OUTPUT_HDMI_DISABLED;
+
+	ret = ioctl(fb, STMFBIO_SET_OUTPUT_CONFIG, &out);
+	if (ret < 0)
+		_lt_debug(TRIPLE_DEBUG_VIDEO, NULL, "%s: STMFBIO_SET_OUTPUT_CONFIG (%m)\n", __func__);
+out:
+	close(fb);
+	return ret;
+}
+
 
 cVideo::cVideo(int, void *, void *)
 {
@@ -232,9 +267,11 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", video_system, VIDEO_STD_MAX);
 		return -1;
 	}
-	if (proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system])) < 0)
-		return -1;
-	return 0;
+	hdmi_out(false);
+	int ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
+	hdmi_out(true);
+
+	return ret;
 }
 
 int cVideo::getPlayState(void)

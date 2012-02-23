@@ -194,11 +194,14 @@ int cVideo::setAspectRatio(int aspect, int mode)
 
 int cVideo::getAspectRatio(void)
 {
-	int ratio = 0; /* proc: 0 = 4:3, 1 = 16:9 */
-	ratio = proc_get_hex("/proc/stb/vmpeg/0/aspect");
-	if (ratio >= 0)
-		return ratio * 2 + 1; /* return: 1 = 4:3, 3 = 16:9 */
-	return ratio;
+	video_size_t s;
+	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
+	{
+		lt_info("%s: VIDEO_GET_SIZE %m\n", __func__);
+		return -1;
+	}
+	lt_debug("%s: %d\n", __func__, s.aspect_ratio);
+	return s.aspect_ratio * 2 + 1;
 }
 
 int cVideo::setCroppingMode(int /*vidDispMode_t format*/)

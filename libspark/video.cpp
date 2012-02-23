@@ -284,22 +284,22 @@ int cVideo::getPlayState(void)
 
 void cVideo::SetVideoMode(analog_mode_t mode)
 {
-	lt_debug("%s(%d)\n", __FUNCTION__, mode);
-#if 0
+	lt_debug("%s(%d)\n", __func__, mode);
+	const char *m;
 	switch(mode)
 	{
 		case ANALOG_SD_YPRPB_SCART:
-			outputformat = VID_OUTFMT_YBR_SVIDEO;
+			m = "yuv";
 			break;
 		case ANALOG_SD_RGB_SCART:
-			outputformat = VID_OUTFMT_RGBC_SVIDEO;
+			m = "rgb";
 			break;
 		default:
-			lt_info("%s unknown mode %d\n", __FUNCTION__, mode);
-			return;
+			lt_info("%s unknown mode %d\n", __func__, mode);
+			m = "rgb";
+			break; /* default to rgb */
 	}
-	fop(ioctl, MPEG_VID_SET_OUTFMT, outputformat);
-#endif
+	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
 void cVideo::ShowPicture(const char * fname)

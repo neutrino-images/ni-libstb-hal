@@ -389,17 +389,14 @@ void cVideo::StopPicture()
 
 void cVideo::Standby(unsigned int bOn)
 {
-#if 0
-	lt_debug("%s(%d)\n", __FUNCTION__, bOn);
+	lt_debug("%s(%d)\n", __func__, bOn);
 	if (bOn)
 	{
-		setBlank(1);
-		fop(ioctl, MPEG_VID_SET_OUTFMT, VID_OUTFMT_DISABLE_DACS);
-	} else
-		fop(ioctl, MPEG_VID_SET_OUTFMT, outputformat);
-	routeVideo(bOn);
-	video_standby = bOn;
-#endif
+		Stop(1);
+		hdmi_out(false);
+	}
+	else
+		hdmi_out(true);
 }
 
 int cVideo::getBlank(void)

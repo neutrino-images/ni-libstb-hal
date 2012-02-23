@@ -485,52 +485,6 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 	return 0;
 }
 
-void cVideo::routeVideo(int standby)
-{
-#if 0
-	lt_debug("%s(%d)\n", __FUNCTION__, standby);
-
-	int avsfd = open("/dev/stb/tdsystem", O_RDONLY);
-	if (avsfd < 0)
-	{
-		perror("open tdsystem");
-		return;
-	}
-
-	/* in standby, we always route VCR scart to the TV. Once there is a UI
-	   to configure this, we can think more about this... */
-	if (standby)
-	{
-		lt_info("%s set fastblank and pin8 to follow VCR SCART, route VCR to TV\n", __FUNCTION__);
-		if (ioctl(avsfd, IOC_AVS_FASTBLANK_SET, (unsigned char)3) < 0)
-			perror("IOC_AVS_FASTBLANK_SET, 3");
-		/* TODO: should probably depend on aspect ratio setting */
-		if (ioctl(avsfd, IOC_AVS_SCART_PIN8_FOLLOW_VCR) < 0)
-			perror("IOC_AVS_SCART_PIN8_FOLLOW_VCR");
-		if (ioctl(avsfd, IOC_AVS_ROUTE_VCR2TV) < 0)
-			perror("IOC_AVS_ROUTE_VCR2TV");
-	} else {
-		unsigned char fblk = 1;
-		lt_info("%s set fastblank=%d pin8=%dV, route encoder to TV\n", __FUNCTION__, fblk, scartvoltage);
-		if (ioctl(avsfd, IOC_AVS_FASTBLANK_SET, fblk) < 0)
-			perror("IOC_AVS_FASTBLANK_SET, fblk");
-		if (!noscart && ioctl(avsfd, IOC_AVS_SCART_PIN8_SET, scartvoltage) < 0)
-			perror("IOC_AVS_SCART_PIN8_SET");
-		if (ioctl(avsfd, IOC_AVS_ROUTE_ENC2TV) < 0)
-			perror("IOC_AVS_ROUTE_ENC2TV");
-	}
-	close(avsfd);
-#endif
-}
-
-void cVideo::FastForwardMode(int mode)
-{
-#if 0
-	lt_debug("%s\n", __FUNCTION__);
-	fop(ioctl, MPEG_VID_FASTFORWARD, mode);
-#endif
-}
-
 int64_t cVideo::GetPTS(void)
 {
 	int64_t pts = 0;

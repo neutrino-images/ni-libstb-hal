@@ -291,6 +291,11 @@ int cVideo::getPlayState(void)
 void cVideo::SetVideoMode(analog_mode_t mode)
 {
 	lt_debug("%s(%d)\n", __func__, mode);
+	if (!(mode & ANALOG_SCART_MASK))
+	{
+		lt_debug("%s: non-SCART mode ignored\n", __func__);
+		return;
+	}
 	const char *m;
 	switch(mode)
 	{

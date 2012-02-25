@@ -276,9 +276,18 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
 		return -1;
 	}
+	bool stopped = false;
+	if (playstate == VIDEO_PLAYING)
+	{
+		lt_info("%s: playstate == VIDEO_PLAYING, stopping video\n", __func__);
+		Stop();
+		stopped = true;
+	}
 	hdmi_out(false);
 	int ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
 	hdmi_out(true);
+	if (stopped)
+		Start();
 
 	return ret;
 }

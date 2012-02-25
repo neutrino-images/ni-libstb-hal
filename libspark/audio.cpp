@@ -136,18 +136,8 @@ bool cAudio::Pause(bool /*Pcm*/)
 
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
-	lt_debug("%s %d\n", __FUNCTION__, Mode);
-#if 0
-	switch (Mode)
-	{
-		case 0:
-			ioctl(fd, MPEG_AUD_SYNC_OFF);
-			break;
-		default:
-			ioctl(fd, MPEG_AUD_SYNC_ON);
-			break;
-	}
-#endif
+	lt_debug("%s %d\n", __func__, Mode);
+	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 };
 
 //AUDIO_ENCODING_AC3

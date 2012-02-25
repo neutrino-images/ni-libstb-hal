@@ -35,8 +35,9 @@
 #define VIDEO_DEVICE "/dev/dvb/adapter0/video0"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
+#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
+#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_VIDEO, NULL, args)
 
 #define fop(cmd, args...) ({				\
 	int _r;						\
@@ -52,6 +53,8 @@
 
 cVideo * videoDecoder = NULL;
 int system_rev = 0;
+
+static bool hdmi_enabled = true;
 
 #define VIDEO_STREAMTYPE_MPEG2 0
 #define VIDEO_STREAMTYPE_MPEG4_H264 1
@@ -102,6 +105,7 @@ static int hdmi_out(bool enable)
 {
 	struct stmfbio_output_configuration out;
 	int ret = -1;
+	lt_info_c("%s(%d)\n", __func__, enable);
 	int fb = open("/dev/fb0", O_RDWR);
 	if (fb < 0)
 	{
@@ -114,6 +118,7 @@ static int hdmi_out(bool enable)
 		lt_debug_c("%s: STMFBIO_GET_OUTPUT_CONFIG (%m)\n", __func__);
 		goto out;
 	}
+	hdmi_enabled = enable;
 	out.caps = STMFBIO_OUTPUT_CAPS_HDMI_CONFIG;
 	out.activate = STMFBIO_ACTIVATE_IMMEDIATE;
 	out.analogue_config = 0;
@@ -145,8 +150,6 @@ cVideo::cVideo(int, void *, void *)
 
 cVideo::~cVideo(void)
 {
-	/* disable DACs and SCART voltage */
-	Standby(true);
 	closeDevice();
 }
 
@@ -413,10 +416,18 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		Stop(1);
+		closeDevice();
 		hdmi_out(false);
 	}
 	else
-		hdmi_out(true);
+	{
+		/* only enable HDMI output when coming from standby, not on
+		 * start. I have no idea why, but enabling it on startup leads
+		 * to strange locking problems of the framebuffer driver :-( */
+		if (!hdmi_enabled)
+			hdmi_out(true);
+		openDevice();
+	}
 }
 
 int cVideo::getBlank(void)

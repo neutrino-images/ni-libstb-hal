@@ -267,7 +267,7 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 
 	if (video_system > VIDEO_STD_MAX)
 	{
-		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", video_system, VIDEO_STD_MAX);
+		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
 		return -1;
 	}
 	hdmi_out(false);

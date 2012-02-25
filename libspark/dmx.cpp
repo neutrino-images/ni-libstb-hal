@@ -423,7 +423,7 @@ bool cDemux::pesFilter(const unsigned short pid)
 		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
 		break;
 	default:
-		lt_info("%s:%d invalid dmx_type %d!\n", dmx_type);
+		lt_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);
 		return false;
 	}
 	return (ioctl(fd, DMX_SET_PES_FILTER, &p_flt) >= 0);

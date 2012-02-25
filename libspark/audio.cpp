@@ -75,6 +75,9 @@ int cAudio::do_mute(bool enable, bool remember)
 	{
 		f = open("/proc/stb/avs/0/volume", O_RDWR);
 		read(f, str, 4);
+		close(f);
+		str[3] = '\0';
+		f = open("/proc/stb/avs/0/volume", O_RDWR);
 		write(f, str, strlen(str));
 		close(f);
 	}

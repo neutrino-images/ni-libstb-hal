@@ -57,6 +57,7 @@ cVideo * videoDecoder = NULL;
 int system_rev = 0;
 
 static bool hdmi_enabled = true;
+static bool stillpicture = false;
 
 #define VIDEO_STREAMTYPE_MPEG2 0
 #define VIDEO_STREAMTYPE_MPEG4_H264 1
@@ -260,6 +261,11 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 int cVideo::Stop(bool blank)
 {
 	lt_debug("%s(%d)\n", __FUNCTION__, blank);
+	if (stillpicture)
+	{
+		lt_debug("%s: stillpicture == true\n", __func__);
+		return -1;
+	}
 	playstate = blank ? VIDEO_STOPPED : VIDEO_FREEZED;
 	return fop(ioctl, VIDEO_STOP, blank ? 1 : 0);
 }
@@ -349,6 +355,12 @@ void cVideo::ShowPicture(const char * fname)
 	char *p;
 	int mfd;
 	struct stat st, st2;
+	if (video_standby)
+	{
+		/* does not work and the driver does not seem to like it */
+		lt_info("%s: video_standby == true\n", __func__);
+		return;
+	}
 	strcpy(destname, "/var/cache");
 	if (stat(fname, &st2))
 	{
@@ -385,11 +397,13 @@ void cVideo::ShowPicture(const char * fname)
 	}
 	fstat(mfd, &st);
 
-	Stop(1);
 	closeDevice();
 	openDevice();
+
 	if (fd >= 0)
 	{
+		stillpicture = true;
+
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
 			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
 		bool seq_end_avail = false;
@@ -425,10 +439,8 @@ void cVideo::ShowPicture(const char * fname)
 
 void cVideo::StopPicture()
 {
-#if 0
-	lt_debug("%s\n", __FUNCTION__);
-	fop(ioctl, MPEG_VID_SELECT_SOURCE, VID_SOURCE_DEMUX);
-#endif
+	lt_debug("%s\n", __func__);
+	stillpicture = false;
 }
 
 void cVideo::Standby(unsigned int bOn)
@@ -449,6 +461,7 @@ void cVideo::Standby(unsigned int bOn)
 			hdmi_out(true);
 		openDevice();
 	}
+	video_standby = bOn;
 }
 
 int cVideo::getBlank(void)

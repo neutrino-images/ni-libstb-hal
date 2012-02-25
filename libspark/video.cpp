@@ -519,10 +519,13 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)
 {
-	rate = proc_get_hex("/proc/stb/vmpeg/0/framerate");
+	video_size_t s;
+	ioctl(fd, VIDEO_GET_SIZE, &s);
+	ioctl(fd, VIDEO_GET_FRAME_RATE, &rate);
 	rate /= 1000;
-	width = proc_get_hex("/proc/stb/vmpeg/0/xres");
-	height = proc_get_hex("/proc/stb/vmpeg/0/yres");
+	height = s.h;
+	width = s.w;
+	lt_debug("%s: rate: %d, width: %d height: %d\n", __func__, rate, width, height);
 }
 
 void cVideo::SetSyncMode(AVSYNC_TYPE Mode)

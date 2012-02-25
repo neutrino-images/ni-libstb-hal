@@ -140,6 +140,7 @@ cVideo::cVideo(int, void *, void *)
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
 	scartvoltage = -1;
 	video_standby = 0;
+	fd = -1;
 }
 
 cVideo::~cVideo(void)
@@ -151,6 +152,10 @@ cVideo::~cVideo(void)
 
 void cVideo::openDevice(void)
 {
+	lt_debug("%s\n", __func__);
+	/* todo: this fd checking is racy, should be protected by a lock */
+	if (fd != -1) /* already open */
+		return;
 	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
 		lt_info("%s cannot open %s: %m\n", __FUNCTION__, VIDEO_DEVICE);
 	fcntl(fd, F_SETFD, FD_CLOEXEC);
@@ -159,6 +164,7 @@ void cVideo::openDevice(void)
 
 void cVideo::closeDevice(void)
 {
+	lt_debug("%s\n", __func__);
 	if (fd >= 0)
 		close(fd);
 	fd = -1;

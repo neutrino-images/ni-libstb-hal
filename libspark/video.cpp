@@ -491,7 +491,7 @@ void cVideo::VideoParamWatchdog(void)
 
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 {
-	char buffer[16];
+	char buffer[64];
 	int _x, _y, _w, _h;
 	/* the target "coordinates" seem to be in a PAL sized plane
 	 * TODO: check this in the driver sources */
@@ -513,14 +513,8 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 		_h = h * yres / osd_h;
 	}
 	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
-	sprintf(buffer, "%x", _x);
-	proc_put("/proc/stb/vmpeg/0/dst_left", buffer, strlen(buffer));
-	sprintf(buffer, "%x", _y);
-	proc_put("/proc/stb/vmpeg/0/dst_top", buffer, strlen(buffer));
-	sprintf(buffer, "%x", _w);
-	proc_put("/proc/stb/vmpeg/0/dst_width", buffer, strlen(buffer));
-	sprintf(buffer, "%x", _h);
-	proc_put("/proc/stb/vmpeg/0/dst_height", buffer, strlen(buffer));
+	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);
+	proc_put("/proc/stb/vmpeg/0/dst_all", buffer, strlen(buffer));
 }
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)

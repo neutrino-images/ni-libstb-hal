@@ -183,6 +183,8 @@ retry:
 void cVideo::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
+	/* looks like sometimes close is unhappy about non-empty buffers */
+	Start();
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -448,7 +450,6 @@ void cVideo::Standby(unsigned int bOn)
 	lt_debug("%s(%d)\n", __func__, bOn);
 	if (bOn)
 	{
-		Stop(1);
 		closeDevice();
 		hdmi_out(false);
 	}
@@ -458,7 +459,12 @@ void cVideo::Standby(unsigned int bOn)
 		 * start. I have no idea why, but enabling it on startup leads
 		 * to strange locking problems of the framebuffer driver :-( */
 		if (!hdmi_enabled)
+		{
 			hdmi_out(true);
+			/* make sure the driver has time to settle.
+			 * again - lame, but makes it work... */
+			sleep(1);
+		}
 		openDevice();
 	}
 	video_standby = bOn;

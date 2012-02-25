@@ -17,6 +17,7 @@ static Context_t *player;
 
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
+static bool decoders_closed = false;
 
 static const char * FILENAME = "playback_libeplayer3.cpp";
 
@@ -30,6 +31,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 
 	audioDecoder->closeDevice();
 	videoDecoder->closeDevice();
+	decoders_closed = true;
 
 	printf("%s:%s - PlayMode=%s\n", FILENAME, __FUNCTION__, aPLAYMODE[PlayMode]);
 	
@@ -61,9 +63,11 @@ void cPlayback::Close(void)
 
 //Dagobert: movieplayer does not call stop, it calls close ;)
 	Stop();
-	audioDecoder->openDevice();
-	videoDecoder->openDevice();
-
+	if (decoders_closed)
+	{
+		audioDecoder->openDevice();
+		videoDecoder->openDevice();
+	}
 }
 
 //Used by Fileplay

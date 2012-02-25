@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
+#include <errno.h>
 
 #include <cstring>
 #include <cstdio>
@@ -156,13 +157,25 @@ cVideo::~cVideo(void)
 
 void cVideo::openDevice(void)
 {
+	int n = 0;
 	lt_debug("%s\n", __func__);
 	/* todo: this fd checking is racy, should be protected by a lock */
 	if (fd != -1) /* already open */
 		return;
+retry:
 	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
-		lt_info("%s cannot open %s: %m\n", __FUNCTION__, VIDEO_DEVICE);
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
+	{
+		if (errno == EBUSY)
+		{
+			/* sometimes we get busy quickly after close() */
+			usleep(50000);
+			if (++n < 10)
+				goto retry;
+		}
+		lt_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
+	}
+	else
+		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	playstate = VIDEO_STOPPED;
 }
 

@@ -31,15 +31,16 @@
 
 static short debug_level = 10;
 
+static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG
 #define playback_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_printf(level, fmt, x...)
 #endif
 
 #ifndef PLAYBACK_SILENT
-#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_err(fmt, x...)
 #endif

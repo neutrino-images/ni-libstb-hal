@@ -53,16 +53,17 @@
 
 #ifdef H264_DEBUG
 
+static const char *FILENAME = "h264.c";
 static short debug_level = 0;
 
 #define h264_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define h264_printf(level, fmt, x...)
 #endif
 
 #ifndef H264_SILENT
-#define h264_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define h264_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define h264_err(fmt, x...)
 #endif

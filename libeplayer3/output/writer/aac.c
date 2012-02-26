@@ -57,15 +57,16 @@
 #ifdef AAC_DEBUG
 
 static short debug_level = 0;
+static const char *FILENAME = "aac.c";
 
 #define aac_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define aac_printf(level, fmt, x...)
 #endif
 
 #ifndef AAC_SILENT
-#define aac_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define aac_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define aac_err(fmt, x...)
 #endif

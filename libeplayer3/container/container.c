@@ -42,7 +42,7 @@ if (debug_level >= level) printf(x); } while (0)
 #endif
 
 
-static const char FILENAME[] = __FILE__;
+static const char FILENAME[] = "container.c";
 
 static void printContainerCapabilities() {
     int i, j;

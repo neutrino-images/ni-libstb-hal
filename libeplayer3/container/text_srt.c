@@ -50,13 +50,13 @@
 static short debug_level = 10;
 
 #define srt_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define srt_printf(level, fmt, x...)
 #endif
 
 #ifndef SRT_SILENT
-#define srt_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define srt_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define srt_err(fmt, x...)
 #endif
@@ -68,7 +68,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #define TRACKWRAP 20
 #define MAXLINELENGTH 80
 
-static const char FILENAME[] = __FILE__;
+static const char FILENAME[] = "text_srt.c";
 
 /* ***************************** */
 /* Types                         */

@@ -54,7 +54,7 @@ if (debug_level >= level) printf(x); } while (0)
 #define cERR_AUDIO_MGR_NO_ERROR        0
 #define cERR_AUDIO_MGR_ERROR          -1
 
-static const char FILENAME[] = __FILE__;
+static const char FILENAME[] = "audio.c";
 
 /* ***************************** */
 /* Types                         */

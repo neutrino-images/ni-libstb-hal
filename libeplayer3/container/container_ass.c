@@ -55,16 +55,17 @@
 
 #ifdef ASS_DEBUG
 
+static const char *FILENAME = "container_ass.c";
 static short debug_level = 10;
 
 #define ass_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ass_printf(level, fmt, x...)
 #endif
 
 #ifndef ASS_SILENT
-#define ass_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define ass_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ass_err(fmt, x...)
 #endif

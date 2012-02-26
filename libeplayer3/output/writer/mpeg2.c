@@ -55,15 +55,16 @@
 #ifdef MPEG2_DEBUG
 
 static short debug_level = 0;
+static const char *FILENAME = "mpeg2.c";
 
 #define mpeg2_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define mpeg2_printf(level, fmt, x...)
 #endif
 
 #ifndef MPEG2_SILENT
-#define mpeg2_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define mpeg2_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define mpeg2_err(fmt, x...)
 #endif

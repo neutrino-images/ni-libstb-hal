@@ -372,7 +372,10 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 		break;
 //		return -1;
 	}
-	if (timeout == 0)
+	/* the negmask == NULL is a hack: the users of negmask are PMT-update
+	 * and sectionsd EIT-Version change. And they really want no timeout
+	 * if timeout == 0 instead of "default timeout" */
+	if (timeout == 0 && negmask == NULL)
 		s_flt.timeout = to;
 
 	lt_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,

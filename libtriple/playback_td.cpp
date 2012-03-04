@@ -103,7 +103,8 @@ void cPlayback::Close(void)
 	if (pesbuf)
 		free(pesbuf);
 	pesbuf = NULL;
-	//Stop();
+
+	audioDecoder->do_mute(audioDecoder->Muted, false);
 }
 
 bool cPlayback::Start(char *filename, unsigned short vp, int vtype, unsigned short ap, int _ac3, unsigned int)
@@ -407,6 +408,8 @@ bool cPlayback::SetSpeed(int speed)
 		audioDecoder->Start();
 		videoDecoder->Start();
 		playstate = STATE_PLAY;
+		/* cPlayback is a friend of cAudio and can use private methods */
+		audioDecoder->do_mute(audioDecoder->Muted, false);
 	}
 	if (playback_speed == 1 && speed > 1)
 	{

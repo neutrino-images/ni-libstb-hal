@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstdlib>
 
 #include "pwrmngr.h"
 #include "lt_debug.h"
@@ -9,8 +10,10 @@
 #include <sys/types.h>
 
 #include <avs/avs_inf.h>
+#include <tdpanel/lcdstuff.h>
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_PWRMNGR, this, args)
+#define lt_info(args...) _lt_info(TRIPLE_DEBUG_PWRMNGR, this, args)
 void cCpuFreqManager::Up(void) { lt_debug("%s\n", __FUNCTION__); }
 void cCpuFreqManager::Down(void) { lt_debug("%s\n", __FUNCTION__); }
 void cCpuFreqManager::Reset(void) { lt_debug("%s\n", __FUNCTION__); }
@@ -55,6 +58,16 @@ bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 	{
 		ioctl(fd, IOC_AVS_SET_VOLUME, 31); /* mute AVS to avoid ugly noise */
 		ioctl(fd, IOC_AVS_STANDBY_ENTER);
+		if (getenv("TRIPLE_LCDBACKLIGHT"))
+		{
+			lt_info("%s: TRIPLE_LCDBACKLIGHT is set: keeping LCD backlight on\n", __func__);
+			close(fd);
+			fd = open("/dev/stb/tdlcd", O_RDONLY);
+			if (fd < 0)
+				lt_info("%s: open tdlcd error: %m\n", __func__);
+			else
+				ioctl(fd, IOC_LCD_BACKLIGHT_ON);
+		}
 	}
 	else
 	{

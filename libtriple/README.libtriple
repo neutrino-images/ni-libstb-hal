@@ -8,7 +8,10 @@ environment variables, which are described here:
 TRIPLE_NOSCART=1 - makes neutrino *not* do any voltage switching on
 	SCART pin 8, probably not useful for anyone but me
 
-TRIPLE_DEBUG=... - controls various debugging levels in libtriple
+TRIPLE_LCDBACKLIGHT=1 - makes the LCD backlight stay on in standby,
+			may disturb others
+
+HAL_DEBUG=... - controls various debugging levels in libtriple
 	valid values for the different component:
 		audio   0x01
 		video   0x02

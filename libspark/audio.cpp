@@ -111,6 +111,12 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
+	/* compensate for different decoding volume of mpeg and ac3 streams
+	 * TODO: check if this is correct for all channels
+	 *       and if we need to do something with DTS?  */
+	if (StreamType == AUDIO_FMT_MPEG)
+		v = map_volume(volume * 30 / 53);
+
 	char str[4];
 	sprintf(str, "%d", v);
 
@@ -155,6 +161,7 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
 	int bypass = AUDIO_STREAMTYPE_MPEG;
+	bool update_volume = (StreamType != type);
 	lt_debug("%s %d\n", __FUNCTION__, type);
 	StreamType = type;
 
@@ -175,6 +182,8 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 	// But as we implemented the behavior to bypass (cause of e2) this is correct here
 	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
 		lt_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
+	if (update_volume)
+		setVolume(volume, volume);
 };
 
 int cAudio::setChannel(int channel)

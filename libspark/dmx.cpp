@@ -394,8 +394,12 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 
 bool cDemux::pesFilter(const unsigned short pid)
 {
+	/* allow PID 0 for web streaming e.g.
+	 * this check originally is from tuxbox cvs but I'm not sure
+	 * what it is good for...
 	if (pid <= 0x0001 && dmx_type != DMX_PCR_ONLY_CHANNEL)
 		return false;
+	 */
 	if ((pid >= 0x0002 && pid <= 0x000f) || pid >= 0x1fff)
 		return false;
 

@@ -27,7 +27,11 @@ void init_td_api()
 	{
 		cCpuFreqManager f;
 		f.SetCpuFreq(0);	/* CPUFREQ == 0 is the trigger for leaving standby */
-		start_input_thread();
+		/* hack: if lircd pidfile is present, don't start input thread */
+		if (access("/var/run/lirc/lircd.pid", R_OK))
+			start_input_thread();
+		else
+			lt_info("%s: lircd pidfile present, not starting input thread\n", __func__);
 	}
 	initialized = true;
 	lt_info("%s end\n", __FUNCTION__);

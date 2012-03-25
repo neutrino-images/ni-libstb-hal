@@ -169,15 +169,8 @@ static void *input_thread(void *data)
 		return NULL;
 	}
 
+	memset(&u, 0, sizeof(u));
 	fcntl(uinput, F_SETFD, FD_CLOEXEC);
-	ioctl(uinput, UI_SET_EVBIT, EV_KEY);
-	/* do not use kernel repeat EV_REP since neutrino will be confused by the
-	 * generated SYN_REPORT events...
-	ioctl(uinput, UI_SET_EVBIT, EV_REP);
-	 */
-	/* register keys */
-	for (i = 0; key_list[i] != -1; i++)
-		ioctl(uinput, UI_SET_KEYBIT, key_list[i]);
 
 	/* configure the device */
 	memset(&ud, 0, sizeof(ud));
@@ -187,6 +180,11 @@ static void *input_thread(void *data)
 	ud.id.product = 0x5678;
 	ud.id.bustype = BUS_I2C; /* ?? */
 	write(uinput, &ud, sizeof(ud));
+	ioctl(uinput, UI_SET_EVBIT, EV_KEY);
+	ioctl(uinput, UI_SET_EVBIT, EV_REP);
+	/* register keys */
+	for (i = 0; key_list[i] != -1; i++)
+		ioctl(uinput, UI_SET_KEYBIT, key_list[i]);
 
 	if (ioctl(uinput, UI_DEV_CREATE))
 	{
@@ -318,15 +316,17 @@ static void *input_thread(void *data)
 				case 0xf057: u.code = KEY_EJECTCD;	break;
 				case 0xf056: u.code = KEY_RECORD;	break;
 			/*	case 0xf05c: u.code = KEY_NEXT;		break; */
+				/* front panel left / right */
+				case 0xf506: u.code = KEY_LEFT;		break;
+				case 0xf507: u.code = KEY_RIGHT;	break;
 				default:
 					continue;
 			}
 			switch (e.type)
 			{
-				case 1: if (u.value < 2)	/* 1 = key press */
-						u.value++;	/* 2 = key repeat */
-					break;
+				case 1: u.value = 1; break;	/* 1 = key press */
 				case 2: u.value = 0; break;	/* 0 = key release */
+								/* 2 = key repeat (not used) */
 				default:
 					continue;
 			}

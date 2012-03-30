@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include <cstring>
 #include <cstdio>
@@ -389,8 +390,13 @@ void cVideo::ShowPicture(const char * fname)
 	char *p;
 	void *data;
 	int mfd;
-	struct stat st;
+	struct stat st, st2;
 	strcpy(destname, "/var/cache");
+	if (stat(fname, &st2))
+	{
+		lt_info("%s: could not stat %s (%m)\n", __func__, fname);
+		return;
+	}
 	mkdir(destname, 0755);
 	/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
 	   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
@@ -401,14 +407,17 @@ void cVideo::ShowPicture(const char * fname)
 	while ((p = strchr(p, '/')) != NULL)
 		*p = '.';
 	strcat(destname, ".m2v");
-	/* ...then check if it exists already...
-	   TODO: check if the cache file is older than the jpeg file... */
-	if (access(destname, R_OK))
+	/* ...then check if it exists already... */
+	if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
 	{
-		/* it does not exist, so call ffmpeg to create it... */
+		struct utimbuf u;
+		u.actime = time(NULL);
+		u.modtime = st2.st_mtime;
+		/* it does not exist or has a different date, so call ffmpeg... */
 		sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 704x576 '%s' </dev/null",
 							fname, destname);
 		system(cmd); /* TODO: use libavcodec to directly convert it */
+		utime(destname, &u);
 	}
 	/* the mutex is a workaround: setBlank is apparently called from
 	   a differnt thread and takes slightly longer, so that the decoder

@@ -288,9 +288,8 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		printf("cPlayback::%s !!!!EOF!!!! < -1\n", __func__);
 		position = duration + 1000;
 		// duration = 0;
-
 		// this is stupid
-		return false;
+		return true;
 	}
 
 	unsigned long long int vpts = 0;

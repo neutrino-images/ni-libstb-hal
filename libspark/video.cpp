@@ -221,6 +221,12 @@ int cVideo::setAspectRatio(int aspect, int mode)
 int cVideo::getAspectRatio(void)
 {
 	video_size_t s;
+	if (fd == -1)
+	{
+		/* in movieplayer mode, fd is not opened -> fall back to procfs */
+		int n = proc_get_hex("/proc/stb/vmpeg/0/aspect");
+		return n * 2 + 1;
+	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
 	{
 		lt_info("%s: VIDEO_GET_SIZE %m\n", __func__);
@@ -526,6 +532,15 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 void cVideo::getPictureInfo(int &width, int &height, int &rate)
 {
 	video_size_t s;
+	if (fd == -1)
+	{
+		/* in movieplayer mode, fd is not opened -> fall back to procfs */
+		rate   = proc_get_hex("/proc/stb/vmpeg/0/framerate");
+		width  = proc_get_hex("/proc/stb/vmpeg/0/xres");
+		height = proc_get_hex("/proc/stb/vmpeg/0/yres");
+		rate /= 1000;
+		return;
+	}
 	ioctl(fd, VIDEO_GET_SIZE, &s);
 	ioctl(fd, VIDEO_GET_FRAME_RATE, &rate);
 	rate /= 1000;

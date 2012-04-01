@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include <cstring>
 #include <cstdio>
@@ -88,6 +89,8 @@ static int proc_get(const char *path, char *value, const int len)
 		return pfd;
 	ret = read(pfd, value, len);
 	value[len-1] = '\0'; /* make sure string is terminated */
+	while (ret > 0 && isspace(value[ret-1]))
+		value[--ret] = '\0';	/* remove trailing whitespace */
 	ret2 = close(pfd);
 	if (ret2 < 0)
 		return ret2;
@@ -286,6 +289,7 @@ int cVideo::setBlank(int)
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
+	char current[32];
 	static const char *modes[] = {
 		"pal",		// VIDEO_STD_NTSC
 		"pal",		// VIDEO_STD_SECAM
@@ -307,6 +311,13 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
 		return -1;
 	}
+	int ret = proc_get("/proc/stb/video/videomode", current, 32);
+	if (strcmp(current,  modes[video_system]) == 0)
+	{
+		lt_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
+		return 0;
+	}
+	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
 	bool stopped = false;
 	if (playstate == VIDEO_PLAYING)
 	{
@@ -315,7 +326,7 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		stopped = true;
 	}
 	hdmi_out(false);
-	int ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
+	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
 	hdmi_out(true);
 	if (stopped)
 		Start();

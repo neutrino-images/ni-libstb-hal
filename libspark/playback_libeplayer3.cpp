@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <audio_lib.h>
 #include <video_lib.h>
@@ -20,6 +21,10 @@ extern cVideo *videoDecoder;
 static bool decoders_closed = false;
 
 static const char * FILENAME = "playback_libeplayer3.cpp";
+static playmode_t pm;
+static std::string fn_ts;
+static std::string fn_xml;
+static off_t last_size;
 
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
@@ -34,6 +39,10 @@ bool cPlayback::Open(playmode_t PlayMode)
 	decoders_closed = true;
 
 	printf("%s:%s - PlayMode=%s\n", FILENAME, __FUNCTION__, aPLAYMODE[PlayMode]);
+	pm = PlayMode;
+	fn_ts = "";
+	fn_xml = "";
+	last_size = 0;
 	
 	player = (Context_t*) malloc(sizeof(Context_t));
 
@@ -166,6 +175,16 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 		
 	printf("%s:%s - return=%d\n", FILENAME, __FUNCTION__, ret);
 
+	fn_ts = std::string(filename);
+	if (fn_ts.rfind(".ts") == fn_ts.length() - 3)
+		fn_xml = fn_ts.substr(0, fn_ts.length() - 3) + ".xml";
+
+	if (pm == PLAYMODE_TS)
+	{
+		struct stat s;
+		if (!stat(filename, &s))
+			last_size = s.st_size;
+	}
 	return ret;
 }
 
@@ -281,7 +300,31 @@ bool cPlayback::GetSpeed(int &speed) const
 // in milliseconds
 bool cPlayback::GetPosition(int &position, int &duration)
 {
+	bool got_duration = false;
 	printf("%s:%s %d %d\n", FILENAME, __FUNCTION__, position, duration);
+
+	/* hack: if the file is growing (timeshift), then determine its length
+	 * by comparing the mtime with the mtime of the xml file */
+	if (pm == PLAYMODE_TS)
+	{
+		struct stat s;
+		if (!stat(fn_ts.c_str(), &s))
+		{
+			if (! playing || last_size != s.st_size)
+			{
+				last_size = s.st_size;
+				time_t curr_time = s.st_mtime;
+				if (!stat(fn_xml.c_str(), &s))
+				{
+					duration = (curr_time - s.st_mtime) * 1000;
+					if (! playing)
+						return true;
+					got_duration = true;
+				}
+			}
+		}
+	}
+
 	if(playing==false) return false;
 
 	if (player && player->playback && !player->playback->isPlaying) {
@@ -302,6 +345,9 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		/* len is in nanoseconds. we have 90 000 pts per second. */
 		position = vpts/90;
 	}
+
+	if (got_duration)
+		return true;
 
 	double length = 0;
 

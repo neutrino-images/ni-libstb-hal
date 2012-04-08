@@ -25,6 +25,7 @@ static playmode_t pm;
 static std::string fn_ts;
 static std::string fn_xml;
 static off_t last_size;
+static int init_jump;
 
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
@@ -34,15 +35,20 @@ bool cPlayback::Open(playmode_t PlayMode)
 		"PLAYMODE_FILE"
 	};
 
-	audioDecoder->closeDevice();
-	videoDecoder->closeDevice();
-	decoders_closed = true;
+	if (PlayMode != PLAYMODE_TS)
+	{
+		audioDecoder->closeDevice();
+		videoDecoder->closeDevice();
+		decoders_closed = true;
+	}
 
 	printf("%s:%s - PlayMode=%s\n", FILENAME, __FUNCTION__, aPLAYMODE[PlayMode]);
 	pm = PlayMode;
 	fn_ts = "";
 	fn_xml = "";
 	last_size = 0;
+	nPlaybackSpeed = 0;
+	init_jump = -1;
 	
 	player = (Context_t*) malloc(sizeof(Context_t));
 
@@ -76,6 +82,7 @@ void cPlayback::Close(void)
 	{
 		audioDecoder->openDevice();
 		videoDecoder->openDevice();
+		decoders_closed = false;
 	}
 }
 
@@ -88,6 +95,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n",
 		FILENAME, __FUNCTION__, filename, vpid, vtype, apid, ac3);
 
+	init_jump = -1;
 	//create playback path
 	mAudioStream=0;
 	char file[400] = {""};
@@ -145,7 +153,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 			}
 		}
 
-		if(player && player->output && player->playback) {
+		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
 			player->output->Command(player, OUTPUT_OPEN, NULL);
 			
 			if ( player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0 ) // playback.c uses "int = 0" for "true"
@@ -160,6 +168,8 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
  * with the exception of timeshift. but this should be handled
  * outside this lib or with another function!
  */
+      if (pm != PLAYMODE_TS)
+      {
         if ((ret) && (!isHTTP))
 	{
 	   //pause playback in case of timeshift
@@ -172,6 +182,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
   	      playing = true;
         } else
   	      playing = true;
+      }
 		
 	printf("%s:%s - return=%d\n", FILENAME, __FUNCTION__, ret);
 
@@ -184,6 +195,12 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 		struct stat s;
 		if (!stat(filename, &s))
 			last_size = s.st_size;
+		if (player && player->output && player->playback)
+		{
+			ret = true;
+			videoDecoder->Stop(false);
+			audioDecoder->Stop();
+		}
 	}
 	return ret;
 }
@@ -231,6 +248,19 @@ bool cPlayback::SetAPid(unsigned short pid, bool ac3)
 bool cPlayback::SetSpeed(int speed)
 {
 	printf("%s:%s playing %d speed %d\n", FILENAME, __FUNCTION__, playing, speed);
+
+	if (! decoders_closed)
+	{
+		audioDecoder->closeDevice();
+		videoDecoder->closeDevice();
+		decoders_closed = true;
+		usleep(500000);
+		if (player && player->output && player->playback) {
+			player->output->Command(player, OUTPUT_OPEN, NULL);
+			if (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0) // playback.c uses "int = 0" for "true"
+				playing = true;
+		}
+	}
 
 	if(playing==false) 
 	   return false;
@@ -281,6 +311,11 @@ bool cPlayback::SetSpeed(int speed)
 			result = player->playback->Command(player, PLAYBACK_CONTINUE, NULL);
 		}
 		
+		if (init_jump > -1)
+		{
+			SetPosition(init_jump);
+			init_jump = -1;
+		}
 		if (result != 0)
 		{
                         printf("returning false\n");
@@ -366,7 +401,17 @@ bool cPlayback::GetPosition(int &position, int &duration)
 bool cPlayback::SetPosition(int position, bool absolute)
 {
 	printf("%s:%s %d\n", FILENAME, __FUNCTION__,position);
-	if(playing==false) return false;
+	if (playing == false)
+	{
+		/* the calling sequence is:
+		 * Start()       - paused
+		 * SetPosition() - which fails if not running
+		 * SetSpeed()    - to start playing
+		 * so let's remember the initial jump position and later jump to it
+		 */
+		init_jump = position;
+		return false;
+	}
 	float pos = (position/1000.0);
 	if(player && player->playback)
 		player->playback->Command(player, PLAYBACK_SEEK, (void*)&pos);

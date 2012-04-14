@@ -303,7 +303,8 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		"1080p30",	// VIDEO_STD_1080P30
 		"1080p24",	// VIDEO_STD_1080P24
 		"1080p25",	// VIDEO_STD_1080P25
-		"1080p50"	// VIDEO_STD_1080P50
+		"720p50",	// VIDEO_STD_AUTO -> not implemented
+		"1080p50"	// VIDEO_STD_1080P50 -> SPARK only
 	};
 
 	if (video_system > VIDEO_STD_MAX)

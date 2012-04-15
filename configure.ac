@@ -24,5 +24,6 @@ common/Makefile
 libeplayer3/Makefile
 libtriple/Makefile
 libspark/Makefile
+tools/Makefile
 ])
 

@@ -1,6 +1,6 @@
 noinst_LIBRARIES = libstb-hal.a
 libstb_hal_a_SOURCES =
-SUBDIRS = common
+SUBDIRS = common tools
 bin_PROGRAMS = libstb-hal-test
 
 libstb_hal_a_LIBADD = \

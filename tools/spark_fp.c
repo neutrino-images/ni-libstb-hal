@@ -188,11 +188,8 @@ int main(int argc, char **argv)
 				aotom.u.led.on = LOG_ON;
 				aotom.u.led.led_nr = 0;
 				ioctl(fd, VFDSETLED, &aotom);
-				if (t < t2)
-				{
-					/* no valid wakeup time -> clear... */
-					t = 0;
-				}
+				if (t == 1)
+					t = 0; /* t = 1 is magic for "no time" -> clear... */
 				else
 				{
 					/* green LED on */
@@ -205,6 +202,8 @@ int main(int argc, char **argv)
 						perror("ioctl VFDGETTIME");
 						break;
 					}
+					if (t < t2 + 20)
+						diff = 20;
 					t += diff;
 				}
 				tmp = gmtime(&t2);

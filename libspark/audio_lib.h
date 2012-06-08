@@ -86,8 +86,8 @@ class cAudio
 		int StopClip();
 		void getAudioInfo(int &type, int &layer, int& freq, int &bitrate, int &mode);
 		void SetSRS(int iq_enable, int nmgr_enable, int iq_mode, int iq_level);
-		bool IsHdmiDDSupported() { return false; };
-		void SetHdmiDD(bool) { return; };
+		bool IsHdmiDDSupported() { return true; };
+		void SetHdmiDD(bool enable);
 		void SetSpdifDD(bool enable);
 		void ScheduleMute(bool On);
 		void EnableAnalogOut(bool enable);

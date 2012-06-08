@@ -380,9 +380,17 @@ void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int
 	lt_debug("%s\n", __FUNCTION__);
 };
 
+void cAudio::SetHdmiDD(bool enable)
+{
+	const char *opt[] = { "pcm", "spdif" };
+	lt_debug("%s %d\n", __func__, enable);
+	proc_put("/proc/stb/hdmi/audio_source", opt[enable], strlen(opt[enable]));
+}
+
 void cAudio::SetSpdifDD(bool enable)
 {
-	lt_debug("%s %d\n", __FUNCTION__, enable);
+	lt_debug("%s %d\n", __func__, enable);
+	setBypassMode(!enable);
 };
 
 void cAudio::ScheduleMute(bool On)
@@ -399,9 +407,7 @@ void cAudio::EnableAnalogOut(bool enable)
 #define AUDIO_BYPASS_OFF 1
 void cAudio::setBypassMode(bool disable)
 {
-	lt_debug("%s %d\n", __FUNCTION__, disable);
-	int mode = disable ? AUDIO_BYPASS_OFF : AUDIO_BYPASS_ON;
-	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, mode) < 0)
-		lt_info("%s AUDIO_SET_BYPASS_MODE %d: %m\n", __func__, mode);
-	return;
+	const char *opt[] = { "passthrough", "downmix" };
+	lt_debug("%s %d\n", __func__, disable);
+	proc_put("/proc/stb/audio/ac3", opt[disable], strlen(opt[disable]));
 }

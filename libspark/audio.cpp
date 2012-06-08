@@ -17,6 +17,19 @@
 
 cAudio * audioDecoder = NULL;
 
+static int proc_put(const char *path, const char *value, const int len)
+{
+	int ret, ret2;
+	int pfd = open(path, O_WRONLY);
+	if (pfd < 0)
+		return pfd;
+	ret = write(pfd, value, len);
+	ret2 = close(pfd);
+	if (ret2 < 0)
+		return ret2;
+	return ret;
+}
+
 cAudio::cAudio(void *, void *, void *)
 {
 	fd = -1;
@@ -66,20 +79,15 @@ int cAudio::do_mute(bool enable, bool remember)
 		Muted = enable;
 
 	sprintf(str, "%d", Muted);
-
-	int f = open("/proc/stb/audio/j1_mute", O_RDWR);
-	write(f, str, strlen(str));
-	close(f);
+	proc_put("/proc/stb/audio/j1_mute", str, strlen(str));
 
 	if (!enable)
 	{
-		f = open("/proc/stb/avs/0/volume", O_RDWR);
+		int f = open("/proc/stb/avs/0/volume", O_RDWR);
 		read(f, str, 4);
 		close(f);
 		str[3] = '\0';
-		f = open("/proc/stb/avs/0/volume", O_RDWR);
-		write(f, str, strlen(str));
-		close(f);
+		proc_put("/proc/stb/avs/0/volume", str, strlen(str));
 	}
 	return 0;
 }
@@ -120,9 +128,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 	char str[4];
 	sprintf(str, "%d", v);
 
-	int f = open("/proc/stb/avs/0/volume", O_RDWR);
-	write(f, str, strlen(str));
-	close(f);
+	proc_put("/proc/stb/avs/0/volume", str, strlen(str));
 	return 0;
 }
 

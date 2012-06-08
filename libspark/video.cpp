@@ -541,21 +541,48 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 	proc_put("/proc/stb/vmpeg/0/dst_all", buffer, strlen(buffer));
 }
 
+static inline int rate2csapi(int rate)
+{
+	switch (rate)
+	{
+		case 23976:
+			return 0;
+		case 24000:
+			return 1;
+		case 25000:
+			return 2;
+		case 29976:
+			return 3;
+		case 30000:
+			return 4;
+		case 50000:
+			return 5;
+		case 50940:
+			return 6;
+		case 60000:
+			return 7;
+		default:
+			break;
+	}
+	return -1;
+}
+
 void cVideo::getPictureInfo(int &width, int &height, int &rate)
 {
 	video_size_t s;
+	int r;
 	if (fd == -1)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
-		rate   = proc_get_hex("/proc/stb/vmpeg/0/framerate");
+		r      = proc_get_hex("/proc/stb/vmpeg/0/framerate");
 		width  = proc_get_hex("/proc/stb/vmpeg/0/xres");
 		height = proc_get_hex("/proc/stb/vmpeg/0/yres");
-		rate /= 1000;
+		rate   = rate2csapi(r);
 		return;
 	}
 	ioctl(fd, VIDEO_GET_SIZE, &s);
-	ioctl(fd, VIDEO_GET_FRAME_RATE, &rate);
-	rate /= 1000;
+	ioctl(fd, VIDEO_GET_FRAME_RATE, &r);
+	rate = rate2csapi(r);
 	height = s.h;
 	width = s.w;
 	lt_debug("%s: rate: %d, width: %d height: %d\n", __func__, rate, width, height);

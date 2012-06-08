@@ -561,28 +561,20 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	lt_debug("%s: rate: %d, width: %d height: %d\n", __func__, rate, width, height);
 }
 
-void cVideo::SetSyncMode(AVSYNC_TYPE Mode)
+void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 {
-	lt_debug("%s %d\n", __FUNCTION__, Mode);
+	lt_debug("%s %d\n", __func__, mode);
 	/*
 	 * { 0, LOCALE_OPTIONS_OFF },
 	 * { 1, LOCALE_OPTIONS_ON  },
 	 * { 2, LOCALE_AUDIOMENU_AVSYNC_AM }
 	 */
-#if 0
-	switch(Mode)
-	{
-		case 0:
-			ioctl(fd, MPEG_VID_SYNC_OFF);
-			break;
-		case 1:
-			ioctl(fd, MPEG_VID_SYNC_ON, VID_SYNC_VID);
-			break;
-		default:
-			ioctl(fd, MPEG_VID_SYNC_ON, VID_SYNC_AUD);
-			break;
-	}
-#endif
+	const char *apply[] = { "disapply", "apply" };
+	const char *clock[] = { "video", "audio" };
+	const char *a = apply[mode > 0]; /* mode == 1 or mode == 2 -> "apply" */
+	const char *c = clock[mode > 1];  /* mode == 2 -> "audio" */
+	proc_put("/proc/stb/stream/policy/AV_SYNC", a, strlen(a));
+	proc_put("/proc/stb/stream/policy/MASTER_CLOCK", c, strlen(c));
 };
 
 int cVideo::SetStreamType(VIDEO_FORMAT type)

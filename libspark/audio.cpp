@@ -282,7 +282,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 		if (tmp)
 			mixer_num = atoi(tmp);
 		lt_info("%s: mixer_num is %d -> device %08x\n",
-			__func__, (mixer_num >= 0) ? (1 << mixer_num) : 0);
+			__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
 	} else {
 		mixer_num = 0;

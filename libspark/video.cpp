@@ -146,12 +146,12 @@ cVideo::cVideo(int, void *, void *)
 {
 	lt_debug("%s\n", __FUNCTION__);
 
-	openDevice();
 	//croppingMode = VID_DISPMODE_NORM;
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
 	scartvoltage = -1;
 	video_standby = 0;
 	fd = -1;
+	openDevice();
 }
 
 cVideo::~cVideo(void)

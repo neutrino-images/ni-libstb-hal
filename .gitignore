@@ -12,6 +12,7 @@
 /libeplayer3/Makefile.in
 /libspark/Makefile.in
 /libtriple/Makefile.in
+/azbox/Makefile.in
 /ltmain.sh
 /missing
 /Makefile.in

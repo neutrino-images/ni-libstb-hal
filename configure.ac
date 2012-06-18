@@ -22,6 +22,7 @@ AC_OUTPUT([
 Makefile
 common/Makefile
 libeplayer3/Makefile
+azbox/Makefile
 libtriple/Makefile
 libspark/Makefile
 tools/Makefile

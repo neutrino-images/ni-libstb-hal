@@ -30,6 +30,17 @@ libstb_hal_a_LIBADD += \
 	libtriple/record_td.o \
 	libtriple/video_td.o
 endif
+if BOXTYPE_AZBOX
+SUBDIRS += azbox
+libstb_hal_a_LIBADD += \
+	azbox/audio.o \
+	azbox/dmx.o \
+	azbox/init.o \
+	azbox/playback.o \
+	azbox/pwrmngr.o \
+	azbox/record.o \
+	azbox/video.o
+endif
 if BOXTYPE_SPARK
 SUBDIRS += libspark libeplayer3
 libstb_hal_a_LIBADD += \

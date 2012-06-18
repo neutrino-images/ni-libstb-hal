@@ -4,6 +4,7 @@ SUBDIRS = common tools
 bin_PROGRAMS = libstb-hal-test
 
 libstb_hal_a_LIBADD = \
+	common/ca.o \
 	common/lt_debug.o
 
 libstb_hal_test_SOURCES = libtest.cpp
@@ -21,7 +22,6 @@ if BOXTYPE_TRIPLE
 SUBDIRS += libtriple
 libstb_hal_a_LIBADD += \
 	libtriple/audio_td.o \
-	libtriple/ca.o \
 	libtriple/dmx_td.o \
 	libtriple/init_td.o \
 	libtriple/lt_dfbinput.o \
@@ -34,7 +34,6 @@ if BOXTYPE_SPARK
 SUBDIRS += libspark libeplayer3
 libstb_hal_a_LIBADD += \
 	libspark/audio.o \
-	libspark/ca.o \
 	libspark/dmx.o \
 	libspark/init.o \
 	libspark/irmp.o \

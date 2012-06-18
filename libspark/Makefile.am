@@ -11,7 +11,6 @@ libspark_a_SOURCES = \
 	irmp.c \
 	lirmp_input.cpp \
 	dmx.cpp \
-	ca.cpp \
 	video.cpp \
 	audio.cpp \
 	init.cpp \

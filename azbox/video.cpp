@@ -89,8 +89,12 @@ static int proc_get(const char *path, char *value, const int len)
 		return pfd;
 	ret = read(pfd, value, len);
 	value[len-1] = '\0'; /* make sure string is terminated */
-	while (ret > 0 && isspace(value[ret-1]))
-		value[--ret] = '\0';	/* remove trailing whitespace */
+	if (ret >= 0)
+	{
+		while (ret > 0 && isspace(value[ret-1]))
+			ret--;		/* remove trailing whitespace */
+		value[ret] = '\0';	/* terminate, even if ret = 0 */
+	}
 	ret2 = close(pfd);
 	if (ret2 < 0)
 		return ret2;

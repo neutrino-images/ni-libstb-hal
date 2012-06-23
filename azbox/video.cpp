@@ -457,8 +457,9 @@ void cVideo::Standby(unsigned int bOn)
 
 int cVideo::getBlank(void)
 {
-	lt_debug("%s\n", __FUNCTION__);
-	return 0;
+	int ret = proc_get_hex("/proc/stb/vmpeg/0/xres");
+	lt_debug("%s => %d\n", __func__, !ret);
+	return !ret;
 }
 
 /* this function is regularly called, checks if video parameters

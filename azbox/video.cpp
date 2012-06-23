@@ -166,7 +166,8 @@ void cVideo::closeDevice(void)
 int cVideo::setAspectRatio(int aspect, int mode)
 {
 	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
-	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
+	/*                       { "panscan", "letterbox", "fullscreen", "14:9", "(unset)" } */
+	static const char *m[] = { "1",        "2",        "0",          "1",    "(unset)" };
 	int n;
 	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
 
@@ -183,8 +184,8 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	if (mode == -1)
 		return 0;
 
-	lt_debug("%s: /proc/stb/video/policy -> %s\n", __func__, m[mode]);
-	n = proc_put("/proc/stb/video/policy", m[mode], strlen(m[mode]));
+	lt_debug("%s: /proc/scalingmode -> %s\n", __func__, m[mode]);
+	n = proc_put("/proc/scalingmode", m[mode], strlen(m[mode]));
 	if (n < 0)
 		return 1;
 	return 0;

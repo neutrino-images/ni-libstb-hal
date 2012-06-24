@@ -260,11 +260,11 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
 	char current[32];
 	static const char *modes[] = {
-		"pal",		// VIDEO_STD_NTSC
-		"pal",		// VIDEO_STD_SECAM
-		"pal",		// VIDEO_STD_PAL
+		"480i",		// VIDEO_STD_NTSC
+		"576i",		// VIDEO_STD_SECAM
+		"576i",		// VIDEO_STD_PAL
 		"480p",		// VIDEO_STD_480P
-		"576p50",	// VIDEO_STD_576P
+		"576p",		// VIDEO_STD_576P
 		"720p60",	// VIDEO_STD_720P60
 		"1080i60",	// VIDEO_STD_1080I60
 		"720p50",	// VIDEO_STD_720P50

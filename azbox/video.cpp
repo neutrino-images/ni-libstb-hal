@@ -62,6 +62,9 @@ int system_rev = 0;
 
 static bool hdmi_enabled = true;
 static bool stillpicture = false;
+static unsigned char *blank_data;
+static ssize_t blank_size;
+static pthread_mutex_t stillp_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* prototype */
 static void show_iframe(int fd, unsigned char *iframe, size_t st_size);
 
@@ -81,12 +84,41 @@ cVideo::cVideo(int, void *, void *)
 	scartvoltage = -1;
 	video_standby = 0;
 	fd = -1;
+
+	const char *blankname = "/share/tuxbox/blank_576.mpg";
+	int blankfd;
+	struct stat st;
+
+	blank_data = NULL; /* initialize */
+	blank_size = 0;
+	blankfd = open(blankname, O_RDONLY);
+	if (blankfd < 0)
+		lt_info("%s cannot open %s: %m", __func__, blankname);
+	else
+	{
+		if (fstat(blankfd, &st) != -1 && st.st_size > 0)
+		{
+			blank_size = st.st_size;
+			blank_data = (unsigned char *)malloc(blank_size);
+			if (! blank_data)
+				lt_info("%s malloc failed (%m)\n", __func__);
+			else if (read(blankfd, blank_data, blank_size) != blank_size)
+			{
+				lt_info("%s short read (%m)\n", __func__);
+				free(blank_data); /* don't leak... */
+				blank_data = NULL;
+			}
+		}
+		close(blankfd);
+	}
 	openDevice();
 }
 
 cVideo::~cVideo(void)
 {
 	closeDevice();
+	if (blank_data)
+		free(blank_data);
 }
 
 void cVideo::openDevice(void)
@@ -207,13 +239,20 @@ int cVideo::Stop(bool blank)
 		lt_debug("%s: stillpicture == true\n", __func__);
 		return -1;
 	}
+	/* blank parameter seems to not work on VIDEO_STOP */
+	if (blank)
+		setBlank(1);
 	playstate = blank ? VIDEO_STOPPED : VIDEO_FREEZED;
 	return fop(ioctl, VIDEO_STOP, blank ? 1 : 0);
 }
 
 int cVideo::setBlank(int)
 {
-	return Stop(1);
+	pthread_mutex_lock(&stillp_mutex);
+	if (blank_data)
+		show_iframe(fd, blank_data, blank_size);
+	pthread_mutex_unlock(&stillp_mutex);
+	return 1;
 }
 
 int cVideo::SetVideoSystem(int video_system, bool remember)
@@ -341,6 +380,13 @@ void cVideo::ShowPicture(const char * fname)
 		system(cmd); /* TODO: use libavcodec to directly convert it */
 		utime(destname, &u);
 	}
+
+	/* the mutex is a workaround: setBlank is apparently called from
+	   a differnt thread and takes slightly longer, so that the decoder
+	   was blanked immediately after displaying the image, which is not
+	   what we want. the mutex ensures proper ordering. */
+	pthread_mutex_lock(&stillp_mutex);
+
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
@@ -362,6 +408,7 @@ void cVideo::ShowPicture(const char * fname)
 	free(iframe);
  out:
 	close(mfd);
+	pthread_mutex_unlock(&stillp_mutex);
 	return;
 }
 

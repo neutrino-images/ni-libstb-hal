@@ -62,6 +62,8 @@ int system_rev = 0;
 
 static bool hdmi_enabled = true;
 static bool stillpicture = false;
+/* prototype */
+static void show_iframe(int fd, unsigned char *iframe, size_t st_size);
 
 #define VIDEO_STREAMTYPE_MPEG2 0
 #define VIDEO_STREAMTYPE_MPEG4_H264 1
@@ -294,17 +296,21 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 void cVideo::ShowPicture(const char * fname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
-	static const unsigned char pes_header[] = { 0, 0, 1, 0xE0, 0, 0, 0x80, 0x80, 5, 0x21, 0, 1, 0, 1};
-	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 	char destname[512];
 	char cmd[512];
 	char *p;
 	int mfd;
+	unsigned char *iframe;
 	struct stat st, st2;
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */
 		lt_info("%s: video_standby == true\n", __func__);
+		return;
+	}
+	if (fd < 0)
+	{
+		lt_info("%s: decoder not opened?\n", __func__);
 		return;
 	}
 	strcpy(destname, "/var/cache");
@@ -343,52 +349,17 @@ void cVideo::ShowPicture(const char * fname)
 	}
 	fstat(mfd, &st);
 
-	closeDevice();
-	openDevice();
+	stillpicture = true;
 
-	if (fd >= 0)
+	iframe = (unsigned char *)malloc(st.st_size);
+	if (! iframe)
 	{
-		stillpicture = true;
-
-		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
-			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
-		bool seq_end_avail = false;
-		size_t pos=0;
-		int count = 7;
-		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
-		if (! iframe)
-		{
-			lt_info("%s: malloc failed (%m)\n", __func__);
-			goto out;
-		}
-		read(mfd, iframe, st.st_size);
-		ioctl(fd, VIDEO_SET_STREAMTYPE, VIDEO_FORMAT_MPEG2);
-		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
-		ioctl(fd, VIDEO_PLAY);
-		ioctl(fd, VIDEO_CONTINUE);
-		ioctl(fd, VIDEO_CLEAR_BUFFER);
-		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
-			++pos;
-		while (count--)
-		{
-			if ((iframe[3] >> 4) != 0xE) // no pes header
-			{
-				write(fd, pes_header, sizeof(pes_header));
-				usleep(8000);
-			}
-			else
-				iframe[4] = iframe[5] = 0x00;
-			write(fd, iframe, st.st_size);
-			usleep(8000);
-		}
-		if (!seq_end_avail)
-			write(fd, seq_end, sizeof(seq_end));
-		memset(iframe, 0, 8192);
-		write(fd, iframe, 8192);
-		ioctl(fd, VIDEO_STOP, 0);
-		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
-		free(iframe);
+		lt_info("%s: malloc failed (%m)\n", __func__);
+		goto out;
 	}
+	read(mfd, iframe, st.st_size);
+	show_iframe(fd, iframe, st.st_size);
+	free(iframe);
  out:
 	close(mfd);
 	return;
@@ -595,4 +566,40 @@ int64_t cVideo::GetPTS(void)
 	if (ioctl(fd, VIDEO_GET_PTS, &pts) < 0)
 		lt_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
+}
+
+static void show_iframe(int fd, unsigned char *iframe, size_t st_size)
+{
+	static const unsigned char pes_header[] = { 0, 0, 1, 0xE0, 0, 0, 0x80, 0x80, 5, 0x21, 0, 1, 0, 1};
+	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
+	unsigned char stuffing[128];
+	bool seq_end_avail = false;
+	size_t pos = 0;
+	int count = 7;
+	if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
+		lt_info_c("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
+	ioctl(fd, VIDEO_SET_STREAMTYPE, VIDEO_FORMAT_MPEG2);
+	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
+	ioctl(fd, VIDEO_PLAY);
+	ioctl(fd, VIDEO_CONTINUE);
+	ioctl(fd, VIDEO_CLEAR_BUFFER);
+	while (pos <= (st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
+		++pos;
+	while (count--)
+	{
+		if ((iframe[3] >> 4) != 0xE) // no pes header
+			write(fd, pes_header, sizeof(pes_header));
+		else
+			iframe[4] = iframe[5] = 0x00;
+		write(fd, iframe, st_size);
+		usleep(8000);
+	}
+	if (!seq_end_avail)
+		write(fd, seq_end, sizeof(seq_end));
+
+	memset(stuffing, 0, sizeof(stuffing));
+	for (count = 0; count < 8192 / (int)sizeof(stuffing); count++)
+		write(fd, stuffing, sizeof(stuffing));
+	ioctl(fd, VIDEO_STOP, 0);
+	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 }

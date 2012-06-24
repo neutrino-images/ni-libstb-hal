@@ -34,6 +34,9 @@
 
 #include <linux/types.h>
 #include <linux/dvb/video.h>
+
+#include <proc_tools.h>
+
 #include "video_lib.h"
 #define VIDEO_DEVICE "/dev/dvb/adapter0/video0"
 #include "lt_debug.h"
@@ -66,50 +69,6 @@ static bool stillpicture = false;
 #define VIDEO_STREAMTYPE_MPEG4_Part2 4
 #define VIDEO_STREAMTYPE_VC1_SM 5
 #define VIDEO_STREAMTYPE_MPEG1 6
-
-
-static int proc_put(const char *path, const char *value, const int len)
-{
-	int ret, ret2;
-	int pfd = open(path, O_WRONLY);
-	if (pfd < 0)
-		return pfd;
-	ret = write(pfd, value, len);
-	ret2 = close(pfd);
-	if (ret2 < 0)
-		return ret2;
-	return ret;
-}
-
-static int proc_get(const char *path, char *value, const int len)
-{
-	int ret, ret2;
-	int pfd = open(path, O_RDONLY);
-	if (pfd < 0)
-		return pfd;
-	ret = read(pfd, value, len);
-	value[len-1] = '\0'; /* make sure string is terminated */
-	if (ret >= 0)
-	{
-		while (ret > 0 && isspace(value[ret-1]))
-			ret--;		/* remove trailing whitespace */
-		value[ret] = '\0';	/* terminate, even if ret = 0 */
-	}
-	ret2 = close(pfd);
-	if (ret2 < 0)
-		return ret2;
-	return ret;
-}
-
-static unsigned int proc_get_hex(const char *path)
-{
-	unsigned int n, ret = 0;
-	char buf[16];
-	n = proc_get(path, buf, 16);
-	if (n > 0)
-		sscanf(buf, "%x", &ret);
-	return ret;
-}
 
 cVideo::cVideo(int, void *, void *)
 {

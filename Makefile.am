@@ -5,7 +5,8 @@ bin_PROGRAMS = libstb-hal-test
 
 libstb_hal_a_LIBADD = \
 	common/ca.o \
-	common/lt_debug.o
+	common/lt_debug.o \
+	common/proc_tools.o
 
 libstb_hal_test_SOURCES = libtest.cpp
 libstb_hal_test_LDADD = \

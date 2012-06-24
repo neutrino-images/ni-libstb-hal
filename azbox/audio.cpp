@@ -6,6 +6,9 @@
 #include <unistd.h>
 
 #include <linux/dvb/audio.h>
+
+#include <proc_tools.h>
+
 #include "audio_lib.h"
 #include "lt_debug.h"
 
@@ -65,10 +68,15 @@ int cAudio::do_mute(bool enable, bool remember)
 
 	if (remember)
 		Muted = enable;
-
+#if 0
+	/* does not work? */
 	if (ioctl(fd, AUDIO_SET_MUTE, enable) < 0 )
 		lt_info("%s: AUDIO_SET_MUTE failed (%m)\n", __func__);
-
+#else
+	char s[2] = { 0, 0 };
+	s[0] = '0' + (int)enable;
+	proc_put("/proc/stb/audio/j1_mute", s, 2);
+#endif
 	return 0;
 }
 

@@ -53,6 +53,11 @@ void cRecord::Close(void)
 }
 #endif
 
+#ifdef MARTII
+#define TS_SIZE 188
+#define READSIZE (100 * 188 * 1024)
+#define BUFSIZE READSIZE
+#endif
 bool cRecord::Start(int fd, unsigned short vpid, unsigned short * apids, int numpids)
 {
 	lt_info("%s: fd %d, vpid 0x%03x\n", __func__, fd, vpid);
@@ -61,7 +66,11 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short * apids, int num
 	if (!dmx)
 		dmx = new cDemux(1);
 
+#ifdef MARTII
+	dmx->Open(DMX_TP_CHANNEL, NULL, READSIZE);
+#else
 	dmx->Open(DMX_TP_CHANNEL, NULL, 512*1024);
+#endif
 	dmx->pesFilter(vpid);
 
 	for (i = 0; i < numpids; i++)
@@ -171,8 +180,10 @@ bool cRecord::AddPid(unsigned short pid)
 void cRecord::RecordThread()
 {
 	lt_info("%s: begin\n", __func__);
+#ifndef MARTII
 #define BUFSIZE (1 << 20) /* 1MB */
 #define READSIZE (BUFSIZE / 16)
+#endif
 	ssize_t r = 0;
 	int buf_pos = 0;
 	int queued = 0;
@@ -195,11 +206,22 @@ void cRecord::RecordThread()
 	a.aio_sigevent.sigev_notify = SIGEV_NONE;
 
 	dmx->Start();
+#ifdef MARTII
+        int dmxfd = dmx->getFD();
+        fcntl(dmxfd, F_SETFL, fcntl(dmxfd, F_GETFL) | O_NONBLOCK);
+	int overflow_count = 0;
+#endif
 	bool overflow = false;
 	while (exit_flag == RECORD_RUNNING)
 	{
 		if (buf_pos < BUFSIZE)
 		{
+#ifdef MARTII
+			if (overflow_count) {
+				lt_info("%s: Overflow cleared after %d iterations\n", __func__, overflow_count);
+				overflow_count = 0;
+			}
+#endif
 			int toread = BUFSIZE - buf_pos;
 			if (toread > READSIZE)
 				toread = READSIZE;
@@ -214,7 +236,9 @@ void cRecord::RecordThread()
 					exit_flag = RECORD_FAILED_READ;
 					break;
 				}
+#ifndef MARTII
 				lt_info("%s: %s\n", __func__, errno == EOVERFLOW ? "EOVERFLOW" : "EAGAIN");
+#endif
 			}
 			else
 			{
@@ -224,24 +248,52 @@ void cRecord::RecordThread()
 		}
 		else
 		{
+#ifdef MARTII
+			if (!overflow)
+				overflow_count = 0;
+#endif
 			overflow = true;
+#ifdef MARTII
+			if (!(overflow_count % 10))
+				lt_info("%s: buffer full! Overflow? (%d)\n", __func__, ++overflow_count);
+#else
 			lt_info("%s: buffer full! Overflow?\n", __func__);
+#endif
 		}
 		r = aio_error(&a);
 		if (r == EINPROGRESS)
 		{
+#ifdef MARTII
+			lt_debug("%s: aio in progress, free: %d\n", __func__, BUFSIZE - buf_pos);
+#else
 			lt_debug("%s: aio in progress...\n", __func__);
 			if (overflow)	/* rate-limit the message */
 				usleep(100000);
+#endif
 			continue;
 		}
+#ifdef MARTII
+		// not calling aio_return causes a memory leak  --martii
+		r = aio_return(&a);
+		if (r < 0)
+#else
 		if (r)
+#endif
 		{
 			exit_flag = RECORD_FAILED_FILE;
+#ifdef MARTII
+			lt_debug("%s: aio_return = %d (%m)\n", __func__, r);
+#else
 			lt_info("%s: aio_error != EINPROGRESS: %d (%m)\n", __func__, r);
+#endif
 			break;
 		}
+#ifdef MARTII
+		else
+			lt_debug("%s: aio_return = %d, free: %d\n", __func__, r, BUFSIZE - buf_pos);
+#else
 		lt_debug("%s: buf_pos %6d w %6d\n", __func__, buf_pos, (int)queued);
+#endif
 		if (posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED))
 			perror("posix_fadvise");
 		if (queued)
@@ -270,10 +322,19 @@ void cRecord::RecordThread()
 			usleep(50000);
 			continue;
 		}
+#ifdef MARTII
+		r = aio_return(&a);
+		if (r < 0)
+#else
 		if (r)
+#endif
 		{
 			exit_flag = RECORD_FAILED_FILE;
+#ifdef MARTII
+			lt_info("%s: aio_result: %d (%m)\n", __func__, r);
+#else
 			lt_info("%s: aio_error != EINPROGRESS: %d (%m)\n", __func__, r);
+#endif
 			break;
 		}
 		if (!queued)

@@ -178,7 +178,11 @@ class cVideo
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
+#ifdef MARTII
+		void SetControl(int, int);
+#else
 		void SetControl(int, int) { return; };
+#endif
 		void VideoParamWatchdog(void);
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);

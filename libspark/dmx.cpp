@@ -4,6 +4,10 @@
 #include <poll.h>
 #include <errno.h>
 #include <inttypes.h>
+#ifdef MARTII
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 #include <cstring>
 #include <cstdio>
@@ -142,6 +146,10 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	int n = DMX_SOURCE_FRONT0;
 	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
+#ifdef MARTII
+	if (uBufferSize == 0)
+		uBufferSize = 0xffff; // may or may not be reasonable  --martii
+#endif
 	if (uBufferSize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
@@ -195,6 +203,7 @@ bool cDemux::Start(bool)
 		return false;
 	}
 
+#ifndef MARTII
 	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
 		lt_debug("%s starting demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
@@ -202,6 +211,7 @@ bool cDemux::Start(bool)
 			perror("DMX_START");
 	}
 	ioctl(fd, DMX_START);
+#endif
 	return true;
 }
 

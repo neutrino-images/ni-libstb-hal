@@ -643,3 +643,28 @@ int64_t cVideo::GetPTS(void)
 		lt_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
 }
+#ifdef MARTII
+void cVideo::SetControl(int control, int value) {
+	const char *p = NULL;
+	switch (control) {
+	case VIDEO_CONTROL_BRIGHTNESS:
+		p = "/proc/stb/video/plane/psi_brightness";
+		break;
+	case VIDEO_CONTROL_CONTRAST:
+		p = "/proc/stb/video/plane/psi_contrast";
+		break;
+	case VIDEO_CONTROL_SATURATION:
+		p = "/proc/stb/video/plane/psi_saturation";
+		break;
+	case VIDEO_CONTROL_HUE:
+		p = "/proc/stb/video/plane/psi_tint";
+		break;
+	}
+	if (p) {
+		char buf[20];
+		int len = snprintf(buf, sizeof(buf), "%d", value);
+		if (len < sizeof(buf))
+			proc_put(p, buf, len);
+	}
+}
+#endif

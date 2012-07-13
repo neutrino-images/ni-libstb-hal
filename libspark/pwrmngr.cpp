@@ -14,7 +14,22 @@ void cCpuFreqManager::Down(void) { lt_debug("%s\n", __FUNCTION__); }
 void cCpuFreqManager::Reset(void) { lt_debug("%s\n", __FUNCTION__); }
 /* those function dummies return true or "harmless" values */
 bool cCpuFreqManager::SetDelta(unsigned long) { lt_debug("%s\n", __FUNCTION__); return true; }
+#ifdef MARTII
+unsigned long cCpuFreqManager::GetCpuFreq(void) {
+	int freq = 0;
+	if (FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "r")) {
+		char buffer[120];
+		while(fgets(buffer, sizeof(buffer), pll0)) {
+			if (1 == sscanf(buffer, "SH4 = %d MHZ", &freq))
+				break;
+		}
+		fclose(pll0);
+		return 1000 * 1000 * (unsigned long) freq;
+	}
+}
+#else
 unsigned long cCpuFreqManager::GetCpuFreq(void) { lt_debug("%s\n", __FUNCTION__); return 0; }
+#endif
 unsigned long cCpuFreqManager::GetDelta(void) { lt_debug("%s\n", __FUNCTION__); return 0; }
 //
 cCpuFreqManager::cCpuFreqManager(void) { lt_debug("%s\n", __FUNCTION__); }
@@ -32,6 +47,17 @@ bool cPowerManager::SetStandby(bool Active, bool Passive)
 
 bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 {
+#ifdef MARTII
+	if (f == 0)
+		f = 450000000;
+	FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
+	if (pll0) {
+		f /= 1000000;
+		fprintf(pll0, "%d\n", f/10 * 256 + 3);
+		fclose (pll0);
+		return 0;
+	}
+#else
 	/* actually SetCpuFreq is used to determine if the system is in standby
 	   this is an "elegant" hack, because:
 	   * during a recording, cpu freq is kept "high", even if the box is sent to standby
@@ -64,6 +90,7 @@ bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 	}
 
 	close(fd);
+#endif
 #endif
 	return true;
 }

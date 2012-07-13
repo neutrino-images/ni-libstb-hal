@@ -180,6 +180,7 @@ int main(int argc, char **argv)
 				if (ret < 0)
 					break;
 				diff = t - t2;
+#ifndef MARTII
 				/* green LED off */
 				aotom.u.led.on = LOG_OFF;
 				aotom.u.led.led_nr = 1;
@@ -188,6 +189,7 @@ int main(int argc, char **argv)
 				aotom.u.led.on = LOG_ON;
 				aotom.u.led.led_nr = 0;
 				ioctl(fd, VFDSETLED, &aotom);
+#endif
 				if (t == 1)
 					t = 0; /* t = 1 is magic for "no time" -> clear... */
 				else

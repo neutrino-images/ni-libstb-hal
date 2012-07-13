@@ -16,8 +16,13 @@ static AVFormatContext*   avContext = NULL;
 
 void dump_metadata()
 {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    AVDictionaryEntry *tag = NULL;
+    while ((tag = av_dict_get(avContext->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+#else
     AVMetadataTag *tag = NULL;
     while ((tag = av_metadata_get(avContext->metadata, "", tag, AV_METADATA_IGNORE_SUFFIX)))
+#endif
         printf("%s: %s\n", tag->key, tag->value);
 }
 
@@ -42,7 +47,11 @@ int main(int argc,char* argv[])
 
     av_register_all();
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    if ((err = avformat_open_input(&avContext, file, NULL, 0)) != 0) {
+#else
     if ((err = av_open_input_file(&avContext, file, NULL, 0, NULL)) != 0) {
+#endif
         char error[512];
 
         printf("av_open_input_file failed %d (%s)\n", err, file);
@@ -67,10 +76,18 @@ int main(int argc,char* argv[])
     
        if (stream)
        {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+          AVDictionaryEntry *tag = NULL;
+#else
           AVMetadataTag *tag = NULL;
+#endif
           
           if (stream->metadata != NULL)
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+             while ((tag = av_dict_get(stream->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+#else
              while ((tag = av_metadata_get(stream->metadata, "", tag, AV_METADATA_IGNORE_SUFFIX)))
+#endif
                 printf("%s: %s\n", tag->key, tag->value);
        }
     }

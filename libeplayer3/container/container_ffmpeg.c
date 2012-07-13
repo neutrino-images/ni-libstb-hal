@@ -171,7 +171,9 @@ static char* Codec2Encoding(enum CodecID id, int* version)
     case CODEC_ID_VC1:
         return "V_VC1";
     case CODEC_ID_H264:
+#ifdef CODEC_ID_FFH264
     case CODEC_ID_FFH264:
+#endif
         return "V_MPEG4/ISO/AVC";
     case CODEC_ID_AVS:
         return "V_AVS";
@@ -272,16 +274,28 @@ float getDurationFromSSALine(unsigned char* line){
 /* search for metatdata in context and stream
  * and map it to our metadata.
  */
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+static char* searchMeta(AVDictionary *metadata, char* ourTag)
+#else
 static char* searchMeta(AVMetadata *metadata, char* ourTag)
+#endif
 {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+   AVDictionaryEntry *tag = NULL;
+#else
    AVMetadataTag *tag = NULL;
+#endif
    int i = 0;
    
    while (metadata_map[i] != NULL)
    {
       if (strcmp(ourTag, metadata_map[i]) == 0)
       {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+          while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+#else
           while ((tag = av_metadata_get(metadata, "", tag, AV_METADATA_IGNORE_SUFFIX)))
+#endif
           {
               if (strcmp(tag->key, metadata_map[ i + 1 ]) == 0)
               {
@@ -421,7 +435,11 @@ if(!context->playback->BackWard && audioMute)
             }
             else 
             {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+               lastSeek = currentReadPosition = avio_tell(avContext->pb);
+#else
                lastSeek = currentReadPosition = url_ftell(avContext->pb);
+#endif
                gotlastPts = 1;
 
 #ifndef use_sec_to_seek
@@ -462,7 +480,11 @@ if(!context->playback->BackWard && audioMute)
 
             int index = packet.stream_index;
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+            currentReadPosition = avio_tell(avContext->pb);
+#else
             currentReadPosition = url_ftell(avContext->pb);  
+#endif
 
             if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)
                 ffmpeg_err("error getting video track\n");
@@ -564,7 +586,11 @@ if(!context->playback->BackWard && audioMute)
                             avOut.len        = decoded_data_size;
 
                             avOut.pts        = pts;
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+                            avOut.extradata  = (unsigned char *) &extradata;
+#else
                             avOut.extradata  = &extradata;
+#endif
                             avOut.extralen   = sizeof(extradata);
                             avOut.frameRate  = 0;
                             avOut.timeScale  = 0;
@@ -725,7 +751,11 @@ if(!context->playback->BackWard && audioMute)
                             SubtitleData_t data;
                             data.data      = line;
                             data.len       = strlen((char*)line);
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+                            data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
+#else
                             data.extradata = DEFAULT_ASS_HEAD;
+#endif
                             data.extralen  = strlen(DEFAULT_ASS_HEAD);
                             data.pts       = pts;
                             data.duration  = duration;
@@ -797,7 +827,11 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     avcodec_register_all();
     av_register_all();
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    if ((err = avformat_open_input(&avContext, filename, NULL, 0)) != 0) {
+#else
     if ((err = av_open_input_file(&avContext, filename, NULL, 0, NULL)) != 0) {
+#endif
         char error[512];
 
         ffmpeg_err("av_open_input_file failed %d (%s)\n", err, filename);
@@ -827,7 +861,11 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 
     ffmpeg_printf(20, "dump format\n");
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    av_dump_format(avContext, 0, filename, 0);
+#else
     dump_format(avContext, 0, filename, 0);
+#endif
 
     ffmpeg_printf(1, "number streams %d\n", avContext->nb_streams);
 
@@ -1277,7 +1315,11 @@ static int container_ffmpeg_stop(Context_t *context) {
 
 static int container_ffmpeg_seek_bytes(off_t pos) {
     int flag = AVSEEK_FLAG_BYTE;
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    off_t current_pos = avio_tell(avContext->pb);
+#else
     off_t current_pos = url_ftell(avContext->pb);
+#endif
 
     ffmpeg_printf(20, "seeking to position %lld (bytes)\n", pos);
 
@@ -1290,7 +1332,11 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
         return cERR_CONTAINER_FFMPEG_ERR;
     }
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContext->pb));
+#else
     ffmpeg_printf(30, "current_pos after seek %lld\n", url_ftell(avContext->pb));
+#endif
 
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -1299,7 +1345,11 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
     int flag = AVSEEK_FLAG_BYTE;
     off_t newpos;
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    off_t current_pos = avio_tell(avContext->pb);
+#else
     off_t current_pos = url_ftell(avContext->pb);
+#endif
     
     if (start == -1)
        start = current_pos;
@@ -1328,7 +1378,11 @@ static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
         return cERR_CONTAINER_FFMPEG_ERR;
     }
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+    ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContext->pb));
+#else
     ffmpeg_printf(30, "current_pos after seek %lld\n", url_ftell(avContext->pb));
+#endif
 
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -1357,7 +1411,11 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
 
     if (pos == -1)
     {
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+        pos = avio_tell(avContext->pb);
+#else
         pos = url_ftell(avContext->pb);
+#endif
     }
 
     if (pts == -1)
@@ -1483,7 +1541,11 @@ static int container_ffmpeg_seek(Context_t *context, float sec) {
  * about 10 seconds, backward does not work.
  */
 
+#if LIBAVFORMAT_VERSION_MAJOR > 53
+        off_t pos = avio_tell(avContext->pb);
+#else
         off_t pos = url_ftell(avContext->pb);
+#endif
 
         ffmpeg_printf(10, "pos %lld %d\n", pos, avContext->bit_rate);
 

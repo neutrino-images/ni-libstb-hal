@@ -135,7 +135,11 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
+#ifdef MARTII
+	while ((c = getopt (argc, argv, "gs:tw:l:L:")) != -1)
+#else
 	while ((c = getopt (argc, argv, "gs:tw:")) != -1)
+#endif
 	{
 		switch (c)
 		{
@@ -221,6 +225,18 @@ int main(int argc, char **argv)
 				 */
 				sleep(2); /* not reached... */
 				break;
+#ifdef MARTII
+			case 'l': /* LED on */
+				aotom.u.led.on = LOG_ON;
+				aotom.u.led.led_nr = atoi(optarg);
+				ioctl(fd, VFDSETLED, &aotom);
+				break;
+			case 'L': /* LED off */
+				aotom.u.led.on = LOG_OFF;
+				aotom.u.led.led_nr = atoi(optarg);
+				ioctl(fd, VFDSETLED, &aotom);
+				break;
+#endif
 			default:
 				usage();
 				return 0;

@@ -108,6 +108,11 @@ cVideo::cVideo(int, void *, void *)
 				free(blank_data[i]); /* don't leak... */
 				blank_data[i] = NULL;
 			}
+			else
+			{	/* set framerate to 24fps... see getBlank() */
+				((char *)blank_data[i])[7] &= 0xF0;
+				((char *)blank_data[i])[7] += 2;
+			}
 		}
 		close(blankfd);
 	}
@@ -497,8 +502,15 @@ void cVideo::Standby(unsigned int bOn)
 
 int cVideo::getBlank(void)
 {
-	lt_debug("%s\n", __FUNCTION__);
-	return 0;
+	VIDEOINFO v;
+	memset(&v, 0, sizeof(v));
+	ioctl(fd, MPEG_VID_GET_V_INFO, &v);
+	/* HACK HACK HACK :-)
+	 * setBlank() puts a 24fps black mpeg into the decoder...
+	 * regular broadcast does not have 24fps, so if it is still
+	 * there, video did not decode... */
+	lt_debug("%s: %hu (blank = 2)\n", __func__, v.frame_rate);
+	return (v.frame_rate == 2);
 }
 
 /* set zoom in percent (100% == 1:1) */

@@ -28,6 +28,7 @@ static pthread_cond_t playback_ready_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t playback_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_mutex_t currpos_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t inbufpos_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int dvrfd = -1;
 static int streamtype;
@@ -295,7 +296,10 @@ void cPlayback::playthread(void)
 		if (playstate == STATE_INIT)
 		{
 			/* hack for timeshift to determine start PTS */
-			if (inbuf_read() < 0)
+			pthread_mutex_lock(&inbufpos_mutex);
+			ret = inbuf_read();
+			pthread_mutex_unlock(&inbufpos_mutex);
+			if (ret < 0)
 				break;
 			usleep(100000);
 			if (pts_start == -1)
@@ -308,7 +312,10 @@ void cPlayback::playthread(void)
 			usleep(1);
 			continue;
 		}
-		if (inbuf_read() < 0)
+		pthread_mutex_lock(&inbufpos_mutex);
+		ret = inbuf_read();
+		pthread_mutex_unlock(&inbufpos_mutex);
+		if (ret < 0)
 			break;
 
 		/* autoselect PID for PLAYMODE_FILE */
@@ -326,9 +333,13 @@ void cPlayback::playthread(void)
 			}
 		}
 
+		pthread_mutex_lock(&inbufpos_mutex);
 		towrite = inbuf_pos / 188 * 188; /* TODO: smaller chunks? */
 		if (towrite == 0)
+		{
+			pthread_mutex_unlock(&inbufpos_mutex);
 			continue;
+		}
  retry:
 		ret = write(dvrfd, inbuf, towrite);
 		if (ret < 0)
@@ -340,6 +351,7 @@ void cPlayback::playthread(void)
 		}
 		memmove(inbuf, inbuf + ret, inbuf_pos - ret);
 		inbuf_pos -= ret;
+		pthread_mutex_unlock(&inbufpos_mutex);
 	}
 
 	pthread_cleanup_pop(1);
@@ -597,12 +609,14 @@ off_t cPlayback::seek_to_pts(int64_t pts)
 		newpos = mp_seekSync(newpos);
 		if (newpos < 0)
 			return newpos;
+		pthread_mutex_lock(&inbufpos_mutex);
 		inbuf_pos = 0;
 		inbuf_sync = 0;
 		while (inbuf_pos < INBUF_SIZE * 8 / 10) {
 			if (inbuf_read() <= 0)
 				break; // EOF
 		}
+		pthread_mutex_unlock(&inbufpos_mutex);
 		if (pts_curr < pts_start)
 			tmppts = pts_curr + 0x200000000ULL - pts_start;
 		else
@@ -786,6 +800,7 @@ int64_t cPlayback::get_PES_PTS(uint8_t *buf, int len, bool last)
 	return pts;
 }
 
+/* needs to be called with inbufpos_mutex locked! */
 ssize_t cPlayback::inbuf_read()
 {
 	if (filetype == FILETYPE_UNKNOWN)

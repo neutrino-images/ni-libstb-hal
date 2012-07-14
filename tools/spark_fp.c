@@ -41,6 +41,10 @@ void usage()
 	printf("\t-t: get current FP time\n");
 	printf("\t-s <time>: set FP time (time = 0: use current time)\n");
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
+#ifdef MARTII
+	printf("\t-l <n>: set LED <n> on\n");
+	printf("\t-L <n>: set LED <n> off\n");
+#endif
 	printf("times are given in unix time (UTC, seconds since 1970-01-01 00:00:00)\n");
 	printf("\n");
 }

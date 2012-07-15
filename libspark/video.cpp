@@ -490,8 +490,34 @@ void cVideo::Standby(unsigned int bOn)
 
 int cVideo::getBlank(void)
 {
-	lt_debug("%s\n", __FUNCTION__);
-	return 0;
+	static unsigned int lastcount = 0;
+	unsigned int count = 0;
+	size_t n = 0;
+	ssize_t r;
+	char *line = NULL;
+	char *p;
+	/* hack: the "mailbox" irq is not increasing if
+	 * no audio or video is decoded... */
+	FILE *f = fopen("/proc/interrupts", "r");
+	if (! f) /* huh? */
+		return 0;
+	while ((r = getline(&line, &n, f)) != -1)
+	{
+		if (r <= strlen("mailbox")) /* should not happen... */
+			continue;
+		line[r - 1] = 0; /* remove \n */
+		if (!strcmp(&line[r - 1 - strlen("mailbox")], "mailbox"))
+		{
+			count =  atoi(line + 5);
+			break;
+		}
+	}
+	free(line);
+	fclose(f);
+	int ret = (count == lastcount); /* no new decode -> return 1 */
+	lt_debug("%s: %d (irq++: %d)\n", __func__, ret, count - lastcount);
+	lastcount = count;
+	return ret;
 }
 
 /* this function is regularly called, checks if video parameters

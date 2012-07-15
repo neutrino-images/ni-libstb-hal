@@ -112,6 +112,7 @@ cVideo::cVideo(int, void *, void *)
 		close(blankfd);
 	}
 	openDevice();
+	Pig(-1, -1, -1, -1);
 }
 
 cVideo::~cVideo(void)

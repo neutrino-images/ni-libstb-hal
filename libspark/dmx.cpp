@@ -94,6 +94,9 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	int flags = O_RDWR;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
+
+	if (pes_type != DMX_PSI_CHANNEL)
+		flags |= O_NONBLOCK;
 #if 0
 	if (pes_type == DMX_TP_CHANNEL)
 	{

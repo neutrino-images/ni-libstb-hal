@@ -54,16 +54,15 @@
 #ifdef VORBIS_DEBUG
 
 static short debug_level = 1;
-static const char *FILENAME = "vorbis.c";
 
 #define vorbis_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vorbis_printf(level, fmt, x...)
 #endif
 
 #ifndef VORBIS_SILENT
-#define vorbis_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define vorbis_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vorbis_err(fmt, x...)
 #endif
@@ -140,13 +139,12 @@ static WriterCaps_t caps_vorbis = {
     "vorbis",
     eAudio,
     "A_VORBIS",
-    AUDIO_ENCODING_VORBIS,
+    AUDIO_ENCODING_VORBIS
 };
 
 struct Writer_s WriterAudioVORBIS = {
     &reset,
     &writeData,
     NULL,
-    &caps_vorbis,
+    &caps_vorbis
 };
-

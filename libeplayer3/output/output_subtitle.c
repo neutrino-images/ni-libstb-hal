@@ -49,13 +49,13 @@
 static short debug_level = 10;
 
 #define subtitle_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define subtitle_printf(level, fmt, x...)
 #endif
 
 #ifndef SUBTITLE_SILENT
-#define subtitle_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define subtitle_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define subtitle_err(fmt, x...)
 #endif
@@ -64,7 +64,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); 
 #define cERR_SUBTITLE_NO_ERROR         0
 #define cERR_SUBTITLE_ERROR            -1
 
-static const char FILENAME[] = "output_subtitle.c";
+static const char FILENAME[] = "subtitle.c";
 
 /*
 Number, Style, Name,, MarginL, MarginR, MarginV, Effect,, Text
@@ -839,7 +839,5 @@ struct Output_s SubtitleOutput = {
     "Subtitle",
     &Command,
     &Write,
-    SubtitleCapabilitis,
-
+    SubtitleCapabilitis
 };
-

@@ -51,17 +51,17 @@
 
 static short debug_level = 10;
 
-static const char FILENAME[] = "linuxdvb.c";
+static const char FILENAME[] = __FILE__;
 
 #ifdef LINUXDVB_DEBUG
 #define linuxdvb_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x ); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x ); } while (0)
 #else
 #define linuxdvb_printf(x...)
 #endif
 
 #ifndef LINUXDVB_SILENT
-#define linuxdvb_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define linuxdvb_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define linuxdvb_err(x...)
 #endif
@@ -601,8 +601,8 @@ int LinuxDvbFastForward(Context_t  *context, char * type) {
 
 
 int LinuxDvbReverse(Context_t  *context, char * type) {
-#ifdef reverse_playback_2
     int ret = cERR_LINUXDVB_NO_ERROR;
+#ifdef reverse_playback_2
     int speed;
 
     unsigned char video = !strcmp("video", type);
@@ -654,8 +654,8 @@ int LinuxDvbReverse(Context_t  *context, char * type) {
 
     linuxdvb_printf(10, "exiting with value %d\n", ret);
 
-    return ret;
 #endif
+    return ret;
 }
 
 int LinuxDvbSlowMotion(Context_t  *context, char * type) {
@@ -1204,7 +1204,5 @@ struct Output_s LinuxDvbOutput = {
     "LinuxDvb",
     &Command,
     &Write,
-    LinuxDvbCapabilities,
-
+    LinuxDvbCapabilities
 };
-

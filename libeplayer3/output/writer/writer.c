@@ -138,4 +138,3 @@ Writer_t* getDefaultFramebufferWriter()
 
     return NULL;
 }
-

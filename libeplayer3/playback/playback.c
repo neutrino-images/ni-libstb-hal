@@ -31,16 +31,15 @@
 
 static short debug_level = 10;
 
-static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG
 #define playback_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_printf(level, fmt, x...)
 #endif
 
 #ifndef PLAYBACK_SILENT
-#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_err(fmt, x...)
 #endif
@@ -227,7 +226,7 @@ static int PlaybackOpen(Context_t  *context, char * uri) {
 
             //free(extension);
         } /* http */
-        else if (!strncmp("mms://", uri, 6) || !strncmp("rtsp://", uri, 7) || !strncmp("rtmp://", uri, 7)) {
+        else if (!strncmp("mms://", uri, 6) || !strncmp("rtsp://", uri, 7) || !strncmp("rtmp://", uri, 7) || !strncmp("rtmpt://", uri, 8) || !strncmp("rtmpe://", uri, 8) || !strncmp("rtmpte://", uri, 9) || !strncmp("rtmps://", uri, 8) || !strncmp("rtp://", uri, 6)) {
 /*            char * extension = NULL; */
             context->playback->isFile = 0;
             context->playback->isHttp = 1;
@@ -762,7 +761,7 @@ static int PlaybackSeek(Context_t  *context, float * pos) {
 
     playback_printf(10, "pos: %f\n", *pos);
 
-    if (!context->playback->isHttp && context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused) {
+    if (context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused) {
         context->playback->isSeeking = 1;
 
         context->output->Command(context, OUTPUT_CLEAR, NULL);
@@ -1058,5 +1057,5 @@ PlaybackHandler_t PlaybackHandler = {
     0,
     &Command,
     "",
-    0,
+    0
 };

@@ -42,7 +42,7 @@ if (debug_level >= level) printf(x); } while (0)
 #endif
 
 
-static const char FILENAME[] = "container.c";
+static const char FILENAME[] = __FILE__;
 
 static void printContainerCapabilities() {
     int i, j;
@@ -121,5 +121,5 @@ ContainerHandler_t ContainerHandler = {
     &SrtContainer,
     &SsaContainer,
     &ASSContainer,
-    Command,
+    Command
 };

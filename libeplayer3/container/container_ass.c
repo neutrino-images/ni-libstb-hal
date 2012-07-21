@@ -55,17 +55,16 @@
 
 #ifdef ASS_DEBUG
 
-static const char *FILENAME = "container_ass.c";
 static short debug_level = 10;
 
 #define ass_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ass_printf(level, fmt, x...)
 #endif
 
 #ifndef ASS_SILENT
-#define ass_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define ass_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ass_err(fmt, x...)
 #endif
@@ -179,7 +178,7 @@ void releaseRegions()
 {
     region_t* next, *old;
     Writer_t* writer;
-    
+
     if (firstRegion == NULL)
         return;
 
@@ -221,12 +220,12 @@ void releaseRegions()
                  writer->writeData(&out);
              }
         }
-        old  = next;         
+        old  = next;
         next = next->next;
         free(old);
     }
-    
-    firstRegion = NULL;  
+
+    firstRegion = NULL;
 }
 
 /* check for regions which should be undisplayed. 
@@ -392,7 +391,8 @@ static void ASSThread(Context_t *context) {
             //       subtitel zeitpunkt zu bestimmen und solange zu schlafen.
             usleep(1000);
 
-            img = ass_render_frame(ass_renderer, ass_track, playPts / 90.0, &change);
+            if(ass_renderer && ass_track)
+                 img = ass_render_frame(ass_renderer, ass_track, playPts / 90.0, &change);
 
             ass_printf(150, "img %p pts %lu %f\n", img, playPts, playPts / 90.0);
 
@@ -425,7 +425,7 @@ static void ASSThread(Context_t *context) {
                     /* api docu said w and h can be zero which
                      * means image should not be rendered
                      */
-                    if ((img->w != 0) && (img->h != 0) && (writer)) 
+                    if ((img->w != 0) && (img->h != 0) && (writer))
                     {
                         out.fd            = framebufferFD;
                         out.data          = img->bitmap;
@@ -435,7 +435,7 @@ static void ASSThread(Context_t *context) {
                         out.x             = img->dst_x;
                         out.y             = img->dst_y;
                         out.color         = img->color;
-                        
+
                         out.Screen_Width  = screen_width; 
                         out.Screen_Height = screen_height; 
                         out.destination   = destination;
@@ -449,8 +449,8 @@ static void ASSThread(Context_t *context) {
                             if(context && context->playback && context->playback->isPlaying && writer){
                                 writer->writeData(&out);
                                 if(threeDMode == 1){
-			            out.x = screen_width/2 + img->dst_x;
-			            writer->writeData(&out);
+                                    out.x = screen_width/2 + img->dst_x;
+                                    writer->writeData(&out);
                                 }else if(threeDMode == 2){
                                     out.y = screen_height/2 + img->dst_y;
                                     writer->writeData(&out);
@@ -465,11 +465,11 @@ static void ASSThread(Context_t *context) {
                              */
                             SubtitleOut_t out;
 
-                            out.type         = eSub_Gfx;                        
+                            out.type         = eSub_Gfx;
 
                             if (ass_track->events)
                             {
-/* fixme: check values */
+                                /* fixme: check values */
                                 out.pts          = ass_track->events->Start * 90.0;
                                 out.duration     = ass_track->events->Duration / 1000.0;
                             } else
@@ -522,7 +522,7 @@ int container_ass_init(Context_t *context)
     int modefd;
     char buf[16];
     SubtitleOutputDef_t output;
-    
+
     ass_printf(10, ">\n");
 
     ass_library = ass_library_init();
@@ -534,12 +534,12 @@ int container_ass_init(Context_t *context)
 
     if (debug_level >= 100)
         ass_set_message_cb(ass_library, ass_msg_callback, NULL);
-    
+
     ass_set_extract_fonts( ass_library, 1 );
     ass_set_style_overrides( ass_library, NULL );
     
     ass_renderer = ass_renderer_init(ass_library);
-    
+
     if (!ass_renderer) {
         ass_err("ass_renderer_init failed!\n");
 
@@ -556,7 +556,7 @@ int container_ass_init(Context_t *context)
     if(modefd > 0){
         read(modefd, buf, 15);
         buf[15]='\0';
-	close(modefd);
+        close(modefd);
     }else threeDMode = 0;
 
     if(strncmp(buf,"sbs",3)==0)threeDMode = 1;
@@ -637,7 +637,7 @@ int container_ass_process_data(Context_t *context, SubtitleData_t* data)
         ass_printf(30,"processing private %d bytes\n",data->extralen);
         ass_process_codec_private(ass_track, (char*) data->extradata, data->extralen);
         ass_printf(30,"processing private done\n");
-    } 
+    }
 
     if (data->data)
     {
@@ -645,7 +645,7 @@ int container_ass_process_data(Context_t *context, SubtitleData_t* data)
         ass_process_data(ass_track, (char*) data->data, data->len);
         ass_printf(30,"processing data done\n");
     }
-    
+
     return cERR_CONTAINER_ASS_NO_ERROR;
 }
 
@@ -813,6 +813,5 @@ static char *ASS_Capabilities[] = {"ass", NULL };
 Container_t ASSContainer = {
     "ASS",
     &Command,
-    ASS_Capabilities,
-
+    ASS_Capabilities
 };

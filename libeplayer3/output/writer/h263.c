@@ -54,16 +54,15 @@
 #ifdef H263_DEBUG
 
 static short debug_level = 0;
-static const char *FILENAME = "h263.c";
 
 #define h263_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define h263_printf(level, fmt, x...)
 #endif
 
 #ifndef H263_SILENT
-#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define h263_err(fmt, x...)
 #endif
@@ -152,26 +151,26 @@ static WriterCaps_t caps_h263 = {
     "h263",
     eVideo,
     "V_H263",
-    VIDEO_ENCODING_H263,
+    VIDEO_ENCODING_H263
 };
 
 struct Writer_s WriterVideoH263 = {
     &reset,
     &writeData,
     NULL,
-    &caps_h263,
+    &caps_h263
 };
 
 static WriterCaps_t caps_flv = {
     "FLV",
     eVideo,
     "V_FLV",
-    VIDEO_ENCODING_FLV1,
+    VIDEO_ENCODING_FLV1
 };
 
 struct Writer_s WriterVideoFLV = {
     &reset,
     &writeData,
     NULL,
-    &caps_flv,
+    &caps_flv
 };

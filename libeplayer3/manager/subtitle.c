@@ -54,7 +54,7 @@ if (debug_level >= level) printf(x); } while (0)
 #define cERR_SUBTITLE_MGR_NO_ERROR        0
 #define cERR_SUBTITLE_MGR_ERROR          -1
 
-static const char FILENAME[] = "subtitle.c";
+static const char FILENAME[] = __FILE__;
 
 /* ***************************** */
 /* Types                         */
@@ -248,6 +248,5 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
 struct Manager_s SubtitleManager = {
     "Subtitle",
     &Command,
-    NULL,
-
+    NULL
 };

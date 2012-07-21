@@ -53,7 +53,7 @@ if (debug_level >= level) printf(x); } while (0)
 #define cERR_OUTPUT_NO_ERROR         0
 #define cERR_OUTPUT_INTERNAL_ERROR   -1
 
-static const char* FILENAME = "output.c";
+static const char* FILENAME = __FILE__;
 
 /* ***************************** */
 /* Types                         */
@@ -349,5 +349,5 @@ OutputHandler_t OutputHandler = {
     NULL,
     NULL,
     NULL,
-    &Command,
+    &Command
 };

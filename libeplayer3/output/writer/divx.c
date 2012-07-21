@@ -55,16 +55,15 @@
 #ifdef DIVX_DEBUG
 
 static short debug_level = 0;
-static const char *FILENAME = "divx.c";
 
 #define divx_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define divx_printf(level, fmt, x...)
 #endif
 
 #ifndef DIVX_SILENT
-#define divx_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define divx_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define divx_err(fmt, x...)
 #endif
@@ -177,40 +176,40 @@ static WriterCaps_t mpeg4p2_caps = {
     "mscomp",
     eVideo,
     "V_MSCOMP",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoMSCOMP = {
     &reset,
     &writeData,
     NULL,
-    &mpeg4p2_caps,
+    &mpeg4p2_caps
 };
 
 static WriterCaps_t fourcc_caps = {
     "fourcc",
     eVideo,
     "V_MS/VFW/FOURCC",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoFOURCC = {
     &reset,
     &writeData,
     NULL,
-    &fourcc_caps,
+    &fourcc_caps
 };
 
 static WriterCaps_t divx_caps = {
     "divx",
     eVideo,
     "V_MKV/XVID",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoDIVX = {
     &reset,
     &writeData,
     NULL,
-    &divx_caps,
+    &divx_caps
 };

@@ -66,16 +66,15 @@
 #ifdef VC1_DEBUG
 
 static short debug_level = 10;
-static const char *FILENAME = "vc1.c";
 
 #define vc1_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vc1_printf(level, fmt, x...)
 #endif
 
 #ifndef VC1_SILENT
-#define vc1_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define vc1_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vc1_err(fmt, x...)
 #endif
@@ -290,4 +289,3 @@ struct Writer_s WriterVideoVC1 = {
     NULL,
     &caps
 };
-

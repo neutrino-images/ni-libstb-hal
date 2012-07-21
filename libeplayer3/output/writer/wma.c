@@ -55,16 +55,15 @@
 #ifdef WMA_DEBUG
 
 static short debug_level = 10;
-static const char *FILENAME = "wma.c";
 
 #define wma_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define wma_printf(level, fmt, x...)
 #endif
 
 #ifndef WMA_SILENT
-#define wma_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define wma_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define wma_err(fmt, x...)
 #endif

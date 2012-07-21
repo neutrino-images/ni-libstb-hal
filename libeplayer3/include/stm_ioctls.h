@@ -58,7 +58,7 @@ typedef enum {
 	STREAM_TYPE_H264,     /* Deprecated */
 	STREAM_TYPE_ASF,      /* Needs work so it can be deprecated */
 	STREAM_TYPE_MP4,      /* Deprecated */
-	STREAM_TYPE_RAW,      /* Deprecated */
+	STREAM_TYPE_RAW       /* Deprecated */
 } stream_type_t;
 
 /*
@@ -322,4 +322,3 @@ typedef dvb_option_t                    video_option_t;
 #define AUDIO_GET_PLAY_INFO             _IOR('o', 78, audio_play_info_t)
 
 #endif /* H_DVB_STM_H */
-

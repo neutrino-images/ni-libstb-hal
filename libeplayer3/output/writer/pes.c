@@ -90,11 +90,8 @@ int InsertPesHeader (unsigned char *data, int size, unsigned char stream_id, uns
 {
     BitPacker_t ld2 = {data, 0, 32};
 
-#if 0
-    /* does not seem to hurt, at least with h264 data...? */
     if (size > MAX_PES_PACKET_SIZE)
         printf("%s: Packet bigger than 63.9K eeeekkkkk\n",__FUNCTION__);
-#endif
 
     PutBits(&ld2,0x0  ,8);
     PutBits(&ld2,0x0  ,8);

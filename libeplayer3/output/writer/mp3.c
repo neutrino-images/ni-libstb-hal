@@ -54,16 +54,15 @@
 #ifdef MP3_DEBUG
 
 static short debug_level = 0;
-static const char *FILENAME = "mp3.c";
 
 #define mp3_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define mp3_printf(level, fmt, x...)
 #endif
 
 #ifndef MP3_SILENT
-#define mp3_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define mp3_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define mp3_err(fmt, x...)
 #endif
@@ -140,26 +139,26 @@ static WriterCaps_t caps_mp3 = {
     "mp3",
     eAudio,
     "A_MP3",
-    AUDIO_ENCODING_MP3,
+    AUDIO_ENCODING_MP3
 };
 
 struct Writer_s WriterAudioMP3 = {
     &reset,
     &writeData,
     NULL,
-    &caps_mp3,
+    &caps_mp3
 };
 
 static WriterCaps_t caps_mpegl3 = {
     "mpeg/l3",
     eAudio,
     "A_MPEG/L3",
-    AUDIO_ENCODING_MPEG2,
+    AUDIO_ENCODING_MPEG2
 };
 
 struct Writer_s WriterAudioMPEGL3 = {
     &reset,
     &writeData,
     NULL,
-    &caps_mpegl3,
+    &caps_mpegl3
 };

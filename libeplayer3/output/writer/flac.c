@@ -54,16 +54,15 @@
 #ifdef FLAC_DEBUG
 
 static short debug_level = 1;
-static const char *FILENAME = "flac.c";
 
 #define flac_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define flac_printf(level, fmt, x...)
 #endif
 
 #ifndef FLAC_SILENT
-#define flac_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define flac_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define flac_err(fmt, x...)
 #endif
@@ -140,13 +139,12 @@ static WriterCaps_t caps_flac = {
     "flac",
     eAudio,
     "A_FLAC",
-    AUDIO_ENCODING_LPCM, //AUDIO_ENCODING_FLAC,
+    AUDIO_ENCODING_LPCM //AUDIO_ENCODING_FLAC
 };
 
 struct Writer_s WriterAudioFLAC = {
     &reset,
     &writeData,
     NULL,
-    &caps_flac,
+    &caps_flac
 };
-

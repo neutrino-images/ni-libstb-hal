@@ -56,16 +56,15 @@
 #ifdef AC3_DEBUG
 
 static short debug_level = 0;
-static const char *FILENAME = "ac3.c";
 
 #define ac3_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ac3_printf(level, fmt, x...)
 #endif
 
 #ifndef AC3_SILENT
-#define ac3_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+#define ac3_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ac3_err(fmt, x...)
 #endif
@@ -140,13 +139,12 @@ static WriterCaps_t caps_ac3 = {
     "ac3",
     eAudio,
     "A_AC3",
-    AUDIO_ENCODING_AC3,
+    AUDIO_ENCODING_AC3
 };
 
 struct Writer_s WriterAudioAC3 = {
     &reset,
     &writeData,
     NULL,
-    &caps_ac3,
+    &caps_ac3
 };
-

@@ -756,7 +756,11 @@ static int PlaybackSlowMotion(Context_t  *context,int* speed) {
     return ret;
 }
 
+#ifdef MARTII
+static int PlaybackSeek(Context_t  *context, float * pos, int absolute) {
+#else
 static int PlaybackSeek(Context_t  *context, float * pos) {
+#endif
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "pos: %f\n", *pos);
@@ -766,6 +770,11 @@ static int PlaybackSeek(Context_t  *context, float * pos) {
 
         context->output->Command(context, OUTPUT_CLEAR, NULL);
 
+#ifdef MARTII
+	if (absolute)
+        	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, pos);
+	else
+#endif
         context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
 
         context->playback->isSeeking = 0;
@@ -990,9 +999,19 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
         break;
     }
     case PLAYBACK_SEEK: {
+#ifdef MARTII
+        ret = PlaybackSeek(context, (float*)argument, 0);
+#else
         ret = PlaybackSeek(context, (float*)argument);
+#endif
         break;
     }
+#ifdef MARTII
+    case PLAYBACK_SEEK_ABS: {
+        ret = PlaybackSeek(context, (float*)argument, -1);
+        break;
+    }
+#endif
     case PLAYBACK_PTS: { // 10
         ret = PlaybackPts(context, (unsigned long long int*)argument);
         break;

@@ -414,7 +414,11 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	}
 	float pos = (position/1000.0);
 	if(player && player->playback)
+#ifdef MARTII
+		player->playback->Command(player, absolute ? PLAYBACK_SEEK_ABS : PLAYBACK_SEEK, (void*)&pos);
+#else
 		player->playback->Command(player, PLAYBACK_SEEK, (void*)&pos);
+#endif
 	return true;
 }
 

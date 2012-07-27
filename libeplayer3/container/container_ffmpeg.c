@@ -108,7 +108,11 @@ static long long int latestPts = 0;
 /* Prototypes                    */
 /* ***************************** */
 static int container_ffmpeg_seek_bytes(off_t pos);
+#ifdef MARTII
+static int container_ffmpeg_seek(Context_t *context, float sec, int absolute);
+#else
 static int container_ffmpeg_seek(Context_t *context, float sec);
+#endif
 static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long int pts, float sec);
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes);
 
@@ -1482,12 +1486,32 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
+#ifdef MARTII
+static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
+#else
 static int container_ffmpeg_seek(Context_t *context, float sec) {
+#endif
     Track_t * videoTrack = NULL;
     Track_t * audioTrack = NULL;
     Track_t * current = NULL;
     int flag = 0;
 
+#ifdef MARTII
+    if (absolute) {
+	ffmpeg_printf(10, "goto %f sec\n", sec);
+
+	if (sec < 0.0)
+		sec = 0.0;
+    } else {
+	ffmpeg_printf(10, "seeking %f sec\n", sec);
+
+	if (sec == 0.0)
+	{
+	    ffmpeg_err("sec = 0.0 ignoring\n");
+	    return cERR_CONTAINER_FFMPEG_ERR;
+	}
+    }
+#else
 #if !defined(VDR1722)
     ffmpeg_printf(10, "seeking %f sec\n", sec);
 
@@ -1505,6 +1529,7 @@ static int container_ffmpeg_seek(Context_t *context, float sec) {
         return cERR_CONTAINER_FFMPEG_ERR;
     }
 #endif
+#endif
     context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
     context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
 
@@ -1514,7 +1539,11 @@ static int container_ffmpeg_seek(Context_t *context, float sec) {
         current = audioTrack;
 
     if (current == NULL) {
+#ifdef MARTII
+        ffmpeg_err( "no track available to seek\n");
+#else
         ffmpeg_err( "no track avaibale to seek\n");
+#endif
         return cERR_CONTAINER_FFMPEG_ERR;
     }
 
@@ -1551,15 +1580,26 @@ static int container_ffmpeg_seek(Context_t *context, float sec) {
         {
             sec *= 180000.0;
         }
+#ifdef MARTII
+	if (absolute)
+	    pos = sec;
+	else
+	    pos += sec;
+#else
 #if !defined(VDR1722)
         pos += sec;
 #else
         pos = sec;
 #endif
+#endif
         if (pos < 0)
         {
+#ifdef MARTII
+	   pos = 0;
+#else
            ffmpeg_err("end of file reached\n");
            return cERR_CONTAINER_FFMPEG_END_OF_FILE;
+#endif
         }
 
         ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %f\n", pos, sec);
@@ -1573,8 +1613,13 @@ static int container_ffmpeg_seek(Context_t *context, float sec) {
 
     } else
     {
+#ifdef MARTII
+	if (!absolute)
+            sec += ((float) current->pts / 90000.0f);
+#else
 #if !defined(VDR1722)
         sec += ((float) current->pts / 90000.0f);
+#endif
 #endif
         ffmpeg_printf(10, "2. seeking to position %f sec ->time base %f %d\n", sec, av_q2d(((AVStream*) current->stream)->time_base), AV_TIME_BASE);
 
@@ -1737,9 +1782,19 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
         break;
     }
     case CONTAINER_SEEK: {
+#ifdef MARTII
+        ret = container_ffmpeg_seek(context, (float)*((float*)argument), 0);
+#else
         ret = container_ffmpeg_seek(context, (float)*((float*)argument));
+#endif
         break;
     }
+#ifdef MARTII
+    case CONTAINER_SEEK_ABS: {
+        ret = container_ffmpeg_seek(context, (float)*((float*)argument), -1);
+        break;
+    }
+#endif
     case CONTAINER_LENGTH: {
         double length = 0;
         ret = container_ffmpeg_get_length(context, &length);

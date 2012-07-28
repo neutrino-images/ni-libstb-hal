@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/dmx.h>
+#include "../common/cs_types.h"
 
 typedef enum
 {
@@ -46,7 +47,6 @@ class cDemux
 		int Read(unsigned char *buff, int len, int Timeout = 0);
 		bool sectionFilter(unsigned short pid, const unsigned char * const filter, const unsigned char * const mask, int len, int Timeout = 0, const unsigned char * const negmask = NULL);
 		bool pesFilter(const unsigned short pid);
-#define AVSYNC_TYPE int
 		void SetSyncMode(AVSYNC_TYPE mode);
 		void * getBuffer();
 		void * getChannel();

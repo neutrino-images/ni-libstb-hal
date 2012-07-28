@@ -2,6 +2,7 @@
 #define _VIDEO_TD_H
 
 #include <linux/dvb/video.h>
+#include "../common/cs_types.h"
 
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
@@ -169,7 +170,6 @@ class cVideo
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
-#define AVSYNC_TYPE int
 		void SetSyncMode(AVSYNC_TYPE mode);
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };

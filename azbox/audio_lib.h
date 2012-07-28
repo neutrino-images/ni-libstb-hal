@@ -3,6 +3,8 @@
 #ifndef _AUDIO_LIB_H_
 #define _AUDIO_LIB_H_
 
+#include "../common/cs_types.h"
+
 typedef enum
 {
   AUDIO_SYNC_WITH_PTS,
@@ -76,7 +78,6 @@ class cAudio
 		int Stop(void);
 		bool Pause(bool Pcm = true);
 		void SetStreamType(AUDIO_FORMAT type);
-#define AVSYNC_TYPE int
 		void SetSyncMode(AVSYNC_TYPE Mode);
 
 		/* select channels */

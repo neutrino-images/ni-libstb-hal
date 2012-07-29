@@ -54,6 +54,7 @@ class cDemux
 		bool addPid(unsigned short pid);
 		void getSTC(int64_t * STC);
 		int getUnit(void);
+		static bool SetSource(int unit, int source);
 		// TD only functions
 		int getFD(void) { return fd; };		/* needed by cPlayback class */
 		void removePid(unsigned short Pid);	/* needed by cRecord class */

@@ -5,8 +5,11 @@
 #define __CA_LIBTRIPLE_H_
 
 #include <stdint.h>
-/* used in cam_menu.cpp */
-typedef uint32_t u32;
+#include "cs_types.h"
+#include <vector>
+typedef std::vector<u16>			CaIdVector;
+typedef std::vector<u16>::iterator		CaIdVectorIterator;
+typedef std::vector<u16>::const_iterator	CaIdVectorConstIterator;
 
 enum CA_INIT_MASK {
 	CA_INIT_SC	= 1,
@@ -79,8 +82,10 @@ public:
 	uint32_t GetNumberSmartCardSlots(void);
 	static cCA *GetInstance(void);
 	bool SendPMT(int Unit, unsigned char *Data, int Len, CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL);
+	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/) { return true; };
 	bool SendMessage(const CA_MESSAGE *Msg);
 	void SetInitMask(enum CA_INIT_MASK InitMask);
+	int GetCAIDS(CaIdVector & /*Caids*/) { return 0; };
 	bool Start(void);
 	void Stop(void);
 	void Ready(bool Set);
@@ -91,6 +96,7 @@ public:
 	void MenuAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint32_t choice);
 	void InputAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint8_t * Data, int Len);
 	void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
+	void SetTSClock(u32 /*Speed*/) { return; };
 	virtual ~cCA();
 };
 

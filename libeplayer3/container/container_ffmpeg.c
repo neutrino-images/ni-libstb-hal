@@ -102,7 +102,11 @@ static AVFormatContext*   avContext = NULL;
 
 static unsigned char isContainerRunning = 0;
 
+#ifdef MARTII
+long long int latestPts = 0;
+#else
 static long long int latestPts = 0;
+#endif
 
 /* ***************************** */
 /* Prototypes                    */
@@ -324,6 +328,9 @@ static void FFMPEGThread(Context_t *context) {
     off_t lastReverseSeek = 0;     /* max address to read before seek again in reverse play */
     off_t lastSeek = -1;
     long long int lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
+#ifdef MARTII
+    long long int currentDvbsubtitlePts = -1, currentTeletextPts = -1;
+#endif
     int           err = 0, gotlastPts = 0, audioMute = 0;
     AudioVideoOut_t avOut;
 
@@ -482,6 +489,10 @@ if(!context->playback->BackWard && audioMute)
             Track_t * videoTrack = NULL;
             Track_t * audioTrack = NULL;
             Track_t * subtitleTrack = NULL;
+#ifdef MARTII
+            Track_t * dvbsubtitleTrack = NULL;
+            Track_t * teletextTrack = NULL;
+#endif
 
             int index = packet.stream_index;
 
@@ -499,6 +510,13 @@ if(!context->playback->BackWard && audioMute)
 
             if (context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack) < 0)
                 ffmpeg_err("error getting subtitle track\n");
+#ifdef MARTII
+            if (context->manager->dvbsubtitle->Command(context, MANAGER_GET_TRACK, &dvbsubtitleTrack) < 0)
+                ffmpeg_err("error getting dvb subtitle track\n");
+
+            if (context->manager->teletext->Command(context, MANAGER_GET_TRACK, &teletextTrack) < 0)
+                ffmpeg_err("error getting teletext track\n");
+#endif
 
             ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, index);
 
@@ -762,6 +780,54 @@ if(!context->playback->BackWard && audioMute)
                     } /* duration */
                 }
             }
+#ifdef MARTII
+            if (dvbsubtitleTrack != NULL) {
+                if (dvbsubtitleTrack->Id == index) {
+                    currentDvbsubtitlePts = dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, &packet);
+
+                    ffmpeg_printf(200, "DvbSubTitle index = %d\n",index);
+
+                    avOut.data       = packet.data;
+                    avOut.len        = packet.size;
+                    avOut.pts        = pts;
+                    avOut.extradata  = NULL;
+                    avOut.extralen   = 0;
+                    avOut.frameRate  = 0;
+                    avOut.timeScale  = 0;
+                    avOut.width      = 0;
+                    avOut.height     = 0;
+                    avOut.type       = "dvbsubtitle";
+
+                    if (context->output->dvbsubtitle->Write(context, &avOut) < 0)
+                    {
+                        //ffmpeg_err("writing data to dvbsubtitle fifo failed\n");
+                    }
+                }
+            }
+            if (teletextTrack != NULL) {
+                if (teletextTrack->Id == index) {
+                    currentTeletextPts = teletextTrack->pts = pts = calcPts(teletextTrack->stream, &packet);
+
+                    ffmpeg_printf(200, "TeleText index = %d\n",index);
+
+                    avOut.data       = packet.data;
+                    avOut.len        = packet.size;
+                    avOut.pts        = pts;
+                    avOut.extradata  = NULL;
+                    avOut.extralen   = 0;
+                    avOut.frameRate  = 0;
+                    avOut.timeScale  = 0;
+                    avOut.width      = 0;
+                    avOut.height     = 0;
+                    avOut.type       = "teletext";
+
+                    if (context->output->teletext->Write(context, &avOut) < 0)
+                    {
+                        //ffmpeg_err("writing data to teletext fifo failed\n");
+                    }
+                }
+            }
+#endif
 
             if (packet.data)
                av_free_packet(&packet);
@@ -846,8 +912,13 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 
     ffmpeg_printf(20, "find_streaminfo\n");
 
+#if LIBAVCODEC_VERSION_MAJOR < 54
     if (av_find_stream_info(avContext) < 0) {
+        ffmpeg_err("Error avformat_find_stream_info\n");
+#else
+    if (avformat_find_stream_info(avContext, NULL) < 0) {
         ffmpeg_err("Error av_find_stream_info\n");
+#endif
 #ifdef this_is_ok
         /* crow reports that sometimes this returns an error
          * but the file is played back well. so remove this
@@ -1199,6 +1270,17 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 
             if (track.Name)
                 ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name);
+#ifdef MARTII
+	    if (stream->codec->codec_id == CODEC_ID_DVB_TELETEXT && context->manager->teletext) {
+                if (context->manager->teletext->Command(context, MANAGER_ADD, &track) < 0) {
+                    ffmpeg_err("failed to add teletext track %d\n", n);
+                }
+	    } else if (stream->codec->codec_id == CODEC_ID_DVB_SUBTITLE && context->manager->dvbsubtitle) {
+                if (context->manager->dvbsubtitle->Command(context, MANAGER_ADD, &track) < 0) {
+                    ffmpeg_err("failed to add dvbsubtitle track %d\n", n);
+                }
+	    } else
+#endif
 
             if (context->manager->subtitle)
                 if (context->manager->subtitle->Command(context, MANAGER_ADD, &track) < 0) {
@@ -1693,6 +1775,17 @@ static int container_ffmpeg_swich_subtitle(Context_t* context, int* arg)
     /* Hellmaster1024: nothing to do here!*/
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
+#ifdef MARTII
+static int container_ffmpeg_switch_dvbsubtitle(Context_t* context, int* arg)
+{
+    return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+static int container_ffmpeg_switch_teletext(Context_t* context, int* arg)
+{
+    return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+#endif
 
 /* konfetti comment: I dont like the mechanism of overwriting
  * the pointer in infostring. This lead in most cases to
@@ -1822,6 +1915,16 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
         *((long long int*)argument) = latestPts;
         break;
     }
+#ifdef MARTII
+    case CONTAINER_SWITCH_DVBSUBTITLE: {
+        ret = container_ffmpeg_switch_dvbsubtitle(context, (int*) argument);
+        break;
+    }
+    case CONTAINER_SWITCH_TELETEXT: {
+        ret = container_ffmpeg_switch_teletext(context, (int*) argument);
+        break;
+    }
+#endif
     default:
         ffmpeg_err("ContainerCmd %d not supported!\n", command);
         ret = cERR_CONTAINER_FFMPEG_ERR;

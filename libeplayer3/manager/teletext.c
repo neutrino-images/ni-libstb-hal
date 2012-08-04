@@ -1,5 +1,6 @@
+#ifdef MARTII
 /*
- * audio manager handling.
+ * teletext manager handling.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MARTII
 #include <libavformat/avformat.h>
-#endif
 #include "manager.h"
 #include "common.h"
 
@@ -35,27 +34,27 @@
 /* ***************************** */
 #define TRACKWRAP 20
 
-#define AUDIO_MGR_DEBUG
+#define TELETEXT_MGR_DEBUG
 
-#ifdef AUDIO_MGR_DEBUG
+#ifdef TELETEXT_MGR_DEBUG
 
 static short debug_level = 0;
 
-#define audio_mgr_printf(level, x...) do { \
+#define teletext_mgr_printf(level, x...) do { \
 if (debug_level >= level) printf(x); } while (0)
 #else
-#define audio_mgr_printf(level, x...)
+#define teletext_mgr_printf(level, x...)
 #endif
 
-#ifndef AUDIO_MGR_SILENT
-#define audio_mgr_err(x...) do { printf(x); } while (0)
+#ifndef TELETEXT_MGR_SILENT
+#define teletext_mgr_err(x...) do { printf(x); } while (0)
 #else
-#define audio_mgr_err(x...)
+#define teletext_mgr_err(x...)
 #endif
 
 /* Error Constants */
-#define cERR_AUDIO_MGR_NO_ERROR        0
-#define cERR_AUDIO_MGR_ERROR          -1
+#define cERR_TELETEXT_MGR_NO_ERROR        0
+#define cERR_TELETEXT_MGR_ERROR          -1
 
 static const char FILENAME[] = __FILE__;
 
@@ -69,7 +68,7 @@ static const char FILENAME[] = __FILE__;
 
 static Track_t * Tracks;
 static int TrackCount = 0;
-static int CurrentTrack = 0; //TRACK[0] as default.
+static int CurrentTrack = -1;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -81,7 +80,7 @@ static int CurrentTrack = 0; //TRACK[0] as default.
 
 static int ManagerAdd(Context_t  *context, Track_t track) {
 
-    audio_mgr_printf(10, "%s::%s name=\"%s\" encoding=\"%s\" id=%d\n", FILENAME, __FUNCTION__, track.Name, track.Encoding, track.Id);
+    teletext_mgr_printf(10, "%s::%s name=\"%s\" encoding=\"%s\" id=%d\n", FILENAME, __FUNCTION__, track.Name, track.Encoding, track.Id);
 
     if (Tracks == NULL) {
         Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
@@ -89,31 +88,31 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
 
     if (Tracks == NULL)
     {
-        audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
-        return cERR_AUDIO_MGR_ERROR;
+        teletext_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+        return cERR_TELETEXT_MGR_ERROR;
     }
 
     if (TrackCount < TRACKWRAP) {
         copyTrack(&Tracks[TrackCount], &track);
         TrackCount++;
     } else {
-        audio_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
-        return cERR_AUDIO_MGR_ERROR;
+        teletext_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
+        return cERR_TELETEXT_MGR_ERROR;
     }
 
     if (TrackCount > 0)
-        context->playback->isAudio = 1;
+        context->playback->isTeletext = 1;
 
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+    teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
-    return cERR_AUDIO_MGR_NO_ERROR;
+    return cERR_TELETEXT_MGR_NO_ERROR;
 }
 
 static char ** ManagerList(Context_t  *context) {
     int i = 0, j = 0;
     char ** tracklist = NULL;
 
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+    teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     if (Tracks != NULL) {
 
@@ -121,7 +120,7 @@ static char ** ManagerList(Context_t  *context) {
 
         if (tracklist == NULL)
         {
-            audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+            teletext_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
             return NULL;
         }
 
@@ -132,7 +131,7 @@ static char ** ManagerList(Context_t  *context) {
         tracklist[j] = NULL;
     }
 
-    audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
+    teletext_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
 
     return tracklist;
 }
@@ -141,7 +140,7 @@ static int ManagerDel(Context_t * context) {
 
     int i = 0;
 
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+    teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     if(Tracks != NULL) {
         for (i = 0; i < TrackCount; i++) {
@@ -151,25 +150,25 @@ static int ManagerDel(Context_t * context) {
         Tracks = NULL;
     } else
     {
-        audio_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
-        return cERR_AUDIO_MGR_ERROR;
+        teletext_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
+        return cERR_TELETEXT_MGR_ERROR;
     }
 
     TrackCount = 0;
-    CurrentTrack = 0;
-    context->playback->isAudio = 0;
+    CurrentTrack = -1;
+    context->playback->isTeletext = 0;
 
-    audio_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
+    teletext_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
 
-    return cERR_AUDIO_MGR_NO_ERROR;
+    return cERR_TELETEXT_MGR_NO_ERROR;
 }
 
 
 static int Command(void  *_context, ManagerCmd_t command, void * argument) {
     Context_t  *context = (Context_t*) _context;
-    int ret = cERR_AUDIO_MGR_NO_ERROR;
+    int ret = cERR_TELETEXT_MGR_NO_ERROR;
 
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+    teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     switch(command) {
     case MANAGER_ADD: {
@@ -183,7 +182,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     case MANAGER_GET: {
-        audio_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
+        teletext_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
 
         if ((TrackCount > 0) && (CurrentTrack >=0))
             *((int*)argument) = (int)Tracks[CurrentTrack].Id;
@@ -192,7 +191,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     case MANAGER_GET_TRACK: {
-        audio_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
+        teletext_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
 
         if ((TrackCount > 0) && (CurrentTrack >=0))
             *((Track_t**)argument) = (Track_t*) &Tracks[CurrentTrack];
@@ -217,25 +216,22 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
     case MANAGER_SET: {
         int id = *((int*)argument);
 
-#ifdef MARTII
-	// What's the argument supposed to be? apid or local index? --martii
+        teletext_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, id);
 
 	if (id >= TrackCount) {
-		int apid = id;
+		int mypid = id;
 		for (id = 0; id < TrackCount; id++) {
-			if (((AVStream *) (Tracks[id].stream))->id == apid)
+			if (((AVStream *) (Tracks[id].stream))->id == mypid)
 				break;
 		}
 	}
-#endif
-        audio_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, id);
 
         if (id < TrackCount)
             CurrentTrack = id;
         else
         {
-            audio_mgr_err("%s::%s track id out of range (%d - %d)\n", FILENAME, __FUNCTION__, id, TrackCount);
-            ret = cERR_AUDIO_MGR_ERROR;
+            teletext_mgr_err("%s::%s track id out of range (%d - %d)\n", FILENAME, __FUNCTION__, id, TrackCount);
+            ret = cERR_TELETEXT_MGR_ERROR;
         }
         break;
     }
@@ -244,19 +240,20 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     default:
-        audio_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
-        ret = cERR_AUDIO_MGR_ERROR;
+        teletext_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
+        ret = cERR_TELETEXT_MGR_ERROR;
         break;
     }
 
-    audio_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__,ret);
+    teletext_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__,ret);
 
     return ret;
 }
 
 
-struct Manager_s AudioManager = {
-    "Audio",
+struct Manager_s TeletextManager = {
+    "Teletext",
     &Command,
     NULL
 };
+#endif

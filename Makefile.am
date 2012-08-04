@@ -67,6 +67,9 @@ libstb_hal_a_LIBADD += \
 	libeplayer3/manager.o \
 	libeplayer3/subtitle.o \
 	libeplayer3/video.o \
+	libeplayer3/output_pipe.o \
+	libeplayer3/dvbsubtitle.o \
+	libeplayer3/teletext.o \
 	libeplayer3/output_subtitle.o \
 	libeplayer3/linuxdvb.o \
 	libeplayer3/output.o \

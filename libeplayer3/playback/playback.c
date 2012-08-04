@@ -331,6 +331,10 @@ static int PlaybackClose(Context_t  *context) {
     context->manager->audio->Command(context, MANAGER_DEL, NULL);
     context->manager->video->Command(context, MANAGER_DEL, NULL);
     context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
+#ifdef MARTII
+    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
+    context->manager->teletext->Command(context, MANAGER_DEL, NULL);
+#endif
 
     context->playback->isPaused     = 0;
     context->playback->isPlaying    = 0;
@@ -938,6 +942,61 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
 
     return ret;
 }
+#ifdef MARTII
+static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* track) {
+    int ret = cERR_PLAYBACK_NO_ERROR;
+
+    playback_printf(10, "Track: %d\n", *track);
+
+    if (context && context->playback && context->playback->isPlaying ) {
+        if (context->manager && context->manager->dvbsubtitle) {
+            if (context->manager->dvbsubtitle->Command(context, MANAGER_SET, track) < 0)
+            {
+                playback_err("manager set track failed\n");
+            }
+        } else
+        {
+            ret = cERR_PLAYBACK_ERROR;
+            playback_err("no dvbsubtitle\n");
+        }
+    } else
+    {
+        playback_err("not possible\n");
+        ret = cERR_PLAYBACK_ERROR;
+    }
+
+    playback_printf(10, "exiting with value %d\n", ret);
+
+    return ret;
+}
+
+static int PlaybackSwitchTeletext(Context_t  *context, int* track) {
+    int ret = cERR_PLAYBACK_NO_ERROR;
+
+    playback_printf(10, "Track: %d\n", *track);
+
+    if (context && context->playback && context->playback->isPlaying ) {
+        if (context->manager && context->manager->teletext) {
+            if (context->manager->teletext->Command(context, MANAGER_SET, track) < 0)
+            {
+                playback_err("manager set track failed\n");
+            }
+        } else
+        {
+            ret = cERR_PLAYBACK_ERROR;
+            playback_err("no dvbsubtitle\n");
+        }
+    } else
+    {
+        playback_err("not possible\n");
+        ret = cERR_PLAYBACK_ERROR;
+    }
+
+    playback_printf(10, "exiting with value %d\n", ret);
+
+    return ret;
+}
+#endif
 
 static int PlaybackInfo(Context_t  *context, char** infoString) {
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -1044,6 +1103,16 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
         ret = PlaybackGetFrameCount(context, (unsigned long long int*)argument);
         break;
     }
+#ifdef MARTII
+    case PLAYBACK_SWITCH_DVBSUBTITLE: {
+        ret = PlaybackSwitchDVBSubtitle(context, (int*)argument);
+	break;
+    }
+    case PLAYBACK_SWITCH_TELETEXT: {
+        ret = PlaybackSwitchTeletext(context, (int*)argument);
+	break;
+    }
+#endif
     default:
         playback_err("PlaybackCmd %d not supported!\n", command);
         ret = cERR_PLAYBACK_ERROR;
@@ -1074,6 +1143,10 @@ PlaybackHandler_t PlaybackHandler = {
     0,
     0,
     0,
+#ifdef MARTII
+    0,
+    0,
+#endif
     &Command,
     "",
     0

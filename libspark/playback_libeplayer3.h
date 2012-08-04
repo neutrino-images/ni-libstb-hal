@@ -15,6 +15,10 @@ class cPlayback
 		bool playing;
 		int nPlaybackSpeed;
 		int mAudioStream;
+#ifdef MARTII
+		int mDvbsubtitleStream;
+		int mTeletextStream;
+#endif
 		bool Stop(void);
 	public:
 		cPlayback(int num = 0);
@@ -25,11 +29,21 @@ class cPlayback
 		bool Start(char *filename, unsigned short vpid, int vtype, unsigned short apid,
 			   int ac3, unsigned int duration);
 		bool SetAPid(unsigned short pid, bool ac3);
+#ifdef MARTII
+		bool SetDvbsubtitlePid(unsigned short pid);
+		bool SetTeletextPid(unsigned short pid);
+		unsigned short GetAPid(void) { return mAudioStream; }
+		unsigned short GetDvbsubtitlePid(void) { return mDvbsubtitleStream; }
+		unsigned short GetTeletextPid(void) { return mTeletextStream; }
+#endif
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;
 		bool GetPosition(int &position, int &duration);
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
+#ifdef MARTII
+		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
+#endif
 #if 0
 		// Functions that are not used by movieplayer.cpp:
 		bool GetOffset(off64_t &offset);

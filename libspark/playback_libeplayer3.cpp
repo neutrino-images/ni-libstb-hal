@@ -58,7 +58,11 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->container	= &ContainerHandler;
 		player->manager		= &ManagerHandler;
 
+#ifdef MARTII
+		fprintf(stderr, "player output name: %s\n", player->output->Name);
+#else
 		printf("%s\n", player->output->Name);
+#endif
 	}
 
 	//Registration of output devices
@@ -66,6 +70,10 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
 		player->output->Command(player,OUTPUT_ADD, (void*)"video");
 		player->output->Command(player,OUTPUT_ADD, (void*)"subtitle");
+#ifdef MARTII
+		player->output->Command(player,OUTPUT_ADD, (void*)"dvbsubtitle");
+		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
+#endif
 	}
 
 	return 0;
@@ -98,6 +106,10 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	init_jump = -1;
 	//create playback path
 	mAudioStream=0;
+#ifdef MARTII
+	mDvbsubtitleStream=-1;
+	mTeletextStream=0;
+#endif
 	char file[400] = {""};
 
 	if(!strncmp("http://", filename, 7))
@@ -220,6 +232,10 @@ bool cPlayback::Stop(void)
 		player->output->Command(player,OUTPUT_DEL, (void*)"audio");
 		player->output->Command(player,OUTPUT_DEL, (void*)"video");
 		player->output->Command(player,OUTPUT_DEL, (void*)"subtitle");
+#ifdef MARTII
+		player->output->Command(player,OUTPUT_DEL, (void*)"dvbsubtitle");
+		player->output->Command(player,OUTPUT_DEL, (void*)"teletext");
+#endif
 	}
 
 	if(player && player->playback)
@@ -233,7 +249,11 @@ bool cPlayback::Stop(void)
 	return true;
 }
 
+#ifdef MARTII
+bool cPlayback::SetAPid(unsigned short pid, bool ac3 __attribute__((unused)))
+#else
 bool cPlayback::SetAPid(unsigned short pid, bool ac3)
+#endif
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	int i=pid;
@@ -244,6 +264,30 @@ bool cPlayback::SetAPid(unsigned short pid, bool ac3)
 	}
 	return true;
 }
+#ifdef MARTII
+bool cPlayback::SetDvbsubtitlePid(unsigned short pid)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int i=pid;
+	if(pid!=mDvbsubtitleStream){
+		if(player && player->playback)
+				player->playback->Command(player, PLAYBACK_SWITCH_DVBSUBTITLE, (void*)&i);
+		mDvbsubtitleStream=pid;
+	}
+	return true;
+}
+bool cPlayback::SetTeletextPid(unsigned short pid)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int i=pid;
+	if(pid!=mTeletextStream){
+		if(player && player->playback)
+				player->playback->Command(player, PLAYBACK_SWITCH_TELETEXT, (void*)&i);
+		mTeletextStream=pid;
+	}
+	return true;
+}
+#endif
 
 bool cPlayback::SetSpeed(int speed)
 {
@@ -460,6 +504,30 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 		}
 	}
 }
+#ifdef MARTII
+void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	if(player && player->manager && player->manager->dvbsubtitle) {
+		char ** TrackList = NULL;
+		player->manager->dvbsubtitle->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL) {
+			printf("DvbsubtitleTrack List\n");
+			int i = 0,j=0;
+			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				pids[j]=j;
+				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
+				language[j]=TrackList[i];
+				free(TrackList[i]);
+				free(TrackList[i+1]);
+			}
+			free(TrackList);
+			*numpids=j;
+		}
+	}
+}
+#endif
 
 //
 cPlayback::cPlayback(int num)

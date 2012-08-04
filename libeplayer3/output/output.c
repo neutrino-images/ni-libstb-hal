@@ -37,8 +37,13 @@
 
 static short debug_level = 0;
 
+#ifdef MARTII
+#define output_printf(level, x...) do { \
+if (debug_level >= level) fprintf(stderr, x); } while (0)
+#else
 #define output_printf(level, x...) do { \
 if (debug_level >= level) printf(x); } while (0)
+#endif
 #else
 #define output_printf(level, x...)
 #endif
@@ -97,6 +102,30 @@ static void OutputAdd(Context_t  *context, char * port) {
 
     for (i = 0; AvailableOutput[i] != NULL; i++)
         for (j = 0; AvailableOutput[i]->Capabilities[j] != NULL; j++)
+#ifdef MARTII
+            if (!strcmp(AvailableOutput[i]->Capabilities[j], port)) {
+                if (!strcmp("audio", port)) {
+                    context->output->audio = AvailableOutput[i];
+		    return;
+		}
+                if (!strcmp("video", port)) {
+                    context->output->video = AvailableOutput[i];
+		    return;
+		}
+                if (!strcmp("subtitle", port)) {
+                    context->output->subtitle = AvailableOutput[i];
+		    return;
+		}
+                if (!strcmp("dvbsubtitle", port)) {
+                    context->output->dvbsubtitle = AvailableOutput[i];
+		    return;
+		}
+                if (!strcmp("teletext", port)) {
+                    context->output->teletext = AvailableOutput[i];
+		    return;
+		}
+            }
+#else
             if (!strcmp(AvailableOutput[i]->Capabilities[j], port)) {
                 if (!strcmp("audio", port))
                     context->output->audio = AvailableOutput[i];
@@ -106,6 +135,7 @@ static void OutputAdd(Context_t  *context, char * port) {
                     context->output->subtitle = AvailableOutput[i];
                 break;
             }
+#endif
 }
 
 static void OutputDel(Context_t  *context, char * port) {
@@ -117,6 +147,12 @@ static void OutputDel(Context_t  *context, char * port) {
         context->output->video = NULL;
     else if (!strcmp("subtitle", port))
         context->output->subtitle = NULL;
+#ifdef MARTII
+    else if (!strcmp("dvbsubtitle", port))
+        context->output->dvbsubtitle = NULL;
+    else if (!strcmp("teletext", port))
+        context->output->teletext = NULL;
+#endif
 
 }
 
@@ -135,6 +171,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 ret |= context->output->audio->Command(context, OUTPUT_OPEN, "audio");
             if (context->playback->isSubtitle)
                 ret |= context->output->subtitle->Command(context, OUTPUT_OPEN, "subtitle");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -147,6 +189,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 ret |= context->output->audio->Command(context, OUTPUT_CLOSE, "audio");
             if (context->playback->isSubtitle)
                 ret |= context->output->subtitle->Command(context, OUTPUT_CLOSE, "subtitle");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -176,6 +224,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                     if (context->playback->isSubtitle)
                         ret = context->output->subtitle->Command(context, OUTPUT_PLAY, "subtitle");
                 }
+#ifdef MARTII
+		if (context->playback->isDvbSubtitle)
+                    ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+		if (context->playback->isTeletext)
+		    ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
             }
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
@@ -189,6 +243,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 ret |= context->output->audio->Command(context, OUTPUT_STOP, "audio");
             if (context->playback->isSubtitle)
                 ret |= context->output->subtitle->Command(context, OUTPUT_STOP, "subtitle");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -247,6 +307,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 ret |= context->output->audio->Command(context, OUTPUT_CONTINUE, "audio");
             //if (context->playback->isSubtitle)
             //	ret |= context->output->subtitle->Command(context, OUTPUT_CONTINUE, "subtitle");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -267,6 +333,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 ret |= context->output->audio->Command(context, OUTPUT_CLEAR, "audio");
             //if (context->playback->isSubtitle && (argument == NULL || *(char *) argument == 's'))
             //	ret |= context->output->subtitle->Command(context, OUTPUT_CLEAR, "subtitle");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -289,6 +361,12 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
                 return context->output->audio->Command(context, OUTPUT_SWITCH, "audio");
             if (context->playback->isVideo)
                 return context->output->video->Command(context, OUTPUT_SWITCH, "video");
+#ifdef MARTII
+            if (context->playback->isDvbSubtitle)
+                ret |= context->output->dvbsubtitle->Command(context, command, "dvbsubtitle");
+            if (context->playback->isTeletext)
+                ret |= context->output->teletext->Command(context, command, "teletext");
+#endif
         } else
             ret = cERR_OUTPUT_INTERNAL_ERROR;
         break;
@@ -349,5 +427,9 @@ OutputHandler_t OutputHandler = {
     NULL,
     NULL,
     NULL,
+#ifdef MARTII
+    NULL, // dvbsubtitle
+    NULL, // teletext
+#endif
     &Command
 };

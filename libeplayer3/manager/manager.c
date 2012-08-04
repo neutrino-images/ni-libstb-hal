@@ -40,12 +40,20 @@
 extern Manager_t AudioManager;
 extern Manager_t VideoManager;
 extern Manager_t SubtitleManager;
+#ifdef MARTII
+extern Manager_t DvbSubtitleManager;
+extern Manager_t TeletextManager;
+#endif
 
 ManagerHandler_t ManagerHandler = {
     "ManagerHandler",
     &AudioManager,
     &VideoManager,
     &SubtitleManager
+#ifdef MARTII
+  , &DvbSubtitleManager
+  , &TeletextManager
+#endif
 };
 
 /* ***************************** */

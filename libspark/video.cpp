@@ -439,7 +439,11 @@ void cVideo::ShowPicture(const char * fname)
 		ioctl(fd, VIDEO_PLAY);
 		ioctl(fd, VIDEO_CONTINUE);
 		ioctl(fd, VIDEO_CLEAR_BUFFER);
+#ifdef MARTII
+		while ((pos + 4) <= st.st_size && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
+#else
 		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
+#endif
 			++pos;
 
 		if ((iframe[3] >> 4) != 0xE) // no pes header

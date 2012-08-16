@@ -4,7 +4,7 @@
 #include <hardware/vid/vid_inf.h>
 #define video_format_t          vidDispSize_t
 //#define video_displayformat_t   vidDispMode_t
-
+#include "../common/cs_types.h"
 
 typedef enum {
 	ANALOG_SD_RGB_SCART = 0x00,
@@ -165,7 +165,6 @@ class cVideo
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
-#define AVSYNC_TYPE int
 		void SetSyncMode(AVSYNC_TYPE mode);
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };

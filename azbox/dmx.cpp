@@ -18,6 +18,7 @@ extern cVideo *videoDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_DEMUX, this, args)
+#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_DEMUX, NULL, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
 	uint16_t _pid = (uint16_t)-1; uint16_t _f = 0;\
@@ -491,4 +492,10 @@ int cDemux::getUnit(void)
 	   right now this is only used by the CA code which is stubbed out
 	   anyway */
 	return num;
+}
+
+bool cDemux::SetSource(int unit, int source)
+{
+	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
+	return true;
 }

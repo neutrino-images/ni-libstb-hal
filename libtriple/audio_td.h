@@ -4,6 +4,7 @@
 #define _AUDIO_TD_H_
 
 #include <hardware/aud/aud_inf.h>
+#include "../common/cs_types.h"
 
 typedef enum
 {
@@ -78,7 +79,6 @@ class cAudio
 		int Stop(void);
 		bool Pause(bool Pcm = true);
 		void SetStreamType(AUDIO_FORMAT type);
-#define AVSYNC_TYPE int
 		void SetSyncMode(AVSYNC_TYPE Mode);
 
 		/* select channels */

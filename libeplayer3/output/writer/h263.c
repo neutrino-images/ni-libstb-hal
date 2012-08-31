@@ -37,6 +37,9 @@
 #include <asm/types.h>
 #include <pthread.h>
 #include <errno.h>
+#ifdef MARTII
+#include <sys/uio.h>
+#endif
 
 #include "common.h"
 #include "output.h"
@@ -92,7 +95,9 @@ static int writeData(void* _call)
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+#ifndef MARTII
     unsigned char DataCopy[PES_MAX_HEADER_SIZE];
+#endif
     int len = 0;
 
     h263_printf(10, "\n");
@@ -130,6 +135,14 @@ static int writeData(void* _call)
 
     HeaderLength                           += PrivateHeaderLength;
 
+#ifdef MARTII
+    struct iovec iov[2];
+    iov[0].iov_base = PesHeader;
+    iov[0].iov_len = HeaderLength;
+    iov[1].iov_base = call->data;
+    iov[1].iov_len = call->len;
+    len = writev(call->fd, iov, 2);
+#else
     unsigned char *PacketData = call->data - HeaderLength;
 
     memcpy(DataCopy, PacketData, HeaderLength);
@@ -138,6 +151,7 @@ static int writeData(void* _call)
     len = write(call->fd, PacketData, call->len + HeaderLength);
 
     memcpy(PacketData, DataCopy, HeaderLength);
+#endif
 
     h263_printf(10, "< len %d\n", len);
     return len;

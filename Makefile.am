@@ -43,9 +43,11 @@ libstb_hal_a_LIBADD += \
 	azbox/video.o
 endif
 if BOXTYPE_SPARK
+libstb_hal_test_LDADD += -lasound
 SUBDIRS += libspark libeplayer3
 libstb_hal_a_LIBADD += \
 	libspark/audio.o \
+	libspark/audio_mixer.o \
 	libspark/dmx.o \
 	libspark/init.o \
 	libspark/irmp.o \

@@ -5,7 +5,7 @@ INCLUDES = \
 noinst_LIBRARIES = libspark.a
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
-AM_LDFLAGS = -lpthread
+AM_LDFLAGS = -lpthread -lasound
 
 libspark_a_SOURCES = \
 	irmp.c \
@@ -13,6 +13,7 @@ libspark_a_SOURCES = \
 	dmx.cpp \
 	video.cpp \
 	audio.cpp \
+	audio_mixer.cpp \
 	init.cpp \
 	playback_libeplayer3.cpp \
 	pwrmngr.cpp \

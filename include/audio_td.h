@@ -3,6 +3,9 @@
 #include "../libtriple/audio_td.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/audio_lib.h"
+#ifdef MARTII
+#include "../libspark/audio_mixer.h"
+#endif
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/audio_lib.h"
 #else

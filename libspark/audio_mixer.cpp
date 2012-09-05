@@ -66,5 +66,5 @@ bool mixerVolume::setVolume(long volume) {
 	return elem
 		&& (volume > -1)
 		&& (volume < 101)
-		&& !snd_mixer_selem_set_playback_volume_all(elem, min + volume * (max - min)/101);
+		&& !snd_mixer_selem_set_playback_volume_all(elem, min + volume * (max - min)/100);
 }

@@ -38,6 +38,7 @@ void usage()
 {
 	printf("usage spark_fp <option>\n");
 	printf("\t-g: get wakeup reason (return code == reason)\n");
+	printf("\t-T: get FP display type (1 = VFD, 2 = LCD, 4 = LED, 8 = LBD)\n");
 	printf("\t-t: get current FP time\n");
 	printf("\t-s <time>: set FP time (time = 0: use current time)\n");
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
-	while ((c = getopt (argc, argv, "gs:tw:")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:T")) != -1)
 	{
 		switch (c)
 		{
@@ -218,6 +219,16 @@ int main(int argc, char **argv)
 					perror("ioctl VFDSTANDBY");
 				 */
 				sleep(2); /* not reached... */
+				break;
+			case 'T':
+				ret = ioctl(fd, VFDGETVERSION, &val);
+				if (ret < 0)
+					perror("ioctl VFDGETVERSION");
+				else
+				{
+					printf("%d\n", val);
+					ret = val;
+				}
 				break;
 			default:
 				usage();

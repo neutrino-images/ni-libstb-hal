@@ -24,6 +24,7 @@ SUBDIRS += libtriple
 libstb_hal_a_LIBADD += \
 	libtriple/audio_td.o \
 	libtriple/dmx_td.o \
+	libtriple/hardware_caps.o \
 	libtriple/init_td.o \
 	libtriple/lt_dfbinput.o \
 	libtriple/playback_td.o \
@@ -36,6 +37,7 @@ SUBDIRS += azbox
 libstb_hal_a_LIBADD += \
 	azbox/audio.o \
 	azbox/dmx.o \
+	azbox/hardware_caps.o \
 	azbox/init.o \
 	azbox/playback.o \
 	azbox/pwrmngr.o \
@@ -47,6 +49,7 @@ SUBDIRS += libspark libeplayer3
 libstb_hal_a_LIBADD += \
 	libspark/audio.o \
 	libspark/dmx.o \
+	libspark/hardware_caps.o \
 	libspark/init.o \
 	libspark/irmp.o \
 	libspark/lirmp_input.o \

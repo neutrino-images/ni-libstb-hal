@@ -7,6 +7,7 @@ noinst_LIBRARIES = libtriple.a
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 libtriple_a_SOURCES = \
+	hardware_caps.c \
 	lt_dfbinput.cpp \
 	dmx_td.cpp \
 	video_td.cpp \

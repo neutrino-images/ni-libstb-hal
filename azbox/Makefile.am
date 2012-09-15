@@ -8,6 +8,7 @@ AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = -lpthread
 
 libdummy_a_SOURCES = \
+	hardware_caps.c \
 	dmx.cpp \
 	video.cpp \
 	audio.cpp \

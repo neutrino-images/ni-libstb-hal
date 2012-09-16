@@ -13,8 +13,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <aotom_main.h>
+
 #include <hardware_caps.h>
 
+#define FP_DEV "/dev/vfd"
 static int initialized = 0;
 static hw_caps_t caps;
 
@@ -33,7 +37,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxvendor, "SPARK");
 	const char *tmp;
 	char buf[1024];
-	int len = -1;
+	int len = -1, ret, val;
 	int fd = open("/proc/cmdline", O_RDONLY);
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
@@ -71,6 +75,17 @@ hw_caps_t *get_hwcaps(void)
 		} else
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
+	}
+	fd = open (FP_DEV, O_RDWR);
+	if (fd != -1) {
+		ret = ioctl(fd, VFDGETVERSION, &val);
+		if (ret < 0)
+			fprintf(stderr, "[hardware_caps] %s: VFDGETVERSION %m\n", __func__);
+		else if (val == 1) { /* VFD, others not yet seen in the wild */
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 8;
+		}
+		close(fd);
 	}
 	return &caps;
 }

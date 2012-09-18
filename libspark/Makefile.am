@@ -9,6 +9,7 @@ AM_LDFLAGS = -lpthread -lasound
 
 libspark_a_SOURCES = \
 	irmp.c \
+	hardware_caps.c \
 	lirmp_input.cpp \
 	dmx.cpp \
 	video.cpp \

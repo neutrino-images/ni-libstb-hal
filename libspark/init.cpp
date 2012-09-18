@@ -37,8 +37,8 @@ typedef struct {
 	const char *name;
 	const char *desc;
 	int fd;
-	int major;
-	int minor;
+	unsigned int major;
+	unsigned int minor;
 	time_t next_discovery;
 } input_device_t;
 
@@ -59,7 +59,7 @@ static input_device_t input_device[] = {
 
 static int number_of_input_devices = 0;
 
-static int do_mknod(int i, char *d_name) {
+static void do_mknod(int i, char *d_name) {
 	char name[255];
 	int dev = -1;
 	// I've no idea how the event device number is actually calculated. Just loop.  --martii
@@ -150,6 +150,26 @@ static void open_input_devices(void) {
 			input_device[i].next_discovery = now + 60;
 			input_device[i].fd = open(input_device[i].name, O_RDWR | O_NONBLOCK);
 		}
+}
+
+static void reopen_input_devices(void) {
+	create_input_devices();
+	time_t now = time(NULL);
+	for (int i = 0; i < number_of_input_devices; i++) {
+		input_device[i].next_discovery = now + 60;
+		int fd = open(input_device[i].name, O_RDWR | O_NONBLOCK);
+		if (fd > -1) {
+			if (input_device[i].fd > -1) {
+				dup2(fd, input_device[i].fd);
+				close (fd);
+			} else {
+				input_device[i].fd = fd;
+			}
+		} else if (input_device[i].fd > -1) {
+			close (input_device[i].fd);
+			input_device[i].fd = -1;
+		}
+	}
 }
 
 static void close_input_devices(void) {
@@ -267,6 +287,10 @@ void init_td_api()
 		start_inmux_thread();
 #endif
 	}
+#ifdef MARTII
+	else
+		reopen_input_devices();
+#endif
 	initialized = true;
 	lt_info("%s end\n", __FUNCTION__);
 }

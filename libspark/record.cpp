@@ -26,16 +26,17 @@ void *execute_record_thread(void *c)
 }
 
 #ifdef MARTII
-cRecord::cRecord(int /*num*/, int bs_dmx, int bs)
+cRecord::cRecord(int num, int bs_dmx, int bs)
 #else
-cRecord::cRecord(int /*num*/)
+cRecord::cRecord(int num)
 #endif
 {
-	lt_info("%s\n", __func__);
+	lt_info("%s %d\n", __func__, num);
 	dmx = NULL;
 	record_thread_running = false;
 	file_fd = -1;
 	exit_flag = RECORD_STOPPED;
+	dmx_num = num;
 #ifdef MARTII
 	bufsize = bs;
 	bufsize_dmx = bs_dmx;
@@ -72,7 +73,7 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short * apids, int num
 	int i;
 
 	if (!dmx)
-		dmx = new cDemux(1);
+		dmx = new cDemux(dmx_num);
 
 #ifdef MARTII
 	dmx->Open(DMX_TP_CHANNEL, NULL, bufsize_dmx);

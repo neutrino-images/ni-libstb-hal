@@ -17,6 +17,7 @@ class cRecord
 {
 	private:
 		int file_fd;
+		int dmx_num;
 		cDemux *dmx;
 		pthread_t record_thread;
 		bool record_thread_running;

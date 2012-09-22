@@ -1,3 +1,52 @@
+/*
+ * cDemux implementation for SH4 receivers (tested on fulan spark and
+ * fulan spark7162 hardware
+ *
+ * derived from libtriple/dmx_td.cpp
+ *
+ * (C) 2010-2012 Stefan Seyfried
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ */
+
+/*
+ * Theory of operation (or "why is this dmx_source thing so strange and
+ * what is the _open() good for?")
+ *
+ * the sh4 pti driver, driving the /dev/dvb/adapter0/dmxN devices, can
+ * apparently only map one input to on demux device at a time, so e.g.
+ * 	DMX_SOURCE_FRONT1 -> demux0
+ * 	DMX_SOURCE_FRONT2 -> demux0
+ * 	DMX_SOURCE_FRONT1 -> demux1
+ * does not work. The driver makes sure that a one-to-one mapping of
+ * DMX_SOURCE_FRONTn to demuxM is maintained, and it does by e.g changing
+ * the default of
+ * 	FRONT0 -> demux0
+ * 	FRONT1 -> demux1
+ * 	FRONT2 -> demux2
+ * to
+ * 	FRONT1 -> demux0
+ * 	FRONT0 -> demux1
+ * 	FRONT2 -> demux2
+ * if you do a DMX_SET_SOURCE(FRONT1) ioctl on demux0.
+ * This means, it also changes demux1's source on the SET_SOURCE ioctl on
+ * demux0, potentially disturbing any operation on demux1 (e.g. recording).
+ *
+ * In order to avoid this, I do not change the source->demuxdev mapping
+ * but instead just always use the demux device that is attached to the
+ * correct source.
+ *
+ * The tricky part is, that the source might actually be changed after
+ * Open() has been called, so Open() gets a dummy placeholder that just
+ * sets some variables while the real device open is put into _open().
+ * _open() gets called later, whenever the device is actually used or
+ * configured and -- if the source has changed -- closes the old and
+ * opens the correct new device node.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -49,12 +98,21 @@ static const char *DMX_T[] = {
 	"DMX_PCR"
 };
 
-/* map the device numbers. for now only demux0 is used */
-static const char *devname[] = {
+/* this is the number of different cDemux() units, not the number of
+ * /dev/dvb/.../demuxX devices! */
+#define NUM_DEMUX 4
+/* the current source of each cDemux unit */
+static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
+
+/* map the device numbers. */
+#define NUM_DEMUXDEV 3
+static const char *devname[NUM_DEMUXDEV] = {
 	"/dev/dvb/adapter0/demux0",
-	"/dev/dvb/adapter0/demux0",
-	"/dev/dvb/adapter0/demux0"
+	"/dev/dvb/adapter0/demux1",
+	"/dev/dvb/adapter0/demux2"
 };
+/* did we already DMX_SET_SOURCE on that demux device? */
+static bool init[NUM_DEMUXDEV] = { false, false, false };
 
 /* uuuugly */
 static int dmx_tp_count = 0;
@@ -62,7 +120,7 @@ static int dmx_tp_count = 0;
 
 cDemux::cDemux(int n)
 {
-	if (n < 0 || n > 2)
+	if (n < 0 || n >= NUM_DEMUX)
 	{
 		lt_info("%s ERROR: n invalid (%d)\n", __FUNCTION__, n);
 		num = 0;
@@ -73,6 +131,7 @@ cDemux::cDemux(int n)
 	measure = false;
 	last_measure = 0;
 	last_data = 0;
+	last_source = -1;
 }
 
 cDemux::~cDemux()
@@ -95,73 +154,66 @@ cDemux::~cDemux()
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
-	int devnum = num;
-	int flags = O_RDWR;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
-	if (pes_type != DMX_PSI_CHANNEL)
-		flags |= O_NONBLOCK;
-#if 0
-	if (pes_type == DMX_TP_CHANNEL)
-	{
-		if (num == 0) /* streaminfo measurement, let's cheat... */
-		{
-			lt_info("%s num=0 and DMX_TP_CHANNEL => measurement demux\n", __func__);
-			devnum = 2; /* demux 0 is used for live, demux 1 for recording */
-			measure = true;
-			last_measure = 0;
-			last_data = 0;
-			flags |= O_NONBLOCK;
-		}
-		else
-		{
-			/* it looks like the drivers can only do one TS at a time */
-			if (dmx_tp_count >= MAX_TS_COUNT)
-			{
-				lt_info("%s too many DMX_TP_CHANNEL requests :-(\n", __FUNCTION__);
-				dmx_type = DMX_INVALID;
-				fd = -1;
-				return false;
-			}
-			dmx_tp_count++;
-			devnum = dmx_tp_count;
-		}
+	dmx_type = pes_type;
+	buffersize = uBufferSize;
+
+	/* return code is unchecked anyway... */
+	return true;
+}
+
+bool cDemux::_open(void)
+{
+	int flags = O_RDWR|O_CLOEXEC;
+	int devnum = dmx_source[num];
+	if (last_source == devnum) {
+		lt_info("%s #%d: source (%d) did not change\n", __func__, num, last_source);
+		if (fd > -1)
+			return true;
 	}
-#endif
+	if (fd > -1) {
+		lt_info("%s #%d: FD ALREADY OPENED fd = %d lastsource %d devnum %d\n", __func__, num, fd, last_source, devnum);
+		close(fd);
+	}
+
+	if (dmx_type != DMX_PSI_CHANNEL)
+		flags |= O_NONBLOCK;
+
 	fd = open(devname[devnum], flags);
 	if (fd < 0)
 	{
 		lt_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
 		return false;
 	}
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
-		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
+		 num, DMX_T[dmx_type], dmx_type, buffersize, fd);
 
-	dmx_type = pes_type;
-#if 0
-	if (!pesfds.empty())
+	/* this would actually need locking, but the worst that weill happen is, that
+	 * we'll DMX_SET_SOURCE twice per device, so don't bother... */
+	if (!init[devnum])
 	{
-		lt_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
-		return false;
+		/* this should not change anything... */
+		int n = DMX_SOURCE_FRONT0 + devnum;
+		lt_info("%s: setting %s to source %d\n", __func__, devname[devnum], n);
+		if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
+			lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
+		else
+			init[devnum] = true;
 	}
-#endif
-	int n = DMX_SOURCE_FRONT0;
-	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
-		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
 #ifdef MARTII
-	if (uBufferSize == 0)
-		uBufferSize = 0xffff; // may or may not be reasonable  --martii
+	if (buffersize == 0)
+		buffersize = 0xffff; // may or may not be reasonable  --martii
 #endif
-	if (uBufferSize > 0)
+	if (buffersize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
-		if (ioctl(fd, DMX_SET_BUFFER_SIZE, uBufferSize) < 0)
+		if (ioctl(fd, DMX_SET_BUFFER_SIZE, buffersize) < 0)
 			lt_info("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
 	}
-	buffersize = uBufferSize;
 
+	last_source = devnum;
 	return true;
 }
 
@@ -243,18 +295,37 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 		fprintf(stderr, "cDemux::%s #%d fd: %d type: %s len: %d timeout: %d\n",
 			__FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
 #endif
+	if (fd < 0)
+	{
+		lt_info("%s #%d: not open!\n", __func__, num);
+		return -1;
+	}
 	int rc;
+	int to = timeout;
 	struct pollfd ufds;
 	ufds.fd = fd;
 	ufds.events = POLLIN|POLLPRI|POLLERR;
 	ufds.revents = 0;
 
-	if (timeout > 0)
+	/* hack: if the frontend loses and regains lock, the demuxer often will not
+	 * return from read(), so as a "emergency exit" for e.g. NIT scan, set a (long)
+	 * timeout here */
+	if (dmx_type == DMX_PSI_CHANNEL && timeout <= 0)
+		to = 60 * 1000;
+
+	if (to > 0)
 	{
  retry:
-		rc = ::poll(&ufds, 1, timeout);
+		rc = ::poll(&ufds, 1, to);
 		if (!rc)
+		{
+			if (timeout == 0) /* we took the emergency exit */
+			{
+				dmx_err("timed out for timeout=0!, %s", "", 0);
+				return -1; /* this timeout is an error */
+			}
 			return 0; // timeout
+		}
 		else if (rc < 0)
 		{
 			dmx_err("poll: %s,", strerror(errno), 0)
@@ -298,6 +369,8 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 {
 	int length = len;
 	memset(&s_flt, 0, sizeof(s_flt));
+
+	_open();
 
 	if (len > DMX_FILTER_SIZE)
 	{
@@ -356,6 +429,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	/* 0x60 - 0x6F: event_information_section - other_transport_stream, schedule */
 	case 0x70: /* time_date_section */
 		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+		s_flt.flags |= DMX_ONESHOT;
 		//s_flt.pid     = 0x0014;
 		to = 30000;
 		break;
@@ -368,6 +442,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 		to = 0;
 		break;
 	case 0x73: /* time_offset_section */
+		s_flt.flags |= DMX_ONESHOT;
 		//s_flt.pid     = 0x0014;
 		to = 30000;
 		break;
@@ -418,6 +493,8 @@ bool cDemux::pesFilter(const unsigned short pid)
 		return false;
 
 	lt_debug("%s #%d pid: 0x%04hx fd: %d type: %s\n", __FUNCTION__, num, pid, fd, DMX_T[dmx_type]);
+
+	_open();
 
 	memset(&p_flt, 0, sizeof(p_flt));
 	p_flt.pid = pid;
@@ -478,6 +555,7 @@ bool cDemux::addPid(unsigned short Pid)
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
 		return false;
 	}
+	_open();
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
 #if 0
@@ -563,6 +641,14 @@ int cDemux::getUnit(void)
 
 bool cDemux::SetSource(int unit, int source)
 {
-	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
+	if (unit >= NUM_DEMUX || unit < 0) {
+		lt_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
+		return false;
+	}
+	lt_info_c("%s(%d, %d) => %d to %d\n", __func__, unit, source, dmx_source[unit], source);
+	if (source < 0 || source >= NUM_DEMUXDEV)
+		lt_info_c("%s(%d, %d) ERROR: source %d out of range!\n", __func__, unit, source, source);
+	else
+		dmx_source[unit] = source;
 	return true;
 }

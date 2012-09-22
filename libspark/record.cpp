@@ -22,13 +22,14 @@ void *execute_record_thread(void *c)
 	return NULL;
 }
 
-cRecord::cRecord(int /*num*/)
+cRecord::cRecord(int num)
 {
-	lt_info("%s\n", __func__);
+	lt_info("%s %d\n", __func__, num);
 	dmx = NULL;
 	record_thread_running = false;
 	file_fd = -1;
 	exit_flag = RECORD_STOPPED;
+	dmx_num = num;
 }
 
 cRecord::~cRecord()
@@ -59,7 +60,7 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short * apids, int num
 	int i;
 
 	if (!dmx)
-		dmx = new cDemux(1);
+		dmx = new cDemux(dmx_num);
 
 	dmx->Open(DMX_TP_CHANNEL, NULL, 512*1024);
 	dmx->pesFilter(vpid);

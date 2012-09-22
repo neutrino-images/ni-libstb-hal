@@ -38,9 +38,11 @@ class cDemux
 		std::vector<pes_pids> pesfds;
 		struct dmx_sct_filter_params s_flt;
 		struct dmx_pes_filter_params p_flt;
+		int last_source;
+		bool _open(void);
 	public:
 
-		bool Open(DMX_CHANNEL_TYPE pes_type, void * x = NULL, int y = 0);
+		bool Open(DMX_CHANNEL_TYPE pes_type, void * unused = NULL, int bufsize = 0);
 		void Close(void);
 		bool Start(bool record = false);
 		bool Stop(void);

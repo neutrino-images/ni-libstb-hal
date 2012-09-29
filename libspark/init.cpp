@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <linux/dvb/dmx.h>
+
 #include "lirmp_input.h"
 #include "pwrmngr.h"
 
@@ -32,6 +34,24 @@ void init_td_api()
 			start_input_thread();
 		else
 			lt_info("%s: lircd pidfile present, not starting input thread\n", __func__);
+
+		/* this is a strange hack: the drivers seem to only work correctly after
+		 * demux0 has been used once. After that, we can use demux1,2,... */
+		struct dmx_pes_filter_params p;
+		int dmx = open("/dev/dvb/adapter0/demux0", O_RDWR|O_CLOEXEC);
+		if (dmx < 0)
+			lt_info("%s: ERROR open /dev/dvb/adapter0/demux0 (%m)\n", __func__);
+		else
+		{
+			memset(&p, 0, sizeof(p));
+			p.output = DMX_OUT_DECODER;
+			p.input  = DMX_IN_FRONTEND;
+			p.flags  = DMX_IMMEDIATE_START;
+			p.pes_type = DMX_PES_VIDEO;
+			ioctl(dmx, DMX_SET_PES_FILTER, &p);
+			ioctl(dmx, DMX_STOP);
+			close(dmx);
+		}
 	}
 	initialized = true;
 	lt_info("%s end\n", __FUNCTION__);

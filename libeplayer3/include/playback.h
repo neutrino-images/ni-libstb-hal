@@ -31,6 +31,7 @@ typedef struct PlaybackHandler_s {
     int (* Command) (/*Context_t*/void  *, PlaybackCmd_t, void *);
     char * uri;
     off_t size;
+    unsigned char noprobe; /* hack: only minimal probing in av_find_stream_info */
 } PlaybackHandler_t;
 
 #endif

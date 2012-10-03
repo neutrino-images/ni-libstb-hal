@@ -320,27 +320,26 @@ static WriterCaps_t caps_pcm = {
     "pcm",
     eAudio,
     "A_PCM",
-    AUDIO_ENCODING_LPCMA,
+    AUDIO_ENCODING_LPCMA
 };
 
 struct Writer_s WriterAudioPCM = {
     &reset,
     &writeData,
     NULL,
-    &caps_pcm,
+    &caps_pcm
 };
 
 static WriterCaps_t caps_ipcm = {
     "ipcm",
     eAudio,
     "A_IPCM",
-    AUDIO_ENCODING_LPCMA,
+    AUDIO_ENCODING_LPCMA
 };
 
 struct Writer_s WriterAudioIPCM = {
     &reset,
     &writeData,
     NULL,
-    &caps_ipcm,
+    &caps_ipcm
 };
-

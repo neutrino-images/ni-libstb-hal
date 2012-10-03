@@ -93,7 +93,6 @@ static int writeData(void* _call)
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-    unsigned char DataCopy[PES_MAX_HEADER_SIZE];
     int len = 0;
 
     h263_printf(10, "\n");
@@ -131,14 +130,21 @@ static int writeData(void* _call)
 
     HeaderLength                           += PrivateHeaderLength;
 
-    unsigned char *PacketData = call->data - HeaderLength;
+		unsigned char *PacketData = malloc(HeaderLength + call->len);
 
-    memcpy(DataCopy, PacketData, HeaderLength);
-    memcpy(PacketData, PesHeader, HeaderLength);
+		if(PacketData != NULL)
+		{
+      memcpy(PacketData, PesHeader, HeaderLength);
+      memcpy(PacketData + HeaderLength, call->data, call->len);
 
-    len = write(call->fd, PacketData, call->len + HeaderLength);
+      len = write(call->fd, PacketData, call->len + HeaderLength);
 
-    memcpy(PacketData, DataCopy, HeaderLength);
+      free(PacketData);
+		}
+		else
+		{
+			h263_err("no mem\n");
+		}
 
     h263_printf(10, "< len %d\n", len);
     return len;
@@ -152,26 +158,26 @@ static WriterCaps_t caps_h263 = {
     "h263",
     eVideo,
     "V_H263",
-    VIDEO_ENCODING_H263,
+    VIDEO_ENCODING_H263
 };
 
 struct Writer_s WriterVideoH263 = {
     &reset,
     &writeData,
     NULL,
-    &caps_h263,
+    &caps_h263
 };
 
 static WriterCaps_t caps_flv = {
     "FLV",
     eVideo,
     "V_FLV",
-    VIDEO_ENCODING_FLV1,
+    VIDEO_ENCODING_FLV1
 };
 
 struct Writer_s WriterVideoFLV = {
     &reset,
     &writeData,
     NULL,
-    &caps_flv,
+    &caps_flv
 };

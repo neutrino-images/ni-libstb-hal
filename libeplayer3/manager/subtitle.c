@@ -248,6 +248,5 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
 struct Manager_s SubtitleManager = {
     "Subtitle",
     &Command,
-    NULL,
-
+    NULL
 };

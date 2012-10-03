@@ -186,12 +186,12 @@ static WriterCaps_t caps = {
     "framebuffer",
     eGfx,
     "framebuffer",
-    0,
+    0
 };
 
 struct Writer_s WriterFramebuffer = {
     &reset,
     &writeData,
     NULL,
-    &caps,
+    &caps
 };

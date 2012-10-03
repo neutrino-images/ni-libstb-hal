@@ -141,7 +141,7 @@ char *SSAgetLine()
                 strInput[k] = '\0';
 
             }
-            else { 
+            else {
                 tamAux = 1;
                 fclose(fssa);
                 fssa = NULL;
@@ -168,7 +168,7 @@ static void* SsaSubtitleThread(void *data) {
     while ( context && context->playback && context->playback->isPlaying && fssa ) {
         char *line = NULL;
 
-        do 
+        do
         {
             line = SSAgetLine();
             if(strncmp(line,"Dialogue: ",10)) {
@@ -186,7 +186,7 @@ static void* SsaSubtitleThread(void *data) {
             context->playback &&
             context->playback->isPlaying) {
                 SubtitleData_t data;
-                          
+
                 data.data      = (unsigned char*) line;
                 data.len       = strlen(line);
                 data.extradata = (unsigned char*) head;
@@ -201,7 +201,7 @@ static void* SsaSubtitleThread(void *data) {
     }
 
     hasThreadStarted = 0;
-    
+
     if(head) {
         free(head);
         head = NULL;
@@ -260,7 +260,7 @@ static void SsaManagerDel(Context_t * context) {
         for (i = 0; i < TrackCount; i++) {
             if (Tracks[i].File != NULL)
                 free(Tracks[i].File);
-            
+
             Tracks[i].File = NULL;
         }
         free(Tracks);
@@ -286,19 +286,19 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
        ssa_err("Filename NULL\n");
        return cERR_SSA_ERROR;
     }
-    
+
     ssa_printf(10, "file: %s\n", Filename);
 
     copyFilename = strdup(Filename);
 
     FilenameFolder = dirname(copyFilename);
-    
+
     if (FilenameFolder == NULL)
     {
        ssa_err("FilenameFolder NULL\n");
        return cERR_SSA_ERROR;
     }
-    
+
     ssa_printf(10, "folder: %s\n", FilenameFolder);
 
     getExtension(copyFilename, &FilenameExtension);
@@ -350,9 +350,9 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
             {
                 char absSubtitleFileName[PATH_MAX];
                 /* found something of interest, so now make an absolut path name */
-                
+
                 sprintf(absSubtitleFileName, "%s/%s.%s", FilenameFolder, subtitleFilename, subtitleExtension);
-                
+
                 ssa_printf(10, "SSA: %s [%s]\n", subtitleExtension, subtitleFilename);
                 ssa_printf(10, "\t->%s\n", absSubtitleFileName);
 
@@ -360,7 +360,7 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
                         absSubtitleFileName,
                         i,
                 };
-                
+
                 SsaManagerAdd(context, SsaSubtitle);
 
                 Track_t Subtitle = {
@@ -415,7 +415,7 @@ static int SsaCloseSubtitle(Context_t *context) {
 
     /* this closes the thread! */
     fssa = NULL;
-    
+
     hasThreadStarted = 0;
 
     return cERR_SSA_NO_ERROR;
@@ -423,7 +423,7 @@ static int SsaCloseSubtitle(Context_t *context) {
 
 static int SsaSwitchSubtitle(Context_t *context, int* arg) {
     int ret = cERR_SSA_NO_ERROR;
-    
+
     ssa_printf(10, "\n");
 
     ret = SsaCloseSubtitle(context);
@@ -434,7 +434,7 @@ static int SsaSwitchSubtitle(Context_t *context, int* arg) {
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
         pthread_create (&thread_sub, &attr, &SsaSubtitleThread, context);
-        
+
         hasThreadStarted = 1;
     }
 
@@ -443,11 +443,11 @@ static int SsaSwitchSubtitle(Context_t *context, int* arg) {
 
 static int SsaDel(Context_t *context) {
     int ret = cERR_SSA_NO_ERROR;
-  
+
     ssa_printf(10, "\n");
 
     ret = SsaCloseSubtitle(context);
-    
+
     SsaManagerDel(context);
 
     return ret;
@@ -456,7 +456,7 @@ static int SsaDel(Context_t *context) {
 static int Command(void  *_context, ContainerCmd_t command, void * argument) {
     Context_t  *context = (Context_t*) _context;
     int ret = cERR_SSA_NO_ERROR;
-    
+
     ssa_printf(10, "\n");
 
     switch(command) {
@@ -488,5 +488,5 @@ static char *SsaCapabilities[] = { "ssa", NULL };
 Container_t SsaContainer = {
     "SSA",
     &Command,
-    SsaCapabilities,
+    SsaCapabilities
 };

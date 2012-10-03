@@ -140,13 +140,12 @@ static WriterCaps_t caps_vorbis = {
     "vorbis",
     eAudio,
     "A_VORBIS",
-    AUDIO_ENCODING_VORBIS,
+    AUDIO_ENCODING_VORBIS
 };
 
 struct Writer_s WriterAudioVORBIS = {
     &reset,
     &writeData,
     NULL,
-    &caps_vorbis,
+    &caps_vorbis
 };
-

@@ -123,4 +123,3 @@ void FlushBits(BitPacker_t * ld)
     ld->Remaining = 32;
     ld->BitBuffer = 0;
 }
-

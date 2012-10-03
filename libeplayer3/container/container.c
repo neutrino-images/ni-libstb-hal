@@ -121,5 +121,5 @@ ContainerHandler_t ContainerHandler = {
     &SrtContainer,
     &SsaContainer,
     &ASSContainer,
-    Command,
+    Command
 };

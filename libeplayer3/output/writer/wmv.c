@@ -278,4 +278,3 @@ struct Writer_s WriterVideoWMV = {
     NULL,
     &caps
 };
-

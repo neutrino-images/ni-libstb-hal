@@ -428,13 +428,12 @@ static WriterCaps_t caps = {
     "h264",
     eVideo,
     "V_MPEG4/ISO/AVC",
-    VIDEO_ENCODING_H264,
+    VIDEO_ENCODING_H264
 };
 
 struct Writer_s WriterVideoH264 = {
     &reset,
     &writeData,
     &writeReverseData,
-    &caps,
+    &caps
 };
-

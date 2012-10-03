@@ -140,26 +140,26 @@ static WriterCaps_t caps_mp3 = {
     "mp3",
     eAudio,
     "A_MP3",
-    AUDIO_ENCODING_MP3,
+    AUDIO_ENCODING_MP3
 };
 
 struct Writer_s WriterAudioMP3 = {
     &reset,
     &writeData,
     NULL,
-    &caps_mp3,
+    &caps_mp3
 };
 
 static WriterCaps_t caps_mpegl3 = {
     "mpeg/l3",
     eAudio,
     "A_MPEG/L3",
-    AUDIO_ENCODING_MPEG2,
+    AUDIO_ENCODING_MPEG2
 };
 
 struct Writer_s WriterAudioMPEGL3 = {
     &reset,
     &writeData,
     NULL,
-    &caps_mpegl3,
+    &caps_mpegl3
 };

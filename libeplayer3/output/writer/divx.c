@@ -177,40 +177,40 @@ static WriterCaps_t mpeg4p2_caps = {
     "mscomp",
     eVideo,
     "V_MSCOMP",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoMSCOMP = {
     &reset,
     &writeData,
     NULL,
-    &mpeg4p2_caps,
+    &mpeg4p2_caps
 };
 
 static WriterCaps_t fourcc_caps = {
     "fourcc",
     eVideo,
     "V_MS/VFW/FOURCC",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoFOURCC = {
     &reset,
     &writeData,
     NULL,
-    &fourcc_caps,
+    &fourcc_caps
 };
 
 static WriterCaps_t divx_caps = {
     "divx",
     eVideo,
     "V_MKV/XVID",
-    VIDEO_ENCODING_MPEG4P2,
+    VIDEO_ENCODING_MPEG4P2
 };
 
 struct Writer_s WriterVideoDIVX = {
     &reset,
     &writeData,
     NULL,
-    &divx_caps,
+    &divx_caps
 };

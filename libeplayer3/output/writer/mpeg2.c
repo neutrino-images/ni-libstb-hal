@@ -154,26 +154,26 @@ static WriterCaps_t caps = {
     "mpeg2",
     eVideo,
     "V_MPEG2",
-    VIDEO_ENCODING_AUTO,
+    VIDEO_ENCODING_AUTO
 };
 
 struct Writer_s WriterVideoMPEG2 = {
     &reset,
     &writeData,
     NULL,
-    &caps,
+    &caps
 };
 
 static WriterCaps_t h264_caps = {
     "mpges_h264",
     eVideo,
     "V_MPEG2/H264",
-    VIDEO_ENCODING_H264,
+    VIDEO_ENCODING_H264
 };
 
 struct Writer_s WriterVideoMPEGH264 = {
     &reset,
     &writeData,
     NULL,
-    &h264_caps,
+    &h264_caps
 };

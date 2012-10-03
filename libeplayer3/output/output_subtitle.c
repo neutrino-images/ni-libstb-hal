@@ -839,7 +839,5 @@ struct Output_s SubtitleOutput = {
     "Subtitle",
     &Command,
     &Write,
-    SubtitleCapabilitis,
-
+    SubtitleCapabilitis
 };
-

@@ -349,5 +349,5 @@ OutputHandler_t OutputHandler = {
     NULL,
     NULL,
     NULL,
-    &Command,
+    &Command
 };

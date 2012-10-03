@@ -290,13 +290,13 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
 
     copyFilename = strdup(Filename);
 
-    FilenameFolder = dirname(copyFilename);
-
-    if (FilenameFolder == NULL)
+    if (copyFilename == NULL)
     {
-       srt_err("FilenameFolder NULL\n");
+       srt_err("copyFilename NULL\n");
        return cERR_SRT_ERROR;
     }
+
+    FilenameFolder = dirname(copyFilename);
 
     srt_printf(10, "folder: %s\n", FilenameFolder);
 
@@ -305,7 +305,7 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
     if (FilenameExtension == NULL)
     {
        srt_err("FilenameExtension NULL\n");
-       free(FilenameFolder);
+       free(copyFilename);
        return cERR_SRT_ERROR;
     }
 

@@ -909,8 +909,10 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     }
 
     avContext->flags = AVFMT_FLAG_GENPTS;
+#ifndef MARTII // I'm currently taking the DVB subtitle info from the stream. Need to probe.
     if (context->playback->noprobe)
         avContext->max_analyze_duration = 1;
+#endif
 
     ffmpeg_printf(20, "find_streaminfo\n");
 

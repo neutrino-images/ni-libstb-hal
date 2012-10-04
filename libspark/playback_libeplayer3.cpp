@@ -126,6 +126,8 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	    printf("upnp://\n");
             isHTTP = true;
 	}
+	else if (pm == PLAYMODE_TS)
+	    strcat(file, "myts://");
 	else
 	    strcat(file, "file://");
 
@@ -371,7 +373,7 @@ bool cPlayback::SetSpeed(int speed)
 
 bool cPlayback::GetSpeed(int &speed) const
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	//printf("%s:%s\n", FILENAME, __FUNCTION__);
         speed = nPlaybackSpeed;
 	return true;
 }

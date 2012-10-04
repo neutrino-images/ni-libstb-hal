@@ -31,15 +31,16 @@
 
 static short debug_level = 10;
 
+static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG
 #define playback_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_printf(level, fmt, x...)
 #endif
 
 #ifndef PLAYBACK_SILENT
-#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_err(fmt, x...)
 #endif
@@ -166,11 +167,17 @@ static int PlaybackOpen(Context_t  *context, char * uri) {
     context->playback->uri = strdup(uri);
 
     if (!context->playback->isPlaying) {
-        if (!strncmp("file://", uri, 7)) {
+        if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7)) {
             char * extension = NULL;
             context->playback->isFile = 1;
             context->playback->isHttp = 0;
             context->playback->isUPNP = 0;
+            if (!strncmp("myts://", uri, 7)) {
+                memcpy(context->playback->uri, "file", 4);
+                memcpy(uri, "file", 4);
+                context->playback->noprobe = 1;
+            } else
+                context->playback->noprobe = 0;
 
             getExtension(uri+7, &extension);
 
@@ -1149,5 +1156,6 @@ PlaybackHandler_t PlaybackHandler = {
 #endif
     &Command,
     "",
+    0,
     0
 };

@@ -59,13 +59,13 @@
 static short debug_level = 10;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ffmpeg_printf(level, fmt, x...)
 #endif
 
 #ifndef FFMPEG_SILENT
-#define ffmpeg_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define ffmpeg_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ffmpeg_err(fmt, x...)
 #endif
@@ -83,7 +83,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #define cERR_CONTAINER_FFMPEG_ERR            -9
 #define cERR_CONTAINER_FFMPEG_END_OF_FILE    -10
 
-static const char* FILENAME = __FILE__;
+static const char* FILENAME = "container_ffmpeg.c";
 
 /* ***************************** */
 /* Types                         */
@@ -909,15 +909,17 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     }
 
     avContext->flags = AVFMT_FLAG_GENPTS;
+    if (context->playback->noprobe)
+        avContext->max_analyze_duration = 1;
 
     ffmpeg_printf(20, "find_streaminfo\n");
 
 #if LIBAVCODEC_VERSION_MAJOR < 54
     if (av_find_stream_info(avContext) < 0) {
-	ffmpeg_err("Error avformat_find_stream_info\n");
+	ffmpeg_err("Error av_find_stream_info\n");
 #else
     if (avformat_find_stream_info(avContext, NULL) < 0) {
-	ffmpeg_err("Error av_find_stream_info\n");
+	ffmpeg_err("Error avformat_find_stream_info\n");
 #endif
 #ifdef this_is_ok
 	/* crow reports that sometimes this returns an error

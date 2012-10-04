@@ -50,13 +50,13 @@
 static short debug_level = 10;
 
 #define ssa_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ssa_printf(level, fmt, x...)
 #endif
 
 #ifndef SSA_SILENT
-#define ssa_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define ssa_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define ssa_err(fmt, x...)
 #endif
@@ -71,7 +71,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 //Buffer size used in getLine function. Do not set to value less than 1 !!!
 #define SSA_BUFFER_SIZE 14
 
-static const char FILENAME[] = __FILE__;
+static const char FILENAME[] = "text_ssa.c";
 
 /* ***************************** */
 /* Types                         */
@@ -291,13 +291,13 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
 
     copyFilename = strdup(Filename);
 
-    FilenameFolder = dirname(copyFilename);
-
-    if (FilenameFolder == NULL)
+    if (copyFilename == NULL)
     {
-       ssa_err("FilenameFolder NULL\n");
+       ssa_err("copyFilename NULL\n");
        return cERR_SSA_ERROR;
     }
+
+    FilenameFolder = dirname(copyFilename);
 
     ssa_printf(10, "folder: %s\n", FilenameFolder);
 
@@ -306,7 +306,7 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
     if (FilenameExtension == NULL)
     {
        ssa_err("FilenameExtension NULL\n");
-       free(FilenameFolder);
+       free(copyFilename);
        return cERR_SSA_ERROR;
     }
 

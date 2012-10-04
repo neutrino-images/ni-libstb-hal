@@ -57,15 +57,16 @@
 #ifdef H263_DEBUG
 
 static short debug_level = 0;
+static const char *FILENAME = "h263.c";
 
 #define h263_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define h263_printf(level, fmt, x...)
 #endif
 
 #ifndef H263_SILENT
-#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define h263_err(fmt, x...)
 #endif
@@ -143,14 +144,21 @@ static int writeData(void* _call)
     iov[1].iov_len = call->len;
     len = writev(call->fd, iov, 2);
 #else
-    unsigned char *PacketData = call->data - HeaderLength;
+		unsigned char *PacketData = malloc(HeaderLength + call->len);
 
-    memcpy(DataCopy, PacketData, HeaderLength);
-    memcpy(PacketData, PesHeader, HeaderLength);
+		if(PacketData != NULL)
+		{
+      memcpy(PacketData, PesHeader, HeaderLength);
+      memcpy(PacketData + HeaderLength, call->data, call->len);
 
-    len = write(call->fd, PacketData, call->len + HeaderLength);
+      len = write(call->fd, PacketData, call->len + HeaderLength);
 
-    memcpy(PacketData, DataCopy, HeaderLength);
+      free(PacketData);
+		}
+		else
+		{
+			h263_err("no mem\n");
+		}
 #endif
 
     h263_printf(10, "< len %d\n", len);

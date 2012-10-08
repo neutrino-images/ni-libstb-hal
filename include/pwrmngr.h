@@ -5,6 +5,8 @@
 #include "../libspark/pwrmngr.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/pwrmngr.h"
+#elif HAVE_GENERIC_HARDWARE
+#include "../generic-pc/pwrmngr.h"
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
 #endif

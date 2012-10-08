@@ -13,6 +13,7 @@
 /libspark/Makefile.in
 /libtriple/Makefile.in
 /azbox/Makefile.in
+/generic-pc/Makefile.in
 /ltmain.sh
 /missing
 /Makefile.in

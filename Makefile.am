@@ -44,6 +44,18 @@ libstb_hal_a_LIBADD += \
 	azbox/record.o \
 	azbox/video.o
 endif
+if BOXTYPE_GENERIC
+SUBDIRS += generic-pc
+libstb_hal_a_LIBADD += \
+	generic-pc/audio.o \
+	generic-pc/dmx.o \
+	generic-pc/hardware_caps.o \
+	generic-pc/init.o \
+	generic-pc/playback.o \
+	generic-pc/pwrmngr.o \
+	generic-pc/record.o \
+	generic-pc/video.o
+endif
 if BOXTYPE_SPARK
 libstb_hal_test_LDADD += -lasound
 SUBDIRS += libspark libeplayer3

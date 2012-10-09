@@ -1,0 +1,37 @@
+/*
+ * determine the capabilities of the hardware.
+ * part of libstb-hal
+ *
+ * (C) 2010-2012 Stefan Seyfried
+ *
+ * License: GPL v2 or later
+ */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <hardware_caps.h>
+
+static int initialized = 0;
+static hw_caps_t caps;
+
+hw_caps_t *get_hwcaps(void)
+{
+	if (initialized)
+		return &caps;
+
+	memset(&caps, 0, sizeof(hw_caps_t));
+
+	initialized = 1;
+	caps.can_shutdown = 1;	/* for testing */
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.has_HDMI = 1;
+	caps.display_xres = 8;
+	strcpy(caps.boxvendor, "Generic");
+	strcpy(caps.boxname, "PC");
+
+	return &caps;
+}

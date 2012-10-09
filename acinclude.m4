@@ -277,7 +277,7 @@ AC_ARG_WITH(boxtype,
 			;;
 		*)
 			AC_MSG_ERROR([bad value $withval for --with-boxtype]) ;;
-	esac], [BOXTYPE="coolstream"])
+	esac], [BOXTYPE="generic"])
 
 AC_ARG_WITH(boxmodel,
 	[  --with-boxmodel         valid for dreambox: dm500, dm500plus, dm600pvr, dm56x0, dm7000, dm7020, dm7025

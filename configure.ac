@@ -23,6 +23,7 @@ Makefile
 common/Makefile
 libeplayer3/Makefile
 azbox/Makefile
+generic-pc/Makefile
 libtriple/Makefile
 libspark/Makefile
 tools/Makefile

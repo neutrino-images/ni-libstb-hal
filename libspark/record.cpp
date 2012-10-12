@@ -54,7 +54,7 @@ void cRecord::Close(void)
 }
 #endif
 
-bool cRecord::Start(int fd, unsigned short vpid, unsigned short * apids, int numpids)
+bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int numpids, uint64_t)
 {
 	lt_info("%s: fd %d, vpid 0x%03x\n", __func__, fd, vpid);
 	int i;
@@ -306,3 +306,13 @@ void cRecord::RecordThread()
 	pthread_exit(NULL);
 }
 
+int  GetStatus()
+{
+	/* dummy for now */
+	return REC_STATUS_OK;
+}
+
+void ResetStatus()
+{
+	return;
+}

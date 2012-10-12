@@ -259,13 +259,13 @@ void cRecord::RecordThread()
 	pthread_exit(NULL);
 }
 
-int  GetStatus()
+int cRecord::GetStatus()
 {
 	/* dummy for now */
 	return REC_STATUS_OK;
 }
 
-void ResetStatus()
+void cRecord::ResetStatus()
 {
 	return;
 }

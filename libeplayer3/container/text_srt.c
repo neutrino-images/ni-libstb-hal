@@ -116,7 +116,11 @@ void data_to_manager(Context_t *context, char* Text, unsigned long long int Pts,
             SubtitleData_t data;
             data.data      = line;
             data.len       = strlen((char*)line);
+#ifdef MARTII
+            data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
+#else
             data.extradata = DEFAULT_ASS_HEAD;
+#endif
             data.extralen  = strlen(DEFAULT_ASS_HEAD);
             data.pts       = Pts*90;
             data.duration  = Duration;

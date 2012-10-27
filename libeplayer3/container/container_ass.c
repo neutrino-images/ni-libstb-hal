@@ -463,6 +463,31 @@ static void ASSThread(Context_t *context) {
                              * so there is hopefully installed an output callback
                              * in the subtitle output!
                              */
+#ifdef MARTII
+                            SubtitleOut_t sub_out;
+
+                            sub_out.type         = eSub_Gfx;
+
+                            if (ass_track->events)
+                            {
+                                /* fixme: check values */
+                                sub_out.pts          = ass_track->events->Start * 90.0;
+                                sub_out.duration     = ass_track->events->Duration / 1000.0;
+                            } else
+                            {
+                                sub_out.pts          = playPts;
+                                sub_out.duration     = 10.0;
+                            }
+                             
+                            sub_out.u.gfx.data   = img->bitmap;
+                            sub_out.u.gfx.Width  = img->w;
+                            sub_out.u.gfx.Height = img->h;
+                            sub_out.u.gfx.x      = img->dst_x;
+                            sub_out.u.gfx.y      = img->dst_y;
+                            if(context && context->playback && context->playback->isPlaying &&
+                               context->output && context->output->subtitle)
+                                context->output->subtitle->Write(context, &sub_out);
+#else
                             SubtitleOut_t out;
 
                             out.type         = eSub_Gfx;
@@ -486,6 +511,7 @@ static void ASSThread(Context_t *context) {
                             if(context && context->playback && context->playback->isPlaying &&
                                context->output && context->output->subtitle)
                                 context->output->subtitle->Write(context, &out);
+#endif
                         }
                     }
 

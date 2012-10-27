@@ -499,7 +499,9 @@ int cVideo::getBlank(void)
 	size_t n = 0;
 	ssize_t r;
 	char *line = NULL;
+#ifndef MARTII
 	char *p;
+#endif
 	/* hack: the "mailbox" irq is not increasing if
 	 * no audio or video is decoded... */
 	FILE *f = fopen("/proc/interrupts", "r");

@@ -26,6 +26,7 @@ unsigned long cCpuFreqManager::GetCpuFreq(void) {
 		fclose(pll0);
 		return 1000 * 1000 * (unsigned long) freq;
 	}
+	return 0;
 }
 #else
 unsigned long cCpuFreqManager::GetCpuFreq(void) { lt_debug("%s\n", __FUNCTION__); return 0; }
@@ -53,7 +54,7 @@ bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 	FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
 	if (pll0) {
 		f /= 1000000;
-		fprintf(pll0, "%d\n", f/10 * 256 + 3);
+		fprintf(pll0, "%lu\n", f/10 * 256 + 3);
 		fclose (pll0);
 		return 0;
 	}

@@ -597,7 +597,11 @@ static int Write(void* _context, void *data) {
     return cERR_SUBTITLE_NO_ERROR;
 }
 
+#ifdef MARTII
+static int subtitle_Open(Context_t* context) {
+#else
 static int subtitle_Open(context) {
+#endif
     int i;
 
     subtitle_printf(10, "\n");
@@ -690,7 +694,11 @@ static int subtitle_Play(Context_t* context) {
     return cERR_SUBTITLE_NO_ERROR;
 }
 
+#ifdef MARTII
+static int subtitle_Stop(Context_t* context) {
+#else
 static int subtitle_Stop(context) {
+#endif
     int wait_time = 20;
     int i;
     

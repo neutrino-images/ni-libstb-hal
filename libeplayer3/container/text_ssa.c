@@ -104,7 +104,12 @@ static int hasThreadStarted = 0;
 char *SSAgetLine()
 {
     char *strAux = NULL, *strInput;
+#ifdef MARTII
+    char c[SSA_BUFFER_SIZE];
+    int ch;
+#else
     char c[SSA_BUFFER_SIZE], ch;
+#endif
     int k, tam, tamAux;
 
     k = tamAux = 0;
@@ -157,8 +162,13 @@ char *SSAgetLine()
 /* ***************************** */
 /* Worker Thread                 */
 /* ***************************** */
+#ifdef MARTII
+static void* SsaSubtitleThread(void *Data) {
+    Context_t *context = (Context_t*) Data;
+#else
 static void* SsaSubtitleThread(void *data) {
     Context_t *context = (Context_t*) data;
+#endif
     char *                 head =malloc(sizeof(char)*1);
 
     ssa_printf(10, "\n");

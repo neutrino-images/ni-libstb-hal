@@ -367,7 +367,9 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
+#ifndef MARTII
 	int length = len;
+#endif
 	memset(&s_flt, 0, sizeof(s_flt));
 
 	_open();
@@ -375,7 +377,11 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	if (len > DMX_FILTER_SIZE)
 	{
 		lt_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
+#ifdef MARTII
+		len = DMX_FILTER_SIZE;
+#else
 		length = DMX_FILTER_SIZE;
+#endif
 	}
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
@@ -547,9 +553,13 @@ void *cDemux::getChannel()
 bool cDemux::addPid(unsigned short Pid)
 {
 	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
+#ifndef MARTII
 	pes_pids pfd;
+#endif
 	int ret;
+#ifndef MARTII
 	struct dmx_pes_filter_params p;
+#endif
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);

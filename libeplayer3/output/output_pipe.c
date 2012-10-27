@@ -277,7 +277,7 @@ int PipeSwitch(Context_t  *context, char * type) {
     return cERR_PIPE_NO_ERROR;
 }
 
-static int writePESDataTeletext(int fd, char *data, size_t data_len)
+static int writePESDataTeletext(int fd, unsigned char *data, size_t data_len)
 {
     int len = 0;
     if (data_len > 0) {
@@ -303,7 +303,7 @@ static int writePESDataTeletext(int fd, char *data, size_t data_len)
     return len;
 }
 
-static int writePESDataDvbsubtitle(int fd, char *data, size_t data_len, int64_t pts)
+static int writePESDataDvbsubtitle(int fd, unsigned char *data, size_t data_len, int64_t pts)
 {
     int len = 0;
     if (data_len > 0) {

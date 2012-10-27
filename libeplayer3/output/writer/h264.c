@@ -334,7 +334,9 @@ static int writeData(void* _call)
             while (NalLength > 0) {
                 unsigned int   PacketLength     = (NalLength < BUFFER_SIZE) ? NalLength : BUFFER_SIZE;
                 int            ExtraLength      = 0;
+#ifndef MARTII
                 unsigned char* PacketStart;
+#endif
 
                 NalLength      -= PacketLength;
 

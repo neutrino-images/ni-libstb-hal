@@ -532,7 +532,11 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 #endif
 
 //
+#ifdef MARTII
+cPlayback::cPlayback(int num __attribute__((unused)))
+#else
 cPlayback::cPlayback(int num)
+#endif
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;

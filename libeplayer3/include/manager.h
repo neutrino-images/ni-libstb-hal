@@ -55,6 +55,9 @@ typedef struct Track_s {
     /* If player2 or the elf do not support decoding of audio codec set this.
      * AVCodec is than used for softdecoding and stream will be injected as PCM */
     int                   inject_as_pcm;
+#ifdef MARTII
+    int                   inject_raw_pcm;
+#endif
 } Track_t;
 
 typedef struct Manager_s {

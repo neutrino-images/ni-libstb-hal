@@ -209,6 +209,10 @@ static char* Codec2Encoding(enum CodecID id, int* version)
         return "A_IPCM"; //return "A_VORBIS";
     case CODEC_ID_FLAC: //86030
         return "A_IPCM"; //return "A_FLAC";
+#ifdef MARTII
+    case CODEC_ID_PCM_S16LE:
+	return "A_PCM";
+#endif
 /* subtitle */
     case CODEC_ID_SSA:
         return "S_TEXT/ASS"; /* Hellmaster1024: seems to be ASS instead of SSA */
@@ -324,13 +328,12 @@ static char* searchMeta(AVDictionary * metadata, char* ourTag)
 
 static void FFMPEGThread(Context_t *context) {
     AVPacket   packet;
+#ifndef MARTII
     off_t currentReadPosition = 0; /* last read position */
+#endif
     off_t lastReverseSeek = 0;     /* max address to read before seek again in reverse play */
     off_t lastSeek = -1;
     long long int lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
-#ifdef MARTII
-    long long int currentDvbsubtitlePts = -1, currentTeletextPts = -1;
-#endif
     int           err = 0, gotlastPts = 0, audioMute = 0;
     AudioVideoOut_t avOut;
 
@@ -494,12 +497,18 @@ static void FFMPEGThread(Context_t *context) {
 	    Track_t * teletextTrack = NULL;
 #endif
 
+#ifdef MARTII
+	    int ix = packet.stream_index;
+#else
 	    int index = packet.stream_index;
+#endif
 
+#ifndef MARTII
 #if LIBAVCODEC_VERSION_MAJOR < 54
 	    currentReadPosition = url_ftell(avContext->pb);
 #else
 	    currentReadPosition = avio_tell(avContext->pb);
+#endif
 #endif
 
 	    if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)
@@ -518,10 +527,18 @@ static void FFMPEGThread(Context_t *context) {
 		ffmpeg_err("error getting teletext track\n");
 #endif
 
+#ifdef MARTII
+	    ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, ix);
+#else
 	    ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, index);
+#endif
 
 	    if (videoTrack != NULL) {
+#ifdef MARTII
+		if (videoTrack->Id == ix) {
+#else
 		if (videoTrack->Id == index) {
+#endif
 		    currentVideoPts = videoTrack->pts = pts = calcPts(videoTrack->stream, &packet);
 
 		    if ((currentVideoPts > latestPts) && (currentVideoPts != INVALID_PTS_VALUE))
@@ -535,7 +552,11 @@ static void FFMPEGThread(Context_t *context) {
 		    }
 #endif
 
+#ifdef MARTII
+		    ffmpeg_printf(200, "VideoTrack index = %d %lld\n",ix, currentVideoPts);
+#else
 		    ffmpeg_printf(200, "VideoTrack index = %d %lld\n",index, currentVideoPts);
+#endif
 
 		    avOut.data       = packet.data;
 		    avOut.len        = packet.size;
@@ -555,7 +576,11 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 
 	    if (audioTrack != NULL) {
+#ifdef MARTII
+		if (audioTrack->Id == ix) {
+#else
 		if (audioTrack->Id == index) {
+#endif
 		    currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, &packet);
 
 		    if ((currentAudioPts > latestPts) && (!videoTrack))
@@ -569,7 +594,42 @@ static void FFMPEGThread(Context_t *context) {
 		    }
 #endif
 
+#ifdef MARTII
+		    ffmpeg_printf(200, "AudioTrack index = %d\n",ix);
+#else
 		    ffmpeg_printf(200, "AudioTrack index = %d\n",index);
+#endif
+#ifdef MARTII
+                    if (audioTrack->inject_raw_pcm == 1){
+                        ffmpeg_printf(200,"write audio raw pcm\n");
+
+                        pcmPrivateData_t extradata;
+                        extradata.uNoOfChannels = ((AVStream*) audioTrack->stream)->codec->channels;
+                        extradata.uSampleRate = ((AVStream*) audioTrack->stream)->codec->sample_rate;
+                        extradata.uBitsPerSample = 16;
+                        extradata.bLittleEndian = 1;
+
+                        avOut.data       = packet.data;
+                        avOut.len        = packet.size;
+                        avOut.pts        = pts;
+                        avOut.extradata  = (unsigned char *) &extradata;
+                        avOut.extralen   = sizeof(extradata);
+                        avOut.frameRate  = 0;
+                        avOut.timeScale  = 0;
+                        avOut.width      = 0;
+                        avOut.height     = 0;
+                        avOut.type       = "audio";
+
+#ifdef reverse_playback_3
+                        if (!context->playback->BackWard)
+#endif
+                        if (context->output->audio->Write(context, &avOut) < 0)
+                        {
+                            ffmpeg_err("(raw pcm) writing data to audio device failed\n");
+                        }
+                    }
+                    else 
+#endif
 
 		    if (audioTrack->inject_as_pcm == 1)
 		    {
@@ -609,7 +669,11 @@ static void FFMPEGThread(Context_t *context) {
 			    avOut.len        = decoded_data_size;
 
 			    avOut.pts        = pts;
+#ifdef MARTII
+			    avOut.extradata  = (unsigned char *) &extradata;
+#else
 			    avOut.extradata  = &extradata;
+#endif
 			    avOut.extralen   = sizeof(extradata);
 			    avOut.frameRate  = 0;
 			    avOut.timeScale  = 0;
@@ -673,7 +737,11 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 
 	    if (subtitleTrack != NULL) {
+#ifdef MARTII
+		if (subtitleTrack->Id == ix) {
+#else
 		if (subtitleTrack->Id == index) {
+#endif
 		    float duration=3.0;
 		    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
@@ -686,7 +754,11 @@ static void FFMPEGThread(Context_t *context) {
 		    ffmpeg_printf(20, "Packet duration %d\n", packet.duration);
 		    ffmpeg_printf(20, "Packet convergence_duration %lld\n", packet.convergence_duration);
 
+#ifdef MARTII
+		    if(packet.duration != 0) // FIXME: packet.duration is 32 bit, AV_NOPTS_VALUE is 64 bit --martii
+#else
 		    if(packet.duration != 0 && packet.duration != AV_NOPTS_VALUE )
+#endif
 			duration=((float)packet.duration)/1000.0;
 		    else if(packet.convergence_duration != 0 && packet.convergence_duration != AV_NOPTS_VALUE )
 			duration=((float)packet.convergence_duration)/1000.0;
@@ -769,7 +841,11 @@ static void FFMPEGThread(Context_t *context) {
 			    SubtitleData_t data;
 			    data.data      = line;
 			    data.len       = strlen((char*)line);
+#ifdef MARTII
+			    data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
+#else
 			    data.extradata = DEFAULT_ASS_HEAD;
+#endif
 			    data.extralen  = strlen(DEFAULT_ASS_HEAD);
 			    data.pts       = pts;
 			    data.duration  = duration;
@@ -782,10 +858,10 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 #ifdef MARTII
 	    if (dvbsubtitleTrack != NULL) {
-		if (dvbsubtitleTrack->Id == index) {
-		    currentDvbsubtitlePts = dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, &packet);
+		if (dvbsubtitleTrack->Id == ix) {
+		    dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, &packet);
 
-		    ffmpeg_printf(200, "DvbSubTitle index = %d\n",index);
+		    ffmpeg_printf(200, "DvbSubTitle index = %d\n",ix);
 
 		    avOut.data       = packet.data;
 		    avOut.len        = packet.size;
@@ -805,10 +881,10 @@ static void FFMPEGThread(Context_t *context) {
 		}
 	    }
 	    if (teletextTrack != NULL) {
-		if (teletextTrack->Id == index) {
-		    currentTeletextPts = teletextTrack->pts = pts = calcPts(teletextTrack->stream, &packet);
+		if (teletextTrack->Id == ix) {
+		    teletextTrack->pts = pts = calcPts(teletextTrack->stream, &packet);
 
-		    ffmpeg_printf(200, "TeleText index = %d\n",index);
+		    ffmpeg_printf(200, "TeleText index = %d\n",ix);
 
 		    avOut.data       = packet.data;
 		    avOut.len        = packet.size;
@@ -1060,6 +1136,13 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 		}
 
+#ifdef MARTII
+		if(!strncmp(encoding, "A_PCM", 5))
+                {
+                    track.inject_raw_pcm = 1;
+                    ffmpeg_printf(10, " Handle inject_raw_pcm = %d\n", track.inject_as_pcm);
+		}
+#endif
 		if(!strncmp(encoding, "A_IPCM", 6))
 		{
 		    track.inject_as_pcm = 1;
@@ -1866,8 +1949,13 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
     switch(command)
     {
     case CONTAINER_INIT:  {
+#ifdef MARTII
+	char * filename = (char *)argument;
+	ret = container_ffmpeg_init(context, filename);
+#else
 	char * FILENAME = (char *)argument;
 	ret = container_ffmpeg_init(context, FILENAME);
+#endif
 	break;
     }
     case CONTAINER_PLAY:  {
@@ -1940,7 +2028,11 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
     return ret;
 }
 
+#ifdef MARTII
+static char *FFMPEG_Capabilities[] = {"avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg", "m2ts", "vob", "wmv","wma", "asf", "mp2", "m4v", "m4a", "divx", "dat", "mpeg", "trp", "mts", "vdr", "ogg", "wav", NULL };
+#else
 static char *FFMPEG_Capabilities[] = {"avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg", "m2ts", "vob", "wmv","wma", "asf", "mp2", "m4v", "m4a", "divx", "dat", "mpeg", "trp", "mts", "vdr", "ogg",  NULL };
+#endif
 
 Container_t FFMPEGContainer = {
     "FFMPEG",

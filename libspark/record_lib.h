@@ -7,6 +7,9 @@
 #define REC_STATUS_OK 0
 #define REC_STATUS_SLOW 1
 #define REC_STATUS_OVERFLOW 2
+#ifdef MARTII
+#define REC_STATUS_STOPPED 4
+#endif
 
 typedef enum {
 	RECORD_RUNNING,

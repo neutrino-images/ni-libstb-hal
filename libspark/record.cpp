@@ -406,8 +406,12 @@ void cRecord::RecordThread()
 
 int cRecord::GetStatus()
 {
+#ifdef MARTII
+	return (exit_flag == RECORD_STOPPED) ? REC_STATUS_STOPPED : REC_STATUS_OK;
+#else
 	/* dummy for now */
 	return REC_STATUS_OK;
+#endif
 }
 
 void cRecord::ResetStatus()

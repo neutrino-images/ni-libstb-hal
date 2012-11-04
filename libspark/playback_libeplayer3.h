@@ -16,12 +16,18 @@ class cPlayback
 		int nPlaybackSpeed;
 		int mAudioStream;
 #ifdef MARTII
+		int mSubtitleStream;
 		int mDvbsubtitleStream;
 		int mTeletextStream;
+		void (*framebuffer_callback)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *);
 #endif
 		bool Stop(void);
 	public:
+#ifdef MARTII
+		cPlayback(int num = 0, void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *) = NULL);
+#else
 		cPlayback(int num = 0);
+#endif
 		~cPlayback();
 
 		bool Open(playmode_t PlayMode);
@@ -30,9 +36,11 @@ class cPlayback
 			   int ac3, unsigned int duration);
 		bool SetAPid(unsigned short pid, bool ac3);
 #ifdef MARTII
+		bool SetSubtitlePid(unsigned short pid);
 		bool SetDvbsubtitlePid(unsigned short pid);
 		bool SetTeletextPid(unsigned short pid);
 		unsigned short GetAPid(void) { return mAudioStream; }
+		unsigned short GetSubtitlePid(void) { return mSubtitleStream; }
 		unsigned short GetDvbsubtitlePid(void) { return mDvbsubtitleStream; }
 		unsigned short GetTeletextPid(void) { return mTeletextStream; }
 #endif
@@ -42,6 +50,7 @@ class cPlayback
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
 #ifdef MARTII
+		void FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 #endif
 #if 0

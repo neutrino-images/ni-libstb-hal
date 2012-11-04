@@ -13,6 +13,9 @@ extern ContainerHandler_t	ContainerHandler;
 extern ManagerHandler_t		ManagerHandler;
 
 #include "playback_libeplayer3.h"
+#ifdef MARTII
+#include "subtitle.h"
+#endif
 
 static Context_t *player;
 
@@ -73,6 +76,14 @@ bool cPlayback::Open(playmode_t PlayMode)
 #ifdef MARTII
 		player->output->Command(player,OUTPUT_ADD, (void*)"dvbsubtitle");
 		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
+
+		if (framebuffer_callback) {
+			SubtitleOutputDef_t so;
+			memset(&so, 0, sizeof(so));
+			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferFD);
+			so.shareFramebuffer = 1;
+			player->output->subtitle->Command(player, OUTPUT_SET_SUBTITLE_OUTPUT, (void*)&so);
+		}
 #endif
 	}
 
@@ -107,6 +118,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	//create playback path
 	mAudioStream=0;
 #ifdef MARTII
+	mSubtitleStream=-1;
 	mDvbsubtitleStream=-1;
 	mTeletextStream=0;
 #endif
@@ -166,6 +178,39 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 				free(TrackList);
 			}
 		}
+#ifdef MARTII
+		//DVBSUB
+		if(player && player->manager && player->manager->dvbsubtitle) {
+			char ** TrackList = NULL;
+			player->manager->dvbsubtitle->Command(player, MANAGER_LIST, &TrackList);
+			if (TrackList != NULL) {
+				printf("DVBSubtitleTrack List\n");
+				int i = 0;
+				for (i = 0; TrackList[i] != NULL; i+=2) {
+					printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+					free(TrackList[i]);
+					free(TrackList[i+1]);
+				}
+				free(TrackList);
+			}
+		}
+
+		//Teletext
+		if(player && player->manager && player->manager->teletext) {
+			char ** TrackList = NULL;
+			player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+			if (TrackList != NULL) {
+				printf("TeletextTrack List\n");
+				int i = 0;
+				for (i = 0; TrackList[i] != NULL; i+=2) {
+					printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+					free(TrackList[i]);
+					free(TrackList[i+1]);
+				}
+				free(TrackList);
+			}
+		}
+#endif
 
 		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
 			player->output->Command(player, OUTPUT_OPEN, NULL);
@@ -267,6 +312,17 @@ bool cPlayback::SetAPid(unsigned short pid, bool ac3)
 	return true;
 }
 #ifdef MARTII
+bool cPlayback::SetSubtitlePid(unsigned short pid)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int i=pid;
+	if(pid!=mSubtitleStream){
+		if(player && player->playback)
+				player->playback->Command(player, PLAYBACK_SWITCH_SUBTITLE, (void*)&i);
+		mSubtitleStream=pid;
+	}
+	return true;
+}
 bool cPlayback::SetDvbsubtitlePid(unsigned short pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -382,7 +438,9 @@ bool cPlayback::GetSpeed(int &speed) const
 bool cPlayback::GetPosition(int &position, int &duration)
 {
 	bool got_duration = false;
+#ifndef MARTII
 	printf("%s:%s %d %d\n", FILENAME, __FUNCTION__, position, duration);
+#endif
 
 	/* hack: if the file is growing (timeshift), then determine its length
 	 * by comparing the mtime with the mtime of the xml file */
@@ -507,6 +565,29 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 	}
 }
 #ifdef MARTII
+void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	if(player && player->manager && player->manager->subtitle) {
+		char ** TrackList = NULL;
+		player->manager->subtitle->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL) {
+			printf("SubtitleTrack List\n");
+			int i = 0,j=0;
+			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				pids[j]=j;
+				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
+				language[j]=TrackList[i];
+				free(TrackList[i]);
+				free(TrackList[i+1]);
+			}
+			free(TrackList);
+			*numpids=j;
+		}
+	}
+}
+
 void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -533,13 +614,16 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 
 //
 #ifdef MARTII
-cPlayback::cPlayback(int num __attribute__((unused)))
+cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *))
 #else
 cPlayback::cPlayback(int num)
 #endif
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;
+#ifdef MARTII
+	framebuffer_callback = fbcb;
+#endif
 }
 
 cPlayback::~cPlayback()

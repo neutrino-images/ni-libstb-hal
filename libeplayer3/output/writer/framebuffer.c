@@ -162,6 +162,15 @@ static int writeData(void* _call)
             {
                 k = ((unsigned)src[x]) * opacity / 255;
                 ck = 255 - k;
+#ifdef MARTII // or __sh__, or !HAVE_TRIPLEDRAGON
+                *dst++ = 0;
+                t = *dst;
+                *dst++ = (k*r + ck*t) / 255;
+                t = *dst;
+                *dst++ = (k*b + ck*t) / 255;
+                t = *dst;
+                *dst++ = (k*g + ck*t) / 255;
+#else
                 t = *dst;
                 *dst++ = (k*b + ck*t) / 255;
                 t = *dst;
@@ -169,6 +178,7 @@ static int writeData(void* _call)
                 t = *dst;
                 *dst++ = (k*r + ck*t) / 255;
                 *dst++ = 0;
+#endif
             }
 
             dst += dst_delta;

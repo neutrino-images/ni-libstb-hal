@@ -209,10 +209,12 @@ static char* Codec2Encoding(enum CodecID id, int* version)
         return "A_IPCM"; //return "A_VORBIS";
     case CODEC_ID_FLAC: //86030
         return "A_IPCM"; //return "A_FLAC";
-#ifdef MARTII
+#if LIBAVCODEC_VERSION_MAJOR > 54 || (LIBAVCODEC_VERSION_MAJOR == 54 && LIBAVCODEC_VERSION_MINOR > 24)
+    case AV_CODEC_ID_PCM_S16LE:
+#else
     case CODEC_ID_PCM_S16LE:
-	return "A_PCM";
 #endif
+	return "A_PCM";
 /* subtitle */
     case CODEC_ID_SSA:
         return "S_TEXT/ASS"; /* Hellmaster1024: seems to be ASS instead of SSA */
@@ -492,12 +494,11 @@ static void FFMPEGThread(Context_t *context) {
 	    Track_t * videoTrack = NULL;
 	    Track_t * audioTrack = NULL;
 	    Track_t * subtitleTrack = NULL;
+
 #ifdef MARTII
 	    Track_t * dvbsubtitleTrack = NULL;
 	    Track_t * teletextTrack = NULL;
-#endif
 
-#ifdef MARTII
 	    int ix = packet.stream_index;
 #else
 	    int index = packet.stream_index;
@@ -599,7 +600,6 @@ static void FFMPEGThread(Context_t *context) {
 #else
 		    ffmpeg_printf(200, "AudioTrack index = %d\n",index);
 #endif
-#ifdef MARTII
                     if (audioTrack->inject_raw_pcm == 1){
                         ffmpeg_printf(200,"write audio raw pcm\n");
 
@@ -628,10 +628,7 @@ static void FFMPEGThread(Context_t *context) {
                             ffmpeg_err("(raw pcm) writing data to audio device failed\n");
                         }
                     }
-                    else 
-#endif
-
-		    if (audioTrack->inject_as_pcm == 1)
+                    else if (audioTrack->inject_as_pcm == 1)
 		    {
 			int      bytesDone = 0;
 			unsigned int samples_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
@@ -1136,13 +1133,11 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 		}
 
-#ifdef MARTII
 		if(!strncmp(encoding, "A_PCM", 5))
                 {
                     track.inject_raw_pcm = 1;
                     ffmpeg_printf(10, " Handle inject_raw_pcm = %d\n", track.inject_as_pcm);
 		}
-#endif
 		if(!strncmp(encoding, "A_IPCM", 6))
 		{
 		    track.inject_as_pcm = 1;
@@ -2028,11 +2023,7 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
     return ret;
 }
 
-#ifdef MARTII
 static char *FFMPEG_Capabilities[] = {"avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg", "m2ts", "vob", "wmv","wma", "asf", "mp2", "m4v", "m4a", "divx", "dat", "mpeg", "trp", "mts", "vdr", "ogg", "wav", NULL };
-#else
-static char *FFMPEG_Capabilities[] = {"avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg", "m2ts", "vob", "wmv","wma", "asf", "mp2", "m4v", "m4a", "divx", "dat", "mpeg", "trp", "mts", "vdr", "ogg",  NULL };
-#endif
 
 Container_t FFMPEGContainer = {
     "FFMPEG",

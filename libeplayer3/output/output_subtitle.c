@@ -529,7 +529,7 @@ static int Write(void* _context, void *data) {
     int DataLength;
     unsigned long long int Pts;
     float Duration;
-    
+ 
     subtitle_printf(10, "\n");
 
     if (data == NULL)

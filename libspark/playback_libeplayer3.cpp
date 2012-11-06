@@ -319,7 +319,7 @@ bool cPlayback::SetSubtitlePid(unsigned short pid)
 	if(pid!=mSubtitleStream){
 		if(player && player->playback)
 				player->playback->Command(player, PLAYBACK_SWITCH_SUBTITLE, (void*)&i);
-		mSubtitleStream=pid;
+		mSubtitleStream = pid;
 	}
 	return true;
 }
@@ -631,6 +631,15 @@ cPlayback::~cPlayback()
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 }
 
+#ifdef MARTII
+void cPlayback::SuspendSubtitle(bool b)
+{
+	if (b)
+		player->playback->Command(player, PLAYBACK_FRAMEBUFFER_LOCK, 0);
+	else
+		player->playback->Command(player, PLAYBACK_FRAMEBUFFER_UNLOCK, 0);
+}
+#endif
 #if 0
 bool cPlayback::IsPlaying(void) const
 {

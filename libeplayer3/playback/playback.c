@@ -1119,6 +1119,16 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
         ret = PlaybackSwitchTeletext(context, (int*)argument);
 	break;
     }
+    case PLAYBACK_FRAMEBUFFER_LOCK: {
+        context->playback->mayWriteToFramebuffer = 0;
+    	ret = cERR_PLAYBACK_NO_ERROR;
+	break;
+    }
+    case PLAYBACK_FRAMEBUFFER_UNLOCK: {
+        context->playback->mayWriteToFramebuffer = 1;
+    	ret = cERR_PLAYBACK_NO_ERROR;
+	break;
+    }
 #endif
     default:
         playback_err("PlaybackCmd %d not supported!\n", command);
@@ -1153,6 +1163,7 @@ PlaybackHandler_t PlaybackHandler = {
 #ifdef MARTII
     0,
     0,
+    1,
 #endif
     &Command,
     "",

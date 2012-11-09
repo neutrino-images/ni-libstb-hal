@@ -1941,6 +1941,10 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
 
     ffmpeg_printf(50, "Command %d\n", command);
 
+#ifdef MARTII
+    if (command != CONTAINER_INIT && !avContext)
+	return cERR_CONTAINER_FFMPEG_ERR;
+#endif
     switch(command)
     {
     case CONTAINER_INIT:  {

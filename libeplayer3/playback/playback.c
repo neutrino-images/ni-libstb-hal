@@ -84,6 +84,10 @@ static void SupervisorThread(Context_t *context) {
     {
         if (context->container->selectedContainer != NULL)
             context->container->selectedContainer->Command(context, CONTAINER_STATUS, &status);
+#ifdef MARTII
+	else
+		dieNow = 1;
+#endif
 
         if (context->container->selectedContainer != NULL)
             context->container->selectedContainer->Command(context, CONTAINER_LAST_PTS, &lastPts);

@@ -850,7 +850,11 @@ static int PlaybackLength(Context_t  *context, double* length) {
 
     playback_printf(20, "\n");
 
+#ifdef MARTII
+    *length = -1;
+#else
     *length = 0;
+#endif
 
     if (context->playback->isPlaying) {
         if (context->container && context->container->selectedContainer)

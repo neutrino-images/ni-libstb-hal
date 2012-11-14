@@ -129,6 +129,18 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	    printf("http://\n");
             isHTTP = true;
 	}
+#ifdef MARTII
+	else if(!strncmp("rtmp://", filename, 7))
+	{
+	    printf("rtmp://\n");
+            isHTTP = true;
+	}
+	else if(!strncmp("mms://", filename, 6))
+	{
+	    printf("mss://\n");
+            isHTTP = true;
+	}
+#endif
 	else if(!strncmp("file://", filename, 7))
 	{
 	    printf("file://\n");

@@ -24,7 +24,7 @@ class cPlayback
 		CS_PLAYBACK_PDATA * privateData;
 
 		pthread_t rua_thread;
-		pthread_t event_thread;
+		// pthread_t event_thread;
 
 		bool enabled;
 		bool paused;
@@ -43,6 +43,8 @@ class cPlayback
 		int mduration;
 		
 		playmode_t playMode;
+		int __GetPosition(void);
+		int rmfp_command(int cmd, int param, bool has_param, int reply_len);
 		//
 	public:
 		bool Open(playmode_t PlayMode);

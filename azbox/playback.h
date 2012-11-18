@@ -4,79 +4,58 @@
 #include <string>
 #include <stdint.h>
 
-#ifndef CS_PLAYBACK_PDATA
-typedef struct {
-	int nothing;
-} CS_PLAYBACK_PDATA;
-#endif
-
 typedef enum {
 	PLAYMODE_TS = 0,
 	PLAYMODE_FILE,
-} playmode_t; 
+} playmode_t;
 
 class cPlayback
 {
 	private:
-		int timeout;
-		pthread_cond_t read_cond;
-		pthread_mutex_t mutex;
-		CS_PLAYBACK_PDATA * privateData;
-
-		pthread_t rua_thread;
-		// pthread_t event_thread;
-
-		bool enabled;
-		bool paused;
+		pthread_mutex_t rmfp_cmd_mutex;
 		bool playing;
-		int unit;
-		int nPlaybackFD;
-		int video_type;
-		int nPlaybackSpeed;
-		int mSpeed;
-		int mAudioStream;
-		int mSubStream;
-		char* mfilename;
-		int thread_active;
-		int eof_reached;
-		int setduration;
-		int mduration;
-		
+		bool eof_reached;
+		int playback_speed;
 		playmode_t playMode;
-		int __GetPosition(void);
-		int rmfp_command(int cmd, int param, bool has_param, int reply_len);
-		//
+		bool open_success;
+		uint16_t apid;
+		uint16_t subpid;
+		char *mfilename;
+		int mduration;
+		pthread_t thread;
+		bool thread_started;
+		/* private functions */
+		bool rmfp_command(int cmd, int param, bool has_param, char *buf, int buflen);
 	public:
-		bool Open(playmode_t PlayMode);
-		void Close(void);
-		bool Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3, int duration);
-		bool Stop(void);
-		bool SetAPid(unsigned short pid, bool ac3);
-		bool SetSPid(int pid);
-		bool SetSpeed(int speed);
-		bool GetSpeed(int &speed) const;
-		bool GetPosition(int &position, int &duration);
-		bool SetPosition(int position, bool absolute = false);
-		bool IsEOF(void) const;
-		int GetCurrPlaybackSpeed(void) const;
-		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
-		void FindAllSPids(int *spids, uint16_t *numpids, std::string *language);
-		//
 		cPlayback(int num = 0);
 		~cPlayback();
-		void RuaThread();
-		void EventThread();
 
+		void run_rmfp();
+
+		bool Open(playmode_t PlayMode);
+		void Close(void);
+		bool Start(char *filename, unsigned short vpid, int vtype, unsigned short apid,
+			   int ac3, unsigned int duration);
+		bool SetAPid(unsigned short pid, int ac3);
+		bool SetSpeed(int speed);
+		bool GetSpeed(int &speed) const;
+		bool GetPosition(int &position, int &duration);	/* pos: current time in ms, dur: file length in ms */
+		bool SetPosition(int position, bool absolute = false);	/* position: jump in ms */
+		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
+		// AZbox specific
+		void FindAllSPids(int *spids, uint16_t *numpids, std::string *language);
+		bool SetSPid(int pid);
 #if 0
-		/* not used */
+		// Functions that are not used by movieplayer.cpp:
+		bool Stop(void);
 		bool GetOffset(off64_t &offset);
-		void PlaybackNotify (int  Event, void *pData, void *pTag);
-		void DMNotify(int Event, void *pTsBuf, void *Tag);
-		bool IsPlaying(void) const;
-		bool IsEnabled(void) const;
+		bool IsPlaying(void) const { return playing; }
+		bool IsEnabled(void) const { return enabled; }
 		void * GetHandle(void);
 		void * GetDmHandle(void);
+		int GetCurrPlaybackSpeed(void) const { return nPlaybackSpeed; }
+		void PlaybackNotify (int  Event, void *pData, void *pTag);
+		void DMNotify(int Event, void *pTsBuf, void *Tag);
 #endif
 };
-
 #endif

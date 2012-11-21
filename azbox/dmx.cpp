@@ -211,17 +211,31 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 			__FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
 #endif
 	int rc;
+	int to = timeout;
 	struct pollfd ufds;
 	ufds.fd = fd;
 	ufds.events = POLLIN|POLLPRI|POLLERR;
 	ufds.revents = 0;
 
-	if (timeout > 0)
+	/* hack: if the frontend loses and regains lock, the demuxer often will not
+	 * return from read(), so as a "emergency exit" for e.g. NIT scan, set a (long)
+	 * timeout here */
+	if (dmx_type == DMX_PSI_CHANNEL && timeout <= 0)
+		to = 60 * 1000;
+
+	if (to > 0)
 	{
  retry:
-		rc = ::poll(&ufds, 1, timeout);
+		rc = ::poll(&ufds, 1, to);
 		if (!rc)
+		{
+			if (timeout == 0) /* we took the emergency exit */
+			{
+				dmx_err("timed out for timeout=0!, %s", "", 0);
+				return -1; /* this timeout is an error */
+			}
 			return 0; // timeout
+		}
 		else if (rc < 0)
 		{
 			dmx_err("poll: %s,", strerror(errno), 0)
@@ -323,6 +337,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	/* 0x60 - 0x6F: event_information_section - other_transport_stream, schedule */
 	case 0x70: /* time_date_section */
 		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+		s_flt.flags |= DMX_ONESHOT;
 		//s_flt.pid     = 0x0014;
 		to = 30000;
 		break;
@@ -335,6 +350,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 		to = 0;
 		break;
 	case 0x73: /* time_offset_section */
+		s_flt.flags |= DMX_ONESHOT;
 		//s_flt.pid     = 0x0014;
 		to = 30000;
 		break;

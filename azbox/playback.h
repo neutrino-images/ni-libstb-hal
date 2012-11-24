@@ -13,7 +13,7 @@ class cPlayback
 {
 	private:
 		pthread_mutex_t rmfp_cmd_mutex;
-		bool playing;
+		int playing;
 		bool eof_reached;
 		int playback_speed;
 		playmode_t playMode;

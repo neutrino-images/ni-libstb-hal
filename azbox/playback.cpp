@@ -184,12 +184,12 @@ void cPlayback::run_rmfp()
 			lt_info("%s out: '%s'\n", __func__, output);
 			if (strstr(output, "Playback has started..."))
 			{
-				playing = true;
+				playing = 1;
 				lt_info("%s: ===================> playing = true\n", __func__);
 			}
 			else if (strstr(output, "End of file..."))
 			{
-				playing = true; /* this can happen without "Playback has started..." */
+				playing = 1; /* this can happen without "Playback has started..." */
 				eof_reached = true;
 				lt_info("%s: ===================> eof_reached = true\n", __func__);
 			}
@@ -202,7 +202,10 @@ void cPlayback::run_rmfp()
 	}
 
 	lt_info("%s: terminating\n", __func__);
-	playing = false;
+	if (playing == 0)	/* playback did not start */
+		playing = 2;
+	else
+		playing = 0;
 	eof_reached = true;
 	pthread_exit(NULL);
 }
@@ -293,6 +296,8 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	}
 	while (! playing)
 		sleep(1);
+	if (playing == 2)
+		playing = 0;
 	return ret;
 }
 
@@ -306,7 +311,7 @@ void cPlayback::Close(void)
 
 		if (pthread_join(thread, NULL))
 			lt_info("%s: error joining rmfp thread (%m)\n", __func__);
-		playing = false;
+		playing = 0;
 		thread_started = false;
 	}
 	else
@@ -315,6 +320,7 @@ void cPlayback::Close(void)
 	if (open_success)
 	{
 		proc_put("/proc/player", "1", 2);
+		open_success = false;
 		lt_info("%s: /proc/player switched to '1'\n", __func__);
 		usleep(1000000);
 	}
@@ -394,6 +400,9 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (!p)
 		return false;
 	position = atoi(++p);
+	/* some mpegs return length 0... which would lead to "eof" after 10 seconds */
+	if (duration == 0)
+		duration = position + 1000;
 
 	if (playMode == PLAYMODE_TS)
 	{
@@ -490,7 +499,7 @@ void cPlayback::FindAllSPids(int *spids, uint16_t *numpids, std::string *languag
 cPlayback::cPlayback(int /*num*/)
 {
 	lt_info("%s: constructor\n", __func__);
-	playing = false;
+	playing = 0;
 	thread_started = false;
 	eof_reached = false;
 	open_success = false;

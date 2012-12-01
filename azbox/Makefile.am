@@ -1,13 +1,12 @@
 INCLUDES = \
 	-I$(top_srcdir)/common
 
-# this library is not used for linking, so call it libdummy...
-noinst_LIBRARIES = libdummy.a
+noinst_LTLIBRARIES = libazbox.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = -lpthread
 
-libdummy_a_SOURCES = \
+libazbox_la_SOURCES = \
 	hardware_caps.c \
 	dmx.cpp \
 	video.cpp \

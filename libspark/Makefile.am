@@ -2,12 +2,12 @@ INCLUDES = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/libeplayer3/include
 
-noinst_LIBRARIES = libspark.a
+noinst_LTLIBRARIES = libspark.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = -lpthread
 
-libspark_a_SOURCES = \
+libspark_la_SOURCES = \
 	irmp.c \
 	hardware_caps.c \
 	lirmp_input.cpp \

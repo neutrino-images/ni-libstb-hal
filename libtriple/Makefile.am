@@ -2,11 +2,11 @@ INCLUDES = \
 	-I$(top_srcdir)/common \
 	@DIRECTFB_CFLAGS@
 
-noinst_LIBRARIES = libtriple.a
+noinst_LTLIBRARIES = libtriple.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
-libtriple_a_SOURCES = \
+libtriple_la_SOURCES = \
 	hardware_caps.c \
 	lt_dfbinput.cpp \
 	dmx_td.cpp \

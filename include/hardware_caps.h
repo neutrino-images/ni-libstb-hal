@@ -33,6 +33,9 @@ typedef struct hw_caps
 	display_type_t display_type;
 	int display_xres;	/* x resolution or chars per line */
 	int display_yres;
+#ifdef MARTII
+	int dmx_offset;
+#endif
 	char boxvendor[64];
 	char boxname[64];
 } hw_caps_t;

@@ -56,6 +56,7 @@
 #ifdef MARTII
 #include <unistd.h>
 #include <fcntl.h>
+#include <hardware_caps.h>
 #endif
 
 #include <cstring>
@@ -196,6 +197,9 @@ bool cDemux::_open(void)
 	{
 		/* this should not change anything... */
 		int n = DMX_SOURCE_FRONT0 + devnum;
+#ifdef MARTII
+		n += get_hwcaps()->dmx_offset;
+#endif
 		lt_info("%s: setting %s to source %d\n", __func__, devname[devnum], n);
 		if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 			lt_info("%s DMX_SET_SOURCE failed!\n", __func__);

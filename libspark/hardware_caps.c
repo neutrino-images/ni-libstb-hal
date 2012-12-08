@@ -68,6 +68,9 @@ hw_caps_t *get_hwcaps(void)
 				case 0x0c0007:
 					tmp = "GoldenMedia Triplex";
 					caps.has_SCART = 1;
+#ifdef MARTII
+					caps.dmx_offset = 1;
+#endif
 					break;
 				default:
 					tmp = p;

@@ -49,14 +49,14 @@ bool cPowerManager::SetStandby(bool Active, bool Passive)
 bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 {
 #ifdef MARTII
-	if (f == 0)
-		f = 450000000;
-	FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
-	if (pll0) {
-		f /= 1000000;
-		fprintf(pll0, "%lu\n", f/10 * 256 + 3);
-		fclose (pll0);
-		return 0;
+	if (f) {
+		FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
+		if (pll0) {
+			f /= 1000000;
+			fprintf(pll0, "%lu\n", (f/10 << 8) | 3);
+			fclose (pll0);
+			return false;
+		}
 	}
 #else
 	/* actually SetCpuFreq is used to determine if the system is in standby

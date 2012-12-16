@@ -102,7 +102,7 @@ int map_volume(const int volume)
 		vol = 100;
 
 #ifdef MARTII
-	vol = 64 - vol * 64 / 100;
+	vol = 62 - vol * 62 / 100;
 #else
 	vol = 63 - vol * 63 / 100;
 #endif

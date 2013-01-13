@@ -942,6 +942,12 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 		}
 		uint16_t w = *(uint16_t *)(map + WIDTH_OFF);
 		uint16_t h = *(uint16_t *)(map + HEIGHT_OFF);
+		if (w > 720 || h > 576) {
+			lt_info("%s: unhandled resolution %dx%d, is the tuner locked?\n", __func__, w, h);
+			munmap(map, VIDEO_SIZE);
+			close(mfd);
+			return false;
+		}
 		uint8_t *luma, *chroma;
 		int needmem = w * h * 5 / 4; /* chroma is 1/4 in size of luma */
 		int lumasize = w * h;

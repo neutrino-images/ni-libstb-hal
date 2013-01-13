@@ -6,6 +6,8 @@
 //#define video_displayformat_t   vidDispMode_t
 #include "../common/cs_types.h"
 
+#define STB_HAL_VIDEO_HAS_GETSCREENIMAGE 1
+
 typedef enum {
 	ANALOG_SD_RGB_SCART = 0x00,
 	ANALOG_SD_YPRPB_SCART,

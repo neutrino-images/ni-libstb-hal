@@ -69,7 +69,7 @@ hw_caps_t *get_hwcaps(void)
 					tmp = "GoldenMedia Triplex";
 					caps.has_SCART = 1;
 #ifdef MARTII
-					caps.dmx_offset = 1; // first sat tuner
+					caps.fe_offset = 1; // first sat tuner
 #endif
 					break;
 				default:
@@ -82,7 +82,7 @@ hw_caps_t *get_hwcaps(void)
 #ifdef MARTII
 	char *fe_off = getenv("FE_OFFSET");
 	if (fe_off)
-		sscanf(fe_off, "%d", &caps.dmx_offset);
+		sscanf(fe_off, "%d", &caps.fe_offset);
 #endif
 	fd = open (FP_DEV, O_RDWR);
 	if (fd != -1) {

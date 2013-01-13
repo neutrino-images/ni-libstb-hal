@@ -198,7 +198,7 @@ bool cDemux::_open(void)
 		/* this should not change anything... */
 		int n = DMX_SOURCE_FRONT0 + devnum;
 #ifdef MARTII
-		n += get_hwcaps()->dmx_offset;
+		n += get_hwcaps()->fe_offset;
 #endif
 		lt_info("%s: setting %s to source %d\n", __func__, devname[devnum], n);
 		if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)

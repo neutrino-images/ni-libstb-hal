@@ -245,6 +245,8 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 
 	if (measure)
 	{
+		if (timeout)
+			usleep(timeout * 1000);
 		uint64_t now;
 		struct timespec t;
 		clock_gettime(CLOCK_MONOTONIC, &t);

@@ -36,6 +36,7 @@ class cDemux
 {
 	private:
 		int num;
+		int devnum;
 		int fd;
 		int buffersize;
 		bool measure;

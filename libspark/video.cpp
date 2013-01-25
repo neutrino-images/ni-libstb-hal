@@ -115,7 +115,7 @@ static int hdmi_out(bool enable)
 	int fb = open("/dev/fb0", O_RDWR);
 	if (fb < 0)
 	{
-		lt_debug_c("%s: can't open /dev/fb/0 (%m)\n", __func__);
+		lt_debug_c("%s: can't open /dev/fb0 (%m)\n", __func__);
 		return -1;
 	}
 	out.outputid = STMFBIO_OUTPUTID_MAIN;

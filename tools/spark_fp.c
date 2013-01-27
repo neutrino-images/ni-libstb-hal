@@ -232,6 +232,8 @@ int main(int argc, char **argv)
 				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
 				break;
 			case 'P':
+#else
+				ret = ioctl(fd, VFDSTANDBY, &t);
 #endif
 				ret = ioctl(fd, VFDPOWEROFF, &t);
 				/* driver always returns einval here...

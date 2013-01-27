@@ -41,7 +41,12 @@ void usage()
 	printf("\t-T: get FP display type (1 = VFD, 2 = LCD, 4 = LED, 8 = LBD)\n");
 	printf("\t-t: get current FP time\n");
 	printf("\t-s <time>: set FP time (time = 0: use current time)\n");
+#ifdef MARTII
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
+	printf("\t-P: power down\n");
+#else
+	printf("\t-w <time>: set FP wakeup time (time = 1: no wakeup)\n");
+#endif
 #ifdef MARTII
 	printf("\t-l <n>: set LED <n> on\n");
 	printf("\t-L <n>: set LED <n> off\n");
@@ -141,7 +146,7 @@ int main(int argc, char **argv)
 
 	ret = 0;
 #ifdef MARTII
-	while ((c = getopt (argc, argv, "gs:tw:Tl:L:")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P")) != -1)
 #else
 	while ((c = getopt (argc, argv, "gs:tw:T")) != -1)
 #endif
@@ -223,7 +228,12 @@ int main(int argc, char **argv)
 				tmp = gmtime(&t);
 				fprintf(stderr, "wakeup time:  %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
 						tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
-				ret = ioctl(fd, VFDSTANDBY, &t);
+#ifdef MARTII
+				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
+				break;
+			case 'P':
+#endif
+				ret = ioctl(fd, VFDPOWEROFF, &t);
 				/* driver always returns einval here...
 				if (ret < 0)
 					perror("ioctl VFDSTANDBY");

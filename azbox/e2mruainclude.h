@@ -80,4 +80,4 @@ EVENT_MSG_EOS,
 EVENT_MSG_SUB_CHANGED,
 };
 
-int fd_cmd, fd_in, fd_out, fd_event, msg;
+//int fd_cmd, fd_in, fd_out, fd_event, msg;

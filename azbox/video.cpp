@@ -60,7 +60,6 @@
 cVideo * videoDecoder = NULL;
 int system_rev = 0;
 
-static bool hdmi_enabled = true;
 static bool stillpicture = false;
 static unsigned char *blank_data;
 static ssize_t blank_size;
@@ -425,20 +424,11 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		closeDevice();
-		//hdmi_out(false);
+		proc_put("/proc/stb/avs/0/input", "aux", 4);
 	}
 	else
 	{
-		/* only enable HDMI output when coming from standby, not on
-		 * start. I have no idea why, but enabling it on startup leads
-		 * to strange locking problems of the framebuffer driver :-( */
-		if (!hdmi_enabled)
-		{
-			//hdmi_out(true);
-			/* make sure the driver has time to settle.
-			 * again - lame, but makes it work... */
-			//sleep(1);
-		}
+		proc_put("/proc/stb/avs/0/input", "encoder", 8);
 		openDevice();
 	}
 	video_standby = bOn;

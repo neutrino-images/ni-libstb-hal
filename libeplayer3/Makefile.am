@@ -1,11 +1,11 @@
-noinst_LIBRARIES = libeplayer3.a
+noinst_LTLIBRARIES = libeplayer3.la
 
 CXXFLAGS = -Wall
 
 INCLUDES = \
 	-I$(srcdir)/include
 
-libeplayer3_a_SOURCES =  \
+libeplayer3_la_SOURCES =  \
 	container/container.c container/container_ffmpeg.c container/text_srt.c \
     container/text_ssa.c container/container_ass.c \
 	manager/audio.c manager/manager.c manager/subtitle.c manager/video.c \
@@ -29,7 +29,7 @@ AM_CPPFLAGS = -Dattribute_deprecated=''
 
 #libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 
-LIBEPLAYER3_LIBS = libeplayer3.a -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
+LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 bin_PROGRAMS = eplayer3 meta
 eplayer3_SOURCES = tools/eplayer2.c
 eplayer3_LDADD = $(LIBEPLAYER3_LIBS)

@@ -91,13 +91,14 @@ cDemux::~cDemux()
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
-	int devnum = num;
+	devnum = num;
 	int flags = O_RDWR;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 	if (pes_type == DMX_TP_CHANNEL)
 	{
-		if (num == 0) /* streaminfo measurement, let's cheat... */
+		/* see neutrino's src/gui/streaminfo2.cpp for the buffer size */
+		if (num == 0 && uBufferSize == 3 * 3008 * 62) /* streaminfo measurement, let's cheat... */
 		{
 			lt_info("%s num=0 and DMX_TP_CHANNEL => measurement demux\n", __func__);
 			devnum = 2; /* demux 0 is used for live, demux 1 for recording */
@@ -244,6 +245,8 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 
 	if (measure)
 	{
+		if (timeout)
+			usleep(timeout * 1000);
 		uint64_t now;
 		struct timespec t;
 		clock_gettime(CLOCK_MONOTONIC, &t);
@@ -535,7 +538,7 @@ bool cDemux::addPid(unsigned short Pid)
 	}
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
-	pfd.fd = open(devname[num], O_RDWR);
+	pfd.fd = open(devname[devnum], O_RDWR);
 	if (pfd.fd < 0)
 	{
 		lt_info("%s #%d Pid = %hx open failed (%m)\n", __FUNCTION__, num, Pid);

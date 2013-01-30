@@ -10,3 +10,7 @@
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
 #endif
+
+#if STB_HAL_VIDEO_HAS_GETSCREENIMAGE
+#define SCREENSHOT 1
+#endif

@@ -230,15 +230,15 @@ int main(int argc, char **argv)
 				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
 				break;
 			case 'P':
-				ret = ioctl(fd, VFDPOWEROFF, &t);
+				ret = ioctl(fd, VFDPOWEROFF);
 #else
 				ret = ioctl(fd, VFDSTANDBY, &t);
-#endif
 				/* driver always returns einval here...
 				if (ret < 0)
 					perror("ioctl VFDSTANDBY");
 				 */
 				sleep(2); /* not reached... */
+#endif
 				break;
 #ifdef MARTII
 			case 'l': /* LED on */

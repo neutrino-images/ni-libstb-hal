@@ -46,6 +46,10 @@ void usage()
 	printf("\t-P: power down\n");
 	printf("\t-l <n>: set LED <n> on\n");
 	printf("\t-L <n>: set LED <n> off\n");
+	printf("\t-B <n>: show blue RC code (n = 0..4 or \"all\")\n");
+	printf("\t-S <n>: show standby RC code (n = 0..4 or \"all\")\n");
+	printf("\t-B <n>:<predata><code>: set blue RC code (n = 0..4)\n");
+	printf("\t-S <n>:<predata><code>: set standby RC code\n");
 #else
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
 #endif

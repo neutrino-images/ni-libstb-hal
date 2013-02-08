@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 
 	ret = 0;
 #ifdef MARTII
-	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:")) != -1)
 #else
 	while ((c = getopt (argc, argv, "gs:tw:T")) != -1)
 #endif
@@ -262,6 +262,54 @@ int main(int argc, char **argv)
 					ret = val;
 				}
 				break;
+#ifdef MARTII
+// Reminder to myself, here's a semi-sane default for Pingulux boxes:
+// spark_fp -S 0:9966da25 -S 1:11eeda25 -S 2:cc33ba45 -S 3:dd227887 -S 4:aa557887 -B 0:996640bf -B 1:11ee40bf -B 2:cc33b847 -B 3:dd2228d7 -B 4:aa5528d7
+// Not sure whether these are the original settings. --martii
+
+			case 'S':
+				if (2 == sscanf(optarg, "%d:%lx", &aotom.u.key.key_nr, (long unsigned int *) &aotom.u.key.key))
+					ioctl(fd, VFDSETSTBYKEY, &aotom);
+				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr)) {
+					ret = ioctl(fd, VFDGETSTBYKEY, &aotom);
+					if (ret)
+						perror("ioctl VFDGETSTBYKEY");
+					else
+						fprintf(stderr, "stby key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
+				} else {
+					aotom.u.key.key_nr = 0;
+					while(aotom.u.key.key_nr < 5) {
+						ret = ioctl(fd, VFDGETSTBYKEY, &aotom);
+						if (ret)
+							perror("ioctl VFDGETSTBYKEY");
+						else
+							fprintf(stderr, "stby key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
+						aotom.u.key.key_nr++;
+					}
+				}
+				break;
+			case 'B':
+				if (2 == sscanf(optarg, "%d:%lx", &aotom.u.key.key_nr, (long unsigned int *) &aotom.u.key.key))
+					ioctl(fd, VFDSETBLUEKEY, &aotom);
+				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr)) {
+					ret = ioctl(fd, VFDGETBLUEKEY, &aotom);
+					if (ret)
+						perror("ioctl VFDGETBLUEKEY");
+					else
+						fprintf(stderr, "blue key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
+				} else {
+					aotom.u.key.key_nr = 0;
+					while(aotom.u.key.key_nr < 5) {
+						ret = ioctl(fd, VFDGETBLUEKEY, &aotom);
+						if (ret)
+							perror("ioctl VFDGETBLUEKEY");
+						else
+							fprintf(stderr, "blue key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
+						aotom.u.key.key_nr++;
+					}
+				}
+				break;
+#endif
 			default:
 				usage();
 				return 0;

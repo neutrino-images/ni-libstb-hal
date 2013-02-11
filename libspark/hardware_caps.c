@@ -70,6 +70,7 @@ hw_caps_t *get_hwcaps(void)
 					caps.has_SCART = 1;
 #ifdef MARTII
 					caps.fe_offset = 1; // first sat tuner
+					caps.fe_offset_max = 2; // last tuner
 #endif
 					break;
 				default:

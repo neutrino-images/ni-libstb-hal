@@ -35,6 +35,7 @@ typedef struct hw_caps
 	int display_yres;
 #ifdef MARTII
 	int fe_offset;
+	int fe_offset_max;
 #endif
 	char boxvendor[64];
 	char boxname[64];

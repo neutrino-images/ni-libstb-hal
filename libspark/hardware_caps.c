@@ -71,10 +71,6 @@ hw_caps_t *get_hwcaps(void)
 				case 0x0c0007:
 					tmp = "GoldenMedia Triplex";
 					caps.has_SCART = 1;
-#ifdef MARTII
-					caps.fe_offset = 1; // first sat tuner
-					caps.fe_offset_max = 2; // last tuner
-#endif
 					break;
 				default:
 					tmp = p;
@@ -83,11 +79,6 @@ hw_caps_t *get_hwcaps(void)
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
 	}
-#ifdef MARTII
-	char *fe_off = getenv("FE_OFFSET");
-	if (fe_off)
-		sscanf(fe_off, "%d", &caps.fe_offset);
-#endif
 	fd = open (FP_DEV, O_RDWR);
 	if (fd != -1) {
 		ret = ioctl(fd, VFDGETVERSION, &val);

@@ -42,6 +42,8 @@ void usage()
 	printf("\t-t: get current FP time\n");
 	printf("\t-s <time>: set FP time (time = 0: use current time)\n");
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
+	printf("\t-l <n>: set LED <n> on\n");
+	printf("\t-L <n>: set LED <n> off\n");
 	printf("times are given in unix time (UTC, seconds since 1970-01-01 00:00:00)\n");
 	printf("\n");
 }
@@ -136,7 +138,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
-	while ((c = getopt (argc, argv, "gs:tw:T")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:Tl:L:")) != -1)
 	{
 		switch (c)
 		{
@@ -219,6 +221,16 @@ int main(int argc, char **argv)
 					perror("ioctl VFDSTANDBY");
 				 */
 				sleep(2); /* not reached... */
+				break;
+			case 'l': /* LED on */
+				aotom.u.led.on = LOG_ON;
+				aotom.u.led.led_nr = atoi(optarg);
+				ioctl(fd, VFDSETLED, &aotom);
+				break;
+			case 'L': /* LED off */
+				aotom.u.led.on = LOG_OFF;
+				aotom.u.led.led_nr = atoi(optarg);
+				ioctl(fd, VFDSETLED, &aotom);
 				break;
 			case 'T':
 				ret = ioctl(fd, VFDGETVERSION, &val);

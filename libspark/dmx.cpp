@@ -226,14 +226,6 @@ void cDemux::Close(void)
 		return;
 	}
 
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping and closing demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DEMUX_STOP");
-		if (close((*i).fd) < 0)
-			perror("close");
-	}
 	pesfds.clear();
 	ioctl(fd, DMX_STOP);
 	close(fd);
@@ -258,13 +250,6 @@ bool cDemux::Start(bool)
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
-
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s starting demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_START) < 0)
-			perror("DMX_START");
-	}
 	ioctl(fd, DMX_START);
 	return true;
 }
@@ -275,12 +260,6 @@ bool cDemux::Stop(void)
 	{
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
-	}
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DMX_STOP");
 	}
 	ioctl(fd, DMX_STOP);
 	return true;
@@ -546,7 +525,6 @@ bool cDemux::addPid(unsigned short Pid)
 	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
 	pes_pids pfd;
 	int ret;
-	struct dmx_pes_filter_params p;
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
@@ -555,39 +533,9 @@ bool cDemux::addPid(unsigned short Pid)
 	_open();
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
-#if 0
-	pfd.fd = open(devname[num], O_RDWR);
-	if (pfd.fd < 0)
-	{
-		lt_info("%s #%d Pid = %hx open failed (%m)\n", __FUNCTION__, num, Pid);
-		return false;
-	}
-	fcntl(pfd.fd, F_SETFD, FD_CLOEXEC);
-	lt_debug("%s #%d Pid = %hx pfd = %d\n", __FUNCTION__, num, Pid, pfd.fd);
-
-	p.pid = Pid;
-	p.input    = DMX_IN_FRONTEND;
-	p.pes_type = DMX_PES_OTHER;
-	p.output   = DMX_OUT_TS_TAP;
-	p.flags    = 0;
-
-	ret = ioctl(pfd.fd, DMX_SET_BUFFER_SIZE, 0x10000); // 64k
-	if (ret == -1)
-		perror("DMX_SET_BUFFER_SIZE");
-	else
-	{
-		ret = ioctl(pfd.fd, DMX_SET_PES_FILTER, &p);
-		if (ret == -1)
-			perror("DEMUX_FILTER_PES_SET");
-	}
+	pfd.fd = fd; /* dummy */
 	pfd.pid = Pid;
-	if (ret != -1)
-		/* success! */
-		pesfds.push_back(pfd);
-	else
-		/* error! */
-		close(pfd.fd);
-#endif
+	pesfds.push_back(pfd);
 	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
 	if (ret < 0)
 		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
@@ -604,11 +552,9 @@ void cDemux::removePid(unsigned short Pid)
 	for (std::vector<pes_pids>::iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
 		if ((*i).pid == Pid) {
-			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", (*i).fd, Pid);
-			if (ioctl((*i).fd, DMX_STOP) < 0)
-				perror("DMX_STOP");
-			if (close((*i).fd) < 0)
-				perror("close");
+			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
+			if (ioctl(fd, DMX_REMOVE_PID, Pid) < 0)
+				lt_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
 			pesfds.erase(i);
 			return; /* TODO: what if the same PID is there multiple times */
 		}

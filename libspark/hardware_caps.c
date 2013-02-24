@@ -68,13 +68,59 @@ hw_caps_t *get_hwcaps(void)
 					tmp = "GalaxyInnovations S8120";
 					caps.has_SCART = 1;
 					break;
+#ifdef MARTII
+				case 0x0c0003:
+					tmp = "Truman Top Box 2";
+					caps.has_SCART = 1;
+					break;
+#endif
 				case 0x0c0007:
 					tmp = "GoldenMedia Triplex";
 					caps.has_SCART = 1;
 					break;
+#ifdef MARTII
+				case 0x0c000a:
+					tmp = "Amiko Alien 2";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c000b:
+					tmp = "GalaxyInnovations Avatar 3 (8820)";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c000d:
+					tmp = "Dynavision 7162";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c000e:
+					tmp = "SAB Unix Triple HD (S903)";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c001d:
+					tmp = "Satcom 7162";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c0020:
+					tmp = "Samsat 7162";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c0021:
+					tmp = "Visionnet Falcon";
+					caps.has_SCART = 1;
+					break;
+				case 0x0c002b00:
+					tmp = "Icecrypt S3700 CHD";
+					caps.has_SCART = 1;
+					break;
+#endif
 				default:
 					tmp = p;
 			}
+#ifdef MARTII
+			if ((sys_id & 0xff0000) == 0x090000)
+				caps.boxtype = 7111;
+			else
+				caps.boxtype = 7162;
+#endif
 		} else
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);

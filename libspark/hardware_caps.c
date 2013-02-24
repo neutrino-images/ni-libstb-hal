@@ -53,12 +53,10 @@ hw_caps_t *get_hwcaps(void)
 		if (p && sscanf(p, "STB_ID=%x:%x:%x:", &h0, &h1, &h2) == 3) {
 			int sys_id = (h0 << 16) | (h1 << 8) | h2;
 			switch (sys_id) {
-#ifdef MARTII
 				case 0x090003:
 					tmp = "Truman Premier 1+";
 					caps.has_SCART = 1;
 					break;
-#endif
 				case 0x090007:
 					tmp = "GoldenMedia GM990";
 					caps.has_SCART = 1;
@@ -74,7 +72,6 @@ hw_caps_t *get_hwcaps(void)
 					tmp = "GalaxyInnovations S8120";
 					caps.has_SCART = 1;
 					break;
-#ifdef MARTII
 				case 0x09000d:
 					tmp = "Dynavision Spark";
 					caps.has_SCART = 1;
@@ -103,12 +100,10 @@ hw_caps_t *get_hwcaps(void)
 					tmp = "Truman Top Box 2";
 					caps.has_SCART = 1;
 					break;
-#endif
 				case 0x0c0007:
 					tmp = "GoldenMedia Triplex";
 					caps.has_SCART = 1;
 					break;
-#ifdef MARTII
 				case 0x0c000a:
 					tmp = "Amiko Alien 2";
 					caps.has_SCART = 1;
@@ -141,7 +136,6 @@ hw_caps_t *get_hwcaps(void)
 					tmp = "Icecrypt S3700 CHD";
 					caps.has_SCART = 1;
 					break;
-#endif
 				default:
 					tmp = p;
 			}

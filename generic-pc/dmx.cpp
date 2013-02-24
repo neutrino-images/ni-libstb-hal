@@ -1,3 +1,25 @@
+/*
+ * cDemux implementation for generic dvbapi
+ *
+ * derived from libtriple/dmx_td.cpp
+ *
+ * (C) 2010-2013 Stefan Seyfried
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -124,15 +146,6 @@ void cDemux::Close(void)
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return;
 	}
-
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping and closing demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DEMUX_STOP");
-		if (close((*i).fd) < 0)
-			perror("close");
-	}
 	pesfds.clear();
 	ioctl(fd, DMX_STOP);
 	close(fd);
@@ -158,13 +171,6 @@ bool cDemux::Start(bool)
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
-
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s starting demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_START) < 0)
-			perror("DMX_START");
-	}
 	ioctl(fd, DMX_START);
 	return true;
 }
@@ -176,12 +182,6 @@ bool cDemux::Stop(void)
 	{
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
-	}
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DMX_STOP");
 	}
 	ioctl(fd, DMX_STOP);
 	return true;
@@ -247,13 +247,12 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
-	int length = len;
 	memset(&s_flt, 0, sizeof(s_flt));
 
 	if (len > DMX_FILTER_SIZE)
 	{
 		lt_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
-		length = DMX_FILTER_SIZE;
+		len = DMX_FILTER_SIZE;
 	}
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
@@ -422,7 +421,6 @@ bool cDemux::addPid(unsigned short Pid)
 	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
 	pes_pids pfd;
 	int ret;
-	struct dmx_pes_filter_params p;
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
@@ -430,6 +428,9 @@ bool cDemux::addPid(unsigned short Pid)
 	}
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
+	pfd.fd = fd; /* dummy */
+	pfd.pid = Pid;
+	pesfds.push_back(pfd);
 	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
 	if (ret < 0)
 		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
@@ -446,11 +447,9 @@ void cDemux::removePid(unsigned short Pid)
 	for (std::vector<pes_pids>::iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
 		if ((*i).pid == Pid) {
-			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", (*i).fd, Pid);
-			if (ioctl((*i).fd, DMX_STOP) < 0)
-				perror("DMX_STOP");
-			if (close((*i).fd) < 0)
-				perror("close");
+			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
+			if (ioctl(fd, DMX_REMOVE_PID, Pid) < 0)
+				lt_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
 			pesfds.erase(i);
 			return; /* TODO: what if the same PID is there multiple times */
 		}
@@ -477,4 +476,10 @@ bool cDemux::SetSource(int unit, int source)
 {
 	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
 	return true;
+}
+
+int cDemux::GetSource(int unit)
+{
+	lt_info_c("%s(%d): not implemented yet\n", __func__, unit);
+	return 0;
 }

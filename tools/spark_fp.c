@@ -44,8 +44,6 @@ void usage()
 #ifdef MARTII
 	printf("\t-w <time>: set FP wakeup time (time = 1: no wakeup)\n");
 	printf("\t-P: power down\n");
-	printf("\t-l <n>: set LED <n> on\n");
-	printf("\t-L <n>: set LED <n> off\n");
 	printf("\t-B <n>: show blue RC code (n = 0..4 or \"all\")\n");
 	printf("\t-S <n>: show standby RC code (n = 0..4 or \"all\")\n");
 	printf("\t-B <n>:<predata><code>: set blue RC code (n = 0..4)\n");
@@ -53,6 +51,8 @@ void usage()
 #else
 	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
 #endif
+	printf("\t-l <n>: set LED <n> on\n");
+	printf("\t-L <n>: set LED <n> off\n");
 	printf("times are given in unix time (UTC, seconds since 1970-01-01 00:00:00)\n");
 	printf("\n");
 }
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 #ifdef MARTII
 	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:")) != -1)
 #else
-	while ((c = getopt (argc, argv, "gs:tw:T")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:Tl:L:")) != -1)
 #endif
 	{
 		switch (c)
@@ -244,7 +244,6 @@ int main(int argc, char **argv)
 				sleep(2); /* not reached... */
 #endif
 				break;
-#ifdef MARTII
 			case 'l': /* LED on */
 				aotom.u.led.on = LOG_ON;
 				aotom.u.led.led_nr = atoi(optarg);
@@ -255,7 +254,6 @@ int main(int argc, char **argv)
 				aotom.u.led.led_nr = atoi(optarg);
 				ioctl(fd, VFDSETLED, &aotom);
 				break;
-#endif
 			case 'T':
 				ret = ioctl(fd, VFDGETVERSION, &val);
 				if (ret < 0)

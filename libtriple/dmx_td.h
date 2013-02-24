@@ -63,6 +63,7 @@ class cDemux
 		int getUnit(void);
 		/* tripledragon is unlikely to get a second tuner, so stub it out right here */
 		static bool SetSource(int /*unit*/, int /*source*/) { return true; };
+		static int GetSource(int /*unit*/) { return 0; };
 		// TD only functions
 		int getFD(void) { return fd; };		/* needed by cPlayback class */
 		void removePid(unsigned short Pid);	/* needed by cRecord class */

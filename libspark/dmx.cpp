@@ -1,15 +1,23 @@
 /*
  * cDemux implementation for SH4 receivers (tested on fulan spark and
- * fulan spark7162 hardware
+ * fulan spark7162 hardware)
  *
  * derived from libtriple/dmx_td.cpp
  *
- * (C) 2010-2012 Stefan Seyfried
+ * (C) 2010-2013 Stefan Seyfried
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -227,14 +235,6 @@ void cDemux::Close(void)
 		return;
 	}
 
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping and closing demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DEMUX_STOP");
-		if (close((*i).fd) < 0)
-			perror("close");
-	}
 	pesfds.clear();
 	ioctl(fd, DMX_STOP);
 	close(fd);
@@ -259,16 +259,7 @@ bool cDemux::Start(bool)
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
-
-#ifndef MARTII
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s starting demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_START) < 0)
-			perror("DMX_START");
-	}
 	ioctl(fd, DMX_START);
-#endif
 	return true;
 }
 
@@ -278,12 +269,6 @@ bool cDemux::Stop(void)
 	{
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
-	}
-	for (std::vector<pes_pids>::const_iterator i = pesfds.begin(); i != pesfds.end(); ++i)
-	{
-		lt_debug("%s stopping demux fd %d pid 0x%04x\n", __FUNCTION__, (*i).fd, (*i).pid);
-		if (ioctl((*i).fd, DMX_STOP) < 0)
-			perror("DMX_STOP");
 	}
 	ioctl(fd, DMX_STOP);
 	return true;
@@ -368,9 +353,6 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
-#ifndef MARTII
-	int length = len;
-#endif
 	memset(&s_flt, 0, sizeof(s_flt));
 
 	_open();
@@ -378,11 +360,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	if (len > DMX_FILTER_SIZE)
 	{
 		lt_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
-#ifdef MARTII
 		len = DMX_FILTER_SIZE;
-#else
-		length = DMX_FILTER_SIZE;
-#endif
 	}
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
@@ -554,13 +532,8 @@ void *cDemux::getChannel()
 bool cDemux::addPid(unsigned short Pid)
 {
 	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
-#ifndef MARTII
 	pes_pids pfd;
-#endif
 	int ret;
-#ifndef MARTII
-	struct dmx_pes_filter_params p;
-#endif
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
@@ -569,39 +542,9 @@ bool cDemux::addPid(unsigned short Pid)
 	_open();
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
-#if 0
-	pfd.fd = open(devname[num], O_RDWR);
-	if (pfd.fd < 0)
-	{
-		lt_info("%s #%d Pid = %hx open failed (%m)\n", __FUNCTION__, num, Pid);
-		return false;
-	}
-	fcntl(pfd.fd, F_SETFD, FD_CLOEXEC);
-	lt_debug("%s #%d Pid = %hx pfd = %d\n", __FUNCTION__, num, Pid, pfd.fd);
-
-	p.pid = Pid;
-	p.input    = DMX_IN_FRONTEND;
-	p.pes_type = DMX_PES_OTHER;
-	p.output   = DMX_OUT_TS_TAP;
-	p.flags    = 0;
-
-	ret = ioctl(pfd.fd, DMX_SET_BUFFER_SIZE, 0x10000); // 64k
-	if (ret == -1)
-		perror("DMX_SET_BUFFER_SIZE");
-	else
-	{
-		ret = ioctl(pfd.fd, DMX_SET_PES_FILTER, &p);
-		if (ret == -1)
-			perror("DEMUX_FILTER_PES_SET");
-	}
+	pfd.fd = fd; /* dummy */
 	pfd.pid = Pid;
-	if (ret != -1)
-		/* success! */
-		pesfds.push_back(pfd);
-	else
-		/* error! */
-		close(pfd.fd);
-#endif
+	pesfds.push_back(pfd);
 	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
 	if (ret < 0)
 		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
@@ -618,11 +561,9 @@ void cDemux::removePid(unsigned short Pid)
 	for (std::vector<pes_pids>::iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
 		if ((*i).pid == Pid) {
-			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", (*i).fd, Pid);
-			if (ioctl((*i).fd, DMX_STOP) < 0)
-				perror("DMX_STOP");
-			if (close((*i).fd) < 0)
-				perror("close");
+			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
+			if (ioctl(fd, DMX_REMOVE_PID, Pid) < 0)
+				lt_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
 			pesfds.erase(i);
 			return; /* TODO: what if the same PID is there multiple times */
 		}
@@ -662,4 +603,14 @@ bool cDemux::SetSource(int unit, int source)
 	else
 		dmx_source[unit] = source;
 	return true;
+}
+
+int cDemux::GetSource(int unit)
+{
+	if (unit >= NUM_DEMUX || unit < 0) {
+		lt_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
+		return -1;
+	}
+	lt_info_c("%s(%d) => %d\n", __func__, unit, dmx_source[unit]);
+	return dmx_source[unit];
 }

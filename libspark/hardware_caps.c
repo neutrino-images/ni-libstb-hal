@@ -53,6 +53,12 @@ hw_caps_t *get_hwcaps(void)
 		if (p && sscanf(p, "STB_ID=%x:%x:%x:", &h0, &h1, &h2) == 3) {
 			int sys_id = (h0 << 16) | (h1 << 8) | h2;
 			switch (sys_id) {
+#ifdef MARTII
+				case 0x090003:
+					tmp = "Truman Premier 1+";
+					caps.has_SCART = 1;
+					break;
+#endif
 				case 0x090007:
 					tmp = "GoldenMedia GM990";
 					caps.has_SCART = 1;
@@ -69,6 +75,30 @@ hw_caps_t *get_hwcaps(void)
 					caps.has_SCART = 1;
 					break;
 #ifdef MARTII
+				case 0x09000d:
+					tmp = "Dynavision Spark";
+					caps.has_SCART = 1;
+					break;
+				case 0x09000e:
+					tmp = "SAB Unix F+ Solo (S902)";
+					caps.has_SCART = 1;
+					break;
+				case 0x090015:
+					tmp = "Superbox S 750 HD";
+					caps.has_SCART = 1;
+					break;
+				case 0x09001d:
+					tmp = "Fulan Spark I+";
+					caps.has_SCART = 1;
+					break;
+				case 0x090020:
+					tmp = "SAMSAT LINUX 1";
+					caps.has_SCART = 1;
+					break;
+				case 0x090021:
+					tmp = "Visionnet Hammer 5400"; // or Startrack SRT 2020 HD, or Visionnet Fireball 101
+					caps.has_SCART = 1;
+					break;
 				case 0x0c0003:
 					tmp = "Truman Top Box 2";
 					caps.has_SCART = 1;

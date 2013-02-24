@@ -514,3 +514,9 @@ bool cDemux::SetSource(int unit, int source)
 	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
 	return true;
 }
+
+int cDemux::GetSource(int unit)
+{
+	lt_info_c("%s(%d): not implemented yet\n", __func__, unit);
+	return 0;
+}

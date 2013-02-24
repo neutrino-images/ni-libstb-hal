@@ -595,3 +595,13 @@ bool cDemux::SetSource(int unit, int source)
 		dmx_source[unit] = source;
 	return true;
 }
+
+int cDemux::GetSource(int unit)
+{
+	if (unit >= NUM_DEMUX || unit < 0) {
+		lt_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
+		return -1;
+	}
+	lt_info_c("%s(%d) => %d\n", __func__, unit, dmx_source[unit]);
+	return dmx_source[unit];
+}

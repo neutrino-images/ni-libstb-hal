@@ -247,13 +247,12 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
-	int length = len;
 	memset(&s_flt, 0, sizeof(s_flt));
 
 	if (len > DMX_FILTER_SIZE)
 	{
 		lt_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
-		length = DMX_FILTER_SIZE;
+		len = DMX_FILTER_SIZE;
 	}
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;

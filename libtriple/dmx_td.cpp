@@ -349,12 +349,12 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	s_flt.filter[0] = filter[0];
 	s_flt.mask[0] = mask[0];
 	s_flt.timeout = timeout;
-	memcpy(&s_flt.filter[3], &filter[1], len - 1);
-	memcpy(&s_flt.mask[3],   &mask[1],   len - 1);
+	memcpy(&s_flt.filter[3], &filter[1], length - 1);
+	memcpy(&s_flt.mask[3],   &mask[1],   length - 1);
 	if (negmask != NULL)
 	{
 		s_flt.positive[0] = negmask[0];
-		memcpy(&s_flt.positive[3], &negmask[1], len - 1);
+		memcpy(&s_flt.positive[3], &negmask[1], length - 1);
 	}
 
 	s_flt.flags = XPDF_IMMEDIATE_START;

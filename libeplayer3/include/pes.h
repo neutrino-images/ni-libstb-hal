@@ -15,7 +15,7 @@
 
 
 #ifdef MARTII
-#define MAX_PES_PACKET_SIZE                     (6+65535)
+#define MAX_PES_PACKET_SIZE                     (65535)
 #else
 #define MAX_PES_PACKET_SIZE                     65400
 #endif

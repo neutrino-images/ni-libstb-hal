@@ -483,7 +483,11 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		position = duration + 1000;
 		// duration = 0;
 		// this is stupid
+#ifdef MARTII
+		return false;
+#else
 		return true;
+#endif
 	}
 
 	unsigned long long int vpts = 0;

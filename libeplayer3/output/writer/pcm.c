@@ -88,6 +88,9 @@ static const unsigned char clpcm_pes[18] = {   0x00, 0x00, 0x01, 0xBD, //start c
 					0x1E, 0x60, 0x0A,       //first pes only, 0xFF after
 					0xFF
 			};
+#ifdef MARTII
+// reference: search for TypeLpcmDVDAudio in player/frame_parser/frame_parser_audio_lpcm.cpp
+#endif
 static const unsigned char clpcm_prv[14] = {   0xA0,   //sub_stream_id
 					0, 0,   //resvd and UPC_EAN_ISRC stuff, unused
 					0x0A,   //private header length

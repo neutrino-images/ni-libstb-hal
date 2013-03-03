@@ -190,7 +190,11 @@ static char* Codec2Encoding(enum CodecID id, int* version)
     case CODEC_ID_MP3:
         return "A_MP3";
     case CODEC_ID_AAC:
+#ifdef MARTII
+        return "A_IPCM";
+#else
         return "A_AAC";
+#endif
     case CODEC_ID_AC3:
         return "A_AC3";
     case CODEC_ID_DTS:
@@ -339,8 +343,10 @@ static void FFMPEGThread(Context_t *context) {
     int           err = 0, gotlastPts = 0, audioMute = 0;
     AudioVideoOut_t avOut;
 
+#ifndef MARTII
     /* Softdecoding buffer*/
     unsigned char *samples = NULL;
+#endif
 
 
     ffmpeg_printf(10, "\n");
@@ -630,6 +636,93 @@ static void FFMPEGThread(Context_t *context) {
                     }
                     else if (audioTrack->inject_as_pcm == 1)
 		    {
+#ifdef MARTII
+			int      bytesDone = 0;
+			unsigned int samples_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+			AVPacket avpkt;
+			avpkt = packet;
+
+			int is_planar = av_sample_fmt_is_planar(((AVStream*) audioTrack->stream)->codec->sample_fmt);
+			int nc = ((AVStream*) audioTrack->stream)->codec->channels;
+			if (is_planar)
+				samples_size *= nc;
+
+			uint8_t *samples = (unsigned char *)malloc(samples_size);
+
+			while(avpkt.size > 0)
+			{
+				int decoded_data_size = samples_size;
+
+				bytesDone = avcodec_decode_audio3(( (AVStream*) audioTrack->stream)->codec,
+				(short *)(samples), &decoded_data_size, &avpkt);
+				if(bytesDone < 0)
+					break;
+
+				avpkt.data += bytesDone;
+				avpkt.size -= bytesDone;
+
+				if(decoded_data_size <= 0)
+					continue;
+
+				int i;
+				if (is_planar && nc > 1) {
+					int ds = decoded_data_size/sizeof(float)/nc;
+					short *shortSamples = (short *)malloc(nc * ds * sizeof(short));
+					float *floatSamples = (float *)samples;
+					int j;
+
+					for (i = 0; i < ds; i++)
+						for (j = 0; j < nc; j++)
+							shortSamples[i * nc + j] = floatSamples[j * ds + i] * 32767.0;
+
+					free(samples);
+					samples = (unsigned char *) shortSamples;
+				} else if (nc == 1) {
+					// mono doesn't seem to work ... convert to stereo
+					int ds = decoded_data_size/sizeof(float);
+					short *shortSamples = (short *)samples;
+					float *floatSamples = (float *)samples;
+
+					for (i = 0; i < ds; i++)
+						shortSamples[2 * i] = shortSamples[2 * i + 1] = floatSamples[i] * 32767.0;
+
+					decoded_data_size *= 2;
+					nc++;
+				} else {
+					int ds = decoded_data_size/sizeof(float);
+					short *shortSamples = (short *)samples;
+					float *floatSamples = (float *)samples;
+
+					for (i = 0; i < ds; i++)
+						shortSamples[i] = floatSamples[i] * 32767.0;
+				}
+
+				pcmPrivateData_t extradata;
+				extradata.uNoOfChannels = nc;
+				extradata.uSampleRate = ((AVStream*) audioTrack->stream)->codec->sample_rate;
+				extradata.uBitsPerSample = 16;
+				extradata.bLittleEndian = 1;
+
+				avOut.data       = samples;
+				avOut.len        = (decoded_data_size * sizeof(short))/sizeof(float);
+
+				avOut.pts        = pts;
+				avOut.extradata  = (unsigned char *) &extradata;
+				avOut.extralen   = sizeof(extradata);
+				avOut.frameRate  = 0;
+				avOut.timeScale  = 0;
+				avOut.width      = 0;
+				avOut.height     = 0;
+				avOut.type       = "audio";
+
+#ifdef reverse_playback_3
+				if (!context->playback->BackWard)
+#endif
+				if (context->output->audio->Write(context, &avOut) < 0)
+					ffmpeg_err("writing data to audio device failed\n");
+			}
+			free(samples);
+#else
 			int      bytesDone = 0;
 			unsigned int samples_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 			AVPacket avpkt;
@@ -645,7 +738,6 @@ static void FFMPEGThread(Context_t *context) {
 
 			    bytesDone = avcodec_decode_audio3(( (AVStream*) audioTrack->stream)->codec,
 				(short *)(samples), &decoded_data_size, &avpkt);
-
 
 			    if(bytesDone < 0) // Error Happend
 				break;
@@ -684,6 +776,7 @@ static void FFMPEGThread(Context_t *context) {
 			    if (context->output->audio->Write(context, &avOut) < 0)
 				ffmpeg_err("writing data to audio device failed\n");
 			}
+#endif
 		    }
 		    else if (audioTrack->have_aacheader == 1)
 		    {
@@ -915,11 +1008,13 @@ static void FFMPEGThread(Context_t *context) {
 
     } /* while */
 
+#ifndef MARTII
     // Freeing the allocated buffer for softdecoding
     if (samples != NULL) {
 	free(samples);
 	samples = NULL;
     }
+#endif
 
     hasPlayThreadStarted = 0;
 
@@ -1138,6 +1233,9 @@ int container_ffmpeg_init(Context_t *context, char * filename)
                     track.inject_raw_pcm = 1;
                     ffmpeg_printf(10, " Handle inject_raw_pcm = %d\n", track.inject_as_pcm);
 		}
+#ifdef MARTII
+		else
+#endif
 		if(!strncmp(encoding, "A_IPCM", 6))
 		{
 		    track.inject_as_pcm = 1;
@@ -1150,6 +1248,7 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 			   printf("AVCODEC__INIT__SUCCESS\n");
 			else
 			   printf("AVCODEC__INIT__FAILED\n");
+#ifndef MARTII
 		}
 		else if(stream->codec->codec_id == CODEC_ID_AAC) {
 		    ffmpeg_printf(10,"Create AAC ExtraData\n");
@@ -1201,9 +1300,14 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    Hexdump(track.aacbuf,7);
 		    track.have_aacheader = 1;
 
+#endif
 		} else if(stream->codec->codec_id == CODEC_ID_WMAV1
 		    || stream->codec->codec_id == CODEC_ID_WMAV2
+#ifdef MARTII
+		    || stream->codec->codec_id == 86056 ) //CODEC_ID_WMAPRO) //if (stream->codec->extradata_size > 0)
+#else
 		    || 86056 ) //CODEC_ID_WMAPRO) //if (stream->codec->extradata_size > 0)
+#endif
 		{
 		    ffmpeg_printf(10,"Create WMA ExtraData\n");
 		    track.aacbuflen = 104 + stream->codec->extradata_size;

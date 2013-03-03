@@ -358,7 +358,9 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	memset(&s_flt, 0, sizeof(s_flt));
 
 	if (len > FILTER_LENGTH - 2)
-		lt_info("%s #%d: len too long: %d, FILTER_LENGTH: %d\n", __FUNCTION__, num, len, FILTER_LENGTH);
+		lt_info("%s #%d: len too long: %d, FILTER_LENGTH: %d\n", __func__, num, len, FILTER_LENGTH);
+	if (len < 1) /* memcpy below will be unhappy */
+		lt_info("%s #%d: len too small: %d\n", __func__, num, len);
 
 	length = (len + 2 + 1) & 0xfe;	/* reportedly, the TD drivers don't handle odd filter  */
 	if (length > FILTER_LENGTH)	/* lengths well. So make sure the length is a multiple */
@@ -368,12 +370,12 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	s_flt.filter[0] = filter[0];
 	s_flt.mask[0] = mask[0];
 	s_flt.timeout = timeout;
-	memcpy(&s_flt.filter[3], &filter[1], length - 1);
-	memcpy(&s_flt.mask[3],   &mask[1],   length - 1);
+	memcpy(&s_flt.filter[3], &filter[1], len - 1);
+	memcpy(&s_flt.mask[3],   &mask[1],   len - 1);
 	if (negmask != NULL)
 	{
 		s_flt.positive[0] = negmask[0];
-		memcpy(&s_flt.positive[3], &negmask[1], length - 1);
+		memcpy(&s_flt.positive[3], &negmask[1], len - 1);
 	}
 
 	s_flt.flags = XPDF_IMMEDIATE_START;

@@ -36,6 +36,9 @@
 #include <errno.h>
 #include <sys/poll.h>
 #include <pthread.h>
+#ifdef MARTII
+#include <sys/prctl.h>
+#endif
 
 #include <libavutil/avutil.h>
 #include <libavformat/avformat.h>
@@ -333,6 +336,12 @@ static char* searchMeta(AVDictionary * metadata, char* ourTag)
 /* **************************** */
 
 static void FFMPEGThread(Context_t *context) {
+#ifdef MARTII
+    char threadname[17];
+    strncpy(threadname, __func__, sizeof(threadname));
+    threadname[16] = 0;
+    prctl (PR_SET_NAME, (unsigned long)&threadname);
+#endif
     AVPacket   packet;
 #ifndef MARTII
     off_t currentReadPosition = 0; /* last read position */
@@ -1549,6 +1558,10 @@ static int container_ffmpeg_stop(Context_t *context) {
 	ffmpeg_err("Container not running\n");
 	return cERR_CONTAINER_FFMPEG_ERR;
     }
+#ifdef MARTII
+    if (context->playback)
+	context->playback->isPlaying = 0;
+#endif
 
     while ( (hasPlayThreadStarted != 0) && (--wait_time) > 0 ) {
 	ffmpeg_printf(10, "Waiting for ffmpeg thread to terminate itself, will try another %d times\n", wait_time);

@@ -143,6 +143,9 @@ void releaseMutex(const char *filename, const const char *function, int line) {
 
 static char* Codec2Encoding(enum CodecID id, int* version)
 {
+#ifdef MARTII
+    fprintf(stderr, "Codec ID: %.8lx\n", (long)id);
+#endif
     switch (id)
     {
     case CODEC_ID_MPEG1VIDEO:
@@ -671,12 +674,11 @@ static void FFMPEGThread(Context_t *context) {
 				if(decoded_data_size <= 0)
 					continue;
 
-				int i;
 				if (is_planar && nc > 1) {
 					int ds = decoded_data_size/sizeof(float)/nc;
 					short *shortSamples = (short *)malloc(nc * ds * sizeof(short));
 					float *floatSamples = (float *)samples;
-					int j;
+					int i, j;
 
 					for (i = 0; i < ds; i++)
 						for (j = 0; j < nc; j++)
@@ -689,6 +691,7 @@ static void FFMPEGThread(Context_t *context) {
 					int ds = decoded_data_size/sizeof(float);
 					short *shortSamples = (short *)samples;
 					float *floatSamples = (float *)samples;
+					int i;
 
 					for (i = 0; i < ds; i++)
 						shortSamples[2 * i] = shortSamples[2 * i + 1] = floatSamples[i] * 32767.0;
@@ -699,6 +702,7 @@ static void FFMPEGThread(Context_t *context) {
 					int ds = decoded_data_size/sizeof(float);
 					short *shortSamples = (short *)samples;
 					float *floatSamples = (float *)samples;
+					int i;
 
 					for (i = 0; i < ds; i++)
 						shortSamples[i] = floatSamples[i] * 32767.0;

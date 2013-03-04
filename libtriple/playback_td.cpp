@@ -105,7 +105,9 @@ void cPlayback::Close(void)
 		free(pesbuf);
 	pesbuf = NULL;
 
-	audioDecoder->do_mute(audioDecoder->Muted, false);
+	/* don't crash */
+	if (audioDecoder)
+		audioDecoder->do_mute(audioDecoder->Muted, false);
 }
 
 bool cPlayback::Start(char *filename, unsigned short vp, int vtype, unsigned short ap, int _ac3, unsigned int)

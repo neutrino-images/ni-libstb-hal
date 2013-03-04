@@ -653,8 +653,6 @@ static void FFMPEGThread(Context_t *context) {
 
 			int is_planar = av_sample_fmt_is_planar(((AVStream*) audioTrack->stream)->codec->sample_fmt);
 			int nc = ((AVStream*) audioTrack->stream)->codec->channels;
-			if (is_planar)
-				samples_size *= nc;
 
 			uint8_t *samples = (unsigned char *)malloc(samples_size);
 

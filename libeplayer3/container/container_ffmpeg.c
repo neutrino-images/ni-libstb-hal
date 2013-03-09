@@ -833,11 +833,7 @@ static void FFMPEGThread(Context_t *context) {
 			    avOut.len        = decoded_data_size;
 
 			    avOut.pts        = pts;
-#ifdef MARTII
-			    avOut.extradata  = (unsigned char *) &extradata;
-#else
 			    avOut.extradata  = &extradata;
-#endif
 			    avOut.extralen   = sizeof(extradata);
 			    avOut.frameRate  = 0;
 			    avOut.timeScale  = 0;

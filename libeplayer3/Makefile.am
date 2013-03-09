@@ -25,11 +25,11 @@ AM_CFLAGS += \
 	-Wno-unused -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable \
 	-Wno-sign-compare -Wno-missing-field-initializers
 # silence ffmpeg deprecation warnings
-AM_CPPFLAGS = -Dattribute_deprecated=''
+#AM_CPPFLAGS = -Dattribute_deprecated=''
 
 #libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 
-LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
+LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lavresample -lz -lass -lm -lpng
 bin_PROGRAMS = eplayer3 meta
 eplayer3_SOURCES = tools/eplayer2.c
 eplayer3_LDADD = $(LIBEPLAYER3_LIBS)

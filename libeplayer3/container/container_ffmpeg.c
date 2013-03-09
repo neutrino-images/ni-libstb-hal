@@ -42,6 +42,10 @@
 
 #include <libavutil/avutil.h>
 #include <libavformat/avformat.h>
+#ifdef MARTII
+#include <libavresample/avresample.h>
+#include <libavutil/opt.h>
+#endif
 
 #include "common.h"
 #include "misc.h"
@@ -54,6 +58,34 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
+#ifdef MARTII //TDT
+//for buffered io
+#define FILLBUFSIZE 1048576
+#define FILLBUFDIFF 1048576
+#define FILLBUFPAKET 5120
+#define FILLBUFSEEKTIME 3 //sec
+
+static int ffmpeg_buf_size = FILLBUFSIZE + FILLBUFDIFF;
+#ifdef MARTII
+static int ffmpeg_buf_seek_time = FILLBUFSEEKTIME;
+#else
+static ffmpeg_buf_seek_time = FILLBUFSEEKTIME;
+#endif
+static int(*ffmpeg_read_org)(void *opaque, uint8_t *buf, int buf_size) = NULL;
+static int64_t(*ffmpeg_seek_org)(void *opaque, int64_t offset, int whence) = NULL;
+static unsigned char* ffmpeg_buf_read = NULL;
+static unsigned char* ffmpeg_buf_write = NULL;
+static unsigned char* ffmpeg_buf = NULL;
+static pthread_t fillerThread;
+static int hasfillerThreadStarted = 0;
+static pthread_mutex_t fillermutex;
+static int ffmpeg_buf_valid_size = 0;
+static int ffmpeg_do_seek_ret = 0;
+static int ffmpeg_do_seek = 0;
+static int ffmpeg_buf_stop = 0;
+//for buffered io (end)
+#endif
 
 #define FFMPEG_DEBUG
 
@@ -102,6 +134,9 @@ static pthread_t PlayThread;
 static int hasPlayThreadStarted = 0;
 
 static AVFormatContext*   avContext = NULL;
+#ifdef MARTII //TDT
+static AVDictionary *avio_opts = NULL;
+#endif
 
 static unsigned char isContainerRunning = 0;
 
@@ -141,6 +176,23 @@ void releaseMutex(const char *filename, const const char *function, int line) {
     ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
+#ifdef MARTII //TDT
+//for buffered io
+void getfillerMutex(const char *filename, const char *function, int line) {
+    ffmpeg_printf(100, "::%d requesting mutex\n", line);
+
+    pthread_mutex_lock(&fillermutex);
+
+    ffmpeg_printf(100, "::%d received mutex\n", line);
+}
+
+void releasefillerMutex(const char *filename, const const char *function, int line) {
+    pthread_mutex_unlock(&fillermutex);
+
+    ffmpeg_printf(100, "::%d released mutex\n", line);
+}
+//for buffered io (end)
+#endif
 static char* Codec2Encoding(enum CodecID id, int* version)
 {
 #ifdef MARTII
@@ -355,7 +407,12 @@ static void FFMPEGThread(Context_t *context) {
     int           err = 0, gotlastPts = 0, audioMute = 0;
     AudioVideoOut_t avOut;
 
-#ifndef MARTII
+#ifdef MARTII
+    AVAudioResampleContext *avr = NULL;
+    AVFrame *decoded_frame = NULL;
+    int out_sample_rate = 44100;
+    uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
+#else
     /* Softdecoding buffer*/
     unsigned char *samples = NULL;
 #endif
@@ -649,73 +706,79 @@ static void FFMPEGThread(Context_t *context) {
                     else if (audioTrack->inject_as_pcm == 1)
 		    {
 #ifdef MARTII
-			int      bytesDone = 0;
-			unsigned int samples_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-			AVPacket avpkt;
-			avpkt = packet;
-
-			int is_planar = av_sample_fmt_is_planar(((AVStream*) audioTrack->stream)->codec->sample_fmt);
-			int nc = ((AVStream*) audioTrack->stream)->codec->channels;
-
-			uint8_t *samples = (unsigned char *)malloc(samples_size);
+			AVCodecContext *c = ((AVStream*)(audioTrack->stream))->codec;
+			AVPacket avpkt = packet;
 
 			while(avpkt.size > 0)
 			{
-				int decoded_data_size = samples_size;
 
-				bytesDone = avcodec_decode_audio3(( (AVStream*) audioTrack->stream)->codec,
-				(short *)(samples), &decoded_data_size, &avpkt);
-				if(bytesDone < 0)
+				int got_frame = 0;
+				if (!decoded_frame) {
+					if (!(decoded_frame = avcodec_alloc_frame())) {
+						fprintf(stderr, "out of memory\n");
+						exit(1);
+					}
+				} else
+					avcodec_get_frame_defaults(decoded_frame);
+
+				int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, &avpkt);
+				if (len < 0)
 					break;
 
-				avpkt.data += bytesDone;
-				avpkt.size -= bytesDone;
-
-				if(decoded_data_size <= 0)
+				avpkt.data += len;
+				avpkt.size -= len;
+				
+				if (!got_frame)
 					continue;
 
-				if (is_planar && nc > 1) {
-					int ds = decoded_data_size/sizeof(float)/nc;
-					short *shortSamples = (short *)malloc(nc * ds * sizeof(short));
-					float *floatSamples = (float *)samples;
-					int i, j;
+				int e;
+				if (!avr) {
+					int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
+					int *rate = rates;
+					int in_rate = c->sample_rate;
+					while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
+						rate++;
+					out_sample_rate = *rate ? *rate : 44100;
+					avr = avresample_alloc_context();
 
-					for (i = 0; i < ds; i++)
-						for (j = 0; j < nc; j++)
-							shortSamples[i * nc + j] = floatSamples[j * ds + i] * 32767.0;
+					out_channel_layout = c->channel_layout;
+					// player2 won't play mono
+					out_channel_layout = (c->channel_layout == AV_CH_LAYOUT_MONO) ? AV_CH_LAYOUT_STEREO : c->channel_layout;
 
-					free(samples);
-					samples = (unsigned char *) shortSamples;
-				} else if (nc == 1) {
-					// mono doesn't seem to work ... convert to stereo
-					int ds = decoded_data_size/sizeof(float);
-					short *shortSamples = (short *)samples;
-					float *floatSamples = (float *)samples;
-					int i;
+					av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
+					av_opt_set_int(avr, "out_channel_layout",	out_channel_layout,	0);
+					av_opt_set_int(avr, "in_sample_rate",		c->sample_rate,		0);
+					av_opt_set_int(avr, "out_sample_rate",		out_sample_rate,	0);
+					av_opt_set_int(avr, "in_sample_fmt",		c->sample_fmt,		0);
+					av_opt_set_int(avr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
 
-					for (i = 0; i < ds; i++)
-						shortSamples[2 * i] = shortSamples[2 * i + 1] = floatSamples[i] * 32767.0;
-
-					decoded_data_size *= 2;
-					nc++;
-				} else {
-					int ds = decoded_data_size/sizeof(float);
-					short *shortSamples = (short *)samples;
-					float *floatSamples = (float *)samples;
-					int i;
-
-					for (i = 0; i < ds; i++)
-						shortSamples[i] = floatSamples[i] * 32767.0;
+					e = avresample_open(avr);
+					if (e < 0)
+						fprintf(stderr, "avresample_open: %d\n", -e);
 				}
 
+				uint8_t *output = NULL;
+				int in_samples = decoded_frame->nb_samples;
+				int out_linesize;
+				int out_samples = avresample_available(avr)
+					+ av_rescale_rnd(avresample_get_delay(avr) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
+				e = av_samples_alloc(&output, &out_linesize, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
+				if (e < 0) {
+					fprintf(stderr, "av_samples_alloc: %d\n", -e);
+					continue;
+				}
+
+				out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
+								      &decoded_frame->data[0], decoded_frame->linesize[0], in_samples);
 				pcmPrivateData_t extradata;
-				extradata.uNoOfChannels = nc;
-				extradata.uSampleRate = ((AVStream*) audioTrack->stream)->codec->sample_rate;
+
+				extradata.uSampleRate = out_sample_rate;
+				extradata.uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
 				extradata.uBitsPerSample = 16;
 				extradata.bLittleEndian = 1;
 
-				avOut.data       = samples;
-				avOut.len        = (decoded_data_size * sizeof(short))/sizeof(float);
+				avOut.data       = output;
+			    	avOut.len        = out_samples * sizeof(short) * c->channels;
 
 				avOut.pts        = pts;
 				avOut.extradata  = (unsigned char *) &extradata;
@@ -731,8 +794,8 @@ static void FFMPEGThread(Context_t *context) {
 #endif
 				if (context->output->audio->Write(context, &avOut) < 0)
 					ffmpeg_err("writing data to audio device failed\n");
+				av_freep(&output);
 			}
-			free(samples);
 #else
 			int      bytesDone = 0;
 			unsigned int samples_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
@@ -749,6 +812,7 @@ static void FFMPEGThread(Context_t *context) {
 
 			    bytesDone = avcodec_decode_audio3(( (AVStream*) audioTrack->stream)->codec,
 				(short *)(samples), &decoded_data_size, &avpkt);
+
 
 			    if(bytesDone < 0) // Error Happend
 				break;
@@ -1019,7 +1083,14 @@ static void FFMPEGThread(Context_t *context) {
 
     } /* while */
 
-#ifndef MARTII
+#ifdef MARTII
+    if (avr) {
+	avresample_close(avr);
+	avresample_free(&avr);
+	if (decoded_frame)
+		avcodec_free_frame(&decoded_frame);
+    }
+#else
     // Freeing the allocated buffer for softdecoding
     if (samples != NULL) {
 	free(samples);
@@ -1031,6 +1102,413 @@ static void FFMPEGThread(Context_t *context) {
 
     ffmpeg_printf(10, "terminating\n");
 }
+#ifdef MARTII //TDT
+//for buffered io
+#ifdef MARTII
+int container_set_ffmpeg_buf_seek_time(int* _time)
+#else
+int container_set_ffmpeg_buf_seek_time(int* time)
+#endif
+{
+#ifdef MARTII
+	ffmpeg_buf_seek_time = (*_time);
+#else
+	ffmpeg_buf_seek_time = (*time);
+#endif
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+int container_set_ffmpeg_buf_size(int* size)
+{
+	if(ffmpeg_buf == NULL)
+	{
+		if(*size == 0)
+			ffmpeg_buf_size = 0;
+		else
+			ffmpeg_buf_size = (*size) + FILLBUFDIFF;
+	}
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+int container_get_ffmpeg_buf_size(int* size)
+{
+	*size = ffmpeg_buf_size - FILLBUFDIFF;
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+int container_get_fillbufstatus(int* size)
+{
+	int rwdiff = 0;
+
+	if(ffmpeg_buf != NULL && ffmpeg_buf_read != NULL && ffmpeg_buf_write != NULL)
+	{
+		if(ffmpeg_buf_read < ffmpeg_buf_write)
+			rwdiff = ffmpeg_buf_write - ffmpeg_buf_read;
+		if(ffmpeg_buf_read > ffmpeg_buf_write)
+		{
+			rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
+			rwdiff += ffmpeg_buf_write - ffmpeg_buf;
+		}
+
+		*size = rwdiff;
+	}
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+int container_stop_buffer()
+{
+	ffmpeg_buf_stop = 1;
+	return 0;
+}
+
+//flag 0: start direct
+//flag 1: from thread
+void ffmpeg_filler(Context_t *context, int* inpause, int flag)
+{
+	int len = 0;
+	int rwdiff = ffmpeg_buf_size;
+	uint8_t buf[FILLBUFPAKET];
+
+	if(ffmpeg_read_org == NULL || ffmpeg_seek_org == NULL)
+	{
+		ffmpeg_err("ffmpeg_read_org or ffmpeg_seek_org is NULL\n");
+		return;
+	}
+
+	while( (flag == 0 && avContext != NULL && avContext->pb != NULL && rwdiff > FILLBUFDIFF) || (flag == 1 && hasfillerThreadStarted != 2 && avContext != NULL && avContext->pb != NULL && rwdiff > FILLBUFDIFF) )
+	{
+		if(flag == 0 && ffmpeg_buf_stop == 1)
+		{
+			ffmpeg_buf_stop = 0;
+			break;
+		}
+
+		getfillerMutex(FILENAME, __FUNCTION__,__LINE__);
+		//do a seek
+		if(ffmpeg_do_seek != 0)
+		{
+			ffmpeg_do_seek_ret = ffmpeg_seek_org(avContext->pb->opaque, avContext->pb->pos + ffmpeg_do_seek, SEEK_SET);
+			if(ffmpeg_do_seek_ret >= 0)
+			{
+				ffmpeg_buf_write = ffmpeg_buf;
+				ffmpeg_buf_read = ffmpeg_buf;
+			}
+
+			ffmpeg_do_seek = 0;
+		}
+
+		if(ffmpeg_buf_read == ffmpeg_buf_write)
+		{
+			ffmpeg_buf_valid_size = 0;
+			rwdiff = ffmpeg_buf_size;
+		}
+		if(ffmpeg_buf_read < ffmpeg_buf_write)
+		{
+			rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_write;
+			rwdiff += ffmpeg_buf_read - ffmpeg_buf;
+		}
+		if(ffmpeg_buf_read > ffmpeg_buf_write)
+			rwdiff = ffmpeg_buf_read - ffmpeg_buf_write;
+
+		int size = FILLBUFPAKET;
+		if(rwdiff - FILLBUFDIFF < size)
+			size = (rwdiff - FILLBUFDIFF);
+
+		if(ffmpeg_buf_write + size > ffmpeg_buf + ffmpeg_buf_size)
+			size = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_write;
+
+		if(ffmpeg_buf_write == ffmpeg_buf + ffmpeg_buf_size)
+			ffmpeg_buf_write = ffmpeg_buf;
+
+		releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+
+		if(size > 0)
+		{
+			if(flag == 1 && hasfillerThreadStarted == 2) break;
+			len = ffmpeg_read_org(avContext->pb->opaque, buf, size);
+			if(flag == 1 && hasfillerThreadStarted == 2) break;
+
+			ffmpeg_printf(20, "buffer-status (free buffer=%d)\n", rwdiff - FILLBUFDIFF - len);
+
+			getfillerMutex(FILENAME, __FUNCTION__,__LINE__);
+			if(len > 0)
+			{
+				memcpy(ffmpeg_buf_write, buf, len);
+				ffmpeg_buf_write += len;
+			}
+			else
+			{
+				releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+				ffmpeg_err("read not ok ret=%d\n", len);
+				break;
+			}
+			releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+		}
+    else
+    {
+      //on long pause the server close the connection, so we use seek to reconnect
+      if(context != NULL && context->playback != NULL && inpause != NULL)
+      {
+        if((*inpause) == 0 && context->playback->isPaused)
+        {
+          (*inpause) = 1;
+        }
+        else if((*inpause) == 1 && !context->playback->isPaused)
+        {
+          int buflen = 0;
+          (*inpause) = 0;
+
+          getfillerMutex(FILENAME, __FUNCTION__,__LINE__);
+          if(ffmpeg_buf_read < ffmpeg_buf_write)
+			     buflen = ffmpeg_buf_write - ffmpeg_buf_read;
+		      if(ffmpeg_buf_read > ffmpeg_buf_write)
+		      {
+			      buflen = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
+			      buflen += ffmpeg_buf_write - ffmpeg_buf;
+		      } 
+          ffmpeg_seek_org(avContext->pb->opaque, avContext->pb->pos + buflen, SEEK_SET);
+          releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+        }
+      }
+    }
+	}
+}
+
+static void ffmpeg_fillerTHREAD(Context_t *context)
+{
+	ffmpeg_printf(10, "Running!\n");
+  int inpause = 0;
+
+	while(hasfillerThreadStarted != 2)
+	{
+		ffmpeg_filler(context, &inpause, 1);
+		usleep(10000);
+	}
+
+	hasfillerThreadStarted = 0;
+
+	ffmpeg_printf(10, "terminating\n");
+}
+
+static int ffmpeg_start_fillerTHREAD(Context_t *context)
+{
+	int error;
+	int ret = 0;
+	pthread_attr_t attr;
+
+	ffmpeg_printf(10, "\n");
+
+	if ( context && context->playback && context->playback->isPlaying )
+		ffmpeg_printf(10, "is Playing\n");
+	else
+		ffmpeg_printf(10, "is NOT Playing\n");
+
+	if (hasfillerThreadStarted == 0)
+	{
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+		if((error = pthread_create(&fillerThread, &attr, (void *)&ffmpeg_fillerTHREAD, context)) != 0)
+		{
+			ffmpeg_printf(10, "Error creating filler thread, error:%d:%s\n", error,strerror(error));
+
+			hasfillerThreadStarted = 0;
+			ret = cERR_CONTAINER_FFMPEG_ERR;
+		}
+		else
+		{
+			ffmpeg_printf(10, "Created filler thread\n");
+
+			hasfillerThreadStarted = 1;
+		}
+	}
+	else
+	{
+		ffmpeg_printf(10, "A filler thread already exists!\n");
+
+		ret = cERR_CONTAINER_FFMPEG_ERR;
+	}
+
+	ffmpeg_printf(10, "exiting with value %d\n", ret);
+	return ret;
+}
+
+int ffmpeg_read_real(void *opaque, uint8_t *buf, int buf_size)
+{
+	int len = buf_size;
+	int rwdiff = 0;
+
+	if(buf_size > 0)
+	{
+		getfillerMutex(FILENAME, __FUNCTION__,__LINE__);
+
+		if(ffmpeg_buf_read < ffmpeg_buf_write)
+			rwdiff = ffmpeg_buf_write - ffmpeg_buf_read;
+		if(ffmpeg_buf_read > ffmpeg_buf_write)
+		{
+			rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
+			rwdiff += ffmpeg_buf_write - ffmpeg_buf;
+		}
+		rwdiff--;
+
+		if(len > rwdiff)
+			len = rwdiff;
+
+		if(ffmpeg_buf_read + len > ffmpeg_buf + ffmpeg_buf_size)
+			len = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
+
+		if(len > 0)
+		{
+			memcpy(buf, ffmpeg_buf_read, len);
+			ffmpeg_buf_read += len;
+
+			if(ffmpeg_buf_valid_size < FILLBUFDIFF)
+			{
+				if(ffmpeg_buf_valid_size + len > FILLBUFDIFF)
+					ffmpeg_buf_valid_size = FILLBUFDIFF;
+				else
+					ffmpeg_buf_valid_size += len;
+			}
+
+			if(ffmpeg_buf_read == ffmpeg_buf + ffmpeg_buf_size)
+				ffmpeg_buf_read = ffmpeg_buf;
+		}
+		else
+			len = 0;
+
+		releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+	}
+
+	return len;
+}
+
+int ffmpeg_read(void *opaque, uint8_t *buf, int buf_size)
+{
+	int sumlen = 0;
+	int len = 0;
+	int count = 2000;
+
+	while(sumlen < buf_size && (--count) > 0)
+	{
+		len = ffmpeg_read_real(opaque, buf, buf_size - sumlen);
+		sumlen += len;
+		buf += len;
+		if(len == 0)
+			usleep(10000);
+	}
+
+	if(count == 0)
+	{
+		if(sumlen == 0)
+			ffmpeg_err( "Timeout waiting for buffered data (buf_size=%d sumlen=%d)!\n", buf_size, sumlen);
+		else
+			ffmpeg_err( "Timeout, not all buffered data availabel (buf_size=%d sumlen=%d)!\n", buf_size, sumlen);
+	}
+
+	return sumlen;
+}
+
+int64_t ffmpeg_seek(void *opaque, int64_t offset, int whence)
+{
+	int64_t diff;
+	int rwdiff = 0;
+	whence &= ~AVSEEK_FORCE;
+
+	if(whence != SEEK_CUR && whence != SEEK_SET)
+		return AVERROR(EINVAL);
+
+	if(whence == SEEK_CUR)
+		diff = offset;
+	else
+		diff = offset - avContext->pb->pos;
+
+	if(diff == 0)
+			return avContext->pb->pos;
+
+	getfillerMutex(FILENAME, __FUNCTION__,__LINE__);
+
+	if(ffmpeg_buf_read < ffmpeg_buf_write)
+		rwdiff = ffmpeg_buf_write - ffmpeg_buf_read;
+	if(ffmpeg_buf_read > ffmpeg_buf_write)
+	{
+		rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
+		rwdiff += ffmpeg_buf_write - ffmpeg_buf;
+	}
+
+	if(diff > 0 && diff < rwdiff)
+	{
+		/* can do the seek inside the buffer */
+		ffmpeg_printf(20, "buffer-seek diff=%lld\n", diff);
+		if(diff > (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read)
+			ffmpeg_buf_read = ffmpeg_buf + (diff - ((ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read));
+		else
+			ffmpeg_buf_read = ffmpeg_buf_read + diff;
+	}
+	else if(diff < 0 && diff * -1 < ffmpeg_buf_valid_size)
+	{
+		/* can do the seek inside the buffer */
+		ffmpeg_printf(20, "buffer-seek diff=%lld\n", diff);
+		int tmpdiff = diff * -1;
+		if(tmpdiff > ffmpeg_buf_read - ffmpeg_buf)
+			ffmpeg_buf_read = (ffmpeg_buf + ffmpeg_buf_size) - (tmpdiff - (ffmpeg_buf_read - ffmpeg_buf));
+		else
+			ffmpeg_buf_read = ffmpeg_buf_read - tmpdiff;
+	}
+	else
+	{
+		releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+		ffmpeg_printf(20, "real-seek diff=%lld\n", diff);
+
+		ffmpeg_do_seek_ret = 0;
+		ffmpeg_do_seek = diff;
+		while(ffmpeg_do_seek != 0)
+			usleep(100000);
+
+		ffmpeg_do_seek = 0;
+		if(ffmpeg_do_seek_ret < 0)
+		{
+			ffmpeg_err("seek not ok ret=%d\n", ffmpeg_do_seek_ret);
+			return ffmpeg_do_seek_ret;
+		}
+
+		//fill buffer
+		int count = ffmpeg_buf_seek_time * 10;
+		int size = 0;
+
+		container_get_fillbufstatus(&size);
+		while(size < ffmpeg_buf_size - FILLBUFDIFF && (--count) > 0)
+		{
+			usleep(100000);
+			container_get_fillbufstatus(&size);
+		}
+
+		return avContext->pb->pos + diff;
+	}
+
+	releasefillerMutex(FILENAME, __FUNCTION__,__LINE__);
+	return avContext->pb->pos + diff;
+}
+
+static void ffmpeg_buf_free()
+{
+	ffmpeg_read_org = NULL;
+	ffmpeg_seek_org = NULL;
+	ffmpeg_buf_read = NULL;
+	ffmpeg_buf_write = NULL;
+	free(ffmpeg_buf);
+	ffmpeg_buf = NULL;
+	ffmpeg_buf_valid_size = 0;
+	ffmpeg_do_seek_ret = 0;
+	ffmpeg_do_seek = 0;
+	ffmpeg_buf_stop = 0;
+}
+//for buffered io (end)
+
+#endif
 
 /* **************************** */
 /* Container part for ffmpeg    */
@@ -1067,6 +1545,9 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     /* initialize ffmpeg */
     avcodec_register_all();
     av_register_all();
+#ifdef MARTII //TDT
+    avformat_network_init();
+#endif
 
 #if LIBAVCODEC_VERSION_MAJOR < 54
     if ((err = av_open_input_file(&avContext, filename, NULL, 0, NULL)) != 0) {
@@ -1083,6 +1564,12 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 	av_strerror(err, error, 512);
 	ffmpeg_err("Cause: %s\n", error);
 
+#ifdef MARTII //TDT
+	if(avio_opts != NULL) av_dict_free(&avio_opts);
+	//for buffered io
+        ffmpeg_buf_free();
+        //for buffered io (end)
+#endif
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	return cERR_CONTAINER_FFMPEG_OPEN;
     }
@@ -1107,12 +1594,61 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 	 * but the file is played back well. so remove this
 	 * until other works are done and we can prove this.
 	 */
+#ifdef MARTII
+	avformat_close_input(&avContext);
+#else
 	av_close_input_file(avContext);
+#endif
+        //for buffered io
+        ffmpeg_buf_free();
+        //for buffered io (end)
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	return cERR_CONTAINER_FFMPEG_STREAM;
 #endif
     }
 
+#ifdef MARTII //TDT
+//for buffered io
+#if LIBAVCODEC_VERSION_MAJOR >= 54
+		ffmpeg_read_org = NULL;
+		ffmpeg_seek_org = NULL;
+    ffmpeg_buf_read = NULL;
+    ffmpeg_buf_write = NULL;
+    ffmpeg_buf = NULL;
+    ffmpeg_buf_valid_size = 0;
+    ffmpeg_do_seek_ret = 0;
+    ffmpeg_do_seek = 0;
+    ffmpeg_buf_stop = 0;
+
+		if(strstr(filename, "http://") == filename)
+		{
+			if(ffmpeg_buf_size > 0 && ffmpeg_buf_size > FILLBUFDIFF + FILLBUFPAKET)
+			{
+    		if(avContext != NULL && avContext->pb != NULL)
+    		{
+      		ffmpeg_buf = av_malloc(ffmpeg_buf_size);
+
+      		if(ffmpeg_buf != NULL)
+      		{
+      			ffmpeg_printf(10, "buffer size=%d\n", ffmpeg_buf_size);
+      		
+						ffmpeg_read_org = avContext->pb->read_packet;
+      		  avContext->pb->read_packet = ffmpeg_read;
+						ffmpeg_seek_org = avContext->pb->seek;
+      		  avContext->pb->seek = ffmpeg_seek;
+						ffmpeg_buf_read = ffmpeg_buf;
+						ffmpeg_buf_write = ffmpeg_buf;
+
+						//fill buffer
+						ffmpeg_filler(context, NULL, 0);
+						ffmpeg_start_fillerTHREAD(context);
+      		}
+    		}
+    	}
+    }
+#endif
+//for buffered io (end)
+#endif
     ffmpeg_printf(20, "dump format\n");
 
 #if LIBAVCODEC_VERSION_MAJOR < 54
@@ -1255,7 +1791,11 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 			AVCodec *codec = avcodec_find_decoder(stream->codec->codec_id);
 
 //( (AVStream*) audioTrack->stream)->codec->flags |= CODEC_FLAG_TRUNCATED;
+#ifdef MARTII
+			if(codec != NULL && !avcodec_open2(stream->codec, codec, NULL))
+#else
 			if(codec != NULL && !avcodec_open(stream->codec, codec))
+#endif
 			   printf("AVCODEC__INIT__SUCCESS\n");
 			else
 			   printf("AVCODEC__INIT__FAILED\n");
@@ -1565,6 +2105,28 @@ static int container_ffmpeg_stop(Context_t *context) {
 	context->playback->isPlaying = 0;
 #endif
 
+#ifdef MARTII //TDT
+		//for buffered io
+		wait_time = 100;
+		if(hasfillerThreadStarted == 1)
+			hasfillerThreadStarted = 2; // should end
+		while ( (hasfillerThreadStarted != 0) && (--wait_time) > 0 ) {
+        ffmpeg_printf(10, "Waiting for ffmpeg filler thread to terminate itself, will try another %d times\n", wait_time);
+
+        usleep(100000);
+    }
+
+		if (wait_time == 0) {
+        ffmpeg_err( "Timeout waiting for filler thread!\n");
+
+        ret = cERR_CONTAINER_FFMPEG_ERR;
+    }
+
+		hasfillerThreadStarted = 0;
+		//for buffered io (end)
+
+		wait_time = 100;
+#endif
     while ( (hasPlayThreadStarted != 0) && (--wait_time) > 0 ) {
 	ffmpeg_printf(10, "Waiting for ffmpeg thread to terminate itself, will try another %d times\n", wait_time);
 
@@ -1581,12 +2143,26 @@ static int container_ffmpeg_stop(Context_t *context) {
 
     getMutex(FILENAME, __FUNCTION__,__LINE__);
 
+#ifdef MARTII
+	avformat_close_input(&avContext);
+#else
     if (avContext != NULL) {
 	av_close_input_file(avContext);
 	avContext = NULL;
     }
+#endif
 
+#ifdef MARTII //TDT
+    if(avio_opts != NULL) av_dict_free(&avio_opts);
+
+    //for buffered io
+    ffmpeg_buf_free();
+    //for buffered io (end)
+#endif
     isContainerRunning = 0;
+#ifdef MARTII //TDT
+    avformat_network_deinit();
+#endif
 
     releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 
@@ -2133,6 +2709,32 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
     case CONTAINER_SWITCH_TELETEXT: {
 	ret = container_ffmpeg_switch_teletext(context, (int*) argument);
 	break;
+    }
+#endif
+#ifdef MARTII //TDT
+    case CONTAINER_SET_BUFFER_SEEK_TIME: {
+      ret = container_set_ffmpeg_buf_seek_time((int*) argument);
+      break;
+    }
+    case CONTAINER_SET_BUFFER_SIZE: {
+      ret = container_set_ffmpeg_buf_size((int*) argument);
+      break;
+    }
+    case CONTAINER_GET_BUFFER_SIZE: {
+      int size = 0;
+      ret = container_get_ffmpeg_buf_size(&size);
+      *((int*)argument) = size;      
+      break;
+    }
+    case CONTAINER_GET_BUFFER_STATUS: {
+      int size = 0;
+      ret = container_get_fillbufstatus(&size);
+      *((int*)argument) = size;
+      break;
+    }
+		case CONTAINER_STOP_BUFFER: {
+      ret = container_stop_buffer();
+      break;
     }
 #endif
     default:

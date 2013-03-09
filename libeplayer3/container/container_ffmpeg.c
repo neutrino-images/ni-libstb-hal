@@ -1083,8 +1083,7 @@ static void FFMPEGThread(Context_t *context) {
     if (avr) {
 	avresample_close(avr);
 	avresample_free(&avr);
-	if (decoded_frame)
-		avcodec_free_frame(&decoded_frame);
+	avcodec_free_frame(&decoded_frame);
     }
 #else
     // Freeing the allocated buffer for softdecoding

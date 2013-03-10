@@ -53,6 +53,7 @@ class cPlayback
 #ifdef MARTII
 		void FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
+		void RequestAbort(void);
 #endif
 #if 0
 		// Functions that are not used by movieplayer.cpp:

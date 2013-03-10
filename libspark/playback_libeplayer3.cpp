@@ -655,6 +655,11 @@ void cPlayback::SuspendSubtitle(bool b)
 	else
 		player->playback->Command(player, PLAYBACK_FRAMEBUFFER_UNLOCK, 0);
 }
+
+void cPlayback::RequestAbort() {
+	if (player->playback)
+		player->playback->abortRequested = 1;
+}
 #endif
 #if 0
 bool cPlayback::IsPlaying(void) const

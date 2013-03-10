@@ -1508,6 +1508,13 @@ static void ffmpeg_buf_free()
 /* **************************** */
 /* Container part for ffmpeg    */
 /* **************************** */
+#ifdef MARTII
+static int interrupt_cb(void *ctx)
+{
+	PlaybackHandler_t *p = (PlaybackHandler_t *)ctx;
+	return p->abortRequested;
+}
+#endif
 
 int container_ffmpeg_init(Context_t *context, char * filename)
 {
@@ -1542,6 +1549,12 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     av_register_all();
 #ifdef MARTII //TDT
     avformat_network_init();
+#endif
+#ifdef MARTII
+    context->playback->abortRequested = 0;
+    avContext = avformat_alloc_context();
+    avContext->interrupt_callback.callback = interrupt_cb;
+    avContext->interrupt_callback.opaque = context->playback;
 #endif
 
 #if LIBAVCODEC_VERSION_MAJOR < 54
@@ -2139,6 +2152,7 @@ static int container_ffmpeg_stop(Context_t *context) {
     getMutex(FILENAME, __FUNCTION__,__LINE__);
 
 #ifdef MARTII
+    if (avContext)
 	avformat_close_input(&avContext);
 #else
     if (avContext != NULL) {

@@ -260,7 +260,11 @@ static char* Codec2Encoding(enum CodecID id, int* version)
     case CODEC_ID_WMAV1:
     case CODEC_ID_WMAV2:
     case 86056: //CODEC_ID_WMAPRO
+#ifdef MARTII
+        return "A_IPCM";
+#else
         return "A_WMA";
+#endif
     case CODEC_ID_MLP:
         return "A_MLP";
     case CODEC_ID_RA_144:
@@ -722,8 +726,10 @@ static void FFMPEGThread(Context_t *context) {
 					avcodec_get_frame_defaults(decoded_frame);
 
 				int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, &avpkt);
-				if (len < 0)
+				if (len < 0) {
+					fprintf(stderr, "avcodec_decode_audio4: %d\n", len);
 					break;
+				}
 
 				avpkt.data += len;
 				avpkt.size -= len;
@@ -741,6 +747,12 @@ static void FFMPEGThread(Context_t *context) {
 					out_sample_rate = *rate ? *rate : 44100;
 					avr = avresample_alloc_context();
 
+#if 1
+					if (c->channel_layout == 0) {
+						// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
+						c->channel_layout = AV_CH_LAYOUT_STEREO;
+					}
+#endif
 					out_channel_layout = c->channel_layout;
 					// player2 won't play mono
 					out_channel_layout = (c->channel_layout == AV_CH_LAYOUT_MONO) ? AV_CH_LAYOUT_STEREO : c->channel_layout;
@@ -753,8 +765,13 @@ static void FFMPEGThread(Context_t *context) {
 					av_opt_set_int(avr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
 
 					e = avresample_open(avr);
-					if (e < 0)
-						fprintf(stderr, "avresample_open: %d\n", -e);
+					if (e < 0) {
+						fprintf(stderr, "avresample_open: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+							-e,
+							(int)c->channel_layout, (int)out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
+						avresample_free(&avr);
+						avr = NULL;
+					}
 				}
 
 				uint8_t *output = NULL;
@@ -1859,7 +1876,6 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    Hexdump(track.aacbuf,7);
 		    track.have_aacheader = 1;
 
-#endif
 		} else if(stream->codec->codec_id == CODEC_ID_WMAV1
 		    || stream->codec->codec_id == CODEC_ID_WMAV2
 #ifdef MARTII
@@ -1955,6 +1971,7 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    //Hexdump(stream->codec->priv_data, track.aacbuflen);
 
 		    track.have_aacheader = 1;
+#endif
 		}
 
 		if (context->manager->audio)

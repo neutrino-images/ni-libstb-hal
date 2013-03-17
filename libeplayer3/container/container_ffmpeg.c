@@ -280,7 +280,11 @@ static char* Codec2Encoding(enum CodecID id, int* version)
 #else
     case CODEC_ID_PCM_S16LE:
 #endif
+#ifdef MARTII
+        return "A_IPCM";
+#else
 	return "A_PCM";
+#endif
 /* subtitle */
     case CODEC_ID_SSA:
         return "S_TEXT/ASS"; /* Hellmaster1024: seems to be ASS instead of SSA */
@@ -1800,12 +1804,12 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 		}
 
+#ifndef MARTII
 		if(!strncmp(encoding, "A_PCM", 5))
                 {
                     track.inject_raw_pcm = 1;
                     ffmpeg_printf(10, " Handle inject_raw_pcm = %d\n", track.inject_as_pcm);
 		}
-#ifdef MARTII
 		else
 #endif
 		if(!strncmp(encoding, "A_IPCM", 6))
@@ -1824,8 +1828,8 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 			   printf("AVCODEC__INIT__SUCCESS\n");
 			else
 			   printf("AVCODEC__INIT__FAILED\n");
-#ifndef MARTII
 		}
+#ifndef MARTII
 		else if(stream->codec->codec_id == CODEC_ID_AAC) {
 		    ffmpeg_printf(10,"Create AAC ExtraData\n");
 		    ffmpeg_printf(10,"stream->codec->extradata_size %d\n", stream->codec->extradata_size);
@@ -1971,8 +1975,8 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 		    //Hexdump(stream->codec->priv_data, track.aacbuflen);
 
 		    track.have_aacheader = 1;
-#endif
 		}
+#endif
 
 		if (context->manager->audio)
 		{

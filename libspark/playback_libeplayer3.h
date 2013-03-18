@@ -33,7 +33,11 @@ class cPlayback
 		bool Open(playmode_t PlayMode);
 		void Close(void);
 		bool Start(char *filename, unsigned short vpid, int vtype, unsigned short apid,
+#ifdef MARTII
+			   int ac3, unsigned int duration, bool no_probe = true);
+#else
 			   int ac3, unsigned int duration);
+#endif
 		bool SetAPid(unsigned short pid, bool ac3);
 #ifdef MARTII
 		bool SetSubtitlePid(unsigned short pid);

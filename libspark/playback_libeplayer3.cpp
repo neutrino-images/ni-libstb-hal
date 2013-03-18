@@ -106,7 +106,11 @@ void cPlayback::Close(void)
 }
 
 //Used by Fileplay
+#ifdef MARTII
+bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned short apid, int ac3, unsigned int, bool no_probe)
+#else
 bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned short apid, int ac3, unsigned int)
+#endif
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -150,7 +154,11 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	    printf("upnp://\n");
             isHTTP = true;
 	}
+#ifdef MARTII
+	else if (pm == PLAYMODE_TS && no_probe)
+#else
 	else if (pm == PLAYMODE_TS)
+#endif
 	    strcat(file, "myts://");
 	else
 	    strcat(file, "file://");

@@ -541,7 +541,11 @@ void cVideo::VideoParamWatchdog(void)
 #endif
 }
 
+#ifdef MARTII
+void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, int starty, int endx, int endy)
+#else
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
+#endif
 {
 	char buffer[64];
 	int _x, _y, _w, _h;
@@ -559,10 +563,25 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 	}
 	else
 	{
+#ifdef MARTII
+		// need to do some additional adjustments because osd border is handled by blitter
+		x += startx;
+		x *= endx - startx + 1;
+		y += starty;
+		y *= endy - starty + 1;
+		w *= endx - startx + 1;
+		h *= endy - starty + 1;
+#endif
 		_x = x * xres / osd_w;
 		_w = w * xres / osd_w;
 		_y = y * yres / osd_h;
 		_h = h * yres / osd_h;
+#ifdef MARTII
+		_x /= 1280;
+		_y /= 720;
+		_w /= 1280;
+		_h /= 720;
+#endif
 	}
 	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
 	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);

@@ -178,12 +178,14 @@ bool cDemux::_open(void)
 	int flags = O_RDWR|O_CLOEXEC;
 	int devnum = dmx_source[num];
 	if (last_source == devnum) {
-		lt_info("%s #%d: source (%d) did not change\n", __func__, num, last_source);
+		lt_debug("%s #%d: source (%d) did not change\n", __func__, num, last_source);
 		if (fd > -1)
 			return true;
 	}
 	if (fd > -1) {
-		lt_info("%s #%d: FD ALREADY OPENED fd = %d lastsource %d devnum %d\n", __func__, num, fd, last_source, devnum);
+		/* we changed source -> close and reopen the fd */
+		lt_debug("%s #%d: FD ALREADY OPENED fd = %d lastsource %d devnum %d\n",
+				__func__, num, fd, last_source, devnum);
 		close(fd);
 	}
 

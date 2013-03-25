@@ -1539,7 +1539,11 @@ static int interrupt_cb(void *ctx)
 
 int container_ffmpeg_init(Context_t *context, char * filename)
 {
+#ifdef MARTII
+    int err;
+#else
     int n, err;
+#endif
 
     ffmpeg_printf(10, ">\n");
 
@@ -1675,6 +1679,25 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     }
 #endif
 //for buffered io (end)
+#endif
+#ifdef MARTII
+    return container_ffmpeg_update_tracks(context, filename);
+}
+
+int container_ffmpeg_update_tracks(Context_t *context, char *filename)
+{
+    int n;
+
+    if (context->manager->audio)
+	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->video)
+	    context->manager->video->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->subtitle)
+	    context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->dvbsubtitle)
+	    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->teletext)
+	    context->manager->teletext->Command(context, MANAGER_DEL, NULL);
 #endif
     ffmpeg_printf(20, "dump format\n");
 

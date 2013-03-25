@@ -14,4 +14,7 @@ typedef struct Context_s {
     ManagerHandler_t	* manager;
 } Context_t;
 
+#ifdef MARTII
+int container_ffmpeg_update_tracks(Context_t *context, char *filename);
+#endif
 #endif

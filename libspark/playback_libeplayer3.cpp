@@ -634,6 +634,35 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 		}
 	}
 }
+
+void cPlayback::FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	if(player && player->manager && player->manager->teletext) {
+		char ** TrackList = NULL;
+		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL) {
+			printf("Teletext List\n");
+			int i = 0,j=0;
+			for (i = 0,j=0; TrackList[i] != NULL; i+=2) {
+				int type = 0;
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				if (1 != sscanf(TrackList[i], "%*d %*s %d %*d %*d", &type))
+					continue;
+				if (type != 2 && type != 5) // return subtitles only
+					continue;
+				pids[j]=j;
+				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
+				language[j]=TrackList[i];
+				free(TrackList[i]);
+				free(TrackList[i+1]);
+				j++;
+			}
+			free(TrackList);
+			*numpids=j;
+		}
+	}
+}
 #endif
 
 //

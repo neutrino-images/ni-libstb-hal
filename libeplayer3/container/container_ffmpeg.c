@@ -1801,10 +1801,14 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
 		lang = av_dict_get(stream->metadata, "language", NULL, 0);
 
+#ifdef MARTII
+		track.Name = lang ? lang->value : "und";
+#else
 		if (lang)
 		   track.Name        = strdup(lang->value);
 		else
 		   track.Name        = strdup("und");
+#endif
 
 		ffmpeg_printf(10, "Language %s\n", track.Name);
 
@@ -2020,10 +2024,14 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
 	     lang = av_dict_get(stream->metadata, "language", NULL, 0);
 
+#ifdef MARTII
+	     track.Name = lang ? lang->value : "und";
+#else
 	     if (lang)
 		track.Name        = strdup(lang->value);
 	     else
 		track.Name        = strdup("und");
+#endif
 
 	    ffmpeg_printf(10, "Language %s\n", track.Name);
 
@@ -2055,14 +2063,29 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 	    }
 
+#ifndef MARTII
 	    if (track.Name)
+#endif
 		ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name);
 #ifdef MARTII
 	    if (stream->codec->codec_id == CODEC_ID_DVB_TELETEXT && context->manager->teletext) {
-		if (context->manager->teletext->Command(context, MANAGER_ADD, &track) < 0) {
-		    ffmpeg_err("failed to add teletext track %d\n", n);
-		}
+		ffmpeg_printf(10, "dvb_teletext\n");
+		int i = 0;
+		AVDictionaryEntry *t = NULL;
+		do {
+			char tmp[30];
+			snprintf(tmp, sizeof(tmp), "teletext_%d", i);
+			t = av_dict_get(stream->metadata, tmp, NULL, 0);
+			if (t) {
+				track.Name = t->value;
+				if (context->manager->teletext->Command(context, MANAGER_ADD, &track) < 0)
+					ffmpeg_err("failed to add teletext track %d\n", n);
+			}
+			i++;
+		} while (t);
 	    } else if (stream->codec->codec_id == CODEC_ID_DVB_SUBTITLE && context->manager->dvbsubtitle) {
+		ffmpeg_printf(10, "dvb_subtitle\n");
+		lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		if (context->manager->dvbsubtitle->Command(context, MANAGER_ADD, &track) < 0) {
 		    ffmpeg_err("failed to add dvbsubtitle track %d\n", n);
 		}

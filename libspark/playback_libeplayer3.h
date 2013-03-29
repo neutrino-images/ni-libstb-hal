@@ -57,6 +57,8 @@ class cPlayback
 #ifdef MARTII
 		void FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
+		void FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpidt, std::string *tlanguage);
+
 		void RequestAbort(void);
 #endif
 #if 0

@@ -115,7 +115,7 @@ static char ** ManagerList(Context_t  *context) {
     teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     if (Tracks != NULL) {
-
+	char tmp[30];
         tracklist = malloc(sizeof(char *) * ((TrackCount*2) + 1));
 
         if (tracklist == NULL)

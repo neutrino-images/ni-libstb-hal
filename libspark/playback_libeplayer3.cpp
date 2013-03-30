@@ -553,6 +553,9 @@ bool cPlayback::SetPosition(int position, bool absolute)
 void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+#ifdef MARTII
+	*numpida = 0;
+#endif
 	if(player && player->manager && player->manager->audio) {
 		char ** TrackList = NULL;
 		player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
@@ -592,6 +595,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	*numpids = 0;
 	if(player && player->manager && player->manager->subtitle) {
 		char ** TrackList = NULL;
 		player->manager->subtitle->Command(player, MANAGER_LIST, &TrackList);
@@ -615,6 +619,7 @@ void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::stri
 void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	*numpids = 0;
 	if(player && player->manager && player->manager->dvbsubtitle) {
 		char ** TrackList = NULL;
 		player->manager->dvbsubtitle->Command(player, MANAGER_LIST, &TrackList);
@@ -638,6 +643,7 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 void cPlayback::FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	*numpids = 0;
 	if(player && player->manager && player->manager->teletext) {
 		char ** TrackList = NULL;
 		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);

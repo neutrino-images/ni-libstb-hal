@@ -8,9 +8,7 @@ AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = -lpthread -lasound
 
 libspark_la_SOURCES = \
-	irmp.c \
 	hardware_caps.c \
-	lirmp_input.cpp \
 	dmx.cpp \
 	video.cpp \
 	audio.cpp \

@@ -11,7 +11,9 @@
 
 #include <linux/dvb/dmx.h>
 
+#ifndef MARTII
 #include "lirmp_input.h"
+#endif
 #include "pwrmngr.h"
 
 #include "lt_debug.h"
@@ -278,15 +280,16 @@ void init_td_api()
 	{
 		cCpuFreqManager f;
 		f.SetCpuFreq(0);	/* CPUFREQ == 0 is the trigger for leaving standby */
+#ifdef MARTII
+		count_input_devices();
+		create_input_devices();
+		start_inmux_thread();
+#else
 		/* hack: if lircd pidfile is present, don't start input thread */
 		if (access("/var/run/lirc/lircd.pid", R_OK))
 			start_input_thread();
 		else
 			lt_info("%s: lircd pidfile present, not starting input thread\n", __func__);
-#ifdef MARTII
-		count_input_devices();
-		create_input_devices();
-		start_inmux_thread();
 #endif
 
 		/* this is a strange hack: the drivers seem to only work correctly after
@@ -320,7 +323,6 @@ void shutdown_td_api()
 	lt_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
 #ifdef MARTII
 	if (initialized) {
-		stop_input_thread();
 		stop_inmux_thread();
 		close_input_devices();
 	}

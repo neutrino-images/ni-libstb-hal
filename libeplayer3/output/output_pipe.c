@@ -37,6 +37,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <sys/uio.h>
+#include <errno.h>
 
 #include "common.h"
 #include "output.h"

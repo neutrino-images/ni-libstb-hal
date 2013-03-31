@@ -958,54 +958,42 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
     return ret;
 }
 #ifdef MARTII
-static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* track) {
+static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* pid) {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
-    playback_printf(10, "Track: %d\n", *track);
+    playback_printf(10, "Track: %d\n", *pid);
 
-    if (context && context->playback && context->playback->isPlaying ) {
-        if (context->manager && context->manager->dvbsubtitle) {
-            if (context->manager->dvbsubtitle->Command(context, MANAGER_SET, track) < 0)
-            {
-                playback_err("manager set track failed\n");
-            }
-        } else
-        {
-            ret = cERR_PLAYBACK_ERROR;
-            playback_err("no dvbsubtitle\n");
+    if (context && context->manager && context->manager->dvbsubtitle ) {
+        if (context->manager->dvbsubtitle->Command(context, *pid == 0xffff ? MANAGER_DEL : MANAGER_SET, pid) < 0) {
+                playback_err("dvbsub manager set track failed\n");
+         	ret = cERR_PLAYBACK_ERROR;
         }
     } else
-    {
-        playback_err("not possible\n");
-        ret = cERR_PLAYBACK_ERROR;
-    }
+        playback_err("no dvbsubtitle\n");
+
+    if (*pid == 0xffff)
+	container_ffmpeg_update_tracks(context, "current stream");
 
     playback_printf(10, "exiting with value %d\n", ret);
 
     return ret;
 }
 
-static int PlaybackSwitchTeletext(Context_t  *context, int* track) {
+static int PlaybackSwitchTeletext(Context_t  *context, int* pid) {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
-    playback_printf(10, "Track: %d\n", *track);
+    playback_printf(10, "Track: %d\n", *pid);
 
-    if (context && context->playback && context->playback->isPlaying ) {
-        if (context->manager && context->manager->teletext) {
-            if (context->manager->teletext->Command(context, MANAGER_SET, track) < 0)
-            {
-                playback_err("manager set track failed\n");
-            }
-        } else
-        {
-            ret = cERR_PLAYBACK_ERROR;
-            playback_err("no dvbsubtitle\n");
-        }
+    if (context && context->manager && context->manager->teletext ) {
+        if (context->manager->teletext->Command(context, *pid == 0xffff ? MANAGER_DEL : MANAGER_SET, pid)) {
+                playback_err("ttxsub manager set track failed\n");
+         	ret = cERR_PLAYBACK_ERROR;
+	}
     } else
-    {
-        playback_err("not possible\n");
-        ret = cERR_PLAYBACK_ERROR;
-    }
+        playback_err("no dvbsubtitle\n");
+
+    if (*pid == 0xffff)
+	container_ffmpeg_update_tracks(context, "current stream");
 
     playback_printf(10, "exiting with value %d\n", ret);
 

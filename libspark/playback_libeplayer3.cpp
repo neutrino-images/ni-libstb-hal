@@ -124,7 +124,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 #ifdef MARTII
 	mSubtitleStream=-1;
 	mDvbsubtitleStream=-1;
-	mTeletextStream=0;
+	mTeletextStream=-1;
 #endif
 	char file[400] = {""};
 
@@ -554,6 +554,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 #ifdef MARTII
+	int max_numpida = *numpida;
 	*numpida = 0;
 #endif
 	if(player && player->manager && player->manager->audio) {
@@ -564,6 +565,9 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 			int i = 0,j=0;
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+#ifdef MARTII
+				if (j < max_numpida) {
+#endif
 				apids[j]=j;
 				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
 				if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
@@ -582,7 +586,14 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 					ac3flags[j] = 0;	//todo
 				else
 					ac3flags[j] = 0;	//todo
+#ifdef MARTII
+				language[j]=std::string(TrackList[i]);
+#else
 				language[j]=TrackList[i];
+#endif
+#ifdef MARTII
+				}
+#endif
 				free(TrackList[i]);
 				free(TrackList[i+1]);
 			}
@@ -595,6 +606,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int max_numpids = *numpids;
 	*numpids = 0;
 	if(player && player->manager && player->manager->subtitle) {
 		char ** TrackList = NULL;
@@ -604,9 +616,10 @@ void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::stri
 			int i = 0,j=0;
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				pids[j]=j;
-				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-				language[j]=TrackList[i];
+				if (j < max_numpids) {
+					pids[j]=j;
+					language[j]=std::string(TrackList[i]);
+				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
 			}
@@ -619,6 +632,7 @@ void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::stri
 void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int max_numpids = *numpids;
 	*numpids = 0;
 	if(player && player->manager && player->manager->dvbsubtitle) {
 		char ** TrackList = NULL;
@@ -628,9 +642,10 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 			int i = 0,j=0;
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				pids[j]=j;
-				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-				language[j]=TrackList[i];
+				if (j < max_numpids) {
+					pids[j]=j;
+					language[j]=std::string(TrackList[i]);
+				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
 			}
@@ -643,6 +658,7 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 void cPlayback::FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int max_numpids = *numpids;
 	*numpids = 0;
 	if(player && player->manager && player->manager->teletext) {
 		char ** TrackList = NULL;
@@ -653,21 +669,51 @@ void cPlayback::FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpids, s
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2) {
 				int type = 0;
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				if (1 != sscanf(TrackList[i], "%*d %*s %d %*d %*d", &type))
-					continue;
-				if (type != 2 && type != 5) // return subtitles only
-					continue;
-				pids[j]=j;
-				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-				language[j]=TrackList[i];
+				if (j < max_numpids) {
+					if (1 != sscanf(TrackList[i], "%*d %*s %d %*d %*d", &type))
+						continue;
+					if (type != 2 && type != 5) // return subtitles only
+						continue;
+					pids[j]=j;
+					language[j]=std::string(TrackList[i]);
+					j++;
+				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
-				j++;
 			}
 			free(TrackList);
 			*numpids=j;
 		}
 	}
+}
+
+unsigned short cPlayback::GetTeletextPid(void)
+{
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	int pid = 0;
+	if(player && player->manager && player->manager->teletext) {
+		char ** TrackList = NULL;
+		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL) {
+			printf("Teletext List\n");
+			int i = 0;
+			for (i = 0; TrackList[i] != NULL; i+=2) {
+				int type = 0;
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				if (!pid) {
+					if (2 != sscanf(TrackList[i], "%d %*s %d %*d %*d", &pid, &type))
+						continue;
+					if (type != 1)
+						pid = 0;
+				}
+				free(TrackList[i]);
+				free(TrackList[i+1]);
+			}
+			free(TrackList);
+		}
+	}
+	printf("teletext pid id %d (0x%x)\n", pid, pid);
+	return (unsigned short)pid;
 }
 #endif
 

@@ -46,7 +46,7 @@ class cPlayback
 		unsigned short GetAPid(void) { return mAudioStream; }
 		unsigned short GetSubtitlePid(void) { return mSubtitleStream; }
 		unsigned short GetDvbsubtitlePid(void) { return mDvbsubtitleStream; }
-		unsigned short GetTeletextPid(void) { return mTeletextStream; }
+		unsigned short GetTeletextPid(void);
 		void SuspendSubtitle(bool);
 #endif
 		bool SetSpeed(int speed);

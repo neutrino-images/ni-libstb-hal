@@ -177,7 +177,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
     }
     case MANAGER_LIST: {
 #ifdef MARTII
-	container_ffmpeg_update_tracks(context, "current stream");
+	container_ffmpeg_update_tracks(context, context->playback->uri);
 #endif
         *((char***)argument) = (char **)ManagerList(context);
         break;

@@ -916,11 +916,27 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
         if (context->manager && context->manager->subtitle) {
             int trackid;
             
+#ifdef MARTII
+            if (context->manager->subtitle->Command(context, *track == 0xffff ? MANAGER_DEL : MANAGER_SET, track) < 0)
+#else
             if (context->manager->subtitle->Command(context, MANAGER_SET, track) < 0)
+#endif
             {
                 playback_err("manager set track failed\n");
             }
+#ifdef MARTII
+	    if (*track == 0xffff) {
+		//CHECK FOR SUBTITLES
+		if (context->container && context->container->textSrtContainer)
+		    context->container->textSrtContainer->Command(context, CONTAINER_INIT, context->playback->uri+7);
 
+		if (context->container && context->container->textSsaContainer)
+		    context->container->textSsaContainer->Command(context, CONTAINER_INIT, context->playback->uri+7);
+
+		if (context->container && context->container->assContainer)
+		    context->container->assContainer->Command(context, CONTAINER_INIT, NULL);
+	    }
+#endif
             context->manager->subtitle->Command(context, MANAGER_GET, &trackid);
 
 /* konfetti: I make this hack a little bit nicer,
@@ -972,7 +988,7 @@ static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* pid) {
         playback_err("no dvbsubtitle\n");
 
     if (*pid == 0xffff)
-	container_ffmpeg_update_tracks(context, "current stream");
+	container_ffmpeg_update_tracks(context, context->playback->uri);
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -990,10 +1006,10 @@ static int PlaybackSwitchTeletext(Context_t  *context, int* pid) {
          	ret = cERR_PLAYBACK_ERROR;
 	}
     } else
-        playback_err("no dvbsubtitle\n");
+        playback_err("no ttxsubtitle\n");
 
     if (*pid == 0xffff)
-	container_ffmpeg_update_tracks(context, "current stream");
+	container_ffmpeg_update_tracks(context, context->playback->uri);
 
     playback_printf(10, "exiting with value %d\n", ret);
 

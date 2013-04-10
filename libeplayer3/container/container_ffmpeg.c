@@ -1530,6 +1530,7 @@ static void ffmpeg_buf_free()
 /* Container part for ffmpeg    */
 /* **************************** */
 #ifdef MARTII
+static int terminating = 0;
 static int interrupt_cb(void *ctx)
 {
 	PlaybackHandler_t *p = (PlaybackHandler_t *)ctx;
@@ -1681,11 +1682,17 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 //for buffered io (end)
 #endif
 #ifdef MARTII
+    terminating = 0;
+    latestPts = 0;
+    isContainerRunning = 1;
     return container_ffmpeg_update_tracks(context, filename);
 }
 
 int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 {
+    if (terminating)
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+
     int n;
 
     if (context->manager->audio)
@@ -2109,9 +2116,11 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
     } /* for */
 
+#ifndef MARTII
     /* init */
     latestPts = 0;
     isContainerRunning = 1;
+#endif
 
     releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 
@@ -2211,6 +2220,9 @@ static int container_ffmpeg_stop(Context_t *context) {
     }
 
     hasPlayThreadStarted = 0;
+#ifdef MARTII
+    terminating = 1;
+#endif
 
     getMutex(FILENAME, __FUNCTION__,__LINE__);
 

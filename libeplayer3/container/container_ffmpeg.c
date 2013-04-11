@@ -475,7 +475,11 @@ static void FFMPEGThread(Context_t *context) {
 	      }
 
 
+#ifdef MARTII
+	      if((err = container_ffmpeg_seek_rel(context, lastSeek, lastPts, (float) context->playback->Speed * 15)) < 0)
+#else
 	      if((err = container_ffmpeg_seek_rel(context, lastSeek, lastPts, (float) context->playback->Speed)) < 0)
+#endif
 	      {
 		  ffmpeg_err( "Error seeking\n");
 

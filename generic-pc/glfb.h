@@ -57,6 +57,7 @@ private:
 	std::map<unsigned char, int> mKeyMap;
 	std::map<int, int> mSpecialMap;
 	int input_fd;
+	int64_t last_apts;
 
 	void checkReinit();		/* e.g. in case window was resized */
 	static void rendercb();		/* callback for GLUT */

@@ -35,7 +35,7 @@ libstb_hal_la_LIBADD += \
 	generic-pc/libgeneric.la
 
 libstb_hal_test_LDADD += \
-	-lglut -lGL -lGLU -lGLEW \
+	-lglut -lGL -lGLU -lGLEW -lao \
 	-lOpenThreads \
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \

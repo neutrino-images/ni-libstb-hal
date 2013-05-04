@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,6 +41,7 @@
 #include <linux/input.h>
 #include "glfb.h"
 #include "video_lib.h"
+#include "audio_lib.h"
 
 #include "lt_debug.h"
 
@@ -50,6 +52,7 @@
 
 
 extern cVideo *videoDecoder;
+extern cAudio *audioDecoder;
 
 static GLFramebuffer *gThiz = 0; /* GLUT does not allow for an arbitrary argument to the render func */
 
@@ -61,6 +64,7 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 	mY = y;
 
 	mState.blit = true;
+	last_apts = 0;
 
 	/* linux framebuffer compat mode */
 	screeninfo.bits_per_pixel = 32;
@@ -352,22 +356,6 @@ void GLFramebuffer::render()
 	GLuint err = glGetError();
 	if (err != 0)
 		lt_info("GLFB::%s: GLError:%d 0x%04x\n", __func__, err, err);
-
-	/* this "rate control" is crap and way too naive, feel free to improve */
-	if (videoDecoder) {
-		int tmp, w, h;
-		videoDecoder->getPictureInfo(w, h, tmp);
-		if (tmp) {
-			tmp = 900000/tmp; /* 90% of the sleep time */
-			if (abs(tmp - sleep_us) > 10000) {
-				lt_info("GLFB::%s: sleep_us %d -> %d\n", __func__, sleep_us, tmp);
-				sleep_us = tmp;
-			}
-		}
-		w = videoDecoder->buf_num;
-		if (w != 8)
-			sleep_us += 10*(8 - w);
-	}
 	usleep(sleep_us);
 	glutPostRedisplay();
 }
@@ -499,6 +487,32 @@ void GLFramebuffer::bltDisplayBuffer()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, 0);
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	/* "rate control" mechanism starts here...
+	 * this implementation is pretty naive and not working too well, but
+	 * better this than nothing... :-) */
+	int64_t apts = 0;
+	/* 18000 is the magic value for A/V sync in my libao->pulseaudio->intel_hda setup */
+	int64_t vpts = buf->pts() + 18000;
+	if (audioDecoder)
+		apts = audioDecoder->getPts();
+	if (apts != last_apts) {
+		int rate, dummy1, dummy2;
+		if (apts < vpts)
+			sleep_us = (sleep_us * 2 + (vpts - apts)*10/9) / 3;
+		else if (sleep_us > 1000)
+			sleep_us -= 1000;
+		last_apts = apts;
+		videoDecoder->getPictureInfo(dummy1, dummy2, rate);
+		if (rate)
+			rate = 2000000 / rate; /* limit to half the frame rate */
+		else
+			rate = 50000; /* minimum 20 fps */
+		if (sleep_us > rate)
+			sleep_us = rate;
+	}
+	lt_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
+			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);
 }
 
 void GLFramebuffer::clear()

@@ -22,6 +22,12 @@ if test x"$BOXTYPE" = x"tripledragon"; then
 	TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)
 fi
 
+if test x$BOXTYPE = xgeneric; then
+	TUXBOX_APPS_LIB_PKGCONFIG(AVFORMAT,libavformat)
+	TUXBOX_APPS_LIB_PKGCONFIG(AVCODEC,libavcodec)
+	TUXBOX_APPS_LIB_PKGCONFIG(AVUTIL,libavutil)
+	TUXBOX_APPS_LIB_PKGCONFIG(SWSCALE,libswscale)
+fi
 AC_OUTPUT([
 Makefile
 common/Makefile

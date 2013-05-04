@@ -3,6 +3,8 @@
 #ifndef _AUDIO_LIB_H_
 #define _AUDIO_LIB_H_
 
+#include <stdint.h>
+#include <OpenThreads/Thread>
 #include "../common/cs_types.h"
 
 typedef enum
@@ -36,7 +38,7 @@ typedef enum
    AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
 } AUDIO_FORMAT;
 
-class cAudio
+class cAudio : public OpenThreads::Thread
 {
 	friend class cPlayback;
 	private:
@@ -50,18 +52,22 @@ class cAudio
 		AUDIO_FORMAT	StreamType;
 		AUDIO_SYNC_MODE    SyncMode;
 		bool started;
+		bool thread_started;
 
 		int volume;
+		int64_t curr_pts;
 
 		void openDevice(void);
 		void closeDevice(void);
 
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
+		void run();
 	public:
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
 		~cAudio(void);
+		int64_t getPts() { return curr_pts; }
 
 		void *GetHandle() { return NULL; };
 		/* shut up */
@@ -92,6 +98,7 @@ class cAudio
 		void SetSpdifDD(bool enable);
 		void ScheduleMute(bool On);
 		void EnableAnalogOut(bool enable);
+		int my_read(uint8_t *buf, int buf_size);
 };
 
 #endif

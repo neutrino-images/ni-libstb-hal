@@ -33,6 +33,14 @@ if BOXTYPE_GENERIC
 SUBDIRS += generic-pc
 libstb_hal_la_LIBADD += \
 	generic-pc/libgeneric.la
+
+libstb_hal_test_LDADD += \
+	-lglut -lGL -lGLU -lGLEW -lao \
+	-lOpenThreads \
+	@AVFORMAT_LIBS@ \
+	@AVUTIL_LIBS@ \
+	@AVCODEC_LIBS@ \
+	@SWSCALE_LIBS@
 endif
 if BOXTYPE_SPARK
 libstb_hal_test_LDADD += -lasound

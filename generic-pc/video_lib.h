@@ -1,6 +1,8 @@
 #ifndef _VIDEO_TD_H
 #define _VIDEO_TD_H
 
+#include <OpenThreads/Thread>
+#include <vector>
 #include <linux/dvb/video.h>
 #include "../common/cs_types.h"
 
@@ -112,9 +114,29 @@ typedef enum
 } VIDEO_CONTROL;
 
 
-class cVideo
+#define VDEC_MAXBUFS 0x30
+class cVideo : public OpenThreads::Thread
 {
 	public:
+		/* called from GL thread */
+		class SWFramebuffer : public std::vector<unsigned char>
+		{
+		public:
+			SWFramebuffer() : mWidth(0), mHeight(0) {}
+			void width(int w) { mWidth = w; }
+			void height(int h) { mHeight = h; }
+			void pts(uint64_t p) { mPts = p; }
+			int width() const { return mWidth; }
+			int height() const { return mHeight; }
+			int64_t pts() const { return mPts; }
+		private:
+			int mWidth;
+			int mHeight;
+			int64_t mPts;
+		};
+		int64_t firstpts;
+		uint64_t framecount;
+		int buf_in, buf_out, buf_num;
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);
 		~cVideo(void);
@@ -163,6 +185,14 @@ class cVideo
 		int  CloseVBI(void) { return 0; };
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
+		SWFramebuffer *getDecBuf(void);
+	private:
+		void run();
+		SWFramebuffer buffers[VDEC_MAXBUFS];
+		int dec_w, dec_h;
+		int dec_r;
+		bool w_h_changed;
+		bool thread_running;
 };
 
 #endif

@@ -11,6 +11,7 @@ libgeneric_la_SOURCES = \
 	dmx.cpp \
 	video.cpp \
 	audio.cpp \
+	glfb.cpp \
 	init.cpp \
 	playback.cpp \
 	pwrmngr.cpp \

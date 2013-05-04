@@ -291,10 +291,11 @@ void GLFramebuffer::render()
 	{
 		mReInit = false;
 		glViewport(0, 0, mX, mY);
+		glutReshapeWindow(mX, mY);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		float aspect = static_cast<float>(mX)/mY;
-		float osdaspect = 1.0/aspect; //(static_cast<float>(mState.width)/mState.height);
+		float osdaspect = 1.0/(static_cast<float>(16.0)/9);
 //		if(!mState.go3d)
 		{
 			glOrtho(aspect*-osdaspect, aspect*osdaspect, -1.0, 1.0, -1.0, 1.0 );
@@ -370,6 +371,11 @@ void GLFramebuffer::checkReinit()
 	{
 		mX = x;
 		mY = y;
+		/* fix aspect ratio */
+		if (x < mY * 16 / 9)
+			mX = mY * 16 / 9;
+		else
+			mY = mX * 9 / 16;
 		mReInit = true;
 	}
 }

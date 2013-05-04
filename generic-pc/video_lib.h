@@ -2,9 +2,11 @@
 #define _VIDEO_TD_H
 
 #include <OpenThreads/Thread>
+#include <OpenThreads/Mutex>
 #include <vector>
 #include <linux/dvb/video.h>
 #include "../common/cs_types.h"
+#include <libavutil/rational.h>
 
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
@@ -126,16 +128,17 @@ class cVideo : public OpenThreads::Thread
 			void width(int w) { mWidth = w; }
 			void height(int h) { mHeight = h; }
 			void pts(uint64_t p) { mPts = p; }
+			void AR(AVRational a) { mAR = a; }
 			int width() const { return mWidth; }
 			int height() const { return mHeight; }
 			int64_t pts() const { return mPts; }
+			AVRational AR() const { return mAR; }
 		private:
 			int mWidth;
 			int mHeight;
 			int64_t mPts;
+			AVRational mAR;
 		};
-		int64_t firstpts;
-		uint64_t framecount;
 		int buf_in, buf_out, buf_num;
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);
@@ -193,6 +196,8 @@ class cVideo : public OpenThreads::Thread
 		int dec_r;
 		bool w_h_changed;
 		bool thread_running;
+		VIDEO_FORMAT v_format;
+		OpenThreads::Mutex buf_m;
 };
 
 #endif

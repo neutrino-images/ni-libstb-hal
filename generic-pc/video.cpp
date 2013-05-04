@@ -63,7 +63,7 @@ cVideo::cVideo(int, void *, void *)
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;
-	firstpts = AV_NOPTS_VALUE;
+	v_format = VIDEO_FORMAT_MPEG2;
 }
 
 cVideo::~cVideo(void)
@@ -80,7 +80,31 @@ int cVideo::setAspectRatio(int, int)
 
 int cVideo::getAspectRatio(void)
 {
-	return 1;
+	buf_m.lock();
+	int ret = 0;
+	int w, h, ar;
+	AVRational a;
+	if (buf_num == 0)
+		goto out;
+	a = buffers[buf_out].AR();
+	w = buffers[buf_out].width();
+	h = buffers[buf_out].height();
+	if (a.den == 0 || h == 0)
+		goto out;
+	ar = w * 100 * a.num / h / a.den;
+	if (ar < 100 || ar > 225) /* < 4:3, > 20:9 */
+		; /* ret = 0: N/A */
+	else if (ar < 140)	/* 4:3 */
+		ret = 1;
+	else if (ar < 165)	/* 14:9 */
+		ret = 2;
+	else if (ar < 200)	/* 16:9 */
+		ret = 3;
+	else
+		ret = 4;	/* 20:9 */
+ out:
+	buf_m.unlock();
+	return ret;
 }
 
 int cVideo::setCroppingMode(int)
@@ -159,19 +183,24 @@ void cVideo::SetSyncMode(AVSYNC_TYPE)
 {
 };
 
-int cVideo::SetStreamType(VIDEO_FORMAT)
+int cVideo::SetStreamType(VIDEO_FORMAT v)
 {
+	v_format = v;
 	return 0;
 }
 
 cVideo::SWFramebuffer *cVideo::getDecBuf(void)
 {
-	if (buf_num == 0)
+	buf_m.lock();
+	if (buf_num == 0) {
+		buf_m.unlock();
 		return NULL;
+	}
 	SWFramebuffer *p = &buffers[buf_out];
 	buf_out++;
 	buf_num--;
 	buf_out %= VDEC_MAXBUFS;
+	buf_m.unlock();
 	return p;
 }
 
@@ -217,9 +246,8 @@ void cVideo::run(void)
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;
+	dec_r = 0;
 
-	firstpts = AV_NOPTS_VALUE;
-	framecount = 0;
 	av_init_packet(&avpkt);
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
@@ -297,6 +325,7 @@ void cVideo::run(void)
 			if (!convert)
 				lt_info("%s: ERROR setting up SWS context\n", __func__);
 			else {
+				buf_m.lock();
 				SWFramebuffer *f = &buffers[buf_in];
 				if (f->size() < need)
 					f->resize(need);
@@ -315,7 +344,12 @@ void cVideo::run(void)
 				}
 				f->width(c->width);
 				f->height(c->height);
-				f->pts(av_frame_get_best_effort_timestamp(frame));
+				int64_t vpts = av_frame_get_best_effort_timestamp(frame);
+				if (v_format == VIDEO_FORMAT_MPEG2)
+					vpts += 90000*3/10; /* 300ms */
+				f->pts(vpts);
+				AVRational a = av_guess_sample_aspect_ratio(avfc, avfc->streams[0], frame);
+				f->AR(a);
 				buf_in++;
 				buf_in %= VDEC_MAXBUFS;
 				buf_num++;
@@ -325,11 +359,9 @@ void cVideo::run(void)
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;
 				}
-				if (firstpts == AV_NOPTS_VALUE && f->pts() != AV_NOPTS_VALUE)
-					firstpts = f->pts();
+				dec_r = c->time_base.den/(c->time_base.num * c->ticks_per_frame);
+				buf_m.unlock();
 			}
-			dec_r = c->time_base.den/(c->time_base.num * c->ticks_per_frame);
-			framecount++;
 			lt_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
 					c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
 					av_frame_get_best_effort_timestamp(frame));

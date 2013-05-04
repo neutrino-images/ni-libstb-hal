@@ -358,7 +358,8 @@ void GLFramebuffer::render()
 	GLuint err = glGetError();
 	if (err != 0)
 		lt_info("GLFB::%s: GLError:%d 0x%04x\n", __func__, err, err);
-	usleep(sleep_us);
+	if (sleep_us > 0)
+		usleep(sleep_us);
 	glutPostRedisplay();
 }
 
@@ -515,12 +516,14 @@ void GLFramebuffer::bltDisplayBuffer()
 			sleep_us -= 1000;
 		last_apts = apts;
 		videoDecoder->getPictureInfo(dummy1, dummy2, rate);
-		if (rate)
+		if (rate > 0)
 			rate = 2000000 / rate; /* limit to half the frame rate */
 		else
 			rate = 50000; /* minimum 20 fps */
 		if (sleep_us > rate)
 			sleep_us = rate;
+		else if (sleep_us < 1)
+			sleep_us = 1;
 	}
 	lt_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
 			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);

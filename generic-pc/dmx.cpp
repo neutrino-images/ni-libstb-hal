@@ -104,6 +104,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
+	dmx_type = pes_type;
 	if (pes_type != DMX_PSI_CHANNEL)
 		flags |= O_NONBLOCK;
 
@@ -116,7 +117,8 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
-	dmx_type = pes_type;
+	if (dmx_type == DMX_VIDEO_CHANNEL)
+		uBufferSize = 0x40000;
 #if 0
 	if (!pesfds.empty())
 	{
@@ -379,10 +381,12 @@ bool cDemux::pesFilter(const unsigned short pid)
 		p_flt.pes_type = DMX_PES_PCR;
 		break;
 	case DMX_AUDIO_CHANNEL:
-		p_flt.pes_type = DMX_PES_AUDIO;
+		p_flt.pes_type = DMX_PES_OTHER;
+		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
 		break;
 	case DMX_VIDEO_CHANNEL:
-		p_flt.pes_type = DMX_PES_VIDEO;
+		p_flt.pes_type = DMX_PES_OTHER;
+		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
 		break;
 	case DMX_PES_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;

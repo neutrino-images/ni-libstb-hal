@@ -52,6 +52,7 @@ cAudio::cAudio(void *, void *, void *)
 	thread_started = false;
 	dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
 	bufpos = 0;
+	curr_pts = 0;
 	gThiz = this;
 	ao_initialize();
 }
@@ -233,6 +234,8 @@ void cAudio::run()
 	ao_info *ai;
 	ao_device *adevice;
 	ao_sample_format sformat;
+
+	curr_pts = 0;
 	av_init_packet(&avpkt);
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
@@ -300,9 +303,8 @@ void cAudio::run()
 			break;
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 		if (gotframe && thread_started) {
-			int64_t pts = av_frame_get_best_effort_timestamp(frame);
-			lt_debug("%s: pts 0x%" PRIx64 " %" PRId64 " %3f\n", __func__, pts, pts, pts/90000.0);
-			curr_pts = pts;
+			curr_pts = av_frame_get_best_effort_timestamp(frame);
+			lt_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
 			ao_play(adevice, (char*)frame->extended_data[0], frame->linesize[0]);
 		}
 		av_free_packet(&avpkt);

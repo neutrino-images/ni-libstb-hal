@@ -46,6 +46,8 @@ private:
 	fb_var_screeninfo screeninfo;
 	int mX;				/* window size */
 	int mY;
+	float mVA;			/* video aspect ratio */;
+
 	bool mReInit;			/* setup things for GL */
 	bool mShutDown;			/* if set main loop is left */
 	bool mInitDone;			/* condition predicate */
@@ -71,7 +73,7 @@ private:
 	void setupGLObjects();		/* PBOs, textures and stuff */
 	void releaseGLObjects();
 	// void drawCube(float size);	/* cubes are the building blocks of our society */
-	void drawSquare(float size);	/* do not be square */
+	void drawSquare(float size, float x_factor = 1);	/* do not be square */
 
 	struct {
 		int width;		/* width and height, fixed for a framebuffer instance */

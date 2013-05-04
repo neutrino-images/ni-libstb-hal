@@ -62,6 +62,7 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 	mState.height = y;
 	mX = y * 16 / 9; /* hard coded 16:9 initial aspect ratio for now */
 	mY = y;
+	mVA = 1.0;
 
 	mState.blit = true;
 	last_apts = 0;
@@ -345,7 +346,7 @@ void GLFramebuffer::render()
 #endif
 	{
 		glBindTexture(GL_TEXTURE_2D, mState.displaytex);
-		drawSquare(1.0);
+		drawSquare(1.0, mVA / (16.0/9));
 		glBindTexture(GL_TEXTURE_2D, mState.osdtex);
 		drawSquare(1.0);
 	}
@@ -420,7 +421,7 @@ void GLFramebuffer::drawCube(float size)
 }
 #endif
 
-void GLFramebuffer::drawSquare(float size)
+void GLFramebuffer::drawSquare(float size, float x_factor)
 {
 	GLfloat vertices[] = {
 		 1.0f,  1.0f,
@@ -439,7 +440,7 @@ void GLFramebuffer::drawSquare(float size)
 	};
 
 	glPushMatrix();
-	glScalef(size, size, size);
+	glScalef(size * x_factor, size, size);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glVertexPointer(2, GL_FLOAT, 0, vertices);
@@ -479,6 +480,10 @@ void GLFramebuffer::bltDisplayBuffer()
 	int w = buf->width(), h = buf->height();
 	if (w == 0 || h == 0)
 		return;
+
+	AVRational a = buf->AR();
+	if (a.den != 0)
+		mVA = static_cast<float>(w * a.num) / h / a.den;
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mState.displaypbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, buf->size(), &(*buf)[0], GL_STREAM_DRAW_ARB);

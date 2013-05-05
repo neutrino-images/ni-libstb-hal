@@ -19,9 +19,8 @@
 	based on Carjay's neutrino-hd-dvbapi work, see
 		http://gitorious.org/neutrino-hd/neutrino-hd-dvbapi
 
-	TODO:	AV-Sync code is not existent yet
+	TODO:	AV-Sync code is "experimental" at best
 		cleanup carjay's crazy 3D stuff :-)
-		video mode setting (4:3, 16:9, panscan...)
 */
 
 #include <vector>
@@ -60,9 +59,19 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 {
 	mState.width  = x;
 	mState.height = y;
-	mX = y * 16 / 9; /* hard coded 16:9 initial aspect ratio for now */
-	mY = y;
-	mVA = 1.0;
+	mX = &_mX[0];
+	mY = &_mY[0];
+	*mX = x;
+	*mY = y;
+	av_reduce(&mOA.num, &mOA.den, x, y, INT_MAX);
+	mVA = mOA;	/* initial aspect ratios are from the FB resolution, those */
+	_mVA = mVA;	/* will be updated by the videoDecoder functions anyway */
+	mVAchanged = true;
+	mCrop = DISPLAY_AR_MODE_PANSCAN;
+	zoom = 1.0;
+	xscale = 1.0;
+	const char *tmp = getenv("GLFB_FULLSCREEN");
+	mFullscreen = !!(tmp);
 
 	mState.blit = true;
 	last_apts = 0;
@@ -118,6 +127,7 @@ void GLFramebuffer::initKeys()
 
 	mKeyMap[0x0d] = KEY_OK;
 	mKeyMap[0x1b] = KEY_EXIT;
+	mKeyMap['e']  = KEY_EPG;
 	mKeyMap['i']  = KEY_INFO;
 	mKeyMap['m']  = KEY_MENU;
 
@@ -162,6 +172,7 @@ void GLFramebuffer::run()
 			glutDisplayFunc(GLFramebuffer::rendercb);
 			glutKeyboardFunc(GLFramebuffer::keyboardcb);
 			glutSpecialFunc(GLFramebuffer::specialcb);
+			glutReshapeFunc(GLFramebuffer::resizecb);
 			setupGLObjects(); /* needs GLEW prototypes */
 			glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
 			glutMainLoop();
@@ -181,7 +192,7 @@ void GLFramebuffer::setupCtx()
 	char const *argv[2] = { "neutrino", 0 };
 	lt_info("GLFB: GL thread starting\n");
 	glutInit(&argc, const_cast<char **>(argv));
-	glutInitWindowSize(mX, mY);
+	glutInitWindowSize(mX[0], mY[0]);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("Neutrino");
 }
@@ -247,6 +258,13 @@ void GLFramebuffer::releaseGLObjects()
 {
 	lt_debug_c("GLFB::%s: 0x%x\n", __func__, key);
 	struct input_event ev;
+	if (key == 'f')
+	{
+		lt_info_c("GLFB::%s: toggle fullscreen\n", __func__);
+		gThiz->mFullscreen = !(gThiz->mFullscreen);
+		gThiz->mReInit = true;
+		return;
+	}
 	std::map<unsigned char, int>::const_iterator i = gThiz->mKeyMap.find(key);
 	if (i == gThiz->mKeyMap.end())
 		return;
@@ -281,21 +299,39 @@ int sleep_us = 30000;
 
 void GLFramebuffer::render()
 {
-	if (!mReInit) /* for example if window is resized */
-		checkReinit();
-
 	if(mShutDown)
 		glutLeaveMainLoop();
 
+	mReInitLock.lock();
 	if (mReInit)
 	{
+		int xoff = 0;
+		int yoff = 0;
+		mVAchanged = true;
 		mReInit = false;
-		glViewport(0, 0, mX, mY);
-		glutReshapeWindow(mX, mY);
+		mX = &_mX[mFullscreen];
+		mY = &_mY[mFullscreen];
+		if (mFullscreen) {
+			int x = glutGet(GLUT_SCREEN_WIDTH);
+			int y = glutGet(GLUT_SCREEN_HEIGHT);
+			*mX = x;
+			*mY = y;
+			AVRational a = { x, y };
+			if (av_cmp_q(a, mOA) < 0)
+				*mY = x * mOA.den / mOA.num;
+			else if (av_cmp_q(a, mOA) > 0)
+				*mX = y * mOA.num / mOA.den;
+			xoff = (x - *mX) / 2;
+			yoff = (y - *mY) / 2;
+		} else
+			*mX = *mY * mOA.num / mOA.den;
+		lt_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
+			__func__, *mX, *mY, xoff, yoff, mFullscreen);
+		glViewport(xoff, yoff, *mX, *mY);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		float aspect = static_cast<float>(mX)/mY;
-		float osdaspect = 1.0/(static_cast<float>(16.0)/9);
+		float aspect = static_cast<float>(*mX)/ *mY;
+		float osdaspect = static_cast<float>(mOA.den) / mOA.num;
 //		if(!mState.go3d)
 		{
 			glOrtho(aspect*-osdaspect, aspect*osdaspect, -1.0, 1.0, -1.0, 1.0 );
@@ -316,6 +352,11 @@ void GLFramebuffer::render()
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
+	mReInitLock.unlock();
+	if (mFullscreen)
+		glutFullScreen();
+	else if (*mX != glutGet(GLUT_WINDOW_WIDTH) || *mY != glutGet(GLUT_WINDOW_HEIGHT))
+		glutReshapeWindow(*mX, *mY);
 
 	bltDisplayBuffer(); /* decoded video stream */
 	if (mState.blit) {
@@ -345,12 +386,60 @@ void GLFramebuffer::render()
 	}
 	else
 #endif
+	if (mVAchanged)
 	{
-		glBindTexture(GL_TEXTURE_2D, mState.displaytex);
-		drawSquare(1.0, mVA / (16.0/9));
-		glBindTexture(GL_TEXTURE_2D, mState.osdtex);
-		drawSquare(1.0);
+		mVAchanged = false;
+		zoom = 1.0;
+		xscale = 1.0;
+		int cmp = (mCrop == DISPLAY_AR_MODE_NONE) ? 0 : av_cmp_q(mVA, mOA);
+		const AVRational a149 = { 14, 9 };
+		switch (cmp) {
+			default:
+			case INT_MIN:	/* invalid */
+			case 0:		/* identical */
+				lt_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
+				break;
+			case 1:		/* mVA > mOA -- video is wider than display */
+				lt_debug("%s: mVA > mOA\n", __func__);
+				xscale = av_q2d(mVA) / av_q2d(mOA);
+				switch (mCrop) {
+					case DISPLAY_AR_MODE_PANSCAN:
+						break;
+					case DISPLAY_AR_MODE_LETTERBOX:
+						zoom = av_q2d(mOA) / av_q2d(mVA);
+						break;
+					case DISPLAY_AR_MODE_PANSCAN2:
+						zoom = av_q2d(mOA) / av_q2d(a149);
+						break;
+					default:
+						break;
+				}
+				break;
+			case -1:	/* mVA < mOA -- video is taller than display */
+				lt_debug("%s: mVA < mOA\n", __func__);
+				xscale = av_q2d(mVA) / av_q2d(mOA);
+				switch (mCrop) {
+					case DISPLAY_AR_MODE_LETTERBOX:
+						break;
+					case DISPLAY_AR_MODE_PANSCAN2:
+						if (av_cmp_q(a149, mOA) < 0) {
+							zoom = av_q2d(mVA) * av_q2d(a149) / av_q2d(mOA);
+							break;
+						}
+						/* fallthrough for output format 14:9 */
+					case DISPLAY_AR_MODE_PANSCAN:
+						zoom = av_q2d(mOA) / av_q2d(mVA);
+						break;
+					default:
+						break;
+				}
+				break;
+		}
 	}
+	glBindTexture(GL_TEXTURE_2D, mState.displaytex);
+	drawSquare(zoom, xscale);
+	glBindTexture(GL_TEXTURE_2D, mState.osdtex);
+	drawSquare(1.0);
 
 	glFlush();
 	glutSwapBuffers();
@@ -363,22 +452,29 @@ void GLFramebuffer::render()
 	glutPostRedisplay();
 }
 
-
-void GLFramebuffer::checkReinit()
+/* static */ void GLFramebuffer::resizecb(int w, int h)
 {
-	int x = glutGet(GLUT_WINDOW_WIDTH);
-	int y = glutGet(GLUT_WINDOW_HEIGHT);
-	if ( x != mX || y != mY )
-	{
-		mX = x;
-		mY = y;
-		/* fix aspect ratio */
-		if (x < mY * 16 / 9)
-			mX = mY * 16 / 9;
-		else
-			mY = mX * 9 / 16;
+	gThiz->checkReinit(w, h);
+}
+
+void GLFramebuffer::checkReinit(int x, int y)
+{
+	static int last_x = 0, last_y = 0;
+
+	mReInitLock.lock();
+	if (mReInit == false && (x != *mX || y != *mY)) {
+		if (x != *mX && abs(x - last_x) > 2) {
+			*mX = x;
+			*mY = *mX * mOA.den / mOA.num;
+		} else if (y != *mY && abs(y - last_y) > 2) {
+			*mY = y;
+			*mX = *mY * mOA.num / mOA.den;
+		}
 		mReInit = true;
 	}
+	mReInitLock.unlock();
+	last_x = x;
+	last_y = y;
 }
 
 #if 0
@@ -489,8 +585,12 @@ void GLFramebuffer::bltDisplayBuffer()
 		return;
 
 	AVRational a = buf->AR();
-	if (a.den != 0)
-		mVA = static_cast<float>(w * a.num) / h / a.den;
+	if (a.den != 0 && a.num != 0 && av_cmp_q(a, _mVA)) {
+		_mVA = a;
+		/* _mVA is the raw buffer's aspect, mVA is the real scaled output aspect */
+		av_reduce(&mVA.num, &mVA.den, w * a.num, h * a.den, INT_MAX);
+		mVAchanged = true;
+	}
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mState.displaypbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, buf->size(), &(*buf)[0], GL_STREAM_DRAW_ARB);

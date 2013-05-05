@@ -169,6 +169,7 @@ void GLFramebuffer::run()
 		else
 		{
 			gThiz = this;
+			glutSetCursor(GLUT_CURSOR_NONE);
 			glutDisplayFunc(GLFramebuffer::rendercb);
 			glutKeyboardFunc(GLFramebuffer::keyboardcb);
 			glutSpecialFunc(GLFramebuffer::specialcb);

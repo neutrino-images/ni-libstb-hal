@@ -20,7 +20,6 @@
 		http://gitorious.org/neutrino-hd/neutrino-hd-dvbapi
 
 	TODO:	AV-Sync code is "experimental" at best
-		cleanup carjay's crazy 3D stuff :-)
 */
 
 #include <vector>
@@ -334,19 +333,10 @@ void GLFramebuffer::render()
 		glLoadIdentity();
 		float aspect = static_cast<float>(*mX)/ *mY;
 		float osdaspect = static_cast<float>(mOA.den) / mOA.num;
-//		if(!mState.go3d)
-		{
-			glOrtho(aspect*-osdaspect, aspect*osdaspect, -1.0, 1.0, -1.0, 1.0 );
-			glClearColor(0.0, 0.0, 0.0, 1.0);
-		}
-#if 0
-		else
-		{	/* carjay is crazy... :-) */
-			gluPerspective(45.0, static_cast<float>(mX)/mY, 0.05, 1000.0);
-			glTranslatef(0.0, 0.0, -2.0);
-			glClearColor(0.25, 0.25, 0.25, 1.0);
-		}
-#endif
+
+		glOrtho(aspect*-osdaspect, aspect*osdaspect, -1.0, 1.0, -1.0, 1.0 );
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glEnable(GL_BLEND);
@@ -368,24 +358,7 @@ void GLFramebuffer::render()
 
 	glBindTexture(GL_TEXTURE_2D, mState.osdtex);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#if 0
-	// cube test
-	if(mState.go3d)
-	{
-		glEnable(GL_DEPTH_TEST);
-		static float ydeg = 0.0;
-		glPushMatrix();
-		glRotatef(ydeg, 0.0, 1.0, 0.0);
-		glBindTexture(GL_TEXTURE_2D, mState.displaytex);
-		drawCube(0.5);
-		glScalef(1.01, 1.01, 1.01);
-		glBindTexture(GL_TEXTURE_2D, mState.osdtex);
-		drawCube(0.5);
-		glPopMatrix();
-		ydeg += 0.75f;
-	}
-	else
-#endif
+
 	if (mVAchanged)
 	{
 		mVAchanged = false;
@@ -476,53 +449,6 @@ void GLFramebuffer::checkReinit(int x, int y)
 	last_x = x;
 	last_y = y;
 }
-
-#if 0
-void GLFramebuffer::drawCube(float size)
-{
-	GLfloat vertices[] = {
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f
-	};
-
-	GLubyte indices[] = {
-		0, 1, 2, 3, /* front  */
-		0, 3, 4, 5, /* right  */
-		0, 5, 6, 1, /* top    */
-		1, 6, 7, 2, /* left   */
-		7, 4, 3, 2, /* bottom */
-		4, 7, 6, 5  /* back   */
-	};
-
-	GLfloat texcoords[] = {
-		1.0, 0.0, // v0
-		0.0, 0.0, // v1
-		0.0, 1.0, // v2
-		1.0, 1.0, // v3
-		0.0, 1.0, // v4
-		0.0, 0.0, // v5
-		1.0, 0.0, // v6
-		1.0, 1.0  // v7
-	};
-
-	glPushMatrix();
-	glScalef(size, size, size);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glPopMatrix();
-}
-#endif
 
 void GLFramebuffer::drawSquare(float size, float x_factor)
 {

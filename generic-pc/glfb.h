@@ -89,7 +89,6 @@ private:
 	void setupOSDBuffer();		/* create the OSD buffer */
 	void setupGLObjects();		/* PBOs, textures and stuff */
 	void releaseGLObjects();
-	// void drawCube(float size);	/* cubes are the building blocks of our society */
 	void drawSquare(float size, float x_factor = 1);	/* do not be square */
 
 	struct {
@@ -99,7 +98,6 @@ private:
 		GLuint pbo;		/* PBO we use for transfer to texture */
 		GLuint displaytex;	/* holds the display texture */
 		GLuint displaypbo;
-		//int go3d;
 		bool blit;
 	} mState;
 

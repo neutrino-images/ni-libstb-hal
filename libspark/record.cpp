@@ -174,7 +174,6 @@ void cRecord::RecordThread()
 	lt_info("%s: begin\n", __func__);
 #define BUFSIZE (1 << 20) /* 1MB */
 #define READSIZE (BUFSIZE / 16)
-	ssize_t r = 0;
 	int buf_pos = 0;
 	int queued = 0;
 	uint8_t *buf;
@@ -197,6 +196,7 @@ void cRecord::RecordThread()
 
 	dmx->Start();
 	bool overflow = false;
+	int r = 0;
 	while (exit_flag == RECORD_RUNNING)
 	{
 		if (buf_pos < BUFSIZE)
@@ -204,10 +204,10 @@ void cRecord::RecordThread()
 			int toread = BUFSIZE - buf_pos;
 			if (toread > READSIZE)
 				toread = READSIZE;
-			r = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d r %6d / %6d\n", __func__,
-				buf_pos, (int)r, BUFSIZE - buf_pos);
-			if (r < 0)
+			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
+			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
+				buf_pos, (int)s, BUFSIZE - buf_pos);
+			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
 				{
@@ -220,7 +220,7 @@ void cRecord::RecordThread()
 			else
 			{
 				overflow = false;
-				buf_pos += r;
+				buf_pos += s;
 			}
 		}
 		else

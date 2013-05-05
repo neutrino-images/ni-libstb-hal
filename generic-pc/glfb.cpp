@@ -261,7 +261,7 @@ void GLFramebuffer::releaseGLObjects()
 	struct input_event ev;
 	if (key == 'f')
 	{
-		lt_info_c("GLFB::%s: toggle fullscreen\n", __func__);
+		lt_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, gThiz->mFullscreen?"off":"on");
 		gThiz->mFullscreen = !(gThiz->mFullscreen);
 		gThiz->mReInit = true;
 		return;
@@ -324,6 +324,7 @@ void GLFramebuffer::render()
 				*mX = y * mOA.num / mOA.den;
 			xoff = (x - *mX) / 2;
 			yoff = (y - *mY) / 2;
+			glutFullScreen();
 		} else
 			*mX = *mY * mOA.num / mOA.den;
 		lt_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
@@ -354,9 +355,7 @@ void GLFramebuffer::render()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	mReInitLock.unlock();
-	if (mFullscreen)
-		glutFullScreen();
-	else if (*mX != glutGet(GLUT_WINDOW_WIDTH) || *mY != glutGet(GLUT_WINDOW_HEIGHT))
+	if (!mFullscreen && (*mX != glutGet(GLUT_WINDOW_WIDTH) || *mY != glutGet(GLUT_WINDOW_HEIGHT)))
 		glutReshapeWindow(*mX, *mY);
 
 	bltDisplayBuffer(); /* decoded video stream */
@@ -463,7 +462,7 @@ void GLFramebuffer::checkReinit(int x, int y)
 	static int last_x = 0, last_y = 0;
 
 	mReInitLock.lock();
-	if (mReInit == false && (x != *mX || y != *mY)) {
+	if (!mFullscreen && !mReInit && (x != *mX || y != *mY)) {
 		if (x != *mX && abs(x - last_x) > 2) {
 			*mX = x;
 			*mY = *mX * mOA.den / mOA.num;

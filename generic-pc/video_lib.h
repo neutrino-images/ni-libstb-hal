@@ -6,7 +6,9 @@
 #include <vector>
 #include <linux/dvb/video.h>
 #include "../common/cs_types.h"
+extern "C" {
 #include <libavutil/rational.h>
+}
 
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
@@ -197,7 +199,11 @@ class cVideo : public OpenThreads::Thread
 		bool w_h_changed;
 		bool thread_running;
 		VIDEO_FORMAT v_format;
+		VIDEO_STD v_std;
 		OpenThreads::Mutex buf_m;
+		DISPLAY_AR display_aspect;
+		DISPLAY_AR_MODE display_crop;
+		int output_h;
 };
 
 #endif

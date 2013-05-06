@@ -199,7 +199,6 @@ void cRecord::RecordThread()
 #define BUFSIZE (1 << 20) /* 1MB */
 #define READSIZE (BUFSIZE / 16)
 #endif
-	ssize_t r = 0;
 	int buf_pos = 0;
 	int queued = 0;
 	uint8_t *buf;
@@ -235,6 +234,7 @@ void cRecord::RecordThread()
 	int overflow_count = 0;
 #endif
 	bool overflow = false;
+	int r = 0;
 	while (exit_flag == RECORD_RUNNING)
 	{
 #ifdef MARTII
@@ -251,18 +251,18 @@ void cRecord::RecordThread()
 			int toread = bufsize - buf_pos;
 			if (toread > readsize)
 				toread = readsize;
-			r = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d r %6d / %6d\n", __func__,
-				buf_pos, (int)r, bufsize - buf_pos);
+			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
+			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
+				buf_pos, (int)s, bufsize - buf_pos);
 #else
 			int toread = BUFSIZE - buf_pos;
 			if (toread > READSIZE)
 				toread = READSIZE;
-			r = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d r %6d / %6d\n", __func__,
-				buf_pos, (int)r, BUFSIZE - buf_pos);
+			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
+			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
+				buf_pos, (int)s, BUFSIZE - buf_pos);
 #endif
-			if (r < 0)
+			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
 				{
@@ -277,7 +277,7 @@ void cRecord::RecordThread()
 			else
 			{
 				overflow = false;
-				buf_pos += r;
+				buf_pos += s;
 			}
 		}
 		else

@@ -1,3 +1,4 @@
+#include <cstring>
 #include <unistd.h>
 
 #include "init_lib.h"
@@ -14,8 +15,26 @@ void init_td_api()
 	if (!initialized)
 		lt_debug_init();
 	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
-	if (! glfb)
-		glfb = new GLFramebuffer(720, 576); /* hard coded to PAL resolution for now */
+	if (! glfb) {
+		int x = 1280, y = 720; /* default OSD FB resolution */
+		/*
+		 * export GLFB_RESOLUTION=720,576
+		 * to restore old default behviour
+		 */
+		const char *tmp = getenv("GLFB_RESOLUTION");
+		const char *p = NULL;
+		if (tmp)
+			p = strchr(tmp, ',');
+		if (p) {
+			x = atoi(tmp);
+			y = atoi(p + 1);
+		}
+		lt_info("%s: setting GL Framebuffer size to %dx%d\n", __func__, x, y);
+		if (!p)
+			lt_info("%s: export GLFB_RESOLUTION=\"<w>,<h>\" to set another resolution\n", __func__);
+
+		glfb = new GLFramebuffer(x, y); /* hard coded to PAL resolution for now */
+	}
 	initialized = true;
 }
 

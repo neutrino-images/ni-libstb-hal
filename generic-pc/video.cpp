@@ -40,16 +40,27 @@ extern "C" {
 
 #include "video_lib.h"
 #include "dmx_lib.h"
+#include "glfb.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
 
 cVideo *videoDecoder = NULL;
 extern cDemux *videoDemux;
+extern GLFramebuffer *glfb;
 int system_rev = 0;
 
 static uint8_t *dmxbuf;
 static int bufpos;
+
+static const AVRational aspect_ratios[6] = {
+	{  1, 1 },
+	{  4, 3 },
+	{ 14, 9 },
+	{ 16, 9 },
+	{ 20, 9 },
+	{ -1,-1 }
+};
 
 cVideo::cVideo(int, void *, void *)
 {
@@ -63,6 +74,8 @@ cVideo::cVideo(int, void *, void *)
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;
+	display_aspect = DISPLAY_AR_16_9;
+	display_crop = DISPLAY_AR_MODE_LETTERBOX;
 	v_format = VIDEO_FORMAT_MPEG2;
 }
 
@@ -73,8 +86,15 @@ cVideo::~cVideo(void)
 	videoDecoder = NULL;
 }
 
-int cVideo::setAspectRatio(int, int)
+int cVideo::setAspectRatio(int vformat, int cropping)
 {
+	lt_info("%s(%d, %d)\n", __func__, vformat, cropping);
+	if (vformat >= 0)
+		display_aspect = (DISPLAY_AR) vformat;
+	if (cropping >= 0)
+		display_crop = (DISPLAY_AR_MODE) cropping;
+	if (display_aspect < DISPLAY_AR_RAW) /* don't know what to do with this */
+		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
 	return 0;
 }
 
@@ -137,8 +157,43 @@ int cVideo::setBlank(int)
 	return 1;
 }
 
-int cVideo::SetVideoSystem(int, bool)
+int cVideo::SetVideoSystem(int system, bool)
 {
+	int h;
+	switch(system)
+	{
+		case VIDEO_STD_NTSC:
+		case VIDEO_STD_480P:
+			h = 480;
+			break;
+		case VIDEO_STD_1080I60:
+		case VIDEO_STD_1080I50:
+		case VIDEO_STD_1080P30:
+		case VIDEO_STD_1080P24:
+		case VIDEO_STD_1080P25:
+		case VIDEO_STD_1080P50:
+			h = 1080;
+			break;
+		case VIDEO_STD_720P50:
+		case VIDEO_STD_720P60:
+			h = 720;
+			break;
+		case VIDEO_STD_AUTO:
+			lt_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
+			// fallthrough
+		case VIDEO_STD_SECAM:
+		case VIDEO_STD_PAL:
+		case VIDEO_STD_576P:
+			h = 576;
+			break;
+		default:
+			lt_info("%s: unhandled value %d\n", __func__, system);
+			return 0;
+	}
+	v_std = (VIDEO_STD) system;
+	output_h = h;
+	if (display_aspect < DISPLAY_AR_RAW) /* don't know what to do with this */
+		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
 	return 0;
 }
 
@@ -334,7 +389,6 @@ void cVideo::run(void)
 				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
 						rgbframe->data, rgbframe->linesize);
 				sws_freeContext(convert);
-				// TODO: locking needed!
 				if (dec_w != c->width || dec_h != c->height) {
 					lt_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
 							dec_w, dec_h, c->width, c->height);

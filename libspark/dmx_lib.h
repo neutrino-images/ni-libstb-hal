@@ -8,6 +8,8 @@
 #include <linux/dvb/dmx.h>
 #include "../common/cs_types.h"
 
+#define MAX_DMX_UNITS 4
+
 typedef enum
 {
 	DMX_INVALID = 0,

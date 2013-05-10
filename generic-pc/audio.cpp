@@ -45,12 +45,15 @@ extern cDemux *audioDemux;
 static uint8_t *dmxbuf = NULL;
 static int bufpos;
 
+extern bool HAL_nodec;
+
 static cAudio *gThiz = NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
 	thread_started = false;
-	dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
+	if (!HAL_nodec)
+		dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
 	bufpos = 0;
 	curr_pts = 0;
 	gThiz = this;
@@ -89,7 +92,8 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 int cAudio::Start(void)
 {
 	lt_info("%s >\n", __func__);
-	OpenThreads::Thread::start();
+	if (! HAL_nodec)
+		OpenThreads::Thread::start();
 	lt_info("%s <\n", __func__);
 	return 0;
 }

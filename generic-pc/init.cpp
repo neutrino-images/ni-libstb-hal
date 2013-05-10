@@ -9,6 +9,7 @@
 
 static bool initialized = false;
 GLFramebuffer *glfb = NULL;
+bool HAL_nodec = false;
 
 void init_td_api()
 {
@@ -35,6 +36,10 @@ void init_td_api()
 
 		glfb = new GLFramebuffer(x, y); /* hard coded to PAL resolution for now */
 	}
+	/* allow disabling of Audio/video decoders in case we just want to
+	 * valgrind-check other parts... export HAL_NOAVDEC=1 */
+	if (getenv("HAL_NOAVDEC"))
+		HAL_nodec = true;
 	initialized = true;
 }
 

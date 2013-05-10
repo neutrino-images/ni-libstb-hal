@@ -50,6 +50,8 @@ extern cDemux *videoDemux;
 extern GLFramebuffer *glfb;
 int system_rev = 0;
 
+extern bool HAL_nodec;
+
 static uint8_t *dmxbuf;
 static int bufpos;
 
@@ -66,7 +68,8 @@ cVideo::cVideo(int, void *, void *)
 {
 	lt_debug("%s\n", __func__);
 	av_register_all();
-	dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
+	if (!HAL_nodec)
+		dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
 	bufpos = 0;
 	thread_running = false;
 	w_h_changed = false;
@@ -135,7 +138,7 @@ int cVideo::setCroppingMode(int)
 int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
 	lt_info("%s running %d >\n", __func__, thread_running);
-	if (!thread_running)
+	if (!thread_running && !HAL_nodec)
 		OpenThreads::Thread::start();
 	lt_info("%s running %d <\n", __func__, thread_running);
 	return 0;

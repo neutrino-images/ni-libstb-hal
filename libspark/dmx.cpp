@@ -61,11 +61,6 @@
 #include <poll.h>
 #include <errno.h>
 #include <inttypes.h>
-#ifdef MARTII
-#include <unistd.h>
-#include <fcntl.h>
-#include <hardware_caps.h>
-#endif
 
 #include <cstring>
 #include <cstdio>

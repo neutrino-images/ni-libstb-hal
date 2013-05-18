@@ -364,7 +364,11 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
+#ifdef MARTII
+void cVideo::ShowPicture(const char * fname, bool isM2V)
+#else
 void cVideo::ShowPicture(const char * fname)
+#endif
 {
 	lt_debug("%s(%s)\n", __func__, fname);
 	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
@@ -380,6 +384,11 @@ void cVideo::ShowPicture(const char * fname)
 		lt_info("%s: video_standby == true\n", __func__);
 		return;
 	}
+#ifdef MARTII
+    if (isM2V)
+	strncpy(destname, fname, sizeof(destname));
+    else {
+#endif
 	strcpy(destname, "/var/cache");
 	if (stat(fname, &st2))
 	{
@@ -408,6 +417,9 @@ void cVideo::ShowPicture(const char * fname)
 		system(cmd); /* TODO: use libavcodec to directly convert it */
 		utime(destname, &u);
 	}
+#ifdef MARTII
+    }
+#endif
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{

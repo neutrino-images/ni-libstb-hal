@@ -381,6 +381,8 @@ bool cDemux::pesFilter(const unsigned short pid)
 	switch (dmx_type) {
 	case DMX_PCR_ONLY_CHANNEL:
 		p_flt.pes_type = DMX_PES_PCR;
+		if (HAL_nodec)
+			return true;
 		break;
 	case DMX_AUDIO_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;

@@ -14,6 +14,8 @@ extern "C" {
 #endif
 #define DMX_FILTER_SIZE FILTER_LENGTH
 
+#define MAX_DMX_UNITS 4
+
 typedef enum
 {
 	DMX_INVALID = 0,

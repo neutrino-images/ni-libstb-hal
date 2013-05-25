@@ -45,12 +45,18 @@ extern cDemux *audioDemux;
 static uint8_t *dmxbuf = NULL;
 static int bufpos;
 
+extern bool HAL_nodec;
+
 static cAudio *gThiz = NULL;
+
+static ao_device *adevice = NULL;
+static ao_sample_format sformat;
 
 cAudio::cAudio(void *, void *, void *)
 {
 	thread_started = false;
-	dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
+	if (!HAL_nodec)
+		dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
 	bufpos = 0;
 	curr_pts = 0;
 	gThiz = this;
@@ -61,6 +67,9 @@ cAudio::~cAudio(void)
 {
 	closeDevice();
 	free(dmxbuf);
+	if (adevice)
+		ao_close(adevice);
+	adevice = NULL;
 	ao_shutdown();
 }
 
@@ -89,7 +98,8 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 int cAudio::Start(void)
 {
 	lt_info("%s >\n", __func__);
-	OpenThreads::Thread::start();
+	if (! HAL_nodec)
+		OpenThreads::Thread::start();
 	lt_info("%s <\n", __func__);
 	return 0;
 }
@@ -126,21 +136,56 @@ int cAudio::setChannel(int /*channel*/)
 	return 0;
 };
 
-int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
+int cAudio::PrepareClipPlay(int ch, int srate, int bits, int le)
 {
-	lt_debug("%s ch %d srate %d bits %d le %d\n", __func__, ch, srate, bits, little_endian);
+	lt_debug("%s ch %d srate %d bits %d le %d adevice %p\n", __func__, ch, srate, bits, le, adevice);;
+	int driver;
+	int byte_format = le ? AO_FMT_LITTLE : AO_FMT_BIG;
+	if (sformat.bits != bits || sformat.channels != ch || sformat.rate != srate ||
+	    sformat.byte_format != byte_format || adevice == NULL)
+	{
+		driver = ao_default_driver_id();
+		sformat.bits = bits;
+		sformat.channels = ch;
+		sformat.rate = srate;
+		sformat.byte_format = byte_format;
+		sformat.matrix = 0;
+		if (adevice)
+			ao_close(adevice);
+		adevice = ao_open_live(driver, &sformat, NULL);
+		ao_info *ai = ao_driver_info(driver);
+		lt_info("%s: changed params ch %d srate %d bits %d le %d adevice %p\n",
+			__func__, ch, srate, bits, le, adevice);;
+		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
+				driver, ai->name, ai->short_name, ai->author);
+	}
 	return 0;
 };
 
-int cAudio::WriteClip(unsigned char * /*buffer*/, int /*size*/)
+int cAudio::WriteClip(unsigned char *buffer, int size)
 {
-	lt_debug("cAudio::%s\n", __func__);
-	return 0;
+	lt_debug("cAudio::%s buf 0x%p size %d\n", __func__, buffer, size);
+	if (!adevice) {
+		lt_info("%s: adevice not opened?\n", __func__);
+		return 0;
+	}
+	ao_play(adevice, (char *)buffer, size);
+	return size;
 };
 
 int cAudio::StopClip()
 {
 	lt_debug("%s\n", __func__);
+#if 0
+	/* don't do anything - closing / reopening ao all the time makes for long delays
+	 * reinit on-demand (e.g. for changed parameters) instead */
+	if (!adevice) {
+		lt_info("%s: adevice not opened?\n", __func__);
+		return 0;
+	}
+	ao_close(adevice);
+	adevice = NULL;
+#endif
 	return 0;
 };
 
@@ -232,8 +277,8 @@ void cAudio::run()
 	int ret, driver;
 	/* libao */
 	ao_info *ai;
-	ao_device *adevice;
-	ao_sample_format sformat;
+	// ao_device *adevice;
+	// ao_sample_format sformat;
 
 	curr_pts = 0;
 	av_init_packet(&avpkt);
@@ -279,16 +324,24 @@ void cAudio::run()
 		lt_info("%s: avcodec_alloc_frame failed\n", __func__);
 		goto out2;
 	}
-	driver = ao_default_driver_id();
-	sformat.bits = 16;
-	sformat.channels = c->channels;
-	sformat.rate = c->sample_rate;
-	sformat.byte_format = AO_FMT_NATIVE;
-	sformat.matrix = 0;
-	adevice = ao_open_live(driver, &sformat, NULL);
-	ai = ao_driver_info(driver);
-	lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
-			driver, ai->name, ai->short_name, ai->author);
+	if (sformat.channels != c->channels || sformat.rate != c->sample_rate ||
+	    sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
+	{
+		driver = ao_default_driver_id();
+		sformat.bits = 16;
+		sformat.channels = c->channels;
+		sformat.rate = c->sample_rate;
+		sformat.byte_format = AO_FMT_NATIVE;
+		sformat.matrix = 0;
+		if (adevice)
+			ao_close(adevice);
+		adevice = ao_open_live(driver, &sformat, NULL);
+		ai = ao_driver_info(driver);
+		lt_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
+			__func__, c->channels, c->sample_rate, 16, adevice);;
+		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
+				driver, ai->name, ai->short_name, ai->author);
+	}
 #if 0
 	lt_info(" driver options:");
 	for (int i = 0; i < ai->option_count; ++i)
@@ -309,7 +362,7 @@ void cAudio::run()
 		}
 		av_free_packet(&avpkt);
 	}
-	ao_close(adevice); /* can take long :-( */
+	// ao_close(adevice); /* can take long :-( */
 	avcodec_free_frame(&frame);
  out2:
 	avcodec_close(c);

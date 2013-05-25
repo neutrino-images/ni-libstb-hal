@@ -425,7 +425,11 @@ void cVideo::ShowPicture(const char * fname)
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
+#ifdef MARTII
+		lt_info("%s cannot open %s: %m\n", __func__, destname);
+#else
 		lt_info("%s cannot open %s: %m", __func__, destname);
+#endif
 		goto out;
 	}
 	fstat(mfd, &st);

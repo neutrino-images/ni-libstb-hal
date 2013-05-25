@@ -282,6 +282,12 @@ int cVideo::Stop(bool blank)
 
 int cVideo::setBlank(int)
 {
+#ifdef MARTII
+	fop(ioctl, VIDEO_PLAY);
+	fop(ioctl, VIDEO_CONTINUE);
+	video_still_picture sp = { NULL, 0 };
+	fop(ioctl, VIDEO_STILLPICTURE, &sp);
+#endif
 	return Stop(1);
 }
 

@@ -83,7 +83,7 @@ typedef enum {
 	VIDEO_STD_PAL	= VID_DISPFMT_PAL,	/* 1 */
 	VIDEO_STD_SECAM	= VID_DISPFMT_SECAM,	/* 4 */
 	VIDEO_STD_1080I50 = VIDEO_STD_PAL,	/* hack, this is used in neutrino settings default */
-	VIDEO_STD_MAX = VIDEO_STD_SECAM + 1;
+	VIDEO_STD_MAX = VIDEO_STD_SECAM + 1
 } VIDEO_STD;
 
 typedef enum {

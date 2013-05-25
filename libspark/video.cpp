@@ -371,8 +371,10 @@ void cVideo::ShowPicture(const char * fname)
 #endif
 {
 	lt_debug("%s(%s)\n", __func__, fname);
+#ifndef MARTII
 	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
 	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
+#endif
 	char destname[512];
 	char cmd[512];
 	char *p;
@@ -437,15 +439,25 @@ void cVideo::ShowPicture(const char * fname)
 
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
 			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
+#ifdef MARTII
+		char *iframe = (char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
+#else
 		bool seq_end_avail = false;
 		size_t pos=0;
 		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
+#endif
 		if (! iframe)
 		{
 			lt_info("%s: malloc failed (%m)\n", __func__);
 			goto out;
 		}
 		read(mfd, iframe, st.st_size);
+#ifdef MARTII
+		fop(ioctl, VIDEO_PLAY);
+		fop(ioctl, VIDEO_CONTINUE);
+		video_still_picture sp = { iframe, st.st_size };
+		fop(ioctl, VIDEO_STILLPICTURE, &sp);
+#else
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
 		ioctl(fd, VIDEO_PLAY);
 		ioctl(fd, VIDEO_CONTINUE);
@@ -465,6 +477,7 @@ void cVideo::ShowPicture(const char * fname)
 		memset(iframe, 0, 8192);
 		write(fd, iframe, 8192);
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+#endif
 		free(iframe);
 	}
  out:

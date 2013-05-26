@@ -97,7 +97,7 @@ typedef enum {
 	VIDEO_STD_1080P25,
 	VIDEO_STD_AUTO,
 	VIDEO_STD_1080P50,	/* SPARK only */
-	VIDEO_STD_MAX = VIDEO_STD_1080P50
+	VIDEO_STD_MAX
 } VIDEO_STD;
 
 /* not used, for dummy functions */

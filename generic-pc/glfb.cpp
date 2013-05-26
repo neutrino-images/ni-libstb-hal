@@ -121,6 +121,11 @@ void GLFramebuffer::initKeys()
 	mSpecialMap[GLUT_KEY_F3] = KEY_YELLOW;
 	mSpecialMap[GLUT_KEY_F4] = KEY_BLUE;
 
+	mSpecialMap[GLUT_KEY_F5] = KEY_WWW;
+	mSpecialMap[GLUT_KEY_F6] = KEY_SUBTITLE;
+	mSpecialMap[GLUT_KEY_F7] = KEY_MOVE;
+	mSpecialMap[GLUT_KEY_F8] = KEY_SLEEP;
+
 	mSpecialMap[GLUT_KEY_PAGE_UP]   = KEY_PAGEUP;
 	mSpecialMap[GLUT_KEY_PAGE_DOWN] = KEY_PAGEDOWN;
 

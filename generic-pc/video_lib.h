@@ -190,6 +190,7 @@ class cVideo : public OpenThreads::Thread
 		int  CloseVBI(void) { return 0; };
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
+		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 		SWFramebuffer *getDecBuf(void);
 	private:
 		void run();

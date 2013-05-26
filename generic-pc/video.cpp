@@ -394,6 +394,7 @@ void cVideo::run(void)
 	AVFrame *frame, *rgbframe;
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;
+	struct SwsContext *convert = NULL;
 
 	time_t warn_r = 0; /* last read error */
 	time_t warn_d = 0; /* last decode error */
@@ -475,9 +476,10 @@ void cVideo::run(void)
 			lt_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
 		if (got_frame) {
 			unsigned int need = avpicture_get_size(PIX_FMT_RGB32, c->width, c->height);
-			struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
-								    c->width, c->height, PIX_FMT_RGB32,
-								    SWS_BICUBIC, 0, 0, 0);
+			convert = sws_getCachedContext(convert,
+						       c->width, c->height, c->pix_fmt,
+						       c->width, c->height, PIX_FMT_RGB32,
+						       SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
 				lt_info("%s: ERROR setting up SWS context\n", __func__);
 			else {
@@ -489,7 +491,6 @@ void cVideo::run(void)
 						c->width, c->height);
 				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
 						rgbframe->data, rgbframe->linesize);
-				sws_freeContext(convert);
 				if (dec_w != c->width || dec_h != c->height) {
 					lt_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
 							dec_w, dec_h, c->width, c->height);
@@ -523,6 +524,7 @@ void cVideo::run(void)
 		}
 		av_free_packet(&avpkt);
 	}
+	sws_freeContext(convert);
  out2:
 	avcodec_close(c);
 	avcodec_free_frame(&frame);

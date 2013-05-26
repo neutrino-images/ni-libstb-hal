@@ -5,7 +5,7 @@ INCLUDES = \
 noinst_LTLIBRARIES = libspark.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
-AM_LDFLAGS = -lpthread -lasound
+AM_LDFLAGS = -lpthread
 
 libspark_la_SOURCES = \
 	hardware_caps.c \

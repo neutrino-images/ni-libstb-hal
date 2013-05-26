@@ -42,6 +42,7 @@ mixerVolume::mixerVolume(const char *name, const char *card, long volume) {
 	 || !(this->snd_mixer_selem_get_playback_volume_range = (int (*)(snd_mixer_elem_t *, long *, long *)) dlsym(alsaLib, "snd_mixer_selem_get_playback_volume_range"))
 	 || !(this->snd_mixer_close = (int (*)(snd_mixer_t *)) dlsym(alsaLib, "snd_mixer_close"))
 	 || !(this->snd_mixer_selem_id_free = (void (*)(snd_mixer_selem_id_t *)) dlsym(alsaLib, "snd_mixer_selem_id_free"))
+	 || !(this->snd_mixer_selem_id_sizeof = (size_t (*)(void)) dlsym(alsaLib, "snd_mixer_selem_id_sizeof"))
 	 || !(this->snd_mixer_selem_set_playback_volume_all = (int (*)(snd_mixer_elem_t *, long)) dlsym(alsaLib, "snd_mixer_selem_set_playback_volume_all")))
 		return;
 

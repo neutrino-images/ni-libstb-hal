@@ -43,7 +43,6 @@ libstb_hal_test_LDADD += \
 	@SWSCALE_LIBS@
 endif
 if BOXTYPE_SPARK
-libstb_hal_test_LDADD += -lasound
 SUBDIRS += libspark libeplayer3
 libstb_hal_la_LIBADD += \
 	libspark/libspark.la \

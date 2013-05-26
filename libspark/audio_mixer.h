@@ -42,6 +42,7 @@ class mixerVolume
 		int (*snd_mixer_close)(snd_mixer_t *mixer);
 		void (*snd_mixer_selem_id_free)(snd_mixer_selem_id_t *obj);
 		int (*snd_mixer_selem_set_playback_volume_all)(snd_mixer_elem_t *elem, long value);
+		size_t (*snd_mixer_selem_id_sizeof)(void);
 	public:
 		mixerVolume(const char *selem_name, const char *Card, long volume = -1);
 		~mixerVolume(void);

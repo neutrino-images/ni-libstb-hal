@@ -78,6 +78,7 @@ cVideo::cVideo(int, void *, void *)
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;
+	pig_x = pig_y = pig_w = pig_h = 0;
 	display_aspect = DISPLAY_AR_16_9;
 	display_crop = DISPLAY_AR_MODE_LETTERBOX;
 	v_format = VIDEO_FORMAT_MPEG2;
@@ -325,8 +326,12 @@ int cVideo::getBlank(void)
 	return 0;
 }
 
-void cVideo::Pig(int, int, int, int, int, int)
+void cVideo::Pig(int x, int y, int w, int h, int, int)
 {
+	pig_x = x;
+	pig_y = y;
+	pig_w = w;
+	pig_h = h;
 }
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)

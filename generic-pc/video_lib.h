@@ -121,7 +121,8 @@ typedef enum
 #define VDEC_MAXBUFS 0x30
 class cVideo : public OpenThreads::Thread
 {
-	public:
+	friend class GLFramebuffer;
+	private:
 		/* called from GL thread */
 		class SWFramebuffer : public std::vector<unsigned char>
 		{
@@ -142,6 +143,7 @@ class cVideo : public OpenThreads::Thread
 			AVRational mAR;
 		};
 		int buf_in, buf_out, buf_num;
+	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);
 		~cVideo(void);
@@ -205,6 +207,10 @@ class cVideo : public OpenThreads::Thread
 		DISPLAY_AR display_aspect;
 		DISPLAY_AR_MODE display_crop;
 		int output_h;
+		int pig_x;
+		int pig_y;
+		int pig_w;
+		int pig_h;
 };
 
 #endif

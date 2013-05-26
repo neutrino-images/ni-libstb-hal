@@ -417,7 +417,7 @@ void GLFramebuffer::render()
 	glBindTexture(GL_TEXTURE_2D, mState.displaytex);
 	drawSquare(zoom, xscale);
 	glBindTexture(GL_TEXTURE_2D, mState.osdtex);
-	drawSquare(1.0);
+	drawSquare(1.0, -100);
 
 	glFlush();
 	glutSwapBuffers();
@@ -472,6 +472,31 @@ void GLFramebuffer::drawSquare(float size, float x_factor)
 		 0.0, 1.0,
 		 1.0, 1.0,
 	};
+	if (x_factor > -99.0) { /* x_factor == -100 => OSD */
+		if (videoDecoder &&
+		    videoDecoder->pig_x > 0 && videoDecoder->pig_y > 0 &&
+		    videoDecoder->pig_w > 0 && videoDecoder->pig_h > 0) {
+			/* these calculations even consider cropping and panscan mode
+			 * maybe this could be done with some clever opengl tricks? */
+			double w2 = (double)mState.width * 0.5l;
+			double h2 = (double)mState.height * 0.5l;
+			double x = (double)(videoDecoder->pig_x - w2) / w2 / x_factor / size;
+			double y = (double)(h2 - videoDecoder->pig_y) / h2 / size;
+			double w = (double)videoDecoder->pig_w / w2;
+			double h = (double)videoDecoder->pig_h / h2;
+			x += ((1.0l - x_factor * size) / 2.0l) * w / x_factor / size;
+			y += ((size - 1.0l) / 2.0l) * h / size;
+			vertices[0] = x + w;		/* top right x */
+			vertices[1] = y;		/* top right y */
+			vertices[2] = x;		/* top left x */
+			vertices[3] = y;		/* top left y */
+			vertices[4] = x;		/* bottom left x */
+			vertices[5] = y - h;		/* bottom left y */
+			vertices[6] = vertices[0];	/* bottom right x */
+			vertices[7] = vertices[5];	/* bottom right y */
+		}
+	} else
+		x_factor = 1.0; /* OSD */
 
 	glPushMatrix();
 	glScalef(size * x_factor, size, size);

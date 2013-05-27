@@ -24,10 +24,11 @@ if test x"$BOXTYPE" = x"tripledragon"; then
 fi
 
 if test x$BOXTYPE = xgeneric; then
-	TUXBOX_APPS_LIB_PKGCONFIG(AVFORMAT,libavformat)
-	TUXBOX_APPS_LIB_PKGCONFIG(AVCODEC,libavcodec)
-	TUXBOX_APPS_LIB_PKGCONFIG(AVUTIL,libavutil)
-	TUXBOX_APPS_LIB_PKGCONFIG(SWSCALE,libswscale)
+	PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1])
+	PKG_CHECK_MODULES([AVCODEC], [libavcodec >= 54.28.0])
+	# don't know which version is exactly needed here...
+	PKG_CHECK_MODULES([AVUTIL], [libavutil])
+	PKG_CHECK_MODULES([SWSCALE], [libswscale])
 fi
 AC_OUTPUT([
 Makefile

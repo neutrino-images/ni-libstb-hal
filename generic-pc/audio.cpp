@@ -329,7 +329,11 @@ void cAudio::run()
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = 16;
+#ifdef MARTII
+		sformat.channels = av_get_channel_layout_nb_channels(c->channels);
+#else
 		sformat.channels = c->channels;
+#endif
 		sformat.rate = c->sample_rate;
 		sformat.byte_format = AO_FMT_NATIVE;
 		sformat.matrix = 0;
@@ -348,8 +352,13 @@ void cAudio::run()
 		fprintf(stderr, " %s", ai->options[i]);
 	fprintf(stderr, "\n");
 #endif
+#ifdef MARTII
+	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
+			c->sample_fmt, c->sample_rate, av_get_channel_layout_nb_channels(c->channels));
+#else
 	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
 			c->sample_fmt, c->sample_rate, c->channels);
+#endif
 	while (thread_started) {
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)

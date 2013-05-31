@@ -211,7 +211,11 @@ void cVideo::SetVideoMode(analog_mode_t)
 {
 }
 
+#ifdef MARTII
+void cVideo::ShowPicture(const char *fname, bool)
+#else
 void cVideo::ShowPicture(const char *fname)
+#endif
 {
 	lt_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))
@@ -326,7 +330,11 @@ int cVideo::getBlank(void)
 	return 0;
 }
 
+#ifdef MARTII
+void cVideo::Pig(int x, int y, int w, int h, int /*osd_w*/, int /*osd_h*/, int /*startx*/, int /*starty*/, int /*endx*/, int /*endy*/)
+#else
 void cVideo::Pig(int x, int y, int w, int h, int, int)
+#endif
 {
 	pig_x = x;
 	pig_y = y;

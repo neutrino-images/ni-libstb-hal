@@ -13,7 +13,11 @@ void cPlayback::Close(void)
 {
 }
 
+#ifdef MARTII
+bool cPlayback::Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3, int duration, bool /*noprobe*/)
+#else
 bool cPlayback::Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3, int duration)
+#endif
 {
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d duration=%i\n",
 		FILENAME, __func__, filename, vpid, vtype, apid, ac3, duration);
@@ -26,11 +30,13 @@ bool cPlayback::SetAPid(unsigned short pid, bool /*ac3*/)
 	return true;
 }
 
+#ifndef MARTII
 bool cPlayback::SetSPid(int pid)
 {
 	printf("%s:%s pid %i\n", FILENAME, __func__, pid);
 	return true;
 }
+#endif
 
 bool cPlayback::SetSpeed(int speed)
 {
@@ -62,6 +68,49 @@ void cPlayback::FindAllPids(uint16_t *, unsigned short *, uint16_t *numpida, std
 	printf("%s:%s\n", FILENAME, __func__);
 	*numpida = 0;
 }
+#ifdef MARTII
+void cPlayback::FindAllSubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+{
+	*numpids = 0;
+}
+
+bool cPlayback::SetSubtitlePid(unsigned short /*pid*/)
+{
+	return true;
+}
+
+bool cPlayback::SetDvbsubtitlePid(unsigned short /*pid*/)
+{
+	return true;
+}
+
+bool cPlayback::SetTeletextPid(unsigned short /*pid*/)
+{
+	return true;
+}
+
+void cPlayback::FindAllDvbsubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+{
+	*numpids = 0;
+}
+
+void cPlayback::FindAllTeletextsubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+{
+	*numpids = 0;
+}
+
+void cPlayback::SuspendSubtitle(bool /*b*/)
+{
+}
+
+void cPlayback::RequestAbort()
+{
+}
+
+unsigned short cPlayback::GetTeletextPid(void)
+{
+}
+#endif
 
 cPlayback::cPlayback(int /*num*/)
 {

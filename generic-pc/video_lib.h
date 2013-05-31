@@ -178,10 +178,18 @@ class cVideo : public OpenThreads::Thread
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };
 		void SetCECAutoStandby(bool) { return; };
+#ifdef MARTII
+		void ShowPicture(const char * fname, bool isM2V = false);
+#else
 		void ShowPicture(const char * fname);
+#endif
 		void StopPicture();
 		void Standby(unsigned int bOn);
+#ifdef MARTII
+		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600, int startx = 0, int starty = 0, int endx = 1279, int endy = 719);
+#else
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
+#endif
 		void SetControl(int, int) { return; };
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);

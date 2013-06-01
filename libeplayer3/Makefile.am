@@ -29,7 +29,7 @@ AM_CFLAGS += \
 
 #libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 
-LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lavresample -lz -lass -lm -lpng
+LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lass -lm -lpng
 bin_PROGRAMS = eplayer3 meta
 eplayer3_SOURCES = tools/eplayer2.c
 eplayer3_LDADD = $(LIBEPLAYER3_LIBS)

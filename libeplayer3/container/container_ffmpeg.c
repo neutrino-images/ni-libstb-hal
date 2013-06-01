@@ -43,8 +43,13 @@
 #include <libavutil/avutil.h>
 #include <libavformat/avformat.h>
 #ifdef MARTII
-#include <libavresample/avresample.h>
-#include <libavutil/opt.h>
+#define USE_LIBSWRESAMPLE
+# ifdef USE_LIBSWRESAMPLE
+#  include <libswresample/swresample.h>
+# else
+#  include <libavresample/avresample.h>
+# endif
+# include <libavutil/opt.h>
 #endif
 
 #include "common.h"
@@ -416,7 +421,11 @@ static void FFMPEGThread(Context_t *context) {
     AudioVideoOut_t avOut;
 
 #ifdef MARTII
+#ifdef USE_LIBSWRESAMPLE
+    SwrContext *swr = NULL;
+#else
     AVAudioResampleContext *avr = NULL;
+#endif
     AVFrame *decoded_frame = NULL;
     int out_sample_rate = 44100;
     uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
@@ -746,14 +755,22 @@ static void FFMPEGThread(Context_t *context) {
 					continue;
 
 				int e;
+#ifdef USE_LIBSWRESAMPLE
+				if (!swr) {
+#else
 				if (!avr) {
+#endif
 					int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
 					int *rate = rates;
 					int in_rate = c->sample_rate;
 					while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
 						rate++;
 					out_sample_rate = *rate ? *rate : 44100;
+#ifdef USE_LIBSWRESAMPLE
+					swr = swr_alloc();
+#else
 					avr = avresample_alloc_context();
+#endif
 
 #if 1
 					if (c->channel_layout == 0) {
@@ -765,6 +782,23 @@ static void FFMPEGThread(Context_t *context) {
 					// player2 won't play mono
 					out_channel_layout = (c->channel_layout == AV_CH_LAYOUT_MONO) ? AV_CH_LAYOUT_STEREO : c->channel_layout;
 
+#ifdef USE_LIBSWRESAMPLE
+					av_opt_set_int(swr, "in_channel_layout",	c->channel_layout,	0);
+					av_opt_set_int(swr, "out_channel_layout",	out_channel_layout,	0);
+					av_opt_set_int(swr, "in_sample_rate",		c->sample_rate,		0);
+					av_opt_set_int(swr, "out_sample_rate",		out_sample_rate,	0);
+					av_opt_set_int(swr, "in_sample_fmt",		c->sample_fmt,		0);
+					av_opt_set_int(swr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
+
+					e = swr_init(swr);
+					if (e < 0) {
+						fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+							-e,
+							(int)c->channel_layout, (int)out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
+						swr_free(&swr);
+						swr = NULL;
+					}
+#else
 					av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
 					av_opt_set_int(avr, "out_channel_layout",	out_channel_layout,	0);
 					av_opt_set_int(avr, "in_sample_rate",		c->sample_rate,		0);
@@ -780,9 +814,21 @@ static void FFMPEGThread(Context_t *context) {
 						avresample_free(&avr);
 						avr = NULL;
 					}
+#endif
 				}
 
 				uint8_t *output = NULL;
+# ifdef USE_LIBSWRESAMPLE
+				int in_samples = decoded_frame->nb_samples;
+				int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
+				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
+				if (e < 0) {
+					fprintf(stderr, "av_samples_alloc: %d\n", -e);
+					continue;
+				}
+
+				out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
+#else
 				int in_samples = decoded_frame->nb_samples;
 				int out_linesize;
 				int out_samples = avresample_available(avr)
@@ -795,6 +841,7 @@ static void FFMPEGThread(Context_t *context) {
 
 				out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
 								      &decoded_frame->data[0], decoded_frame->linesize[0], in_samples);
+#endif
 				pcmPrivateData_t extradata;
 
 				extradata.uSampleRate = out_sample_rate;
@@ -1105,11 +1152,17 @@ static void FFMPEGThread(Context_t *context) {
     } /* while */
 
 #ifdef MARTII
+# ifdef USE_LIBSWRESAMPLE
+    if (swr) {
+	swr_free(&swr);
+    }
+# else
     if (avr) {
 	avresample_close(avr);
 	avresample_free(&avr);
 	avcodec_free_frame(&decoded_frame);
     }
+# endif
 #else
     // Freeing the allocated buffer for softdecoding
     if (samples != NULL) {

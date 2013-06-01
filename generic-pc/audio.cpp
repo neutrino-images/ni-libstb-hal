@@ -35,8 +35,13 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <ao/ao.h>
 #ifdef MARTII
-#include <libavresample/avresample.h>
-#include <libavutil/opt.h>
+#define USE_LIBSWRESAMPLE
+# ifdef USE_LIBSWRESAMPLE
+#  include <libswresample/swresample.h>
+# else
+#  include <libavresample/avresample.h>
+# endif
+# include <libavutil/opt.h>
 #endif
 }
 #ifdef MARTII
@@ -291,7 +296,11 @@ void cAudio::run()
 	// ao_device *adevice;
 	// ao_sample_format sformat;
 #ifdef MARTII
+#ifdef USE_LIBSWRESAMPLE
+	SwrContext *swr = NULL;
+#else
 	AVAudioResampleContext *avr = NULL;
+#endif
 	int e;
 #endif
 
@@ -364,6 +373,20 @@ void cAudio::run()
 	fprintf(stderr, "\n");
 #endif
 #ifdef MARTII
+# ifdef USE_LIBSWRESAMPLE
+	swr = swr_alloc();
+	av_opt_set_int(swr, "in_channel_layout",	c->channel_layout,	0);
+	av_opt_set_int(swr, "out_channel_layout",	c->channel_layout,	0);
+	av_opt_set_int(swr, "in_sample_rate",		c->sample_rate,		0);
+	av_opt_set_int(swr, "out_sample_rate",		c->sample_rate,		0);
+	av_opt_set_int(swr, "in_sample_fmt",		c->sample_fmt,		0);
+	av_opt_set_int(swr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
+	e = swr_init(swr);
+	if (e < 0) {
+		lt_info("%s: swr_init failed: %d\n", __func__, -e);
+		goto out2;
+	}
+# else
 	avr = avresample_alloc_context();
 	av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
 	av_opt_set_int(avr, "out_channel_layout",	c->channel_layout,	0);
@@ -376,6 +399,7 @@ void cAudio::run()
 		lt_info("%s: avresample_open failed: %d\n", __func__, -e);
 		goto out2;
 	}
+# endif
 #endif
 	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
 			c->sample_fmt, c->sample_rate, c->channels);
@@ -389,6 +413,17 @@ void cAudio::run()
 			lt_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
 #ifdef MARTII
 			uint8_t *output = NULL;
+# ifdef USE_LIBSWRESAMPLE
+			int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + frame->nb_samples,
+							 c->sample_rate, c->sample_rate, AV_ROUND_UP);
+			e = av_samples_alloc(&output, NULL, c->channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+			if (e < 0) {
+				lt_info("%s: av_samples_alloc failed: %d\n", __func__, -e);
+				goto out2;
+			}
+			out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &frame->data[0], frame->nb_samples);
+# else
+			uint8_t *output = NULL;
 			int out_linesize;
 			int out_samples = avresample_available(avr)
 					+ av_rescale_rnd(avresample_get_delay(avr) + frame->nb_samples,
@@ -400,6 +435,7 @@ void cAudio::run()
 			}
 			out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
 							 &frame->data[0], frame->linesize[0], frame->nb_samples);
+# endif
 			ao_play(adevice, (char *)output, out_samples * 2 /* 16 bit */ * c->channels);
 			av_freep(&output);
 #else
@@ -414,10 +450,16 @@ void cAudio::run()
 	avcodec_close(c);
  out:
 #ifdef MARTII
+# ifdef USE_LIBSWRESAMPLE
+	if (swr) {
+		swr_free(&swr);
+	}
+# else
 	if (avr) {
 		avresample_close(avr);
 		avresample_free(&avr);
 	}
+# endif
 #endif
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);

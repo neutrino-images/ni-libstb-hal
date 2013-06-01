@@ -650,3 +650,13 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 
 	return true;
 }
+
+int64_t cVideo::GetPTS(void)
+{
+	int64_t pts = 0;
+	buf_m.lock();
+	if (buf_num != 0)
+		pts = buffers[buf_out].pts();
+	buf_m.unlock();
+	return pts;
+}

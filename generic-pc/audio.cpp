@@ -16,7 +16,7 @@
  *
  * cAudio implementation with decoder.
  * uses libao  <http://www.xiph.org/ao/> for output
- *      ffmpeg <http://ffmpeg.org> for demuxing / decoding
+ *      ffmpeg <http://ffmpeg.org> for demuxing / decoding / format conversion
  */
 
 #include <cstdio>
@@ -33,28 +33,15 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
+#include <libswresample/swresample.h>
 #include <ao/ao.h>
-#ifdef MARTII
-#define USE_LIBSWRESAMPLE
-# ifdef USE_LIBSWRESAMPLE
-#  include <libswresample/swresample.h>
-# else
-#  include <libavresample/avresample.h>
-# endif
-# include <libavutil/opt.h>
-#endif
 }
-#ifdef MARTII
-/* ffmpeg buf 8k */
-#define INBUF_SIZE 0x2000
-/* my own buf 32k */
-#define DMX_BUF_SZ 0x8000
-#else
 /* ffmpeg buf 2k */
 #define INBUF_SIZE 0x0800
 /* my own buf 16k */
 #define DMX_BUF_SZ 0x4000
-#endif
 
 cAudio * audioDecoder = NULL;
 extern cDemux *audioDemux;
@@ -67,6 +54,8 @@ static cAudio *gThiz = NULL;
 
 static ao_device *adevice = NULL;
 static ao_sample_format sformat;
+
+static AVCodecContext *c= NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
@@ -113,22 +102,22 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 int cAudio::Start(void)
 {
-	lt_info("%s >\n", __func__);
+	lt_debug("%s >\n", __func__);
 	if (! HAL_nodec)
 		OpenThreads::Thread::start();
-	lt_info("%s <\n", __func__);
+	lt_debug("%s <\n", __func__);
 	return 0;
 }
 
 int cAudio::Stop(void)
 {
-	lt_info("%s >\n", __func__);
+	lt_debug("%s >\n", __func__);
 	if (thread_started)
 	{
 		thread_started = false;
 		OpenThreads::Thread::join();
 	}
-	lt_info("%s <\n", __func__);
+	lt_debug("%s <\n", __func__);
 	return 0;
 }
 
@@ -207,12 +196,51 @@ int cAudio::StopClip()
 
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
-	lt_debug("%s\n", __func__);
 	type = 0;
-	layer = 0;
+	layer = 0;	/* not used */
 	freq = 0;
-	bitrate = 0;
-	mode = 0;
+	bitrate = 0;	/* not used, but easy to get :-) */
+	mode = 0;	/* default: stereo */
+	if (c) {
+		type = (c->codec_id != AV_CODEC_ID_MP2); /* only mpeg / not mpeg is indicated */
+		freq = c->sample_rate;
+		bitrate = c->bit_rate;
+		if (c->channels == 1)
+			mode = 3; /* for AV_CODEC_ID_MP2, only stereo / mono is detected for now */
+		if (c->codec_id != AV_CODEC_ID_MP2) {
+			switch (c->channel_layout) {
+				case AV_CH_LAYOUT_MONO:
+					mode = 1;	// "C"
+					break;
+				case AV_CH_LAYOUT_STEREO:
+					mode = 2;	// "L/R"
+					break;
+				case AV_CH_LAYOUT_2_1:
+				case AV_CH_LAYOUT_SURROUND:
+					mode = 3;	// "L/C/R"
+					break;
+				case AV_CH_LAYOUT_2POINT1:
+					mode = 4;	// "L/R/S"
+					break;
+				case AV_CH_LAYOUT_3POINT1:
+					mode = 5;	// "L/C/R/S"
+					break;
+				case AV_CH_LAYOUT_2_2:
+				case AV_CH_LAYOUT_QUAD:
+					mode = 6;	// "L/R/SL/SR"
+					break;
+				case AV_CH_LAYOUT_5POINT0:
+				case AV_CH_LAYOUT_5POINT1:
+					mode = 7;	// "L/C/R/SL/SR"
+					break;
+				default:
+					lt_info("%s: unknown ch_layout 0x%" PRIx64 "\n",
+						 __func__, c->channel_layout);
+			}
+		}
+	}
+	lt_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n",
+		  __func__, type, layer, freq, bitrate, mode, c->codec_id);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
@@ -284,7 +312,6 @@ void cAudio::run()
 	av_register_all();
 
 	AVCodec *codec;
-	AVCodecContext *c= NULL;
 	AVFormatContext *avfc = NULL;
 	AVInputFormat *inp;
 	AVFrame *frame;
@@ -295,14 +322,14 @@ void cAudio::run()
 	ao_info *ai;
 	// ao_device *adevice;
 	// ao_sample_format sformat;
-#ifdef MARTII
-#ifdef USE_LIBSWRESAMPLE
+	/* resample */
 	SwrContext *swr = NULL;
-#else
-	AVAudioResampleContext *avr = NULL;
-#endif
-	int e;
-#endif
+	uint8_t *obuf = NULL;
+	int obuf_sz = 0; /* in samples */
+	int obuf_sz_max = 0;
+	int o_ch, o_sr; /* output channels and sample rate */
+	uint64_t o_layout; /* output channels layout */
+	char tmp[64] = "unknown";
 
 	curr_pts = 0;
 	av_init_packet(&avpkt);
@@ -336,7 +363,7 @@ void cAudio::run()
 	c = avfc->streams[0]->codec;
 	codec = avcodec_find_decoder(c->codec_id);
 	if (!codec) {
-		lt_info("%s: Codec not found\n", __func__);
+		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(c->codec_id));
 		goto out;
 	}
 	if (avcodec_open2(c, codec, NULL) < 0) {
@@ -348,13 +375,17 @@ void cAudio::run()
 		lt_info("%s: avcodec_alloc_frame failed\n", __func__);
 		goto out2;
 	}
-	if (sformat.channels != c->channels || sformat.rate != c->sample_rate ||
+	/* output sample rate, channels, layout could be set here if necessary */
+	o_ch = c->channels;		/* 2 */
+	o_sr = c->sample_rate;		/* 48000 */
+	o_layout = c->channel_layout;	/* AV_CH_LAYOUT_STEREO */
+	if (sformat.channels != o_ch || sformat.rate != o_sr ||
 	    sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = 16;
-		sformat.channels = c->channels;
-		sformat.rate = c->sample_rate;
+		sformat.channels = o_ch;
+		sformat.rate = o_sr;
 		sformat.byte_format = AO_FMT_NATIVE;
 		sformat.matrix = 0;
 		if (adevice)
@@ -362,7 +393,7 @@ void cAudio::run()
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ai = ao_driver_info(driver);
 		lt_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
-			__func__, c->channels, c->sample_rate, 16, adevice);;
+			__func__, o_ch, o_sr, 16, adevice);;
 		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
 				driver, ai->name, ai->short_name, ai->author);
 	}
@@ -372,95 +403,57 @@ void cAudio::run()
 		fprintf(stderr, " %s", ai->options[i]);
 	fprintf(stderr, "\n");
 #endif
-#ifdef MARTII
-# ifdef USE_LIBSWRESAMPLE
-	swr = swr_alloc();
-	av_opt_set_int(swr, "in_channel_layout",	c->channel_layout,	0);
-	av_opt_set_int(swr, "out_channel_layout",	c->channel_layout,	0);
-	av_opt_set_int(swr, "in_sample_rate",		c->sample_rate,		0);
-	av_opt_set_int(swr, "out_sample_rate",		c->sample_rate,		0);
-	av_opt_set_int(swr, "in_sample_fmt",		c->sample_fmt,		0);
-	av_opt_set_int(swr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
-	e = swr_init(swr);
-	if (e < 0) {
-		lt_info("%s: swr_init failed: %d\n", __func__, -e);
-		goto out2;
+	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
+	lt_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
+		 avcodec_get_name(c->codec_id), c->sample_fmt, tmp, c->sample_rate, c->channels);
+	swr = swr_alloc_set_opts(swr,
+				 o_layout, AV_SAMPLE_FMT_S16, o_sr,			/* output */
+				 c->channel_layout, c->sample_fmt, c->sample_rate,	/* input */
+				 0, NULL);
+	if (! swr) {
+		lt_info("could not alloc resample context\n");
+		goto out3;
 	}
-# else
-	avr = avresample_alloc_context();
-	av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
-	av_opt_set_int(avr, "out_channel_layout",	c->channel_layout,	0);
-	av_opt_set_int(avr, "in_sample_rate",		c->sample_rate,		0);
-	av_opt_set_int(avr, "out_sample_rate",		c->sample_rate,		0);
-	av_opt_set_int(avr, "in_sample_fmt",		c->sample_fmt,		0);
-	av_opt_set_int(avr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
-	e = avresample_open(avr);
-	if (e < 0) {
-		lt_info("%s: avresample_open failed: %d\n", __func__, -e);
-		goto out2;
-	}
-# endif
-#endif
-	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
-			c->sample_fmt, c->sample_rate, c->channels);
+	swr_init(swr);
 	while (thread_started) {
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)
 			break;
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 		if (gotframe && thread_started) {
+			int out_linesize;
+			obuf_sz = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) +
+						 frame->nb_samples, o_sr, c->sample_rate, AV_ROUND_UP);
+			if (obuf_sz > obuf_sz_max) {
+				lt_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
+				av_free(obuf);
+				if (av_samples_alloc(&obuf, &out_linesize, o_ch,
+							frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0) {
+					lt_info("av_samples_alloc failed\n");
+					av_free_packet(&avpkt);
+					break; /* while (thread_started) */
+				}
+				obuf_sz_max = obuf_sz;
+			}
+			obuf_sz = swr_convert(swr, &obuf, obuf_sz,
+					      (const uint8_t **)frame->extended_data, frame->nb_samples);
 			curr_pts = av_frame_get_best_effort_timestamp(frame);
 			lt_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
-#ifdef MARTII
-			uint8_t *output = NULL;
-# ifdef USE_LIBSWRESAMPLE
-			int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + frame->nb_samples,
-							 c->sample_rate, c->sample_rate, AV_ROUND_UP);
-			e = av_samples_alloc(&output, NULL, c->channels, out_samples, AV_SAMPLE_FMT_S16, 1);
-			if (e < 0) {
-				lt_info("%s: av_samples_alloc failed: %d\n", __func__, -e);
-				goto out2;
-			}
-			out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &frame->data[0], frame->nb_samples);
-# else
-			uint8_t *output = NULL;
-			int out_linesize;
-			int out_samples = avresample_available(avr)
-					+ av_rescale_rnd(avresample_get_delay(avr) + frame->nb_samples,
-							 c->sample_rate, c->sample_rate, AV_ROUND_UP);
-			e = av_samples_alloc(&output, &out_linesize, c->channels, out_samples, AV_SAMPLE_FMT_S16, 1);
-			if (e < 0) {
-				lt_info("%s: av_samples_alloc failed: %d\n", __func__, -e);
-				goto out2;
-			}
-			out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
-							 &frame->data[0], frame->linesize[0], frame->nb_samples);
-# endif
-			ao_play(adevice, (char *)output, out_samples * 2 /* 16 bit */ * c->channels);
-			av_freep(&output);
-#else
-			ao_play(adevice, (char*)frame->extended_data[0], frame->linesize[0]);
-#endif
+			int o_buf_sz = av_samples_get_buffer_size(&out_linesize, o_ch,
+								  obuf_sz, AV_SAMPLE_FMT_S16, 1);
+			ao_play(adevice, (char *)obuf, o_buf_sz);
 		}
 		av_free_packet(&avpkt);
 	}
 	// ao_close(adevice); /* can take long :-( */
+	av_free(obuf);
+	swr_free(&swr);
+ out3:
 	avcodec_free_frame(&frame);
  out2:
 	avcodec_close(c);
+	c = NULL;
  out:
-#ifdef MARTII
-# ifdef USE_LIBSWRESAMPLE
-	if (swr) {
-		swr_free(&swr);
-	}
-# else
-	if (avr) {
-		avresample_close(avr);
-		avresample_free(&avr);
-	}
-# endif
-#endif
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);
 	av_free(pIOCtx);

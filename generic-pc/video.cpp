@@ -139,21 +139,21 @@ int cVideo::setCroppingMode(int)
 
 int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
-	lt_info("%s running %d >\n", __func__, thread_running);
+	lt_debug("%s running %d >\n", __func__, thread_running);
 	if (!thread_running && !HAL_nodec)
 		OpenThreads::Thread::start();
-	lt_info("%s running %d <\n", __func__, thread_running);
+	lt_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
 
 int cVideo::Stop(bool)
 {
-	lt_info("%s running %d >\n", __func__, thread_running);
+	lt_debug("%s running %d >\n", __func__, thread_running);
 	if (thread_running) {
 		thread_running = false;
 		OpenThreads::Thread::join();
 	}
-	lt_info("%s running %d <\n", __func__, thread_running);
+	lt_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
 
@@ -446,7 +446,6 @@ void cVideo::run(void)
 		if (! thread_running)
 			goto out;
 	}
-	lt_info("%s: nb_streams %d\n", __func__, avfc->nb_streams);
 
 	if (avfc->streams[0]->codec->codec_type != AVMEDIA_TYPE_VIDEO)
 		lt_info("%s: no video codec? 0x%x\n", __func__, avfc->streams[0]->codec->codec_type);
@@ -454,7 +453,7 @@ void cVideo::run(void)
 	c = avfc->streams[0]->codec;
 	codec = avcodec_find_decoder(c->codec_id);
 	if (!codec) {
-		lt_info("%s: Codec not found\n", __func__);
+		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(c->codec_id));
 		goto out;
 	}
 	if (avcodec_open2(c, codec, NULL) < 0) {
@@ -467,6 +466,7 @@ void cVideo::run(void)
 		lt_info("%s: Could not allocate video frame\n", __func__);
 		goto out2;
 	}
+	lt_info("decoding %s\n", avcodec_get_name(c->codec_id));
 	while (thread_running) {
 		if (av_read_frame(avfc, &avpkt) < 0) {
 			if (warn_r - time(NULL) > 4) {

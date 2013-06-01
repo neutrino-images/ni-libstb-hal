@@ -5,6 +5,8 @@ INCLUDES = \
 noinst_LTLIBRARIES = libtriple.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
+AM_LDFLAGS = \
+	@DIRECTFB_LIBS@
 
 libtriple_la_SOURCES = \
 	hardware_caps.c \

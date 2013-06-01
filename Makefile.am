@@ -40,6 +40,7 @@ libstb_hal_test_LDADD += \
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
+	@AVRESAMPLE_LIBS@ \
 	@SWSCALE_LIBS@
 endif
 if BOXTYPE_SPARK

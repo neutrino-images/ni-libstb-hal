@@ -34,11 +34,22 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <ao/ao.h>
+#ifdef MARTII
+#include <libavresample/avresample.h>
+#include <libavutil/opt.h>
+#endif
 }
+#ifdef MARTII
+/* ffmpeg buf 8k */
+#define INBUF_SIZE 0x2000
+/* my own buf 32k */
+#define DMX_BUF_SZ 0x8000
+#else
 /* ffmpeg buf 2k */
 #define INBUF_SIZE 0x0800
 /* my own buf 16k */
 #define DMX_BUF_SZ 0x4000
+#endif
 
 cAudio * audioDecoder = NULL;
 extern cDemux *audioDemux;
@@ -279,6 +290,10 @@ void cAudio::run()
 	ao_info *ai;
 	// ao_device *adevice;
 	// ao_sample_format sformat;
+#ifdef MARTII
+	AVAudioResampleContext *avr = NULL;
+	int e;
+#endif
 
 	curr_pts = 0;
 	av_init_packet(&avpkt);
@@ -329,11 +344,7 @@ void cAudio::run()
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = 16;
-#ifdef MARTII
-		sformat.channels = av_get_channel_layout_nb_channels(c->channels);
-#else
 		sformat.channels = c->channels;
-#endif
 		sformat.rate = c->sample_rate;
 		sformat.byte_format = AO_FMT_NATIVE;
 		sformat.matrix = 0;
@@ -353,12 +364,21 @@ void cAudio::run()
 	fprintf(stderr, "\n");
 #endif
 #ifdef MARTII
-	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
-			c->sample_fmt, c->sample_rate, av_get_channel_layout_nb_channels(c->channels));
-#else
+	avr = avresample_alloc_context();
+	av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
+	av_opt_set_int(avr, "out_channel_layout",	c->channel_layout,	0);
+	av_opt_set_int(avr, "in_sample_rate",		c->sample_rate,		0);
+	av_opt_set_int(avr, "out_sample_rate",		c->sample_rate,		0);
+	av_opt_set_int(avr, "in_sample_fmt",		c->sample_fmt,		0);
+	av_opt_set_int(avr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
+	e = avresample_open(avr);
+	if (e < 0) {
+		lt_info("%s: avresample_open failed: %d\n", __func__, -e);
+		goto out2;
+	}
+#endif
 	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
 			c->sample_fmt, c->sample_rate, c->channels);
-#endif
 	while (thread_started) {
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)
@@ -367,7 +387,24 @@ void cAudio::run()
 		if (gotframe && thread_started) {
 			curr_pts = av_frame_get_best_effort_timestamp(frame);
 			lt_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
+#ifdef MARTII
+			uint8_t *output = NULL;
+			int out_linesize;
+			int out_samples = avresample_available(avr)
+					+ av_rescale_rnd(avresample_get_delay(avr) + frame->nb_samples,
+							 c->sample_rate, c->sample_rate, AV_ROUND_UP);
+			e = av_samples_alloc(&output, &out_linesize, c->channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+			if (e < 0) {
+				lt_info("%s: av_samples_alloc failed: %d\n", __func__, -e);
+				goto out2;
+			}
+			out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
+							 &frame->data[0], frame->linesize[0], frame->nb_samples);
+			ao_play(adevice, (char *)output, out_samples * 2 /* 16 bit */ * c->channels);
+			av_freep(&output);
+#else
 			ao_play(adevice, (char*)frame->extended_data[0], frame->linesize[0]);
+#endif
 		}
 		av_free_packet(&avpkt);
 	}
@@ -376,6 +413,12 @@ void cAudio::run()
  out2:
 	avcodec_close(c);
  out:
+#ifdef MARTII
+	if (avr) {
+		avresample_close(avr);
+		avresample_free(&avr);
+	}
+#endif
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);
 	av_free(pIOCtx);

@@ -29,6 +29,7 @@ if test x$BOXTYPE = xgeneric; then
 	# don't know which version is exactly needed here...
 	PKG_CHECK_MODULES([AVUTIL], [libavutil])
 	PKG_CHECK_MODULES([SWSCALE], [libswscale])
+	PKG_CHECK_MODULES([AVRESAMPLE], [libavresample])
 fi
 AC_OUTPUT([
 Makefile

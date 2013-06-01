@@ -151,6 +151,12 @@ void GLFramebuffer::initKeys()
 	mKeyMap['7']  = KEY_7;
 	mKeyMap['8']  = KEY_8;
 	mKeyMap['9']  = KEY_9;
+#ifdef MARTII
+	mKeyMap['r']  = KEY_RED;
+	mKeyMap['g']  = KEY_GREEN;
+	mKeyMap['y']  = KEY_YELLOW;
+	mKeyMap['b']  = KEY_BLUE;
+#endif
 }
 
 void GLFramebuffer::run()

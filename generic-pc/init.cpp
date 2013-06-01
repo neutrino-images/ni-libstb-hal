@@ -40,6 +40,8 @@ void init_td_api()
 	 * valgrind-check other parts... export HAL_NOAVDEC=1 */
 	if (getenv("HAL_NOAVDEC"))
 		HAL_nodec = true;
+	/* hack, this triggers that the simple_display thread does not blit() once per second... */
+	setenv("SPARK_NOBLIT", "1", 1);
 	initialized = true;
 }
 

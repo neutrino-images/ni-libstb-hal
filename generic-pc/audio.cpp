@@ -329,6 +329,7 @@ void cAudio::run()
 	int obuf_sz_max = 0;
 	int o_ch, o_sr; /* output channels and sample rate */
 	uint64_t o_layout; /* output channels layout */
+	char tmp[64] = "unknown";
 
 	curr_pts = 0;
 	av_init_packet(&avpkt);
@@ -362,7 +363,7 @@ void cAudio::run()
 	c = avfc->streams[0]->codec;
 	codec = avcodec_find_decoder(c->codec_id);
 	if (!codec) {
-		lt_info("%s: Codec not found\n", __func__);
+		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(c->codec_id));
 		goto out;
 	}
 	if (avcodec_open2(c, codec, NULL) < 0) {
@@ -402,8 +403,9 @@ void cAudio::run()
 		fprintf(stderr, " %s", ai->options[i]);
 	fprintf(stderr, "\n");
 #endif
-	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
-			c->sample_fmt, c->sample_rate, c->channels);
+	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
+	lt_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
+		 avcodec_get_name(c->codec_id), c->sample_fmt, tmp, c->sample_rate, c->channels);
 	swr = swr_alloc_set_opts(swr,
 				 o_layout, AV_SAMPLE_FMT_S16, o_sr,			/* output */
 				 c->channel_layout, c->sample_fmt, c->sample_rate,	/* input */

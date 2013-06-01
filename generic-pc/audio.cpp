@@ -16,7 +16,7 @@
  *
  * cAudio implementation with decoder.
  * uses libao  <http://www.xiph.org/ao/> for output
- *      ffmpeg <http://ffmpeg.org> for demuxing / decoding
+ *      ffmpeg <http://ffmpeg.org> for demuxing / decoding / format conversion
  */
 
 #include <cstdio>
@@ -33,6 +33,9 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
+#include <libswresample/swresample.h>
 #include <ao/ao.h>
 }
 /* ffmpeg buf 2k */
@@ -279,6 +282,13 @@ void cAudio::run()
 	ao_info *ai;
 	// ao_device *adevice;
 	// ao_sample_format sformat;
+	/* resample */
+	SwrContext *swr = NULL;
+	uint8_t *obuf = NULL;
+	int obuf_sz = 0; /* in samples */
+	int obuf_sz_max = 0;
+	int o_ch, o_sr; /* output channels and sample rate */
+	uint64_t o_layout; /* output channels layout */
 
 	curr_pts = 0;
 	av_init_packet(&avpkt);
@@ -324,13 +334,17 @@ void cAudio::run()
 		lt_info("%s: avcodec_alloc_frame failed\n", __func__);
 		goto out2;
 	}
-	if (sformat.channels != c->channels || sformat.rate != c->sample_rate ||
+	/* output sample rate, channels, layout could be set here if necessary */
+	o_ch = c->channels;		/* 2 */
+	o_sr = c->sample_rate;		/* 48000 */
+	o_layout = c->channel_layout;	/* AV_CH_LAYOUT_STEREO */
+	if (sformat.channels != o_ch || sformat.rate != o_sr ||
 	    sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = 16;
-		sformat.channels = c->channels;
-		sformat.rate = c->sample_rate;
+		sformat.channels = o_ch;
+		sformat.rate = o_sr;
 		sformat.byte_format = AO_FMT_NATIVE;
 		sformat.matrix = 0;
 		if (adevice)
@@ -338,7 +352,7 @@ void cAudio::run()
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ai = ao_driver_info(driver);
 		lt_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
-			__func__, c->channels, c->sample_rate, 16, adevice);;
+			__func__, o_ch, o_sr, 16, adevice);;
 		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
 				driver, ai->name, ai->short_name, ai->author);
 	}
@@ -350,19 +364,49 @@ void cAudio::run()
 #endif
 	lt_info("codec params: sample_fmt %d sample_rate %d channels %d\n",
 			c->sample_fmt, c->sample_rate, c->channels);
+	swr = swr_alloc_set_opts(swr,
+				 o_layout, AV_SAMPLE_FMT_S16, o_sr,			/* output */
+				 c->channel_layout, c->sample_fmt, c->sample_rate,	/* input */
+				 0, NULL);
+	if (! swr) {
+		lt_info("could not alloc resample context\n");
+		goto out3;
+	}
+	swr_init(swr);
 	while (thread_started) {
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)
 			break;
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 		if (gotframe && thread_started) {
+			int out_linesize;
+			obuf_sz = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) +
+						 frame->nb_samples, o_sr, c->sample_rate, AV_ROUND_UP);
+			if (obuf_sz > obuf_sz_max) {
+				lt_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
+				av_free(obuf);
+				if (av_samples_alloc(&obuf, &out_linesize, o_ch,
+							frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0) {
+					lt_info("av_samples_alloc failed\n");
+					av_free_packet(&avpkt);
+					break; /* while (thread_started) */
+				}
+				obuf_sz_max = obuf_sz;
+			}
+			obuf_sz = swr_convert(swr, &obuf, obuf_sz,
+					      (const uint8_t **)frame->extended_data, frame->nb_samples);
 			curr_pts = av_frame_get_best_effort_timestamp(frame);
 			lt_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
-			ao_play(adevice, (char*)frame->extended_data[0], frame->linesize[0]);
+			int o_buf_sz = av_samples_get_buffer_size(&out_linesize, o_ch,
+								  obuf_sz, AV_SAMPLE_FMT_S16, 1);
+			ao_play(adevice, (char *)obuf, o_buf_sz);
 		}
 		av_free_packet(&avpkt);
 	}
 	// ao_close(adevice); /* can take long :-( */
+	av_free(obuf);
+	swr_free(&swr);
+ out3:
 	avcodec_free_frame(&frame);
  out2:
 	avcodec_close(c);

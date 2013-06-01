@@ -55,6 +55,8 @@ static cAudio *gThiz = NULL;
 static ao_device *adevice = NULL;
 static ao_sample_format sformat;
 
+static AVCodecContext *c= NULL;
+
 cAudio::cAudio(void *, void *, void *)
 {
 	thread_started = false;
@@ -194,12 +196,51 @@ int cAudio::StopClip()
 
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
-	lt_debug("%s\n", __func__);
 	type = 0;
-	layer = 0;
+	layer = 0;	/* not used */
 	freq = 0;
-	bitrate = 0;
-	mode = 0;
+	bitrate = 0;	/* not used, but easy to get :-) */
+	mode = 0;	/* default: stereo */
+	if (c) {
+		type = (c->codec_id != AV_CODEC_ID_MP2); /* only mpeg / not mpeg is indicated */
+		freq = c->sample_rate;
+		bitrate = c->bit_rate;
+		if (c->channels == 1)
+			mode = 3; /* for AV_CODEC_ID_MP2, only stereo / mono is detected for now */
+		if (c->codec_id != AV_CODEC_ID_MP2) {
+			switch (c->channel_layout) {
+				case AV_CH_LAYOUT_MONO:
+					mode = 1;	// "C"
+					break;
+				case AV_CH_LAYOUT_STEREO:
+					mode = 2;	// "L/R"
+					break;
+				case AV_CH_LAYOUT_2_1:
+				case AV_CH_LAYOUT_SURROUND:
+					mode = 3;	// "L/C/R"
+					break;
+				case AV_CH_LAYOUT_2POINT1:
+					mode = 4;	// "L/R/S"
+					break;
+				case AV_CH_LAYOUT_3POINT1:
+					mode = 5;	// "L/C/R/S"
+					break;
+				case AV_CH_LAYOUT_2_2:
+				case AV_CH_LAYOUT_QUAD:
+					mode = 6;	// "L/R/SL/SR"
+					break;
+				case AV_CH_LAYOUT_5POINT0:
+				case AV_CH_LAYOUT_5POINT1:
+					mode = 7;	// "L/C/R/SL/SR"
+					break;
+				default:
+					lt_info("%s: unknown ch_layout 0x%" PRIx64 "\n",
+						 __func__, c->channel_layout);
+			}
+		}
+	}
+	lt_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n",
+		  __func__, type, layer, freq, bitrate, mode, c->codec_id);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
@@ -271,7 +312,6 @@ void cAudio::run()
 	av_register_all();
 
 	AVCodec *codec;
-	AVCodecContext *c= NULL;
 	AVFormatContext *avfc = NULL;
 	AVInputFormat *inp;
 	AVFrame *frame;
@@ -410,6 +450,7 @@ void cAudio::run()
 	avcodec_free_frame(&frame);
  out2:
 	avcodec_close(c);
+	c = NULL;
  out:
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);

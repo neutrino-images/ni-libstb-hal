@@ -102,22 +102,22 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 int cAudio::Start(void)
 {
-	lt_info("%s >\n", __func__);
+	lt_debug("%s >\n", __func__);
 	if (! HAL_nodec)
 		OpenThreads::Thread::start();
-	lt_info("%s <\n", __func__);
+	lt_debug("%s <\n", __func__);
 	return 0;
 }
 
 int cAudio::Stop(void)
 {
-	lt_info("%s >\n", __func__);
+	lt_debug("%s >\n", __func__);
 	if (thread_started)
 	{
 		thread_started = false;
 		OpenThreads::Thread::join();
 	}
-	lt_info("%s <\n", __func__);
+	lt_debug("%s <\n", __func__);
 	return 0;
 }
 

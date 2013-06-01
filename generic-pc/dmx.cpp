@@ -120,7 +120,9 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	if (dmx_type == DMX_VIDEO_CHANNEL)
-		uBufferSize = 0x40000;
+		uBufferSize = 0x100000;		/* 1MB */
+	if (dmx_type == DMX_AUDIO_CHANNEL)
+		uBufferSize = 0x10000;		/* 64k */
 #if 0
 	if (!pesfds.empty())
 	{

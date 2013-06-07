@@ -211,11 +211,7 @@ void cVideo::SetVideoMode(analog_mode_t)
 {
 }
 
-#ifdef MARTII
-void cVideo::ShowPicture(const char *fname, bool)
-#else
 void cVideo::ShowPicture(const char *fname)
-#endif
 {
 	lt_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))

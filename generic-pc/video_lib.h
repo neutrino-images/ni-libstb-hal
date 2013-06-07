@@ -178,11 +178,7 @@ class cVideo : public OpenThreads::Thread
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };
 		void SetCECAutoStandby(bool) { return; };
-#ifdef MARTII
-		void ShowPicture(const char * fname, bool isM2V = false);
-#else
 		void ShowPicture(const char * fname);
-#endif
 		void StopPicture();
 		void Standby(unsigned int bOn);
 #ifdef MARTII

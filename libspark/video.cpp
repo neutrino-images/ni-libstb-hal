@@ -370,11 +370,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
-#ifdef MARTII
-void cVideo::ShowPicture(const char * fname, bool isM2V)
-#else
 void cVideo::ShowPicture(const char * fname)
-#endif
 {
 	lt_debug("%s(%s)\n", __func__, fname);
 #ifndef MARTII
@@ -393,7 +389,8 @@ void cVideo::ShowPicture(const char * fname)
 		return;
 	}
 #ifdef MARTII
-    if (isM2V)
+    const char *lastDot = strrchr(fname, '.');
+    if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
 	strncpy(destname, fname, sizeof(destname));
     else {
 #endif

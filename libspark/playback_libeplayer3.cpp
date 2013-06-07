@@ -125,8 +125,11 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	mSubtitleStream=-1;
 	mDvbsubtitleStream=-1;
 	mTeletextStream=-1;
-#endif
+	char *file = (char *) alloca(strlen(filename) + 1);
+	*file = 0;
+#else
 	char file[400] = {""};
+#endif
 
 	if(!strncmp("http://", filename, 7))
 	{

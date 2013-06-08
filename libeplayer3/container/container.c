@@ -27,7 +27,7 @@
 
 #ifdef CONTAINER_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 #define container_printf(level, x...) do { \
 if (debug_level >= level) printf(x); } while (0)

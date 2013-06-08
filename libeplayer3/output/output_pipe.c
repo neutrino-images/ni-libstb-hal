@@ -51,7 +51,7 @@
 
 #define PIPE_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 static const char FILENAME[] = __FILE__;
 

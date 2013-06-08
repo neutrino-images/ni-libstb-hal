@@ -66,7 +66,7 @@
 
 #ifdef VC1_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 #define vc1_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)

@@ -29,7 +29,7 @@
 
 #define PLAYBACK_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG

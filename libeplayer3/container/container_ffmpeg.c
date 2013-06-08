@@ -64,7 +64,7 @@
 
 #ifdef FFMPEG_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)

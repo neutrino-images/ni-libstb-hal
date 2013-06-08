@@ -248,30 +248,17 @@ static int writeData(void* _call)
     if (call->private_data == NULL)
     {
         aac_printf(10, "private_data = NULL\n");
-
-#ifdef MARTII
 	memcpy (ExtraData, DefaultAACHeader, AAC_HEADER_LENGTH);
-#else
-        call->private_data = DefaultAACHeader;
-        call->private_size = AAC_HEADER_LENGTH;
-#endif
     }
-#ifdef MARTII
     else
-#endif
+    	memcpy (ExtraData, call->private_data, AAC_HEADER_LENGTH);
 
-    memcpy (ExtraData, call->private_data, AAC_HEADER_LENGTH);
-#ifdef MARTII
     ExtraData[3]       |= (PacketLength >> 11) & 0x3;
-#else
-    ExtraData[3]       |= (PacketLength >> 12) & 0x3;
-#endif
     ExtraData[4]        = (PacketLength >> 3) & 0xff;
     ExtraData[5]       |= (PacketLength << 5) & 0xe0;
 
     unsigned int  HeaderLength = InsertPesHeader (PesHeader, PacketLength, AAC_AUDIO_PES_START_CODE, call->Pts, 0);
 
-#ifdef MARTII
     struct iovec iov[3];
     iov[0].iov_base = PesHeader;
     iov[0].iov_len = HeaderLength;
@@ -280,20 +267,6 @@ static int writeData(void* _call)
     iov[2].iov_base = call->data;
     iov[2].iov_len = call->len;
     return writev(call->fd, iov, 3);
-#else
-    unsigned char* PacketStart = malloc(HeaderLength + sizeof(ExtraData) + call->len);
-    memcpy (PacketStart, PesHeader, HeaderLength);
-    memcpy (PacketStart + HeaderLength, ExtraData, sizeof(ExtraData));
-    memcpy (PacketStart + HeaderLength + sizeof(ExtraData), call->data, call->len);
-
-    aac_printf(100, "H %d d %d ExtraData %d\n", HeaderLength, call->len, sizeof(ExtraData));
-
-    int len = write(call->fd, PacketStart, HeaderLength + call->len + sizeof(ExtraData));
-
-    free(PacketStart);
-
-    return len;
-#endif
 }
 
 /* ***************************** */

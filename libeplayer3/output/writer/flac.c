@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <memory.h>
@@ -116,16 +117,13 @@ static int writeData(void* _call)
         return 0;
     }
 
-    int HeaderLength = InsertPesHeader (PesHeader, call->len , MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
+    struct iovec iov[2];
+    iov[0].iov_base = PesHeader;
+    iov[0].iov_len = InsertPesHeader (PesHeader, call->len , MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
+    iov[1].iov_base = call->data;
+    iov[1].iov_len = call->len;
 
-    unsigned char* PacketStart = malloc(call->len + HeaderLength);
-
-    memcpy (PacketStart, PesHeader, HeaderLength);
-    memcpy (PacketStart + HeaderLength, call->data, call->len);
-
-    int len = write(call->fd, PacketStart, call->len + HeaderLength);
-
-    free(PacketStart);
+    int len = writev(call->fd, iov, 2);
 
     flac_printf(10, "flac_Write-< len=%d\n", len);
     return len;

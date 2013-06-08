@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <memory.h>
@@ -123,7 +124,7 @@ static int writeData(void* _call)
 {
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
-    awmv_t *private_data = (awmv_t *)malloc(sizeof(awmv_t));
+    awmv_t private_data;
     int len = 0;
 
     wmv_printf(10, "\n");
@@ -137,12 +138,12 @@ static int writeData(void* _call)
 
     wmv_printf(10, "Got Private Size %d\n", call->private_size);
 
-    memcpy(private_data->privateData, call->private_data,
+    memcpy(private_data.privateData, call->private_data,
            call->private_size>WMV3_PRIVATE_DATA_LENGTH?WMV3_PRIVATE_DATA_LENGTH:call->private_size);
 
-    private_data->width = call->Width;
-    private_data->height = call->Height;
-    private_data->framerate = call->FrameRate;
+    private_data.width = call->Width;
+    private_data.height = call->Height;
+    private_data.framerate = call->FrameRate;
 
     if ((call->data == NULL) || (call->len <= 0)) {
         wmv_err("parsing NULL Data. ignoring...\n");
@@ -160,16 +161,11 @@ static int writeData(void* _call)
         unsigned int                MetadataLength;
         unsigned int                crazyFramerate = 0;
 
-        if (private_data == NULL) {
-            wmv_err("private_data NULL\n");
-            return -1;
-        }
+        wmv_printf(10, "Framerate: %u\n", private_data.framerate);
+        wmv_printf(10, "biWidth: %d\n",   private_data.width);
+        wmv_printf(10, "biHeight: %d\n",  private_data.height);
 
-        wmv_printf(10, "Framerate: %u\n", private_data->framerate);
-        wmv_printf(10, "biWidth: %d\n",   private_data->width);
-        wmv_printf(10, "biHeight: %d\n",  private_data->height);
-
-        crazyFramerate = ((10000000.0 / private_data->framerate) * 1000.0);
+        crazyFramerate = ((10000000.0 / private_data.framerate) * 1000.0);
         wmv_printf(10, "crazyFramerate: %u\n", crazyFramerate);
 
         PesPtr          = &PesPacket[PES_MIN_HEADER_SIZE];
@@ -177,18 +173,18 @@ static int writeData(void* _call)
         memcpy (PesPtr, Metadata, sizeof(Metadata));
         PesPtr         += METADATA_STRUCT_C_START;
 
-        memcpy (PesPtr, private_data->privateData, WMV3_PRIVATE_DATA_LENGTH);
+        memcpy (PesPtr, private_data.privateData, WMV3_PRIVATE_DATA_LENGTH);
         PesPtr             += WMV3_PRIVATE_DATA_LENGTH;
 
         /* Metadata Header Struct A */
-        *PesPtr++           = (private_data->height >>  0) & 0xff;
-        *PesPtr++           = (private_data->height >>  8) & 0xff;
-        *PesPtr++           = (private_data->height >> 16) & 0xff;
-        *PesPtr++           =  private_data->height >> 24;
-        *PesPtr++           = (private_data->width  >>  0) & 0xff;
-        *PesPtr++           = (private_data->width  >>  8) & 0xff;
-        *PesPtr++           = (private_data->width  >> 16) & 0xff;
-        *PesPtr++           =  private_data->width  >> 24;
+        *PesPtr++           = (private_data.height >>  0) & 0xff;
+        *PesPtr++           = (private_data.height >>  8) & 0xff;
+        *PesPtr++           = (private_data.height >> 16) & 0xff;
+        *PesPtr++           =  private_data.height >> 24;
+        *PesPtr++           = (private_data.width  >>  0) & 0xff;
+        *PesPtr++           = (private_data.width  >>  8) & 0xff;
+        *PesPtr++           = (private_data.width  >> 16) & 0xff;
+        *PesPtr++           =  private_data.width  >> 24;
 
         PesPtr             += 12;       /* Skip flag word and Struct B first 8 bytes */
 
@@ -209,7 +205,7 @@ static int writeData(void* _call)
     if(call->len > 0 && call->data) {
         int Position = 0;
         unsigned char insertSampleHeader = 1;
-        while(1) {
+        while(Position < call->len) {
 
             int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
                                (call->len - Position) : MAX_PES_PACKET_SIZE;
@@ -241,18 +237,21 @@ static int writeData(void* _call)
                 insertSampleHeader = 0;
             }
 
-            PacketStart = malloc(call->len + HeaderLength);
-            memcpy (PacketStart, PesHeader, HeaderLength);
-            memcpy (PacketStart + HeaderLength, call->data + Position, PacketLength);
+	    struct iovec iov[2];
+	    iov[0].iov_base = PesHeader;
+	    iov[0].iov_len = HeaderLength;
+	    iov[1].iov_base = call->data + Position;
+	    iov[1].iov_len = PacketLength;
 
-            len = write(call->fd, PacketStart, PacketLength + HeaderLength);
-            free(PacketStart);
+            ssize_t l = writev(call->fd, iov, 2);
+	    if (l < 0) {
+		len = l;
+		break;
+	    }
+	    len += l;
 
             Position += PacketLength;
             call->Pts = INVALID_PTS_VALUE;
-
-            if (Position == call->len)
-                break;
         }
     }
 

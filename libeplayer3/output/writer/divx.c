@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <memory.h>
@@ -97,7 +98,6 @@ static int writeData(void* _call)
     unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
     unsigned char  FakeHeaders[64]; // 64bytes should be enough to make the fake headers
     unsigned int   FakeHeaderLength;
-    unsigned int   ExtraLength = 0;
     unsigned char  Version             = 5;
     unsigned int   FakeStartCode       = (Version << 8) | PES_VERSION_FAKE_START_CODE;
     unsigned int   HeaderLength = 0;
@@ -147,21 +147,22 @@ static int writeData(void* _call)
 
     FakeHeaderLength    = (ld.Ptr - (FakeHeaders));
 
-    if (initialHeader) ExtraLength = call->private_size;
+    struct iovec iov[4];
+    int ic = 0;
+    iov[ic].iov_base = PesHeader;
+    iov[ic++].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
+    iov[ic].iov_base = FakeHeaders;
+    iov[ic++].iov_len = FakeHeaderLength;
 
-    HeaderLength        = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
-    unsigned char* PacketStart = malloc(call->len + HeaderLength + FakeHeaderLength + ExtraLength);
-    memcpy (PacketStart, PesHeader, HeaderLength);
-    memcpy (PacketStart + HeaderLength, FakeHeaders, FakeHeaderLength);
     if (initialHeader) {
-        memcpy (PacketStart + HeaderLength + FakeHeaderLength, call->private_data, call->private_size);
+	iov[ic].iov_base = call->private_data;
+	iov[ic++].iov_len = call->private_size;
         initialHeader = 0;
     }
-    memcpy (PacketStart + HeaderLength + FakeHeaderLength + ExtraLength, call->data, call->len);
+    iov[ic].iov_base = call->data;
+    iov[ic++].iov_len = call->len;
 
-    int len = write(call->fd, PacketStart ,call->len + HeaderLength + FakeHeaderLength + ExtraLength);
-
-    free(PacketStart);
+    int len = writev(call->fd, iov, ic);
 
     divx_printf(10, "xvid_Write < len=%d\n", len);
 

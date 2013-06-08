@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <memory.h>
@@ -119,7 +120,7 @@ static int writeData(void* _call)
         return 0;
     }
 
-    while(1) {
+    while(Position < call->len) {
         int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
                            (call->len - Position) : MAX_PES_PACKET_SIZE;
 
@@ -127,19 +128,21 @@ static int writeData(void* _call)
 
         mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 
-        int HeaderLength = InsertPesHeader (PesHeader, PacketLength, 0xe0, call->Pts, 0);
-        unsigned char* PacketStart = malloc(PacketLength + HeaderLength);
-        memcpy (PacketStart, PesHeader, HeaderLength);
-        memcpy (PacketStart + HeaderLength, call->data + Position, PacketLength);
+	struct iovec iov[2];
+	iov[0].iov_base = PesHeader;
+	iov[0].iov_len = InsertPesHeader (PesHeader, PacketLength, 0xe0, call->Pts, 0);
+	iov[1].iov_base = call->data + Position;
+	iov[1].iov_len = PacketLength;
 
-        len = write(call->fd, PacketStart, PacketLength + HeaderLength);
-        free(PacketStart);
+        ssize_t l = writev(call->fd, iov, 2);
+	if (l < 0) {
+		len = l;
+		break;
+	}
+	len += l;
 
         Position += PacketLength;
         call->Pts = INVALID_PTS_VALUE;
-
-        if (Position == call->len)
-            break;
     }
 
     mpeg2_printf(10, "< len %d\n", len);

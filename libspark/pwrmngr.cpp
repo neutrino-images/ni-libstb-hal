@@ -14,7 +14,7 @@ void cCpuFreqManager::Down(void) { lt_debug("%s\n", __FUNCTION__); }
 void cCpuFreqManager::Reset(void) { lt_debug("%s\n", __FUNCTION__); }
 /* those function dummies return true or "harmless" values */
 bool cCpuFreqManager::SetDelta(unsigned long) { lt_debug("%s\n", __FUNCTION__); return true; }
-#ifdef MARTII
+#if HAVE_SPARK_HARDWARE
 unsigned long cCpuFreqManager::GetCpuFreq(void) {
 	int freq = 0;
 	if (FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "r")) {
@@ -48,7 +48,7 @@ bool cPowerManager::SetStandby(bool Active, bool Passive)
 
 bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 {
-#ifdef MARTII
+#if HAVE_SPARK_HARDWARE
 	if (f) {
 		FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
 		if (pll0) {

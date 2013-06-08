@@ -38,9 +38,7 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#ifdef MARTII
 #include <aotom_main.h>
-#endif
 
 #include "lirmp_input.h"
 extern "C" {
@@ -196,19 +194,13 @@ static void *input_thread(void *)
 	uint32_t lircdata;	/* lirc_t to be correct... */
 	unsigned int count = 0;	/* how many timeouts? */
 	unsigned int nodec = 0;	/* how many timeouts since last decoded? */
-#ifdef MARTII
 	int aotom_fd = -1;
-#endif
 	IRMP_DATA d;
 
 	lt_info("LIRC/IRMP input converter thread starting...\n");
 
 	/* modprobe does not complain if the module is already loaded... */
-#ifdef MARTII
-	system("/sbin/insmod /lib/modules/uinput.ko");
-#else
 	system("/sbin/modprobe uinput");
-#endif
 	do {
 		usleep(100000); /* mdev needs some time to create the device? */
 		uinput = open("/dev/uinput", O_WRONLY|O_NDELAY);
@@ -309,9 +301,7 @@ static void *input_thread(void *)
 #define LIRC_PULSE_MASK	0x00FFFFFF
 	lt_info("LIRC/IRMP input converter going into main loop...\n");
 
-#ifdef MARTII
 	aotom_fd = open("/dev/vfd", O_RDONLY);
-#endif
 
 	/* TODO: ioctl to find out if we have a compatible LIRC_MODE2 device */
 	thread_running = 1;
@@ -407,14 +397,12 @@ static void *input_thread(void *)
 							//lt_debug("uinput write: value: %d code: %d\n", u.value, u.code);
 							last_code = u.code;
 							write(uinput, &u, sizeof(u));
-#ifdef MARTII
 							if (aotom_fd > -1) {
 								struct aotom_ioctl_data vfd_data;
 								vfd_data.u.led.led_nr = 1;
 								vfd_data.u.led.on = 10;
 								ioctl(aotom_fd, VFDSETLED, &vfd_data);
 							}
-#endif
 							break;
 						}
 					}
@@ -425,10 +413,8 @@ static void *input_thread(void *)
 	/* clean up */
 	close (lircfd);
 
-#ifdef MARTII
 	if (aotom_fd > -1)
 		close(aotom_fd);
-#endif
 
  out:
 	ioctl(uinput, UI_DEV_DESTROY);

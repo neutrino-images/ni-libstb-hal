@@ -57,9 +57,6 @@ class cAudio
 
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
-#ifdef MARTII
-		int percent;
-#endif
 	public:
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
@@ -94,10 +91,6 @@ class cAudio
 		void SetSpdifDD(bool enable);
 		void ScheduleMute(bool On);
 		void EnableAnalogOut(bool enable);
-#ifdef MARTII
-		int getPercent(void);
-		int setPercent(int perc);
-#endif
 };
 
 #endif

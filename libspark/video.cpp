@@ -282,12 +282,10 @@ int cVideo::Stop(bool blank)
 
 int cVideo::setBlank(int)
 {
-#ifdef MARTII
 	fop(ioctl, VIDEO_PLAY);
 	fop(ioctl, VIDEO_CONTINUE);
 	video_still_picture sp = { NULL, 0 };
 	fop(ioctl, VIDEO_STILLPICTURE, &sp);
-#endif
 	return Stop(1);
 }
 
@@ -373,10 +371,6 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 void cVideo::ShowPicture(const char * fname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
-#ifndef MARTII
-	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
-	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
-#endif
 	char destname[512];
 	char cmd[512];
 	char *p;
@@ -388,12 +382,10 @@ void cVideo::ShowPicture(const char * fname)
 		lt_info("%s: video_standby == true\n", __func__);
 		return;
 	}
-#ifdef MARTII
     const char *lastDot = strrchr(fname, '.');
     if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
 	strncpy(destname, fname, sizeof(destname));
     else {
-#endif
 	strcpy(destname, "/var/cache");
 	if (stat(fname, &st2))
 	{
@@ -422,17 +414,11 @@ void cVideo::ShowPicture(const char * fname)
 		system(cmd); /* TODO: use libavcodec to directly convert it */
 		utime(destname, &u);
 	}
-#ifdef MARTII
     }
-#endif
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
-#ifdef MARTII
 		lt_info("%s cannot open %s: %m\n", __func__, destname);
-#else
-		lt_info("%s cannot open %s: %m", __func__, destname);
-#endif
 		goto out;
 	}
 	fstat(mfd, &st);
@@ -446,45 +432,17 @@ void cVideo::ShowPicture(const char * fname)
 
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
 			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
-#ifdef MARTII
 		char *iframe = (char *)malloc(st.st_size);
-#else
-		bool seq_end_avail = false;
-		size_t pos=0;
-		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
-#endif
 		if (! iframe)
 		{
 			lt_info("%s: malloc failed (%m)\n", __func__);
 			goto out;
 		}
 		read(mfd, iframe, st.st_size);
-#ifdef MARTII
 		fop(ioctl, VIDEO_PLAY);
 		fop(ioctl, VIDEO_CONTINUE);
 		video_still_picture sp = { iframe, st.st_size };
 		fop(ioctl, VIDEO_STILLPICTURE, &sp);
-#else
-		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
-		ioctl(fd, VIDEO_PLAY);
-		ioctl(fd, VIDEO_CONTINUE);
-		ioctl(fd, VIDEO_CLEAR_BUFFER);
-#ifdef MARTII
-		while ((pos + 4) <= st.st_size && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
-#else
-		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
-#endif
-			++pos;
-
-		if ((iframe[3] >> 4) != 0xE) // no pes header
-			write(fd, pes_header, sizeof(pes_header));
-		write(fd, iframe, st.st_size);
-		if (!seq_end_avail)
-			write(fd, seq_end, sizeof(seq_end));
-		memset(iframe, 0, 8192);
-		write(fd, iframe, 8192);
-		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
-#endif
 		free(iframe);
 	}
  out:
@@ -573,11 +531,7 @@ void cVideo::VideoParamWatchdog(void)
 #endif
 }
 
-#ifdef MARTII
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, int starty, int endx, int endy)
-#else
-void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
-#endif
 {
 	char buffer[64];
 	int _x, _y, _w, _h;
@@ -595,7 +549,6 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 	}
 	else
 	{
-#ifdef MARTII
 		// need to do some additional adjustments because osd border is handled by blitter
 		x += startx;
 		x *= endx - startx + 1;
@@ -603,17 +556,14 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 		y *= endy - starty + 1;
 		w *= endx - startx + 1;
 		h *= endy - starty + 1;
-#endif
 		_x = x * xres / osd_w;
 		_w = w * xres / osd_w;
 		_y = y * yres / osd_h;
 		_h = h * yres / osd_h;
-#ifdef MARTII
 		_x /= 1280;
 		_y /= 720;
 		_w /= 1280;
 		_h /= 720;
-#endif
 	}
 	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
 	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);
@@ -722,7 +672,7 @@ int64_t cVideo::GetPTS(void)
 		lt_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
 }
-#ifdef MARTII
+
 void cVideo::SetControl(int control, int value) {
 	const char *p = NULL;
 	switch (control) {
@@ -746,4 +696,3 @@ void cVideo::SetControl(int control, int value) {
 			proc_put(p, buf, len);
 	}
 }
-#endif

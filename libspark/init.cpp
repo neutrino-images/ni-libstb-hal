@@ -11,16 +11,12 @@
 
 #include <linux/dvb/dmx.h>
 
-#ifndef MARTII
-#include "lirmp_input.h"
-#endif
 #include "pwrmngr.h"
 
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
 
-#ifdef MARTII
 #include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -267,8 +263,6 @@ void stop_inmux_thread(void)
 	inmux_thread_running = 0;
 }
 
-#endif
-
 static bool initialized = false;
 
 void init_td_api()
@@ -280,17 +274,9 @@ void init_td_api()
 	{
 		cCpuFreqManager f;
 		f.SetCpuFreq(0);	/* CPUFREQ == 0 is the trigger for leaving standby */
-#ifdef MARTII
 		count_input_devices();
 		create_input_devices();
 		start_inmux_thread();
-#else
-		/* hack: if lircd pidfile is present, don't start input thread */
-		if (access("/var/run/lirc/lircd.pid", R_OK))
-			start_input_thread();
-		else
-			lt_info("%s: lircd pidfile present, not starting input thread\n", __func__);
-#endif
 
 		/* this is a strange hack: the drivers seem to only work correctly after
 		 * demux0 has been used once. After that, we can use demux1,2,... */
@@ -309,11 +295,8 @@ void init_td_api()
 			ioctl(dmx, DMX_STOP);
 			close(dmx);
 		}
-	}
-#ifdef MARTII
-	else
+	} else
 		reopen_input_devices();
-#endif
 	initialized = true;
 	lt_info("%s end\n", __FUNCTION__);
 }
@@ -321,14 +304,9 @@ void init_td_api()
 void shutdown_td_api()
 {
 	lt_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
-#ifdef MARTII
 	if (initialized) {
 		stop_inmux_thread();
 		close_input_devices();
 	}
-#else
-	if (initialized)
-		stop_input_thread();
-#endif
 	initialized = false;
 }

@@ -35,9 +35,7 @@ typedef struct hw_caps
 	int display_yres;
 	char boxvendor[64];
 	char boxname[64];
-#ifdef MARTII
 	int boxtype;
-#endif
 } hw_caps_t;
 
 hw_caps_t *get_hwcaps(void);

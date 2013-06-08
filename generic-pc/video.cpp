@@ -326,11 +326,7 @@ int cVideo::getBlank(void)
 	return 0;
 }
 
-#ifdef MARTII
 void cVideo::Pig(int x, int y, int w, int h, int /*osd_w*/, int /*osd_h*/, int /*startx*/, int /*starty*/, int /*endx*/, int /*endy*/)
-#else
-void cVideo::Pig(int x, int y, int w, int h, int, int)
-#endif
 {
 	pig_x = x;
 	pig_y = y;

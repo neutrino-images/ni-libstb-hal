@@ -30,9 +30,7 @@ hw_caps_t *get_hwcaps(void)
 	memset(&caps, 0, sizeof(hw_caps_t));
 
 	initialized = 1;
-#ifdef MARTII
 	caps.can_cec = 1;
-#endif
 	caps.can_shutdown = 1;
 	caps.display_type = HW_DISPLAY_LED_NUM;
 	caps.has_HDMI = 1;
@@ -139,12 +137,10 @@ hw_caps_t *get_hwcaps(void)
 				default:
 					tmp = p;
 			}
-#ifdef MARTII
 			if ((sys_id & 0xff0000) == 0x090000)
 				caps.boxtype = 7111;
 			else
 				caps.boxtype = 7162;
-#endif
 		} else
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);

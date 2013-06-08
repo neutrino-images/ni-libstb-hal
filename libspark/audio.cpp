@@ -37,9 +37,6 @@ cAudio::cAudio(void *, void *, void *)
 	mixer_fd = -1;
 	openDevice();
 	Muted = false;
-#ifdef MARTII
-	percent = 100;
-#endif
 }
 
 cAudio::~cAudio(void)
@@ -111,11 +108,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 	lt_debug("%s(%d, %d)\n", __func__, left, right);
 
 	volume = (left + right) / 2;
-#ifdef MARTII
-	int v = map_volume((volume * percent)/100);
-#else
 	int v = map_volume(volume);
-#endif
 	if (clipfd != -1 && mixer_fd != -1) {
 		int tmp = 0;
 		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
@@ -126,13 +119,6 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
-#ifndef MARTII
-	/* compensate for different decoding volume of mpeg and ac3 streams
-	 * TODO: check if this is correct for all channels
-	 *       and if we need to do something with DTS?  */
-	if (StreamType == AUDIO_FMT_MPEG)
-		v = map_volume(volume * 30 / 53);
-#endif
 
 	char str[4];
 	sprintf(str, "%d", v);
@@ -153,24 +139,17 @@ int cAudio::Stop(void)
 	return ioctl(fd, AUDIO_STOP);
 }
 
-#ifdef MARTII
 bool cAudio::Pause(bool Pcm)
 {
 	ioctl(fd, Pcm ? AUDIO_PAUSE : AUDIO_CONTINUE, 1);
 	return true;
 }
-#else
-bool cAudio::Pause(bool /*Pcm*/)
-{
-	return true;
-};
-#endif
 
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
 	lt_debug("%s %d\n", __func__, Mode);
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
-};
+}
 
 //AUDIO_ENCODING_AC3
 #define AUDIO_STREAMTYPE_AC3 0
@@ -184,9 +163,6 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
 	int bypass = AUDIO_STREAMTYPE_MPEG;
-#ifndef MARTII
-	bool update_volume = (StreamType != type);
-#endif
 	lt_debug("%s %d\n", __FUNCTION__, type);
 	StreamType = type;
 
@@ -207,17 +183,13 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 	// But as we implemented the behavior to bypass (cause of e2) this is correct here
 	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
 		lt_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
-#ifndef MARTII
-	if (update_volume)
-		setVolume(volume, volume);
-#endif
-};
+}
 
 int cAudio::setChannel(int channel)
 {
 	lt_debug("%s %d\n", __FUNCTION__, channel);
 	return 0;
-};
+}
 
 int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 {
@@ -315,7 +287,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	setVolume(volume, volume);
 
 	return 0;
-};
+}
 
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
@@ -412,17 +384,17 @@ void cAudio::SetSpdifDD(bool enable)
 {
 	lt_debug("%s %d\n", __func__, enable);
 	setBypassMode(!enable);
-};
+}
 
 void cAudio::ScheduleMute(bool On)
 {
 	lt_debug("%s %d\n", __FUNCTION__, On);
-};
+}
 
 void cAudio::EnableAnalogOut(bool enable)
 {
 	lt_debug("%s %d\n", __FUNCTION__, enable);
-};
+}
 
 #define AUDIO_BYPASS_ON  0
 #define AUDIO_BYPASS_OFF 1
@@ -432,20 +404,3 @@ void cAudio::setBypassMode(bool disable)
 	lt_debug("%s %d\n", __func__, disable);
 	proc_put("/proc/stb/audio/ac3", opt[disable], strlen(opt[disable]));
 }
-
-#ifdef MARTII
-int cAudio::getPercent(void) {
-	return percent;
-}
-
-int cAudio::setPercent(int perc) {
-	lt_debug("%s %d (muted: %d)\n", __func__, perc, Muted);
-	int old_percent = percent;
-	percent = perc;
-	if (percent < 0 || percent > 999)
-		percent = 100;
-	if(!Muted)
-		setVolume(volume, volume);
-	return old_percent;
-}
-#endif

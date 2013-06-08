@@ -13,9 +13,7 @@ extern ContainerHandler_t	ContainerHandler;
 extern ManagerHandler_t		ManagerHandler;
 
 #include "playback_libeplayer3.h"
-#ifdef MARTII
 #include "subtitle.h"
-#endif
 
 static Context_t *player;
 
@@ -61,11 +59,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->container	= &ContainerHandler;
 		player->manager		= &ManagerHandler;
 
-#ifdef MARTII
 		fprintf(stderr, "player output name: %s\n", player->output->Name);
-#else
-		printf("%s\n", player->output->Name);
-#endif
 	}
 
 	//Registration of output devices
@@ -73,7 +67,6 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
 		player->output->Command(player,OUTPUT_ADD, (void*)"video");
 		player->output->Command(player,OUTPUT_ADD, (void*)"subtitle");
-#ifdef MARTII
 		player->output->Command(player,OUTPUT_ADD, (void*)"dvbsubtitle");
 		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
 
@@ -84,7 +77,6 @@ bool cPlayback::Open(playmode_t PlayMode)
 			so.shareFramebuffer = 1;
 			player->output->subtitle->Command(player, OUTPUT_SET_SUBTITLE_OUTPUT, (void*)&so);
 		}
-#endif
 	}
 
 	return 0;
@@ -106,11 +98,7 @@ void cPlayback::Close(void)
 }
 
 //Used by Fileplay
-#ifdef MARTII
 bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned short apid, int ac3, unsigned int, bool no_probe)
-#else
-bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned short apid, int ac3, unsigned int)
-#endif
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -121,22 +109,17 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	init_jump = -1;
 	//create playback path
 	mAudioStream=0;
-#ifdef MARTII
 	mSubtitleStream=-1;
 	mDvbsubtitleStream=-1;
 	mTeletextStream=-1;
 	char *file = (char *) alloca(strlen(filename) + 1);
 	*file = 0;
-#else
-	char file[400] = {""};
-#endif
 
 	if(!strncmp("http://", filename, 7))
 	{
 	    printf("http://\n");
             isHTTP = true;
 	}
-#ifdef MARTII
 	else if(!strncmp("rtmp://", filename, 7))
 	{
 	    printf("rtmp://\n");
@@ -147,7 +130,6 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	    printf("mss://\n");
             isHTTP = true;
 	}
-#endif
 	else if(!strncmp("file://", filename, 7))
 	{
 	    printf("file://\n");
@@ -157,11 +139,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	    printf("upnp://\n");
             isHTTP = true;
 	}
-#ifdef MARTII
 	else if (pm == PLAYMODE_TS && no_probe)
-#else
-	else if (pm == PLAYMODE_TS)
-#endif
 	    strcat(file, "myts://");
 	else
 	    strcat(file, "file://");
@@ -201,7 +179,6 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 				free(TrackList);
 			}
 		}
-#ifdef MARTII
 		//DVBSUB
 		if(player && player->manager && player->manager->dvbsubtitle) {
 			char ** TrackList = NULL;
@@ -233,7 +210,6 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 				free(TrackList);
 			}
 		}
-#endif
 
 		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
 			player->output->Command(player, OUTPUT_OPEN, NULL);
@@ -302,10 +278,8 @@ bool cPlayback::Stop(void)
 		player->output->Command(player,OUTPUT_DEL, (void*)"audio");
 		player->output->Command(player,OUTPUT_DEL, (void*)"video");
 		player->output->Command(player,OUTPUT_DEL, (void*)"subtitle");
-#ifdef MARTII
 		player->output->Command(player,OUTPUT_DEL, (void*)"dvbsubtitle");
 		player->output->Command(player,OUTPUT_DEL, (void*)"teletext");
-#endif
 	}
 
 	if(player && player->playback)
@@ -319,11 +293,7 @@ bool cPlayback::Stop(void)
 	return true;
 }
 
-#ifdef MARTII
 bool cPlayback::SetAPid(unsigned short pid, bool ac3 __attribute__((unused)))
-#else
-bool cPlayback::SetAPid(unsigned short pid, bool ac3)
-#endif
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	int i=pid;
@@ -334,7 +304,7 @@ bool cPlayback::SetAPid(unsigned short pid, bool ac3)
 	}
 	return true;
 }
-#ifdef MARTII
+
 bool cPlayback::SetSubtitlePid(unsigned short pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -346,6 +316,7 @@ bool cPlayback::SetSubtitlePid(unsigned short pid)
 	}
 	return true;
 }
+
 bool cPlayback::SetDvbsubtitlePid(unsigned short pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -357,6 +328,7 @@ bool cPlayback::SetDvbsubtitlePid(unsigned short pid)
 	}
 	return true;
 }
+
 bool cPlayback::SetTeletextPid(unsigned short pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -368,7 +340,6 @@ bool cPlayback::SetTeletextPid(unsigned short pid)
 	}
 	return true;
 }
-#endif
 
 bool cPlayback::SetSpeed(int speed)
 {
@@ -461,9 +432,6 @@ bool cPlayback::GetSpeed(int &speed) const
 bool cPlayback::GetPosition(int &position, int &duration)
 {
 	bool got_duration = false;
-#ifndef MARTII
-	printf("%s:%s %d %d\n", FILENAME, __FUNCTION__, position, duration);
-#endif
 
 	/* hack: if the file is growing (timeshift), then determine its length
 	 * by comparing the mtime with the mtime of the xml file */
@@ -492,13 +460,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (player && player->playback && !player->playback->isPlaying) {
 		printf("cPlayback::%s !!!!EOF!!!! < -1\n", __func__);
 		position = duration + 1000;
-		// duration = 0;
-		// this is stupid
-#ifdef MARTII
 		return false;
-#else
-		return true;
-#endif
 	}
 
 	unsigned long long int vpts = 0;
@@ -545,21 +507,15 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	}
 	float pos = (position/1000.0);
 	if(player && player->playback)
-#ifdef MARTII
 		player->playback->Command(player, absolute ? PLAYBACK_SEEK_ABS : PLAYBACK_SEEK, (void*)&pos);
-#else
-		player->playback->Command(player, PLAYBACK_SEEK, (void*)&pos);
-#endif
 	return true;
 }
 
 void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
-#ifdef MARTII
 	int max_numpida = *numpida;
 	*numpida = 0;
-#endif
 	if(player && player->manager && player->manager->audio) {
 		char ** TrackList = NULL;
 		player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
@@ -568,9 +524,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 			int i = 0,j=0;
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-#ifdef MARTII
 				if (j < max_numpida) {
-#endif
 				apids[j]=j;
 				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
 				if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
@@ -589,14 +543,8 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 					ac3flags[j] = 0;	//todo
 				else
 					ac3flags[j] = 0;	//todo
-#ifdef MARTII
 				language[j]=std::string(TrackList[i]);
-#else
-				language[j]=TrackList[i];
-#endif
-#ifdef MARTII
 				}
-#endif
 				free(TrackList[i]);
 				free(TrackList[i+1]);
 			}
@@ -605,7 +553,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 		}
 	}
 }
-#ifdef MARTII
+
 void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -718,20 +666,12 @@ unsigned short cPlayback::GetTeletextPid(void)
 	printf("teletext pid id %d (0x%x)\n", pid, pid);
 	return (unsigned short)pid;
 }
-#endif
 
-//
-#ifdef MARTII
 cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *))
-#else
-cPlayback::cPlayback(int num)
-#endif
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;
-#ifdef MARTII
 	framebuffer_callback = fbcb;
-#endif
 }
 
 cPlayback::~cPlayback()
@@ -739,7 +679,6 @@ cPlayback::~cPlayback()
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 }
 
-#ifdef MARTII
 void cPlayback::SuspendSubtitle(bool b)
 {
 	if (b)
@@ -752,7 +691,6 @@ void cPlayback::RequestAbort() {
 	if (player->playback)
 		player->playback->abortRequested = 1;
 }
-#endif
 #if 0
 bool cPlayback::IsPlaying(void) const
 {

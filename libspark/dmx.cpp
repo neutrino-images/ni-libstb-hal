@@ -208,10 +208,8 @@ bool cDemux::_open(void)
 		else
 			init[devnum] = true;
 	}
-#ifdef MARTII
 	if (buffersize == 0)
 		buffersize = 0xffff; // may or may not be reasonable  --martii
-#endif
 	if (buffersize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */

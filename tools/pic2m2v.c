@@ -72,13 +72,8 @@ int main(int argc, char **argv)
 			u.modtime = st2.st_mtime;
 			printf("converting %s -> %s\n", fname, destname);
 			/* it does not exist or has a different date, so call ffmpeg... */
-#ifdef MARTII
 			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s %s '%s' </dev/null",
 							fname, TARGETRES, destname);
-#else
-			sprintf(cmd, "ffmpeg -v 31 -y -f mjpeg -i '%s' -s %s '%s' </dev/null",
-							fname, TARGETRES, destname);
-#endif
 			system(cmd); /* TODO: use libavcodec to directly convert it */
 			utime(destname, &u);
 		}

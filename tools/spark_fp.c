@@ -41,16 +41,12 @@ void usage()
 	printf("\t-T: get FP display type (1 = VFD, 2 = LCD, 4 = LED, 8 = LBD)\n");
 	printf("\t-t: get current FP time\n");
 	printf("\t-s <time>: set FP time (time = 0: use current time)\n");
-#ifdef MARTII
 	printf("\t-w <time>: set FP wakeup time (time = 1: no wakeup)\n");
 	printf("\t-P: power down\n");
 	printf("\t-B <n>: show blue RC code (n = 0..4 or \"all\")\n");
 	printf("\t-S <n>: show standby RC code (n = 0..4 or \"all\")\n");
 	printf("\t-B <n>:<predata><code>: set blue RC code (n = 0..4)\n");
 	printf("\t-S <n>:<predata><code>: set standby RC code\n");
-#else
-	printf("\t-w <time>: set FP wakeup time and power down (time = 1: no wakeup)\n");
-#endif
 	printf("\t-l <n>: set LED <n> on\n");
 	printf("\t-L <n>: set LED <n> off\n");
 	printf("times are given in unix time (UTC, seconds since 1970-01-01 00:00:00)\n");
@@ -147,11 +143,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
-#ifdef MARTII
 	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:")) != -1)
-#else
-	while ((c = getopt (argc, argv, "gs:tw:Tl:L:")) != -1)
-#endif
 	{
 		switch (c)
 		{
@@ -196,16 +188,6 @@ int main(int argc, char **argv)
 				if (ret < 0)
 					break;
 				diff = t - t2;
-#ifndef MARTII
-				/* green LED off */
-				aotom.u.led.on = LOG_OFF;
-				aotom.u.led.led_nr = 1;
-				ioctl(fd, VFDSETLED, &aotom);
-				/* red LED on */
-				aotom.u.led.on = LOG_ON;
-				aotom.u.led.led_nr = 0;
-				ioctl(fd, VFDSETLED, &aotom);
-#endif
 				if (t == 1)
 					t = 0; /* t = 1 is magic for "no time" -> clear... */
 				else
@@ -230,19 +212,10 @@ int main(int argc, char **argv)
 				tmp = gmtime(&t);
 				fprintf(stderr, "wakeup time:  %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
 						tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
-#ifdef MARTII
 				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
 				break;
 			case 'P':
 				ret = ioctl(fd, VFDPOWEROFF);
-#else
-				ret = ioctl(fd, VFDSTANDBY, &t);
-				/* driver always returns einval here...
-				if (ret < 0)
-					perror("ioctl VFDSTANDBY");
-				 */
-				sleep(2); /* not reached... */
-#endif
 				break;
 			case 'l': /* LED on */
 				aotom.u.led.on = LOG_ON;
@@ -264,7 +237,6 @@ int main(int argc, char **argv)
 					ret = val;
 				}
 				break;
-#ifdef MARTII
 // Reminder to myself, here's a semi-sane default for Pingulux boxes:
 // spark_fp -S 0:9966da25 -S 1:11eeda25 -S 2:cc33ba45 -S 3:dd227887 -S 4:aa557887 -B 0:996640bf -B 1:11ee40bf -B 2:cc33b847 -B 3:dd2228d7 -B 4:aa5528d7
 // Not sure whether these are the original settings. --martii
@@ -311,7 +283,6 @@ int main(int argc, char **argv)
 					}
 				}
 				break;
-#endif
 			default:
 				usage();
 				return 0;

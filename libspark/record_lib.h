@@ -7,9 +7,7 @@
 #define REC_STATUS_OK 0
 #define REC_STATUS_SLOW 1
 #define REC_STATUS_OVERFLOW 2
-#ifdef MARTII
 #define REC_STATUS_STOPPED 4
-#endif
 
 typedef enum {
 	RECORD_RUNNING,
@@ -30,19 +28,13 @@ class cRecord
 		bool record_thread_running;
 		record_state_t exit_flag;
 		int state;
-#ifdef MARTII
 		int bufsize;
 		int bufsize_dmx;
 		void (*failureCallback)(void *);
 		void *failureData;
-#endif
 	public:
-#ifdef MARTII
 		cRecord(int num = 0, int bs_dmx = 100 * 188 * 1024, int bs = 100 * 188 * 1024);
 		void setFailureCallback(void (*f)(void *), void *d) { failureCallback = f; failureData = d; }
-#else
-		cRecord(int num = 0);
-#endif
 		~cRecord();
 
 		bool Open();

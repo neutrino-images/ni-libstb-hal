@@ -75,11 +75,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 
 #define ASS_RING_SIZE 5
 
-#ifdef MARTII
 #define ASS_FONT "/share/fonts/neutrino.ttf"
-#else
-#define ASS_FONT "/usr/share/fonts/FreeSans.ttf"
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -386,24 +382,16 @@ static void ASSThread(Context_t *context) {
                     continue;
             }
 
-#ifndef MARTII
-            getMutex(__LINE__);
-#endif
-            
             //FIXME: durch den sleep bleibt die cpu usage zw. 5 und 13%, ohne
             //       steigt sie bei Verwendung von subtiteln bis auf 95%.
             //       ich hoffe dadurch gehen keine subtitle verloren, wenn die playPts
             //       durch den sleep verschlafen wird. Besser wäre es den nächsten
             //       subtitel zeitpunkt zu bestimmen und solange zu schlafen.
-#ifdef MARTII
             usleep(10000);
 	    if(!context->playback->mayWriteToFramebuffer)
 		continue;
             getMutex(__LINE__);
 	    checkRegions();
-#else
-            usleep(1000);
-#endif
 
             if(ass_renderer && ass_track)
                  img = ass_render_frame(ass_renderer, ass_track, playPts / 90.0, &change);
@@ -428,11 +416,7 @@ static void ASSThread(Context_t *context) {
 
                     if (ass_track && ass_track->events)
                     {
-#ifdef MARTII
                         undisplay = now + (ass_track->events->Duration + 500) / 90000;
-#else
-                        undisplay = now + ass_track->events->Duration / 1000 + 0.5;
-#endif
                     }
 
                     ass_printf(100, "w %d h %d s %d x %d y %d c %d chg %d now %ld und %ld\n", 
@@ -481,7 +465,6 @@ static void ASSThread(Context_t *context) {
                              * so there is hopefully installed an output callback
                              * in the subtitle output!
                              */
-#ifdef MARTII
                             SubtitleOut_t sub_out;
 
                             sub_out.type         = eSub_Gfx;
@@ -505,31 +488,6 @@ static void ASSThread(Context_t *context) {
                             if(context && context->playback && context->playback->isPlaying &&
                                context->output && context->output->subtitle)
                                 context->output->subtitle->Write(context, &sub_out);
-#else
-                            SubtitleOut_t out;
-
-                            out.type         = eSub_Gfx;
-
-                            if (ass_track->events)
-                            {
-                                /* fixme: check values */
-                                out.pts          = ass_track->events->Start * 90.0;
-                                out.duration     = ass_track->events->Duration / 1000.0;
-                            } else
-                            {
-                                out.pts          = playPts;
-                                out.duration     = 10.0;
-                            }
-                             
-                            out.u.gfx.data   = img->bitmap;
-                            out.u.gfx.Width  = img->w;
-                            out.u.gfx.Height = img->h;
-                            out.u.gfx.x      = img->dst_x;
-                            out.u.gfx.y      = img->dst_y;
-                            if(context && context->playback && context->playback->isPlaying &&
-                               context->output && context->output->subtitle)
-                                context->output->subtitle->Write(context, &out);
-#endif
                         }
                     }
 
@@ -549,21 +507,15 @@ static void ASSThread(Context_t *context) {
         }
         
         /* cleanup no longer used but not overwritten regions */
-#ifdef MARTII
 	getMutex(__LINE__);
-#endif
         checkRegions();
-#ifdef MARTII
 	releaseMutex(__LINE__);
-#endif
     } /* while */
 
     hasPlayThreadStarted = 0;
 
     ass_printf(10, "terminating\n");
-#ifdef MARTII
     pthread_exit(NULL);
-#endif
 }
 
 /* **************************** */
@@ -641,18 +593,10 @@ int container_ass_init(Context_t *context)
     }
     
     ass_set_use_margins(ass_renderer, 0 );
-#ifdef MARTII
     ass_set_font_scale(ass_renderer, (ass_font_scale * screen_height) / 240.0);
-#else    
-    ass_set_font_scale(ass_renderer, ass_font_scale);
-#endif
 
     ass_set_hinting(ass_renderer, ASS_HINTING_LIGHT);
-#ifdef MARTII
     ass_set_line_spacing(ass_renderer, (ass_line_spacing * screen_height) / 240.0);
-#else
-    ass_set_line_spacing(ass_renderer, ass_line_spacing);
-#endif
     ass_set_fonts(ass_renderer, ASS_FONT, "Arial", 0, NULL, 1);
 
     if(threeDMode == 0){
@@ -691,10 +635,8 @@ int container_ass_process_data(Context_t *context, SubtitleData_t* data)
             ass_err("error creating ass_track\n");
             return cERR_CONTAINER_ASS_ERROR;
         }
-#ifdef MARTII
     ass_track->PlayResX = screen_width;
     ass_track->PlayResY = screen_height;
-#endif
     }
 
     if ((data->extradata) && (first_kiss))

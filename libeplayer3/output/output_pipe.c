@@ -1,4 +1,3 @@
-#ifdef MARTII
 /*
  * Pipe Output handling.
  *
@@ -452,4 +451,3 @@ struct Output_s PipeOutput = {
     &Write,
     PipeCapabilities
 };
-#endif

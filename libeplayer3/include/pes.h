@@ -14,11 +14,7 @@
 #define PES_VERSION_FAKE_START_CODE             0x31
 
 
-#ifdef MARTII
 #define MAX_PES_PACKET_SIZE                     (65535)
-#else
-#define MAX_PES_PACKET_SIZE                     65400
-#endif
 
 
 /* start codes */

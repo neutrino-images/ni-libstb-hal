@@ -37,9 +37,7 @@
 #include <asm/types.h>
 #include <pthread.h>
 #include <errno.h>
-#ifdef MARTII
 #include <sys/uio.h>
-#endif
 
 #include "common.h"
 #include "output.h"

@@ -100,19 +100,8 @@ static int reset()
 
 static int writeData(void* _call)
 {
-#ifndef MARTII
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-#endif
     unsigned char a;
-#ifndef MARTII
-    int x,y;
-#endif
     int res = 0;
-#ifndef MARTII
-    unsigned char* dst;
-#endif
     
     WriterFBCallData_t* call = (WriterFBCallData_t*) _call;
     
@@ -162,7 +151,7 @@ static int writeData(void* _call)
             {
                 k = ((unsigned)src[x]) * opacity / 255;
                 ck = 255 - k;
-#ifdef MARTII // or __sh__, or !HAVE_TRIPLEDRAGON
+#if HAVE_SPARK_HARDWARE
                 *dst++ = 0;
                 t = *dst;
                 *dst++ = (k*r + ck*t) / 255;
@@ -186,9 +175,7 @@ static int writeData(void* _call)
         }
     } else
     {
-#ifdef MARTII
 	 int y;
-#endif
          for (y = 0; y < call->Height; y++)
                 memset(call->destination + ((call->y + y) * call->destStride) + call->x * 4, 0, call->Width * 4);
     }

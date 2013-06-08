@@ -799,11 +799,7 @@ int LinuxDvbGetFrameCount(Context_t  *context, unsigned long long int* frameCoun
             linuxdvb_err("VIDEO_GET_PLAY_INFO: %s\n", strerror(errno));
             ret = cERR_LINUXDVB_ERROR;
         }
-#ifdef MARTII
         else linuxdvb_err("V: %llu\n", playInfo.frame_count);
-#else
-        else linuxdvb_err("V: %ull\n", playInfo.frame_count);
-#endif
     }
     else if (audiofd != -1)
     {
@@ -813,11 +809,7 @@ int LinuxDvbGetFrameCount(Context_t  *context, unsigned long long int* frameCoun
             linuxdvb_err("AUDIO_GET_PLAY_INFO: %s\n", strerror(errno));
             ret = cERR_LINUXDVB_ERROR;
         }
-#ifdef MARTII
         else linuxdvb_err("A: %llu\n", playInfo.frame_count);
-#else
-        else linuxdvb_err("A: %ull\n", playInfo.frame_count);
-#endif
     }
     else {
         ret = cERR_LINUXDVB_ERROR;

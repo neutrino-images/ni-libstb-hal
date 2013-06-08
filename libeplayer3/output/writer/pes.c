@@ -91,11 +91,7 @@ int InsertPesHeader (unsigned char *data, int size, unsigned char stream_id, uns
     BitPacker_t ld2 = {data, 0, 32};
 
     if (size > MAX_PES_PACKET_SIZE)
-#ifdef MARTII
-	size = 0; // unbounded
-#else
-        printf("%s: Packet bigger than 63.9K eeeekkkkk\n",__FUNCTION__);
-#endif
+    size = 0; // unbounded
 
     PutBits(&ld2,0x0  ,8);
     PutBits(&ld2,0x0  ,8);

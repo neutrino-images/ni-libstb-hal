@@ -36,10 +36,7 @@ Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 static inline unsigned char* text_to_ass(char *text, long long int pts, double duration)
 {
      char buf[1024];
-#ifdef MARTII
-     unsigned
-#endif
-     int x,pos=0;
+     unsigned int x,pos=0;
      for(x=0;x<strlen(text);x++){
          if(text[x]=='\n'){
              buf[pos++]='\\';

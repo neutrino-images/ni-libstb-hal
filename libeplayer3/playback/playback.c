@@ -84,10 +84,8 @@ static void SupervisorThread(Context_t *context) {
     {
         if (context->container->selectedContainer != NULL)
             context->container->selectedContainer->Command(context, CONTAINER_STATUS, &status);
-#ifdef MARTII
 	else
 		dieNow = 1;
-#endif
 
         if (context->container->selectedContainer != NULL)
             context->container->selectedContainer->Command(context, CONTAINER_LAST_PTS, &lastPts);
@@ -342,10 +340,8 @@ static int PlaybackClose(Context_t  *context) {
     context->manager->audio->Command(context, MANAGER_DEL, NULL);
     context->manager->video->Command(context, MANAGER_DEL, NULL);
     context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
-#ifdef MARTII
     context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     context->manager->teletext->Command(context, MANAGER_DEL, NULL);
-#endif
 
     context->playback->isPaused     = 0;
     context->playback->isPlaying    = 0;
@@ -771,11 +767,7 @@ static int PlaybackSlowMotion(Context_t  *context,int* speed) {
     return ret;
 }
 
-#ifdef MARTII
 static int PlaybackSeek(Context_t  *context, float * pos, int absolute) {
-#else
-static int PlaybackSeek(Context_t  *context, float * pos) {
-#endif
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "pos: %f\n", *pos);
@@ -785,12 +777,10 @@ static int PlaybackSeek(Context_t  *context, float * pos) {
 
         context->output->Command(context, OUTPUT_CLEAR, NULL);
 
-#ifdef MARTII
 	if (absolute)
         	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, pos);
 	else
-#endif
-        context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
+        	context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
 
         context->playback->isSeeking = 0;
 
@@ -850,11 +840,7 @@ static int PlaybackLength(Context_t  *context, double* length) {
 
     playback_printf(20, "\n");
 
-#ifdef MARTII
     *length = -1;
-#else
-    *length = 0;
-#endif
 
     if (context->playback->isPlaying) {
         if (context->container && context->container->selectedContainer)
@@ -916,15 +902,10 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
         if (context->manager && context->manager->subtitle) {
             int trackid;
             
-#ifdef MARTII
             if (context->manager->subtitle->Command(context, *track == 0xffff ? MANAGER_DEL : MANAGER_SET, track) < 0)
-#else
-            if (context->manager->subtitle->Command(context, MANAGER_SET, track) < 0)
-#endif
             {
                 playback_err("manager set track failed\n");
             }
-#ifdef MARTII
 	    if (*track == 0xffff) {
 		//CHECK FOR SUBTITLES
 		if (context->container && context->container->textSrtContainer)
@@ -936,7 +917,6 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
 		if (context->container && context->container->assContainer)
 		    context->container->assContainer->Command(context, CONTAINER_INIT, NULL);
 	    }
-#endif
             context->manager->subtitle->Command(context, MANAGER_GET, &trackid);
 
 /* konfetti: I make this hack a little bit nicer,
@@ -973,7 +953,7 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
 
     return ret;
 }
-#ifdef MARTII
+
 static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* pid) {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -1015,7 +995,6 @@ static int PlaybackSwitchTeletext(Context_t  *context, int* pid) {
 
     return ret;
 }
-#endif
 
 static int PlaybackInfo(Context_t  *context, char** infoString) {
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -1077,19 +1056,13 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
         break;
     }
     case PLAYBACK_SEEK: {
-#ifdef MARTII
         ret = PlaybackSeek(context, (float*)argument, 0);
-#else
-        ret = PlaybackSeek(context, (float*)argument);
-#endif
         break;
     }
-#ifdef MARTII
     case PLAYBACK_SEEK_ABS: {
         ret = PlaybackSeek(context, (float*)argument, -1);
         break;
     }
-#endif
     case PLAYBACK_PTS: { // 10
         ret = PlaybackPts(context, (unsigned long long int*)argument);
         break;
@@ -1122,7 +1095,6 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
         ret = PlaybackGetFrameCount(context, (unsigned long long int*)argument);
         break;
     }
-#ifdef MARTII
     case PLAYBACK_SWITCH_DVBSUBTITLE: {
         ret = PlaybackSwitchDVBSubtitle(context, (int*)argument);
 	break;
@@ -1141,7 +1113,6 @@ static int Command(void* _context, PlaybackCmd_t command, void * argument) {
     	ret = cERR_PLAYBACK_NO_ERROR;
 	break;
     }
-#endif
     default:
         playback_err("PlaybackCmd %d not supported!\n", command);
         ret = cERR_PLAYBACK_ERROR;
@@ -1172,12 +1143,10 @@ PlaybackHandler_t PlaybackHandler = {
     0,
     0,
     0,
-#ifdef MARTII
     0,
     0,
     1,
     0,
-#endif
     &Command,
     "",
     0,

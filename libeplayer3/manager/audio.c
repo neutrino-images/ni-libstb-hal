@@ -24,9 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MARTII
 #include <libavformat/avformat.h>
-#endif
 #include "manager.h"
 #include "common.h"
 
@@ -179,9 +177,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     case MANAGER_LIST: {
-#ifdef MARTII
 	container_ffmpeg_update_tracks(context, context->playback->uri);
-#endif
         *((char***)argument) = (char **)ManagerList(context);
         break;
     }
@@ -220,9 +216,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
     case MANAGER_SET: {
         int id = *((int*)argument);
 
-#ifdef MARTII
 	// What's the argument supposed to be? apid or local index? --martii
-
 	if (id >= TrackCount) {
 		int apid = id;
 		for (id = 0; id < TrackCount; id++) {
@@ -230,7 +224,6 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
 				break;
 		}
 	}
-#endif
         audio_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, id);
 
         if (id < TrackCount)

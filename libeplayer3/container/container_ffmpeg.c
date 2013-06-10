@@ -161,9 +161,6 @@ static char* Codec2Encoding(enum CodecID id, int* version)
     case CODEC_ID_RV20:
         return "V_RMV";
     case CODEC_ID_MPEG4:
-#if LIBAVCODEC_VERSION_MAJOR < 53
-    case CODEC_ID_XVID:
-#endif
     case CODEC_ID_MSMPEG4V1:
     case CODEC_ID_MSMPEG4V2:
     case CODEC_ID_MSMPEG4V3:
@@ -180,9 +177,6 @@ static char* Codec2Encoding(enum CodecID id, int* version)
     case CODEC_ID_VC1:
         return "V_VC1";
     case CODEC_ID_H264:
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    case CODEC_ID_FFH264:
-#endif
         return "V_MPEG4/ISO/AVC";
     case CODEC_ID_AVS:
         return "V_AVS";
@@ -218,11 +212,7 @@ static char* Codec2Encoding(enum CodecID id, int* version)
         return "A_IPCM"; //return "A_VORBIS";
     case CODEC_ID_FLAC: //86030
         return "A_IPCM"; //return "A_FLAC";
-#if LIBAVCODEC_VERSION_MAJOR > 54 || (LIBAVCODEC_VERSION_MAJOR == 54 && LIBAVCODEC_VERSION_MINOR > 24)
     case AV_CODEC_ID_PCM_S16LE:
-#else
-    case CODEC_ID_PCM_S16LE:
-#endif
 #if 1
         return "A_IPCM";
 #else
@@ -302,28 +292,16 @@ float getDurationFromSSALine(unsigned char* line){
  * and map it to our metadata.
  */
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-static char* searchMeta(AVMetadata *metadata, char* ourTag)
-#else
 static char* searchMeta(AVDictionary * metadata, char* ourTag)
-#endif
 {
-#if LIBAVCODEC_VERSION_MAJOR < 54
-   AVMetadataTag *tag = NULL;
-#else
    AVDictionaryEntry *tag = NULL;
-#endif
    int i = 0;
 
    while (metadata_map[i] != NULL)
    {
       if (strcmp(ourTag, metadata_map[i]) == 0)
       {
-#if LIBAVCODEC_VERSION_MAJOR < 54
-          while ((tag = av_metadata_get(metadata, "", tag, AV_METADATA_IGNORE_SUFFIX)))
-#else
           while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-#endif
           {
               if (strcmp(tag->key, metadata_map[ i + 1 ]) == 0)
               {
@@ -471,11 +449,7 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 	    else
 	    {
-#if LIBAVCODEC_VERSION_MAJOR < 54
-	       lastSeek = currentReadPosition = url_ftell(avContext->pb);
-#else
 	       lastSeek = currentReadPosition = avio_tell(avContext->pb);
-#endif
 	       gotlastPts = 1;
 
 #ifndef use_sec_to_seek
@@ -1040,18 +1014,10 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     avContext->interrupt_callback.callback = interrupt_cb;
     avContext->interrupt_callback.opaque = context->playback;
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    if ((err = av_open_input_file(&avContext, filename, NULL, 0, NULL)) != 0) {
-#else
     if ((err = avformat_open_input(&avContext, filename, NULL, 0)) != 0) {
-#endif
 	char error[512];
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-	ffmpeg_err("av_open_input_file failed %d (%s)\n", err, filename);
-#else
 	ffmpeg_err("avformat_open_input failed %d (%s)\n", err, filename);
-#endif
 	av_strerror(err, error, 512);
 	ffmpeg_err("Cause: %s\n", error);
 
@@ -1065,13 +1031,8 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 
     ffmpeg_printf(20, "find_streaminfo\n");
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    if (av_find_stream_info(avContext) < 0) {
-	ffmpeg_err("Error av_find_stream_info\n");
-#else
     if (avformat_find_stream_info(avContext, NULL) < 0) {
 	ffmpeg_err("Error avformat_find_stream_info\n");
-#endif
 #ifdef this_is_ok
 	/* crow reports that sometimes this returns an error
 	 * but the file is played back well. so remove this
@@ -1109,11 +1070,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 	    context->manager->teletext->Command(context, MANAGER_DEL, NULL);
     ffmpeg_printf(20, "dump format\n");
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    dump_format(avContext, 0, filename, 0);
-#else
     av_dump_format(avContext, 0, filename, 0);
-#endif
 
     ffmpeg_printf(1, "number streams %d\n", avContext->nb_streams);
 
@@ -1575,11 +1532,7 @@ static int container_ffmpeg_stop(Context_t *context) {
 
 static int container_ffmpeg_seek_bytes(off_t pos) {
     int flag = AVSEEK_FLAG_BYTE;
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    off_t current_pos = url_ftell(avContext->pb);
-#else
     off_t current_pos = avio_tell(avContext->pb);
-#endif
 
     ffmpeg_printf(20, "seeking to position %lld (bytes)\n", pos);
 
@@ -1592,11 +1545,7 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
 	return cERR_CONTAINER_FFMPEG_ERR;
     }
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    ffmpeg_printf(30, "current_pos after seek %lld\n", url_ftell(avContext->pb));
-#else
     ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContext->pb));
-#endif
 
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -1605,11 +1554,7 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
     int flag = AVSEEK_FLAG_BYTE;
     off_t newpos;
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    off_t current_pos = url_ftell(avContext->pb);
-#else
     off_t current_pos = avio_tell(avContext->pb);
-#endif
 
     if (start == -1)
        start = current_pos;
@@ -1638,11 +1583,7 @@ static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
 	return cERR_CONTAINER_FFMPEG_ERR;
     }
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-    ffmpeg_printf(30, "current_pos after seek %lld\n", url_ftell(avContext->pb));
-#else
     ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContext->pb));
-#endif
 
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -1671,11 +1612,7 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
 
     if (pos == -1)
     {
-#if LIBAVCODEC_VERSION_MAJOR < 54
-	pos = url_ftell(avContext->pb);
-#else
 	pos = avio_tell(avContext->pb);
-#endif
     }
 
     if (pts == -1)
@@ -1797,11 +1734,7 @@ static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
  * about 10 seconds, backward does not work.
  */
 
-#if LIBAVCODEC_VERSION_MAJOR < 54
-	off_t pos = url_ftell(avContext->pb);
-#else
 	off_t pos = avio_tell(avContext->pb);
-#endif
 
 	ffmpeg_printf(10, "pos %lld %d\n", pos, avContext->bit_rate);
 

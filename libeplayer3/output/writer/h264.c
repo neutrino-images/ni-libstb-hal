@@ -300,7 +300,7 @@ static int writeData(void* _call)
         memcpy (NalData, call->data + VideoPosition, NalLengthBytes);
         VideoPosition += NalLengthBytes;
 	NalStart += NalLengthBytes;
-	switch(NalLength) {
+	switch(NalLengthBytes) {
 		case 1:  NalLength = (NalData[0]); break;
 		case 2:  NalLength = (NalData[0] <<  8) | (NalData[1]); break;
 		case 3:  NalLength = (NalData[0] << 16) | (NalData[1] <<  8) | (NalData[2]); break;

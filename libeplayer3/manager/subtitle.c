@@ -107,7 +107,7 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
     return cERR_SUBTITLE_MGR_NO_ERROR;
 }
 
-static char ** ManagerList(Context_t  *context) {
+static char ** ManagerList(Context_t  *context __attribute__((unused))) {
     char ** tracklist = NULL;
     int i = 0, j = 0;
 

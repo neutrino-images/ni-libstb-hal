@@ -58,6 +58,32 @@ if (debug_level >= level) printf(x); } while (0)
 /* Varaibles                     */
 /* ***************************** */
 
+static Writer_t * AvailableWriter[] = {
+    &WriterAudioIPCM,
+    &WriterAudioPCM,
+    &WriterAudioMP3,
+    &WriterAudioMPEGL3,
+    &WriterAudioAC3,
+    &WriterAudioAAC,
+    &WriterAudioDTS,
+    &WriterAudioWMA,
+    &WriterAudioFLAC,
+    &WriterAudioVORBIS,
+
+    &WriterVideoMPEG2,
+    &WriterVideoMPEGH264,
+    &WriterVideoH264,
+    &WriterVideoDIVX,
+    &WriterVideoFOURCC,
+    &WriterVideoMSCOMP,
+    &WriterVideoWMV,
+    &WriterVideoH263,
+    &WriterVideoFLV,
+    &WriterVideoVC1,
+    &WriterFramebuffer,
+    NULL
+};
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */

@@ -21,9 +21,9 @@ AM_CFLAGS = -Wall -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOUR
 
 # get rid of many warnings. This is not my project, so fixing them is not
 # top priority
-AM_CFLAGS += \
-	-Wno-unused -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable \
-	-Wno-sign-compare -Wno-missing-field-initializers
+#AM_CFLAGS += \
+#	-Wno-unused -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable \
+#	-Wno-sign-compare -Wno-missing-field-initializers
 # silence ffmpeg deprecation warnings
 #AM_CPPFLAGS = -Dattribute_deprecated=''
 

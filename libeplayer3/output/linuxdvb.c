@@ -88,7 +88,7 @@ int LinuxDvbStop(Context_t  *context, char * type);
 /* MISC Functions                */
 /* ***************************** */
 
-void getLinuxDVBMutex(const char *filename, const char *function, int line) {
+void getLinuxDVBMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused))) {
 
     linuxdvb_printf(250, "requesting mutex\n");
 
@@ -97,14 +97,14 @@ void getLinuxDVBMutex(const char *filename, const char *function, int line) {
     linuxdvb_printf(250, "received mutex\n");
 }
 
-void releaseLinuxDVBMutex(const char *filename, const char *function, int line) {
+void releaseLinuxDVBMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused))) {
     pthread_mutex_unlock(&LinuxDVBmutex);
 
     linuxdvb_printf(250, "released mutex\n");
 
 }
 
-int LinuxDvbOpen(Context_t  *context, char * type) {
+int LinuxDvbOpen(Context_t  *context __attribute__((unused)), char * type) {
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
 
@@ -292,7 +292,7 @@ int LinuxDvbPlay(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbStop(Context_t  *context, char * type) {
+int LinuxDvbStop(Context_t  *context __attribute__((unused)), char * type) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
@@ -349,7 +349,7 @@ int LinuxDvbStop(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbPause(Context_t  *context, char * type) {
+int LinuxDvbPause(Context_t  *context __attribute__((unused)), char * type) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
@@ -380,7 +380,7 @@ int LinuxDvbPause(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbContinue(Context_t  *context, char * type) {
+int LinuxDvbContinue(Context_t  *context __attribute__((unused)), char * type) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
@@ -410,7 +410,7 @@ int LinuxDvbContinue(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbReverseDiscontinuity(Context_t  *context, int* surplus) {
+int LinuxDvbReverseDiscontinuity(Context_t  *context __attribute__((unused)), int* surplus) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     int dis_type = VIDEO_DISCONTINUITY_CONTINUOUS_REVERSE | *surplus;
     
@@ -427,7 +427,7 @@ int LinuxDvbReverseDiscontinuity(Context_t  *context, int* surplus) {
     return ret;
 }
 
-int LinuxDvbAudioMute(Context_t  *context, char *flag) {
+int LinuxDvbAudioMute(Context_t  *context __attribute__((unused)), char *flag) {
     int ret = cERR_LINUXDVB_NO_ERROR;
 
     linuxdvb_printf(10, "\n");
@@ -465,7 +465,7 @@ int LinuxDvbAudioMute(Context_t  *context, char *flag) {
 }
 
 
-int LinuxDvbFlush(Context_t  *context, char * type) {
+int LinuxDvbFlush(Context_t  *context __attribute__((unused)), char * type) {
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
 
@@ -600,7 +600,7 @@ int LinuxDvbFastForward(Context_t  *context, char * type) {
 #endif
 
 
-int LinuxDvbReverse(Context_t  *context, char * type) {
+int LinuxDvbReverse(Context_t  *context __attribute__((unused)), char * type __attribute__((unused))) {
     int ret = cERR_LINUXDVB_NO_ERROR;
 #ifdef reverse_playback_2
     int speed;
@@ -686,7 +686,7 @@ int LinuxDvbSlowMotion(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbAVSync(Context_t  *context, char * type) {
+int LinuxDvbAVSync(Context_t  *context, char * type __attribute__((unused))) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     /* konfetti: this one is dedicated to audiofd so we
      * are ignoring what is given by type! I think we should
@@ -710,7 +710,7 @@ int LinuxDvbAVSync(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbClear(Context_t  *context, char * type) {
+int LinuxDvbClear(Context_t  *context __attribute__((unused)), char * type) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     unsigned char video = !strcmp("video", type);
     unsigned char audio = !strcmp("audio", type);
@@ -745,7 +745,7 @@ int LinuxDvbClear(Context_t  *context, char * type) {
     return ret;
 }
 
-int LinuxDvbPts(Context_t  *context, unsigned long long int* pts) {
+int LinuxDvbPts(Context_t  *context __attribute__((unused)), unsigned long long int* pts) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     
     linuxdvb_printf(50, "\n");
@@ -783,7 +783,7 @@ int LinuxDvbPts(Context_t  *context, unsigned long long int* pts) {
     return ret;
 }
 
-int LinuxDvbGetFrameCount(Context_t  *context, unsigned long long int* frameCount) {
+int LinuxDvbGetFrameCount(Context_t  *context __attribute__((unused)), unsigned long long int* frameCount) {
     int ret = cERR_LINUXDVB_NO_ERROR;
     dvb_play_info_t playInfo;
 

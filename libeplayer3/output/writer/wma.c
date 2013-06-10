@@ -124,7 +124,6 @@ static int writeData(void* _call)
     if (initialHeader) {
 
         unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
-        int HeaderLength;
 
         if ((call->private_size <= 0) || (call->private_data == NULL))
         {

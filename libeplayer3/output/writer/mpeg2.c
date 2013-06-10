@@ -96,7 +96,7 @@ static int writeData(void* _call)
 
     unsigned char               PesHeader[PES_MAX_HEADER_SIZE];
     int len = 0;
-    int Position = 0;
+    unsigned int Position = 0;
 
     mpeg2_printf(10, "\n");
 

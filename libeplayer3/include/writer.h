@@ -77,32 +77,6 @@ extern Writer_t WriterFramebuffer;
 extern Writer_t WriterPipe;
 extern Writer_t WriterDVBSubtitle;
 
-static Writer_t * AvailableWriter[] = {
-    &WriterAudioIPCM,
-    &WriterAudioPCM,
-    &WriterAudioMP3,
-    &WriterAudioMPEGL3,
-    &WriterAudioAC3,
-    &WriterAudioAAC,
-    &WriterAudioDTS,
-    &WriterAudioWMA,
-    &WriterAudioFLAC,
-    &WriterAudioVORBIS,
-
-    &WriterVideoMPEG2,
-    &WriterVideoMPEGH264,
-    &WriterVideoH264,
-    &WriterVideoDIVX,
-    &WriterVideoFOURCC,
-    &WriterVideoMSCOMP,
-    &WriterVideoWMV,
-    &WriterVideoH263,
-    &WriterVideoFLV,
-    &WriterVideoVC1,
-    &WriterFramebuffer,
-    NULL
-};
-
 Writer_t* getWriter(char* encoding);
 
 Writer_t* getDefaultVideoWriter();

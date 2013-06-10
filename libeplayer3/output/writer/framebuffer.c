@@ -128,7 +128,7 @@ static int writeData(void* _call)
         int src_stride = call->Stride;
         int dst_stride = call->destStride;
         int dst_delta  = dst_stride - call->Width*4;
-        int x,y;
+        unsigned int x,y;
         const unsigned char *src = call->data;
         unsigned char *dst = call->destination + (call->y * dst_stride + call->x * 4);
         unsigned int k,ck,t;
@@ -175,7 +175,7 @@ static int writeData(void* _call)
         }
     } else
     {
-	 int y;
+	 unsigned int y;
          for (y = 0; y < call->Height; y++)
                 memset(call->destination + ((call->y + y) * call->destStride) + call->x * 4, 0, call->Width * 4);
     }

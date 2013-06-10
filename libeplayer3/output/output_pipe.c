@@ -88,7 +88,7 @@ int PipeStop(Context_t  *context, char * type);
 /* MISC Functions                */
 /* ***************************** */
 
-void getPipeMutex(const char *filename, const char *function, int line) {
+void getPipeMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused))) {
 
     pipe_printf(250, "requesting mutex\n");
 
@@ -97,14 +97,14 @@ void getPipeMutex(const char *filename, const char *function, int line) {
     pipe_printf(250, "received mutex\n");
 }
 
-void releasePipeMutex(const char *filename, const char *function, int line) {
+void releasePipeMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused))) {
     pthread_mutex_unlock(&Pipemutex);
 
     pipe_printf(250, "released mutex\n");
 
 }
 
-int PipeOpen(Context_t  *context, char * type) {
+int PipeOpen(Context_t  *context __attribute__((unused)), char * type) {
     unsigned char teletext = !strcmp("teletext", type);
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
 
@@ -163,10 +163,10 @@ int PipeClose(Context_t  *context, char * type) {
     return cERR_PIPE_NO_ERROR;
 }
 
-int PipePlay(Context_t  *context, char * type) {
+int PipePlay(Context_t  *context __attribute__((unused)), char * type __attribute__((unused))) {
     int ret = cERR_PIPE_NO_ERROR;
-    Writer_t* writer;
 
+#if 0
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
     unsigned char teletext = !strcmp("teletext", type);
 
@@ -176,12 +176,14 @@ int PipePlay(Context_t  *context, char * type) {
     }
     if (teletext && teletextfd != -1) {
     }
-
+#endif
     return ret;
 }
 
-int PipeStop(Context_t  *context, char * type) {
+int PipeStop(Context_t  *context __attribute__((unused)), char * type __attribute__((unused))) {
     int ret = cERR_PIPE_NO_ERROR;
+
+#if 0
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
     unsigned char teletext = !strcmp("teletext", type);
 
@@ -195,11 +197,12 @@ int PipeStop(Context_t  *context, char * type) {
     }
 
     releasePipeMutex(FILENAME, __FUNCTION__,__LINE__);
+#endif
 
     return ret;
 }
 
-int PipeFlush(Context_t  *context, char * type) {
+int PipeFlush(Context_t  *context __attribute__((unused)), char * type) {
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
     unsigned char teletext = !strcmp("teletext", type);
 
@@ -225,7 +228,7 @@ int PipeFlush(Context_t  *context, char * type) {
     return cERR_PIPE_NO_ERROR;
 }
 
-int PipeClear(Context_t  *context, char * type) {
+int PipeClear(Context_t  *context __attribute__((unused)), char * type) {
     int ret = cERR_PIPE_NO_ERROR;
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
     unsigned char teletext = !strcmp("teletext", type);
@@ -252,10 +255,10 @@ int PipeClear(Context_t  *context, char * type) {
     return ret;
 }
 
-int PipeSwitch(Context_t  *context, char * type) {
+int PipeSwitch(Context_t  *context __attribute__((unused)), char * type __attribute__((unused))) {
+#if 0
     unsigned char dvbsubtitle = !strcmp("dvbsubtitle", type);
     unsigned char teletext = !strcmp("teletext", type);
-    Writer_t* writer;
 
     pipe_printf(10, "v%d a%d\n", dvbsubtitle, teletext);
 
@@ -273,13 +276,13 @@ int PipeSwitch(Context_t  *context, char * type) {
     }
 
     pipe_printf(10, "exiting\n");
-
+#endif
     return cERR_PIPE_NO_ERROR;
 }
 
 static int writePESDataTeletext(int fd, unsigned char *data, size_t data_len)
 {
-    int len = 0;
+    unsigned int len = 0;
     if (data_len > 0) {
     	len = data_len + 39;
 	char header[45];
@@ -335,7 +338,7 @@ static int writePESDataDvbsubtitle(int fd, unsigned char *data, size_t data_len,
 	iov[1].iov_base = data;
 	iov[1].iov_len = data_len;
 	len = writev(fd, iov, 2);
-	if (len != iov[0].iov_len + iov[1].iov_len) {
+	if (len != (int)(iov[0].iov_len + iov[1].iov_len)) {
 	    // writing to pipe failed, clear it.
 	    char buf[65536];
 	    while(0 < read(fd, buf, sizeof(buf)));
@@ -344,16 +347,13 @@ static int writePESDataDvbsubtitle(int fd, unsigned char *data, size_t data_len,
     return len;
 }
 
-static int Write(void  *_context, void* _out)
+static int Write(void  *_context __attribute__((unused)), void* _out)
 {
-    Context_t          *context  = (Context_t  *) _context;
     AudioVideoOut_t    *out      = (AudioVideoOut_t*) _out;
     int                ret       = cERR_PIPE_NO_ERROR;
     int                res       = 0;
     unsigned char      dvbsubtitle;
     unsigned char      teletext;
-    Writer_t*          writer;
-    WriterAVCallData_t call;
 
     if (out == NULL)
     {
@@ -387,7 +387,7 @@ static int Write(void  *_context, void* _out)
     return ret;
 }
 
-static int reset(Context_t  *context)
+static int reset(Context_t  *context __attribute__((unused)))
 {
     int ret = cERR_PIPE_NO_ERROR;
 

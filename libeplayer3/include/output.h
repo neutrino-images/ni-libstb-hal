@@ -63,13 +63,6 @@ extern Output_t LinuxDvbOutput;
 extern Output_t SubtitleOutput;
 extern Output_t PipeOutput;
 
-static Output_t * AvailableOutput[] = {
-    &LinuxDvbOutput,
-    &SubtitleOutput,
-    &PipeOutput,
-    NULL
-};
-
 typedef struct OutputHandler_s {
     char * Name;
     Output_t * audio;

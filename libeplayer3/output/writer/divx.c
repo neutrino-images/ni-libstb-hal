@@ -100,7 +100,6 @@ static int writeData(void* _call)
     unsigned int   FakeHeaderLength;
     unsigned char  Version             = 5;
     unsigned int   FakeStartCode       = (Version << 8) | PES_VERSION_FAKE_START_CODE;
-    unsigned int   HeaderLength = 0;
     unsigned int   usecPerFrame = 41708; /* Hellmaster1024: default value */
     BitPacker_t ld = {FakeHeaders, 0, 32};
 

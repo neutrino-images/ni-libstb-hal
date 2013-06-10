@@ -97,7 +97,6 @@ static int writeData(void* _call)
 {
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
-    int             i = 0;
     unsigned char   PesHeader[PES_AUDIO_HEADER_SIZE];
 
     dts_printf(10, "\n");

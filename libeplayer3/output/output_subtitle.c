@@ -597,7 +597,7 @@ static int Write(void* _context, void *data) {
     return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int subtitle_Open(Context_t* context) {
+static int subtitle_Open(Context_t* context __attribute__((unused))) {
     int i;
 
     subtitle_printf(10, "\n");
@@ -629,7 +629,7 @@ static int subtitle_Open(Context_t* context) {
     return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int subtitle_Close(Context_t* context) {
+static int subtitle_Close(Context_t* context __attribute__((unused))) {
     int i;
 
     subtitle_printf(10, "\n");
@@ -690,7 +690,7 @@ static int subtitle_Play(Context_t* context) {
     return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int subtitle_Stop(Context_t* context) {
+static int subtitle_Stop(Context_t* context __attribute__((unused))) {
     int wait_time = 20;
     int i;
     

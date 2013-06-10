@@ -33,11 +33,6 @@ typedef struct Container_s {
 
 extern Container_t FFMPEGContainer;
 
-static Container_t * AvailableContainer[] = {
-    &FFMPEGContainer,
-    NULL
-};
-
 typedef struct ContainerHandler_s {
     char * Name;
     Container_t * selectedContainer;

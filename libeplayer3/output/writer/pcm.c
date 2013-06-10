@@ -116,7 +116,7 @@ static unsigned int breakBufferFillSize = 0;
 /* MISC Functions                */
 /* ***************************** */
 
-static int prepareClipPlay(int uNoOfChannels, int uSampleRate, int uBitsPerSample, int bLittleEndian)
+static int prepareClipPlay(int uNoOfChannels, int uSampleRate, int uBitsPerSample, int bLittleEndian __attribute__((unused)))
 {
 	printf("rate: %d ch: %d bits: %d (%d bps)\n",
 		uSampleRate/*Format->dwSamplesPerSec*/,
@@ -189,8 +189,6 @@ static int writeData(void* _call)
 {
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
-    unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
-
     pcm_printf(10, "\n");
 
     if (call == NULL)
@@ -223,15 +221,14 @@ static int writeData(void* _call)
     }
 
     unsigned char * buffer = call->data;
-    int size = call->len;
+    unsigned int size = call->len;
         //printf("PCM %d size SubFrameLen=%d\n", size, SubFrameLen);
 
-    unsigned int qty;
 	unsigned int n;
 	unsigned int injectBufferSize = sizeof(lpcm_pes) + sizeof(lpcm_prv) + SubFrameLen;
 	unsigned char * injectBuffer = (unsigned char *)malloc(sizeof(unsigned char)*injectBufferSize);
 	unsigned char * injectBufferDataPointer = &injectBuffer[sizeof(lpcm_pes)+sizeof(lpcm_prv)];
-    int pos;
+    unsigned int pos;
 
 	for(pos = 0; pos < size; )
 	{

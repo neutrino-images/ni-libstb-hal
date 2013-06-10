@@ -25,7 +25,8 @@ void dump_metadata()
 int main(int argc,char* argv[])
 {
     char file[255] = {""};
-    int  err, i;
+    unsigned int i;
+    int  err;
 
     if (argc < 2)
     {
@@ -52,9 +53,9 @@ int main(int argc,char* argv[])
         return -1;
     }
 
-    if (av_find_stream_info(avContext) < 0)
+    if (avformat_find_stream_info(avContext, NULL) < 0)
     {
-        printf("Error av_find_stream_info\n");
+        printf("Error avformat_find_stream_info\n");
     }
 
     printf("\n***\n");

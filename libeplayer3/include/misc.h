@@ -116,7 +116,7 @@ static inline char * basename(char * name)
 static inline char * dirname(char * name)
 {
   static char path[100];
-  int i = 0;
+  unsigned int i = 0;
   int pos = 0;
 
   while((name[i] != 0) && (i < sizeof(path)))

@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <include/init_td.h>
 
-int main(int argc, char ** argv)
+int main(int argc __attribute__((unused)), char ** argv __attribute__((unused)))
 {
 	init_td_api();
 	while (1) {

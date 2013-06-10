@@ -212,7 +212,7 @@ static void* SrtSubtitleThread(void *data) {
 /* Functions                     */
 /* ***************************** */
 
-static void SrtManagerAdd(Context_t  *context, SrtTrack_t track) {
+static void SrtManagerAdd(Context_t  *context __attribute__((unused)), SrtTrack_t track) {
     srt_printf(10, "%s %d\n",track.File, track.Id);
 
     if (Tracks == NULL) {
@@ -226,7 +226,8 @@ static void SrtManagerAdd(Context_t  *context, SrtTrack_t track) {
     }
 }
 
-static char ** SrtManagerList(Context_t  *context) {
+#if 0
+static char ** SrtManagerList(Context_t  *context __attribute__((unused))) {
     char ** tracklist = NULL;
 
     srt_printf(10, "\n");
@@ -248,8 +249,9 @@ static char ** SrtManagerList(Context_t  *context) {
 
     return tracklist;
 }
+#endif
 
-static void SrtManagerDel(Context_t * context) {
+static void SrtManagerDel(Context_t * context __attribute__((unused))) {
     int i = 0;
 
     srt_printf(10, "\n");
@@ -362,11 +364,11 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
 
                 SrtManagerAdd(context, SrtSubtitle);
 
-                Track_t Subtitle = {
-                        subtitleExtension,
-                        "S_TEXT/SRT",
-                        i++,
-                };
+                Track_t Subtitle;
+		memset(&Subtitle, 0, sizeof(Subtitle));
+		Subtitle.Name = subtitleExtension;
+                Subtitle.Encoding = "S_TEXT/SRT";
+                Subtitle.Id = i++,
                 context->manager->subtitle->Command(context, MANAGER_ADD, &Subtitle);
             }
 
@@ -382,7 +384,7 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
     return cERR_SRT_NO_ERROR;
 }
 
-static int SrtOpenSubtitle(Context_t *context, int trackid) {
+static int SrtOpenSubtitle(Context_t *context __attribute__((unused)), int trackid) {
     srt_printf(10, "\n");
 
     if(trackid < TEXTSRTOFFSET || (trackid % TEXTSRTOFFSET) >= TrackCount) {
@@ -406,7 +408,7 @@ static int SrtOpenSubtitle(Context_t *context, int trackid) {
     return cERR_SRT_NO_ERROR;
 }
 
-static int SrtCloseSubtitle(Context_t *context) {
+static int SrtCloseSubtitle(Context_t *context __attribute__((unused))) {
     srt_printf(10, "\n");
 
     if(fsub)

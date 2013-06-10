@@ -139,7 +139,7 @@ static region_t* firstRegion = NULL;
 /* MISC Functions                */
 /* ***************************** */
 
-void ass_msg_callback(int level, const char *format, va_list va, void *ctx)
+void ass_msg_callback(int level __attribute__((unused)), const char *format, va_list va, void *ctx __attribute__((unused)))
 {
     int n;
     char *str;
@@ -613,7 +613,7 @@ int container_ass_init(Context_t *context)
     return cERR_CONTAINER_ASS_NO_ERROR;
 }
 
-int container_ass_process_data(Context_t *context, SubtitleData_t* data)
+int container_ass_process_data(Context_t *context __attribute__((unused)), SubtitleData_t* data)
 {
     int first_kiss;
     
@@ -656,7 +656,7 @@ int container_ass_process_data(Context_t *context, SubtitleData_t* data)
     return cERR_CONTAINER_ASS_NO_ERROR;
 }
 
-static int container_ass_stop(Context_t *context) {
+static int container_ass_stop(Context_t *context __attribute__((unused))) {
     int ret = cERR_CONTAINER_ASS_NO_ERROR;
     int wait_time = 20;
     Writer_t* writer;
@@ -715,7 +715,7 @@ static int container_ass_stop(Context_t *context) {
     return ret;
 }
 
-static int container_ass_switch_subtitle(Context_t* context, int* arg)
+static int container_ass_switch_subtitle(Context_t* context, int* arg __attribute__((unused)))
 {
     int error;
     int ret = cERR_CONTAINER_ASS_NO_ERROR;

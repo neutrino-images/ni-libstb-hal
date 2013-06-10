@@ -200,7 +200,7 @@ static int writeData(void* _call)
         }
 
         {
-            int i;
+            unsigned int i;
 
             /* For VC1 the codec private data is a standard vc1 sequence header so we just copy it to the output */
             memcpy (&PesPacket[PES_MIN_HEADER_SIZE], call->private_data, call->private_size);
@@ -217,7 +217,7 @@ static int writeData(void* _call)
     }
 
     if(call->len > 0 && call->data) {
-        int Position = 0;
+        unsigned int Position = 0;
         unsigned char insertSampleHeader = 1;
 
         while(Position < call->len) {
@@ -232,7 +232,6 @@ static int writeData(void* _call)
             unsigned char       PesHeader[PES_MAX_HEADER_SIZE];
             memset (PesHeader, '0', PES_MAX_HEADER_SIZE);
             int                 HeaderLength = InsertPesHeader (PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, call->Pts, 0);
-            unsigned char*      PacketStart;
 
             if(insertSampleHeader) {
                     const unsigned char         Vc1FrameStartCode[]     = {0, 0, 1, VC1_FRAME_START_CODE};

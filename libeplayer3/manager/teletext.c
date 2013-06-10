@@ -107,14 +107,13 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
     return cERR_TELETEXT_MGR_NO_ERROR;
 }
 
-static char ** ManagerList(Context_t  *context) {
+static char ** ManagerList(Context_t  *context __attribute__((unused))) {
     int i = 0, j = 0;
     char ** tracklist = NULL;
 
     teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     if (Tracks != NULL) {
-	char tmp[30];
         tracklist = malloc(sizeof(char *) * ((TrackCount*2) + 1));
 
         if (tracklist == NULL)

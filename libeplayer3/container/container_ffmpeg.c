@@ -64,7 +64,7 @@
 
 #ifdef FFMPEG_DEBUG
 
-static short debug_level = 0;
+static short debug_level = 10;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
@@ -118,13 +118,15 @@ long long int latestPts = 0;
 static int container_ffmpeg_seek_bytes(off_t pos);
 static int container_ffmpeg_seek(Context_t *context, float sec, int absolute);
 static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long int pts, float sec);
+#if defined(use_sec_to_seek)
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes);
+#endif
 
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
 
-void getMutex(const char *filename, const char *function, int line) {
+void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line) {
     ffmpeg_printf(100, "::%d requesting mutex\n", line);
 
     pthread_mutex_lock(&mutex);
@@ -132,7 +134,7 @@ void getMutex(const char *filename, const char *function, int line) {
     ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-void releaseMutex(const char *filename, const const char *function, int line) {
+void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line) {
     pthread_mutex_unlock(&mutex);
 
     ffmpeg_printf(100, "::%d released mutex\n", line);
@@ -325,10 +327,13 @@ static void FFMPEGThread(Context_t *context) {
     threadname[16] = 0;
     prctl (PR_SET_NAME, (unsigned long)&threadname);
     AVPacket   packet;
-    off_t lastReverseSeek = 0;     /* max address to read before seek again in reverse play */
     off_t lastSeek = -1;
     long long int lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
-    int           err = 0, gotlastPts = 0, audioMute = 0;
+    int           err = 0, audioMute = 0;
+#ifdef reverse_playback_2
+    int           gotlastPts = 0;
+    off_t lastReverseSeek = 0;     /* max address to read before seek again in reverse play */
+#endif
     AudioVideoOut_t avOut;
 
 #ifdef USE_LIBSWRESAMPLE
@@ -476,12 +481,7 @@ static void FFMPEGThread(Context_t *context) {
 #endif
 	getMutex(FILENAME, __FUNCTION__,__LINE__);
 
-#define use_read_frame
-#ifdef use_read_frame
 	if (av_read_frame(avContext, &packet) == 0 )
-#else
-	if (av_read_packet(avContext, &packet) == 0 )
-#endif
 	{
 	    long long int pts;
 	    Track_t * videoTrack = NULL;
@@ -823,7 +823,7 @@ static void FFMPEGThread(Context_t *context) {
 			       ffmpeg_err("error decoding subtitle\n");
 			   } else
 			   {
-			       int i;
+			       unsigned int i;
 
 			       ffmpeg_printf(0, "format %d\n", sub.format);
 			       ffmpeg_printf(0, "start_display_time %d\n", sub.start_display_time);
@@ -1058,7 +1058,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 
-    int n;
+    unsigned int n;
 
     if (context->manager->audio)
 	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
@@ -1550,6 +1550,7 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
+#if defined(use_sec_to_seek)
 /* seeking relative to a given byteposition N bytes ->for reverse playback needed */
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
     int flag = AVSEEK_FLAG_BYTE;
@@ -1587,6 +1588,7 @@ static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
 
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
+#endif
 
 /* seeking relative to a given byteposition N seconds ->for reverse playback needed */
 static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long int pts, float sec) {
@@ -1834,18 +1836,18 @@ static int container_ffmpeg_swich_audio(Context_t* context, int* arg)
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_swich_subtitle(Context_t* context, int* arg)
+static int container_ffmpeg_swich_subtitle(Context_t* context __attribute__((unused)), int* arg __attribute__((unused)))
 {
     /* Hellmaster1024: nothing to do here!*/
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_switch_dvbsubtitle(Context_t* context, int* arg)
+static int container_ffmpeg_switch_dvbsubtitle(Context_t* context __attribute__((unused)), int* arg __attribute__((unused)))
 {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_switch_teletext(Context_t* context, int* arg)
+static int container_ffmpeg_switch_teletext(Context_t* context __attribute__((unused)), int* arg __attribute__((unused)))
 {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }

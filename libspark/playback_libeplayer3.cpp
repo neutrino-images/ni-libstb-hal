@@ -459,6 +459,25 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 	}
 }
 
+/* dummy functions for subtitles */
+void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
+{
+	*num = 0;
+}
+
+bool cPlayback::SelectSubtitles(int pid)
+{
+	printf("%s:%s pid %d\n", FILENAME, __func__, pid);
+	return false;
+}
+
+/* another dummy function for DVD playback(?) */
+void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
+{
+	positions.clear();
+	titles.clear();
+}
+
 //
 cPlayback::cPlayback(int num)
 {

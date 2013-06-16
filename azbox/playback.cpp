@@ -336,7 +336,7 @@ bool cPlayback::SetAPid(unsigned short pid, int /*ac3*/)
 	return true;
 }
 
-bool cPlayback::SetSPid(int pid)
+bool cPlayback::SelectSubtitles(int pid)
 {
 	lt_info("%s: pid %i\n", __func__, pid);
 	if (pid != subpid)
@@ -464,7 +464,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 	}
 }
 
-void cPlayback::FindAllSPids(int *spids, uint16_t *numpids, std::string *language)
+void cPlayback::FindAllSubs(uint16_t *spids, unsigned short *supported, uint16_t *numpids, std::string *language)
 {
 	lt_info("%s\n", __func__);
 	char buf[32];
@@ -487,6 +487,7 @@ void cPlayback::FindAllSPids(int *spids, uint16_t *numpids, std::string *languag
 			spu_lang[20] = '\0';
 			spids[sid] = atoi(streamidstring);
 			language[sid] = spu_lang;
+			supported[sid] = 1;
 			lt_info("%s: #%d apid:%d lang: %s\n", __func__, sid, spids[sid], spu_lang);
 		}
 	}
@@ -494,6 +495,13 @@ void cPlayback::FindAllSPids(int *spids, uint16_t *numpids, std::string *languag
 	*numpids = spu_count + 1;
 	spids[spu_count] = -1;
 	language[spu_count] = "Disable";
+}
+
+/* DVD support is not yet ready... */
+void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
+{
+	positions.clear();
+	titles.clear();
 }
 
 cPlayback::cPlayback(int /*num*/)

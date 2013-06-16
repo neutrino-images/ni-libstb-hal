@@ -576,6 +576,24 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 	*numpida = i;
 }
 
+/* it is unlikely that subtitle support will be implemented soon */
+void cPlayback::FindAllSubs(uint16_t *, unsigned short *, uint16_t *num, std::string *)
+{
+	*num = 0;
+}
+
+bool cPlayback::SelectSubtitles(int)
+{
+	return false;
+}
+
+/* DVD support is also unlikely... */
+void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
+{
+	positions.clear();
+	titles.clear();
+}
+
 off_t cPlayback::seek_to_pts(int64_t pts)
 {
 	off_t newpos = curr_pos;

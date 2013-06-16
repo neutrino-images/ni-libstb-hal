@@ -26,7 +26,7 @@ bool cPlayback::SetAPid(unsigned short pid, bool /*ac3*/)
 	return true;
 }
 
-bool cPlayback::SetSPid(int pid)
+bool cPlayback::SelectSubtitles(int pid)
 {
 	printf("%s:%s pid %i\n", FILENAME, __func__, pid);
 	return true;
@@ -61,6 +61,18 @@ void cPlayback::FindAllPids(uint16_t *, unsigned short *, uint16_t *numpida, std
 {
 	printf("%s:%s\n", FILENAME, __func__);
 	*numpida = 0;
+}
+
+void cPlayback::FindAllSubs(uint16_t *, unsigned short *, uint16_t *numpida, std::string *)
+{
+	printf("%s:%s\n", FILENAME, __func__);
+	*numpida = 0;
+}
+
+void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
+{
+	positions.clear();
+	titles.clear();
 }
 
 cPlayback::cPlayback(int /*num*/)

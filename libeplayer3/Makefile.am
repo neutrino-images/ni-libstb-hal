@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libeplayer3.la
 
 CXXFLAGS = -Wall
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(srcdir)/include
 
 libeplayer3_la_SOURCES =  \
@@ -24,7 +24,7 @@ AM_CFLAGS += \
 	-Wno-unused -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable \
 	-Wno-sign-compare -Wno-missing-field-initializers
 # silence ffmpeg deprecation warnings
-AM_CPPFLAGS = -Dattribute_deprecated=''
+AM_CPPFLAGS += -Dattribute_deprecated=''
 
 #libeplayer3_la_LIBADD = -lpthread -lavformat -lavcodec -lavutil -lz -lass -lm -lpng
 

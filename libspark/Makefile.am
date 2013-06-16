@@ -1,8 +1,8 @@
-INCLUDES = \
+noinst_LTLIBRARIES = libspark.la
+
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/libeplayer3/include
-
-noinst_LTLIBRARIES = libspark.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = -lpthread -lass
@@ -19,4 +19,4 @@ libspark_la_SOURCES = \
 	pwrmngr.cpp \
 	record.cpp
 
-AM_CPPFLAGS = -DF_INTERRUPTS=20000 -DIRMP_EMBED -DLIRC_IRMP
+AM_CPPFLAGS += -DF_INTERRUPTS=20000 -DIRMP_EMBED -DLIRC_IRMP

@@ -43,10 +43,10 @@ extern cVideo *videoDecoder;
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
 	uint16_t _pid = (uint16_t)-1; uint16_t _f = 0;\
-	if (dmx_type == DMX_PES_CHANNEL) { \
-		_pid = p_flt.pid; \
-	} else if (dmx_type == DMX_PSI_CHANNEL) { \
+	if (dmx_type == DMX_PSI_CHANNEL) { \
 		_pid = s_flt.pid; _f = s_flt.filter.filter[0]; \
+	} else { \
+		_pid = p_flt.pid; \
 	}; \
 	lt_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
 		__func__, _errstr, fd, _revents, DMX_T[dmx_type], _pid, _f); \

@@ -2,6 +2,7 @@
 #define __HAL_PLAYBACK_H
 
 #include <string>
+#include <vector>
 
 typedef enum {
 	PLAYMODE_TS = 0,
@@ -45,8 +46,10 @@ class cPlayback
 		void FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpidt, std::string *tlanguage);
-
 		void RequestAbort(void);
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
+		bool SelectSubtitles(int pid);
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 #if 0
 		// Functions that are not used by movieplayer.cpp:
 		bool GetOffset(off64_t &offset);

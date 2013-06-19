@@ -667,6 +667,26 @@ unsigned short cPlayback::GetTeletextPid(void)
 	return (unsigned short)pid;
 }
 
+/* dummy functions for subtitles */
+void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
+{
+	*num = 0;
+}
+
+bool cPlayback::SelectSubtitles(int pid)
+{
+	printf("%s:%s pid %d\n", FILENAME, __func__, pid);
+	return false;
+}
+
+/* another dummy function for DVD playback(?) */
+void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
+{
+	positions.clear();
+	titles.clear();
+}
+
+//
 cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);

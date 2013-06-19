@@ -35,16 +35,20 @@
 #include "dmx_lib.h"
 #include "lt_debug.h"
 
+/* needed for getSTC :-( */
+#include "video_lib.h"
+extern cVideo *videoDecoder;
+
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_DEMUX, this, args)
 #define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_DEMUX, NULL, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
 	uint16_t _pid = (uint16_t)-1; uint16_t _f = 0;\
-	if (dmx_type == DMX_PES_CHANNEL) { \
-		_pid = p_flt.pid; \
-	} else if (dmx_type == DMX_PSI_CHANNEL) { \
+	if (dmx_type == DMX_PSI_CHANNEL) { \
 		_pid = s_flt.pid; _f = s_flt.filter.filter[0]; \
+	} else { \
+		_pid = p_flt.pid; \
 	}; \
 	lt_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
 		__func__, _errstr, fd, _revents, DMX_T[dmx_type], _pid, _f); \
@@ -120,7 +124,9 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	if (dmx_type == DMX_VIDEO_CHANNEL)
-		uBufferSize = 0x40000;
+		uBufferSize = 0x100000;		/* 1MB */
+	if (dmx_type == DMX_AUDIO_CHANNEL)
+		uBufferSize = 0x10000;		/* 64k */
 #if 0
 	if (!pesfds.empty())
 	{
@@ -472,6 +478,8 @@ void cDemux::removePid(unsigned short Pid)
 void cDemux::getSTC(int64_t * STC)
 {
 	int64_t pts = 0;
+	if (videoDecoder)
+		pts = videoDecoder->GetPTS();
 	*STC = pts;
 }
 

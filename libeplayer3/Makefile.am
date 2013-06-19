@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libeplayer3.la
 
 CXXFLAGS = -Wall
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(srcdir)/include
 
 libeplayer3_la_SOURCES =  \

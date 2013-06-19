@@ -109,6 +109,9 @@ class cPlayback
 		bool GetPosition(int &position, int &duration);	/* pos: current time in ms, dur: file length in ms */
 		bool SetPosition(int position, bool absolute = false);	/* position: jump in ms */
 		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
+		bool SelectSubtitles(int pid);
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 #if 0
 		// Functions that are not used by movieplayer.cpp:
 		bool Stop(void);

@@ -122,6 +122,7 @@ typedef enum
 class cVideo : public OpenThreads::Thread
 {
 	friend class GLFramebuffer;
+	friend class cDemux;
 	private:
 		/* called from GL thread */
 		class SWFramebuffer : public std::vector<unsigned char>
@@ -143,6 +144,7 @@ class cVideo : public OpenThreads::Thread
 			AVRational mAR;
 		};
 		int buf_in, buf_out, buf_num;
+		int64_t GetPTS(void);
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *);

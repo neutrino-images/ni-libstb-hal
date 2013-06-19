@@ -3,6 +3,7 @@
 
 #include <string>
 #include <stdint.h>
+#include <vector>
 
 typedef enum {
 	PLAYMODE_TS = 0,
@@ -43,6 +44,9 @@ class cPlayback
 		void FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpidt, std::string *tlanguage);
 
 		void RequestAbort(void);
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
+		bool SelectSubtitles(int pid);
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		//
 		cPlayback(int num = 0);
 		~cPlayback();

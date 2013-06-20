@@ -3,6 +3,7 @@
 
 #include <linux/dvb/video.h>
 #include "../common/cs_types.h"
+#include "dmx_lib.h"
 
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
@@ -119,6 +120,7 @@ class cVideo
 	private:
 		/* video device */
 		int fd;
+		int dev;
 		/* apparently we cannot query the driver's state
 		   => remember it */
 		video_play_state_t playstate;
@@ -141,7 +143,7 @@ class cVideo
 		void closeDevice(void);
 	public:
 		/* constructor & destructor */
-		cVideo(int mode, void *, void *);
+		cVideo(int mode, void *, void *, int dev = 0);
 		~cVideo(void);
 
 		void * GetTVEnc() { return NULL; };
@@ -189,6 +191,7 @@ class cVideo
 		int  CloseVBI(void) { return 0; };
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
+		void SetDemux(cDemux *dmx);
 };
 
 #endif

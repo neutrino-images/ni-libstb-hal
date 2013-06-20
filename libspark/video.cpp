@@ -34,7 +34,7 @@
 #include <linux/dvb/video.h>
 #include <linux/stmfb.h>
 #include "video_lib.h"
-#define VIDEO_DEVICE "/dev/dvb/adapter0/video0"
+#define VIDEO_DEVICE_FMT "/dev/dvb/adapter0/video%d"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
@@ -53,6 +53,7 @@
 	_r;						\
 })
 
+cVideo * pipDecoder = NULL;
 cVideo * videoDecoder = NULL;
 int system_rev = 0;
 
@@ -141,7 +142,7 @@ out:
 }
 
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, int _dev)
 {
 	lt_debug("%s\n", __FUNCTION__);
 
@@ -150,6 +151,7 @@ cVideo::cVideo(int, void *, void *)
 	scartvoltage = -1;
 	video_standby = 0;
 	fd = -1;
+	dev = _dev;
 	openDevice();
 }
 
@@ -165,8 +167,10 @@ void cVideo::openDevice(void)
 	/* todo: this fd checking is racy, should be protected by a lock */
 	if (fd != -1) /* already open */
 		return;
+	char vd[sizeof(VIDEO_DEVICE_FMT) + 10];
+	snprintf(vd, sizeof(vd), VIDEO_DEVICE_FMT, dev);
 retry:
-	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
+	if ((fd = open(vd, O_RDWR)) < 0)
 	{
 		if (errno == EBUSY)
 		{
@@ -175,7 +179,7 @@ retry:
 			if (++n < 10)
 				goto retry;
 		}
-		lt_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
+		lt_info("%s cannot open %s: %m, retries %d\n", __func__, vd, n);
 	}
 	else
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
@@ -191,6 +195,12 @@ void cVideo::closeDevice(void)
 		close(fd);
 	fd = -1;
 	playstate = VIDEO_STOPPED;
+}
+
+void cVideo::SetDemux(cDemux * /*dmx*/)
+{
+	lt_debug("%s\n", __func__);
+	// FIXME, stub only
 }
 
 int cVideo::setAspectRatio(int aspect, int mode)
@@ -226,7 +236,9 @@ int cVideo::getAspectRatio(void)
 	if (fd == -1)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
-		int n = proc_get_hex("/proc/stb/vmpeg/0/aspect");
+		char tmp[100];
+		snprintf(tmp, sizeof(tmp), "/proc/stb/vmpeg/%d/aspect", dev);
+		int n = proc_get_hex(tmp);
 		return n * 2 + 1;
 	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
@@ -567,7 +579,9 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 	}
 	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
 	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);
-	proc_put("/proc/stb/vmpeg/0/dst_all", buffer, strlen(buffer));
+	char tmp[100];
+	snprintf(tmp, sizeof(tmp), "/proc/stb/vmpeg/%d/dst_all", dev);
+	proc_put(tmp, buffer, strlen(buffer));
 }
 
 static inline int rate2csapi(int rate)
@@ -603,9 +617,13 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	if (fd == -1)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
-		r      = proc_get_hex("/proc/stb/vmpeg/0/framerate");
-		width  = proc_get_hex("/proc/stb/vmpeg/0/xres");
-		height = proc_get_hex("/proc/stb/vmpeg/0/yres");
+		char tmp[100];
+		snprintf(tmp, sizeof(tmp), "/proc/stb/vmpeg/%d/framerate", dev);
+		r      = proc_get_hex(tmp);
+		snprintf(tmp, sizeof(tmp), "/proc/stb/vmpeg/%d/xres", dev);
+		width  = proc_get_hex(tmp);
+		snprintf(tmp, sizeof(tmp), "/proc/stb/vmpeg/%d/yres", dev);
+		height = proc_get_hex(tmp);
 		rate   = rate2csapi(r);
 		return;
 	}

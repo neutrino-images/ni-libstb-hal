@@ -61,6 +61,7 @@ hw_caps_t *get_hwcaps(void)
 					break;
 				case 0x090008:
 					tmp = "Edision Pingulux";
+					caps.has_SCART = 1; // RCA qualifies ... --martii
 					break;
 				case 0x09000a:
 					tmp = "Amiko Alien SDH8900";

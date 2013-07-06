@@ -954,9 +954,10 @@ static void FFMPEGThread(Context_t *context) {
     if (avr) {
 	avresample_close(avr);
 	avresample_free(&avr);
-	avcodec_free_frame(&decoded_frame);
     }
 #endif
+    if (decoded_frame)
+	avcodec_free_frame(&decoded_frame);
 
     hasPlayThreadStarted = 0;
 

@@ -118,7 +118,8 @@ long long int latestPts = 0;
 static int container_ffmpeg_seek_bytes(off_t pos);
 static int container_ffmpeg_seek(Context_t *context, float sec, int absolute);
 static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long int pts, float sec);
-#if defined(use_sec_to_seek)
+#define use_sec_to_seek
+#if !defined(use_sec_to_seek)
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes);
 #endif
 
@@ -376,7 +377,7 @@ static void FFMPEGThread(Context_t *context) {
 	if (context->playback->BackWard && av_gettime() >= showtime)
 	{
 	      audioMute = 1;
-	      context->output->Command(context, OUTPUT_CLEAR, "v");
+	      context->output->Command(context, OUTPUT_CLEAR, "video");
 
 	      if(bofcount == 1)
 	      {
@@ -438,7 +439,6 @@ static void FFMPEGThread(Context_t *context) {
 	    else
 		lastReverseSeek = lastSeek;
 
-#define use_sec_to_seek
 #if defined(use_sec_to_seek)
 	    if ((err = container_ffmpeg_seek_rel(context, lastSeek, lastPts, -5)) < 0)
 #else
@@ -679,7 +679,7 @@ static void FFMPEGThread(Context_t *context) {
 				}
 
 				uint8_t *output = NULL;
-# ifdef USE_LIBSWRESAMPLE
+#ifdef USE_LIBSWRESAMPLE
 				int in_samples = decoded_frame->nb_samples;
 				int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
 				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
@@ -1551,7 +1551,7 @@ static int container_ffmpeg_seek_bytes(off_t pos) {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-#if defined(use_sec_to_seek)
+#if !defined(use_sec_to_seek)
 /* seeking relative to a given byteposition N bytes ->for reverse playback needed */
 static int container_ffmpeg_seek_bytes_rel(off_t start, off_t bytes) {
     int flag = AVSEEK_FLAG_BYTE;
@@ -1670,18 +1670,35 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
 
 	ffmpeg_printf(10, "2. seeking to position %f sec ->time base %f %d\n", sec, av_q2d(((AVStream*) current->stream)->time_base), AV_TIME_BASE);
 
-	if (av_seek_frame(avContext, -1 , sec * AV_TIME_BASE, flag) < 0) {
+#if 1
+    	if (avformat_seek_file(avContext, -1, INT64_MIN, sec * AV_TIME_BASE, INT64_MAX, flag) < 0)
+#else
+	if (av_seek_frame(avContext, -1 , sec * AV_TIME_BASE, flag) < 0)
+#endif
+	{
 	    ffmpeg_err( "Error seeking\n");
 	    releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	    return cERR_CONTAINER_FFMPEG_ERR;
 	}
 
+	context->output->Command(context, OUTPUT_FLUSH, NULL); // martii
+	context->output->Command(context, OUTPUT_PLAY, NULL); // martii
+	latestPts = 0;
+#if 1
+	if (videoTrack && videoTrack->stream && ((AVStream*) videoTrack->stream)->codec && ((AVStream*) videoTrack->stream)->codec->codec)
+		avcodec_flush_buffers(((AVStream*) videoTrack->stream)->codec);
+	if (audioTrack && audioTrack->stream && ((AVStream*) audioTrack->stream)->codec && ((AVStream*) audioTrack->stream)->codec->codec)
+		avcodec_flush_buffers(((AVStream*) audioTrack->stream)->codec);
+#endif
+
+#if 0 // looks bogus --martii
 	if (sec <= 0)
 	{
 	   ffmpeg_err("end of file reached\n");
 	   releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	   return cERR_CONTAINER_FFMPEG_END_OF_FILE;
 	}
+#endif
     }
 
     releaseMutex(FILENAME, __FUNCTION__,__LINE__);
@@ -1772,11 +1789,26 @@ static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
 	    sec += ((float) current->pts / 90000.0f);
 	ffmpeg_printf(10, "2. seeking to position %f sec ->time base %f %d\n", sec, av_q2d(((AVStream*) current->stream)->time_base), AV_TIME_BASE);
 
-	if (av_seek_frame(avContext, -1 /* or streamindex */, sec * AV_TIME_BASE, flag) < 0) {
+#if 1
+    	if (avformat_seek_file(avContext, -1, INT64_MIN, sec * AV_TIME_BASE, INT64_MAX, flag) < 0)
+#else
+	if (av_seek_frame(avContext, -1 /* or streamindex */, sec * AV_TIME_BASE, flag) < 0)
+#endif
+	{
 	    ffmpeg_err( "Error seeking\n");
 	    releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	    return cERR_CONTAINER_FFMPEG_ERR;
 	}
+
+	context->output->Command(context, OUTPUT_FLUSH, NULL); // martii
+	context->output->Command(context, OUTPUT_PLAY, NULL); // martii
+	latestPts = 0;
+#if 1
+	if (videoTrack && videoTrack->stream && ((AVStream*) videoTrack->stream)->codec && ((AVStream*) videoTrack->stream)->codec->codec)
+		avcodec_flush_buffers(((AVStream*) videoTrack->stream)->codec);
+	if (audioTrack && audioTrack->stream && ((AVStream*) audioTrack->stream)->codec && ((AVStream*) audioTrack->stream)->codec->codec)
+		avcodec_flush_buffers(((AVStream*) audioTrack->stream)->codec);
+#endif
     }
 
     releaseMutex(FILENAME, __FUNCTION__,__LINE__);
@@ -1828,7 +1860,7 @@ static int container_ffmpeg_get_length(Context_t *context, double * length) {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_swich_audio(Context_t* context, int* arg)
+static int container_ffmpeg_switch_audio(Context_t* context, int* arg)
 {
     ffmpeg_printf(10, "track %d\n", *arg);
     /* Hellmaster1024: nothing to do here!*/
@@ -1837,7 +1869,7 @@ static int container_ffmpeg_swich_audio(Context_t* context, int* arg)
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_swich_subtitle(Context_t* context __attribute__((unused)), int* arg __attribute__((unused)))
+static int container_ffmpeg_switch_subtitle(Context_t* context __attribute__((unused)), int* arg __attribute__((unused)))
 {
     /* Hellmaster1024: nothing to do here!*/
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
@@ -1958,11 +1990,11 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
 	break;
     }
     case CONTAINER_SWITCH_AUDIO: {
-	ret = container_ffmpeg_swich_audio(context, (int*) argument);
+	ret = container_ffmpeg_switch_audio(context, (int*) argument);
 	break;
     }
     case CONTAINER_SWITCH_SUBTITLE: {
-	ret = container_ffmpeg_swich_subtitle(context, (int*) argument);
+	ret = container_ffmpeg_switch_subtitle(context, (int*) argument);
 	break;
     }
     case CONTAINER_INFO: {

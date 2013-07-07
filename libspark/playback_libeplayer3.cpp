@@ -267,12 +267,13 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 bool cPlayback::Stop(void)
 {
 	printf("%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
-	if(playing==false) return false;
+	//if(playing==false) return false;
 
-	if(player && player->playback && player->output) {
+	if(player && player->playback)
 		player->playback->Command(player, PLAYBACK_STOP, NULL);
+
+	if(player && player->output)
 		player->output->Command(player, OUTPUT_CLOSE, NULL);
-	}
 
 	if(player && player->output) {
 		player->output->Command(player,OUTPUT_DEL, (void*)"audio");

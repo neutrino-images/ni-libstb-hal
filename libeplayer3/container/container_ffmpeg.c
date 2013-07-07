@@ -728,6 +728,9 @@ static void FFMPEGThread(Context_t *context) {
 				if (context->output->audio->Write(context, &avOut) < 0)
 					ffmpeg_err("writing data to audio device failed\n");
 				av_freep(&output);
+#ifdef USE_LIBSWRESAMPLE
+		    		currentAudioPts = pts = swr_next_pts(swr, INT64_MIN);
+#endif
 			}
 		    }
 		    else if (audioTrack->have_aacheader == 1)
@@ -1681,8 +1684,8 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
 	    return cERR_CONTAINER_FFMPEG_ERR;
 	}
 
-	context->output->Command(context, OUTPUT_FLUSH, NULL); // martii
-	context->output->Command(context, OUTPUT_PLAY, NULL); // martii
+	context->output->Command(context, OUTPUT_FLUSH, NULL);
+	context->output->Command(context, OUTPUT_PLAY, NULL);
 	latestPts = 0;
 #if 1
 	if (videoTrack && videoTrack->stream && ((AVStream*) videoTrack->stream)->codec && ((AVStream*) videoTrack->stream)->codec->codec)
@@ -1800,8 +1803,8 @@ static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
 	    return cERR_CONTAINER_FFMPEG_ERR;
 	}
 
-	context->output->Command(context, OUTPUT_FLUSH, NULL); // martii
-	context->output->Command(context, OUTPUT_PLAY, NULL); // martii
+	context->output->Command(context, OUTPUT_FLUSH, NULL);
+	context->output->Command(context, OUTPUT_PLAY, NULL);
 	latestPts = 0;
 #if 1
 	if (videoTrack && videoTrack->stream && ((AVStream*) videoTrack->stream)->codec && ((AVStream*) videoTrack->stream)->codec->codec)

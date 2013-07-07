@@ -163,7 +163,12 @@ status = 1;
 /* Functions                     */
 /* ***************************** */
 
+static int PlaybackStop(Context_t  *context);
+
 static int PlaybackOpen(Context_t  *context, char * uri) {
+    if (context->playback->isPlaying)
+	PlaybackStop(context);
+
     playback_printf(10, "URI=%s\n", uri);
 
     context->playback->uri = strdup(uri);
@@ -311,7 +316,8 @@ static int PlaybackOpen(Context_t  *context, char * uri) {
     }
     else
     {
-        playback_err("playback alread running\n");
+        playback_err("playback already running\n");
+
         return cERR_PLAYBACK_ERROR;
     }
 
@@ -488,7 +494,7 @@ static int PlaybackStop(Context_t  *context) {
 
     playback_printf(10, "\n");
 
-    if (context->playback->isPlaying) {
+    if (context && context->playback && context->playback->isPlaying) {
 
         context->playback->isPaused     = 0;
         context->playback->isPlaying    = 0;

@@ -728,9 +728,6 @@ static void FFMPEGThread(Context_t *context) {
 				if (context->output->audio->Write(context, &avOut) < 0)
 					ffmpeg_err("writing data to audio device failed\n");
 				av_freep(&output);
-#ifdef USE_LIBSWRESAMPLE
-		    		currentAudioPts = pts = swr_next_pts(swr, INT64_MIN);
-#endif
 			}
 		    }
 		    else if (audioTrack->have_aacheader == 1)

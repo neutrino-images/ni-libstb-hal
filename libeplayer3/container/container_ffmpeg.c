@@ -39,6 +39,7 @@
 #include <sys/prctl.h>
 
 #include <libavutil/avutil.h>
+#include <libavutil/time.h>
 #include <libavformat/avformat.h>
 #define USE_LIBSWRESAMPLE
 #ifdef USE_LIBSWRESAMPLE
@@ -141,7 +142,7 @@ void releaseMutex(const char *filename __attribute__((unused)), const const char
     ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
-static char* Codec2Encoding(enum CodecID id, int* version)
+static char* Codec2Encoding(enum AVCodecID id, int* version)
 {
     fprintf(stderr, "Codec ID: %.8lx\n", (long)id);
     switch (id)

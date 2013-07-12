@@ -214,6 +214,7 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
 			player->output->Command(player, OUTPUT_OPEN, NULL);
 			
+			SetAPid(apid, 0);
 			if ( player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0 ) // playback.c uses "int = 0" for "true"
 				ret = true;
 		}
@@ -526,25 +527,29 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
 				if (j < max_numpida) {
-				apids[j]=j;
-				// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-				if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
-					ac3flags[j] = 4;
-				else if(!strncmp("A_AC3",       TrackList[i+1], 5))
-					ac3flags[j] = 1;
-				else if(!strncmp("A_DTS",       TrackList[i+1], 5))
-					ac3flags[j] = 6;
-				else if(!strncmp("A_AAC",       TrackList[i+1], 5))
-					ac3flags[j] = 5;
-				else if(!strncmp("A_PCM",       TrackList[i+1], 5))
-					ac3flags[j] = 0; 	//todo
-				else if(!strncmp("A_VORBIS",    TrackList[i+1], 8))
-					ac3flags[j] = 0;	//todo
-				else if(!strncmp("A_FLAC",      TrackList[i+1], 6))
-					ac3flags[j] = 0;	//todo
-				else
-					ac3flags[j] = 0;	//todo
-				language[j]=std::string(TrackList[i]);
+					int _pid;
+					char _lang[strlen(TrackList[i])];
+					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
+						apids[j]=(uint16_t)_pid;
+						// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
+						if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
+							ac3flags[j] = 4;
+						else if(!strncmp("A_AC3",       TrackList[i+1], 5))
+							ac3flags[j] = 1;
+						else if(!strncmp("A_DTS",       TrackList[i+1], 5))
+							ac3flags[j] = 6;
+						else if(!strncmp("A_AAC",       TrackList[i+1], 5))
+							ac3flags[j] = 5;
+						else if(!strncmp("A_PCM",       TrackList[i+1], 5))
+							ac3flags[j] = 0; 	//todo
+						else if(!strncmp("A_VORBIS",    TrackList[i+1], 8))
+							ac3flags[j] = 0;	//todo
+						else if(!strncmp("A_FLAC",      TrackList[i+1], 6))
+							ac3flags[j] = 0;	//todo
+						else
+							ac3flags[j] = 0;	//todo
+						language[j]=std::string(_lang);
+					}
 				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
@@ -569,8 +574,12 @@ void cPlayback::FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::stri
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
 				if (j < max_numpids) {
-					pids[j]=j;
-					language[j]=std::string(TrackList[i]);
+					int _pid;
+					char _lang[strlen(TrackList[i])];
+					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
+						pids[j]=(uint16_t)_pid;
+						language[j]=std::string(_lang);
+					}
 				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
@@ -595,8 +604,12 @@ void cPlayback::FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::s
 			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
 				if (j < max_numpids) {
-					pids[j]=j;
-					language[j]=std::string(TrackList[i]);
+					int _pid;
+					char _lang[strlen(TrackList[i])];
+					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
+						pids[j]=(uint16_t)_pid;
+						language[j]=std::string(_lang);
+					}
 				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);
@@ -622,11 +635,12 @@ void cPlayback::FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpids, s
 				int type = 0;
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
 				if (j < max_numpids) {
-					if (1 != sscanf(TrackList[i], "%*d %*s %d %*d %*d", &type))
+					int _pid;
+					if (2 != sscanf(TrackList[i], "%d %*s %d %*d %*d", &_pid, &type))
 						continue;
 					if (type != 2 && type != 5) // return subtitles only
 						continue;
-					pids[j]=j;
+					pids[j]=(uint16_t)_pid;
 					language[j]=std::string(TrackList[i]);
 					j++;
 				}
@@ -717,7 +731,7 @@ bool cPlayback::IsPlaying(void) const
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 
-        /* konfetti: there is no event/callback mechanism in libeplayer2
+	/* konfetti: there is no event/callback mechanism in libeplayer2
 	 * so in case of ending playback we have no information on a 
 	 * terminated stream currently (or did I oversee it?).
 	 * So let's ask the player the state.
@@ -725,7 +739,7 @@ bool cPlayback::IsPlaying(void) const
 	if (playing)
 	{
 	   return player->playback->isPlaying;
-        }
+	}
 
 	return playing;
 }

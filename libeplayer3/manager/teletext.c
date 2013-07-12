@@ -114,6 +114,7 @@ static char ** ManagerList(Context_t  *context __attribute__((unused))) {
     teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
     if (Tracks != NULL) {
+
         tracklist = malloc(sizeof(char *) * ((TrackCount*2) + 1));
 
         if (tracklist == NULL)
@@ -123,7 +124,10 @@ static char ** ManagerList(Context_t  *context __attribute__((unused))) {
         }
 
         for (i = 0, j = 0; i < TrackCount; i++, j+=2) {
-            tracklist[j]    = strdup(Tracks[i].Name);
+	    size_t len = strlen(Tracks[i].Name) + 20;
+	    char tmp[len];
+	    snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
+            tracklist[j]    = strdup(tmp);
             tracklist[j+1]  = strdup(Tracks[i].Encoding);
         }
         tracklist[j] = NULL;
@@ -213,23 +217,17 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     case MANAGER_SET: {
-        int id = *((int*)argument);
+	int i;
+        teletext_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, *((int*)argument));
 
-        teletext_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, id);
-
-	if (id >= TrackCount) {
-		int mypid = id;
-		for (id = 0; id < TrackCount; id++) {
-			if (((AVStream *) (Tracks[id].stream))->id == mypid)
-				break;
+	for (i = 0; i < TrackCount; i++)
+		if (Tracks[i].Id == *((int*)argument)) {
+			CurrentTrack = i;
+			break;
 		}
-	}
 
-        if (id < TrackCount)
-            CurrentTrack = id;
-        else
-        {
-            teletext_mgr_err("%s::%s track id out of range (%d - %d)\n", FILENAME, __FUNCTION__, id, TrackCount);
+        if (i == TrackCount) {
+            teletext_mgr_err("%s::%s track id %d unknown\n", FILENAME, __FUNCTION__, *((int*)argument));
             ret = cERR_TELETEXT_MGR_ERROR;
         }
         break;

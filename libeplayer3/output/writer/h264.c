@@ -366,8 +366,6 @@ static int writeReverseData(void* _call)
 {
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
 
-#ifndef old_reverse_playback
-
     h264_printf(10, "\n");
 
     if (call == NULL)
@@ -391,13 +389,6 @@ static int writeReverseData(void* _call)
     }
 
     return 0;
-
-#else
-
-    return 0;
-
-#endif
-
 }
 /* ***************************** */
 /* Writer  Definition            */

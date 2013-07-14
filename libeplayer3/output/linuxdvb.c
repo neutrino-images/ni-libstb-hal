@@ -609,59 +609,6 @@ int LinuxDvbFastForward(Context_t  *context, char * type) {
 
 int LinuxDvbReverse(Context_t  *context __attribute__((unused)), char * type __attribute__((unused))) {
     int ret = cERR_LINUXDVB_NO_ERROR;
-#ifdef reverse_playback_2
-    int speed;
-
-    unsigned char video = !strcmp("video", type);
-    unsigned char audio = !strcmp("audio", type);
-
-    linuxdvb_printf(10, "v%d a%d\n", video, audio);
-
-    if (context->playback->Speed >= 0)
-    {
-        linuxdvb_err("error speed is greater 0, but should be a neg value in skipped frames (or zero)\n");
-        return cERR_LINUXDVB_ERROR;
-    }
-
-    /* speed == 0 indicates end of trick mode, otherwise negative value of skipped frames
-     * multiplicated with DVB_SPEED_NORMAL_PLAY (currently 1000)
-     */
-    speed = (context->playback->Speed == 0) ? DVB_SPEED_REVERSE_STOPPED :
-            context->playback->Speed * DVB_SPEED_NORMAL_PLAY;
-
-    linuxdvb_printf(10, "speed %d - %d\n", speed, context->playback->Speed);
-    
-    if (video && videofd != -1) {
-
-        getLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
-
-        if (ioctl(videofd, VIDEO_SET_SPEED, speed) == -1)
-        {
-            linuxdvb_err("ioctl failed with errno %d\n", errno);
-            linuxdvb_err("VIDEO_SET_SPEED: %s\n", strerror(errno));
-            ret = cERR_LINUXDVB_ERROR;
-        }
-
-        releaseLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
-    }
-
-    if (audio && audiofd != -1) {
-
-        getLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
-
-        if (ioctl(audiofd, AUDIO_SET_SPEED, speed) == -1)
-        {
-            linuxdvb_err("ioctl failed with errno %d\n", errno);
-            linuxdvb_err("AUDIO_SET_SPEED: %s\n", strerror(errno));
-            ret = cERR_LINUXDVB_ERROR;
-        }
-
-        releaseLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
-    }
-
-    linuxdvb_printf(10, "exiting with value %d\n", ret);
-
-#endif
     return ret;
 }
 

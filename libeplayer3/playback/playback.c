@@ -610,82 +610,6 @@ static int PlaybackFastForward(Context_t  *context, int* speed) {
     return ret;
 }
 
-#ifdef reverse_playback_1
-static pthread_t FBThread;
-/* konfetti: see below */
-static unsigned char isFBThreadStarted = 0;
-
-static void FastBackwardThread(Context_t *context)
-{
-    playback_printf(10, "\n");
-
-    context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
-    while(context->playback && context->playback->isPlaying && context->playback->BackWard)
-    {
-        context->playback->isSeeking = 1;
-        context->output->Command(context, OUTPUT_CLEAR, NULL);
-        context->output->Command(context, OUTPUT_PAUSE, NULL);
-        context->output->Command(context, OUTPUT_CLEAR, NULL);
-        context->container->selectedContainer->Command(context, CONTAINER_SEEK, &context->playback->BackWard);
-        context->output->Command(context, OUTPUT_CLEAR, NULL);
-        context->playback->isSeeking = 0;
-        context->output->Command(context, OUTPUT_CONTINUE, NULL);
-
-        //context->container->selectedContainer->Command(context, CONTAINER_SEEK, &context->playback->BackWard);
-        //context->output->Command(context, OUTPUT_CLEAR, "video");
-        usleep(500000);
-    }
-    //context->output->Command(context, OUTPUT_CLEAR, NULL);
-    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
-    isFBThreadStarted = 0;
-
-    playback_printf(10, "exit\n");
-}
-
-static int PlaybackFastBackward(Context_t  *context,int* speed) {
-    int ret = cERR_PLAYBACK_NO_ERROR;
-    int error;
-    pthread_attr_t attr;
-
-    playback_printf(10, "speed %d\n", *speed);
-
-    /* Audio only backwarding not supported */
-    if (context->playback->isVideo && !context->playback->isHttp && !context->playback->isForwarding && (!context->playback->isPaused || context->playback->isPlaying)) {
-        
-        if ((*speed > 0) || (*speed < cMaxSpeed_fr))
-        {
-            playback_err("speed %d out of range (0 - %d) \n", *speed, cMaxSpeed_fr);
-            return cERR_PLAYBACK_ERROR;
-        }
-
-        context->playback->BackWard = -(*speed);
-
-        playback_printf(20, "Speed: %d x {%f}\n", *speed, context->playback->BackWard);
-
-        if(!isFBThreadStarted)
-        {
-            pthread_attr_init(&attr);
-            pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-            if((error = pthread_create(&FBThread, &attr, (void *)&FastBackwardThread, context)) != 0)
-            {
-                playback_err("Error creating thread error:%d:%s\n",error,strerror(error));
-                isFBThreadStarted = 0;
-                ret = cERR_PLAYBACK_ERROR;
-            } else
-                isFBThreadStarted = 1;
-        }
-    } else
-    {
-        playback_err("fast backward not possible\n");
-        ret = cERR_PLAYBACK_ERROR;
-    }
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
-}
-#else
 static int PlaybackFastBackward(Context_t  *context,int* speed) {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -734,8 +658,6 @@ static int PlaybackFastBackward(Context_t  *context,int* speed) {
 
     return ret;
 }
-#endif
-
 
 static int PlaybackSlowMotion(Context_t  *context,int* speed) {
     int ret = cERR_PLAYBACK_NO_ERROR;

@@ -92,6 +92,7 @@ typedef struct avcC_s
 /* ***************************** */
 const unsigned char Head[]                  = {0, 0, 0, 1};
 static int initialHeader = 1;
+//static int NoOtherBeginningFound = 1;
 static unsigned int        NalLengthBytes          = 1;
 
 /* ***************************** */
@@ -105,6 +106,7 @@ static unsigned int        NalLengthBytes          = 1;
 static int reset()
 {
     initialHeader = 1;
+    //NoOtherBeginningFound = 1;
     return 0;
 }
 
@@ -117,10 +119,6 @@ static int writeData(void* _call)
     unsigned int            TimeDelta;
     unsigned int            TimeScale;
     int                     len = 0;
-#if 0
-// This should at least be set to 1 in reset(), but seems to make playback unreliable. Disabled for now. --martii
-    static int              NoOtherBeginningFound = 1;
-#endif
     int ic = 0;
     struct iovec iov[128];
     h264_printf(10, "\n");
@@ -149,11 +147,10 @@ static int writeData(void* _call)
         return 0;
     }
 
-#if 0
 // This seems to make playback unreliable. Disabled for now. --martii
-    if((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-       (call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x01 && NoOtherBeginningFound) ||
-            (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))
+    if((call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+       //(call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x01 && NoOtherBeginningFound) ||
+            (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff)))
     {
 	unsigned int PacketLength = 0;
         unsigned int FakeStartCode = (call->Version << 8) | PES_VERSION_FAKE_START_CODE;
@@ -175,8 +172,7 @@ static int writeData(void* _call)
         iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
 	return writev(call->fd, iov, ic);
     }
-    NoOtherBeginningFound = 0;
-#endif
+    //NoOtherBeginningFound = 0;
 
     if (initialHeader)
     {

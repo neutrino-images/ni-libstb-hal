@@ -135,10 +135,7 @@ static int mutexInitialized = 0;
 
 static void initMutex(void)
 {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
-    pthread_mutex_init(&mutex, &attr);
+    pthread_mutex_init(&mutex, NULL);
     mutexInitialized = 1;
 }
 

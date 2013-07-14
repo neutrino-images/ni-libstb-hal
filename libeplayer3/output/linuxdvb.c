@@ -712,10 +712,12 @@ int LinuxDvbPts(Context_t  *context __attribute__((unused)), unsigned long long 
     else
 	linuxdvb_err("VIDEO_GET_PTS: %d (%s)\n", errno, strerror(errno));
 
-    if (audiofd > -1 && ret != cERR_LINUXDVB_NO_ERROR && !ioctl(audiofd, AUDIO_GET_PTS, (void*)&sCURRENT_PTS))
-	ret = cERR_LINUXDVB_NO_ERROR;
-    else
-	linuxdvb_err("AUDIO_GET_PTS: %d (%s)\n", errno, strerror(errno));
+    if (ret != cERR_LINUXDVB_NO_ERROR) {
+	if (audiofd > -1 && !ioctl(audiofd, AUDIO_GET_PTS, (void*)&sCURRENT_PTS))
+		ret = cERR_LINUXDVB_NO_ERROR;
+	else
+		linuxdvb_err("AUDIO_GET_PTS: %d (%s)\n", errno, strerror(errno));
+    }
 
     if (ret != cERR_LINUXDVB_NO_ERROR)
         sCURRENT_PTS = 0;

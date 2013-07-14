@@ -131,15 +131,29 @@ static int container_ffmpeg_seek_rel(Context_t *context, off_t pos, long long in
 /* MISC Functions                */
 /* ***************************** */
 
-void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line) {
+static int mutexInitialized = 0;
+
+static void initMutex(void)
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
+    pthread_mutex_init(&mutex, &attr);
+    mutexInitialized = 1;
+}
+
+static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line) {
     ffmpeg_printf(100, "::%d requesting mutex\n", line);
+
+    if (!mutexInitialized)
+	initMutex();
 
     pthread_mutex_lock(&mutex);
 
     ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line) {
+static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line) {
     pthread_mutex_unlock(&mutex);
 
     ffmpeg_printf(100, "::%d released mutex\n", line);
@@ -400,8 +414,9 @@ static void FFMPEGThread(Context_t *context) {
 		      bofcount = 1;
 		  }
 	      }
-
 	}
+
+	getMutex(FILENAME, __FUNCTION__,__LINE__);
 
 	if (do_seek_target_seconds || do_seek_target_bytes) {
 		if (do_seek_target_seconds) {
@@ -421,8 +436,6 @@ static void FFMPEGThread(Context_t *context) {
 	      showtime = av_gettime() + 300000; //jump back all 300ms
 	      context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
 	}
-
-	getMutex(FILENAME, __FUNCTION__,__LINE__);
 
 	if (av_read_frame(avContext, &packet) == 0 )
 	{

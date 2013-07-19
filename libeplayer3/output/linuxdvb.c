@@ -952,7 +952,7 @@ static int Write(void  *_context, void* _out)
             if (writer->writeData)
                 res = writer->writeData(&call);
 
-            if (res <= 0)
+            if (res < 0)
             {
                 linuxdvb_err("failed to write data %d - %d\n", res, errno);
                 linuxdvb_err("%s\n", strerror(errno));
@@ -994,7 +994,7 @@ static int Write(void  *_context, void* _out)
             if (writer->writeData)
                 res = writer->writeData(&call);
 
-            if (res <= 0)
+            if (res < 0)
             {
                 linuxdvb_err("failed to write data %d - %d\n", res, errno);
                 linuxdvb_err("%s\n", strerror(errno));

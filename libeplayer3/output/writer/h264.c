@@ -147,8 +147,8 @@ static int writeData(void* _call)
         return 0;
     }
 
-// This seems to make playback unreliable. Disabled for now. --martii
     if((call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+// This seems to make playback unreliable. Disabled for now. --martii
        //(call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x01 && NoOtherBeginningFound) ||
             (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff)))
     {
@@ -291,61 +291,53 @@ static int writeData(void* _call)
     unsigned int NalStart      = 0;
     unsigned int VideoPosition = 0;
 
-    ic = 0;
     do {
-        unsigned int   NalLength;
-        unsigned char  NalData[4];
-        int            NalPresent = 1;
+		unsigned int   NalLength;
+		unsigned char  NalData[4];
+		int NalPresent = 1;
 
-        memcpy (NalData, call->data + VideoPosition, NalLengthBytes);
-        VideoPosition += NalLengthBytes;
-	NalStart += NalLengthBytes;
-	switch(NalLengthBytes) {
-		case 1:  NalLength = (NalData[0]); break;
-		case 2:  NalLength = (NalData[0] <<  8) | (NalData[1]); break;
-		case 3:  NalLength = (NalData[0] << 16) | (NalData[1] <<  8) | (NalData[2]); break;
-		default: NalLength = (NalData[0] << 24) | (NalData[1] << 16) | (NalData[2] << 8) | (NalData[3]); break;
-	}
-
-        h264_printf(20, "NalStart = %u + NalLength = %u > SampleSize = %u\n", NalStart, NalLength, SampleSize);
-
-        if (NalStart + NalLength > SampleSize) {
-
-            h264_printf(20, "nal length past end of buffer - size %u frame offset %u left %u\n",
-                        NalLength, NalStart , SampleSize - NalStart );
-
-            NalStart    = SampleSize;
-        } else {
-            NalStart               += NalLength;
-            while (NalLength > 0) {
-                unsigned int   PacketLength     = (NalLength < BUFFER_SIZE) ? NalLength : BUFFER_SIZE;
-                NalLength      -= PacketLength;
-
-		ic = 0;
-		iov[ic++].iov_base = PesHeader;
-
-                if (NalPresent) {
-                	NalPresent      = 0;
-			iov[ic].iov_base = (char *)Head;
-			iov[ic++].iov_len = sizeof(Head);
-                	PacketLength   += sizeof(Head);
+		memcpy (NalData, call->data + VideoPosition, NalLengthBytes);
+		VideoPosition += NalLengthBytes;
+		NalStart += NalLengthBytes;
+		switch(NalLengthBytes) {
+			case 1:  NalLength = (NalData[0]); break;
+			case 2:  NalLength = (NalData[0] <<  8) | (NalData[1]); break;
+			case 3:  NalLength = (NalData[0] << 16) | (NalData[1] <<  8) | (NalData[2]); break;
+			default: NalLength = (NalData[0] << 24) | (NalData[1] << 16) | (NalData[2] << 8) | (NalData[3]); break;
 		}
 
-		iov[ic].iov_base = call->data + VideoPosition;
-		iov[ic++].iov_len = PacketLength;
-		VideoPosition    += PacketLength;
+		h264_printf(20, "NalStart = %u + NalLength = %u > SampleSize = %u\n", NalStart, NalLength, SampleSize);
 
-                h264_printf (20, "  pts=%llu\n", VideoPts);
+		if (NalStart + NalLength > SampleSize) {
+			h264_printf(20, "nal length past end of buffer - size %u frame offset %u left %u\n",
+				NalLength, NalStart , SampleSize - NalStart );
 
-                iov[0].iov_len = InsertPesHeader (PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, VideoPts, 0);
-		ssize_t l = writev(call->fd, iov, ic);
-		if (l < 0)
-			return l;
-		len += l;
+			NalStart = SampleSize;
+		} else {
+			NalStart += NalLength;
+			ic = 0;
+			iov[ic++].iov_base = PesHeader;
 
-                VideoPts        = INVALID_PTS_VALUE;
-            }
-        }
+			if (NalPresent) {
+				NalPresent = 0;
+				iov[ic].iov_base = (char *)Head;
+				iov[ic++].iov_len = sizeof(Head);
+			}
+
+			iov[ic].iov_base = call->data + VideoPosition;
+			iov[ic++].iov_len = NalLength;
+			VideoPosition += NalLength;
+
+			h264_printf (20, "  pts=%llu\n", VideoPts);
+
+			iov[0].iov_len = InsertPesHeader (PesHeader, NalLength, MPEG_VIDEO_PES_START_CODE, VideoPts, 0);
+			ssize_t l = writev(call->fd, iov, ic);
+			if (l < 0)
+				return l;
+			len += l;
+
+			VideoPts = INVALID_PTS_VALUE;
+		}
     } while (NalStart < SampleSize);
 
     if (len < 0)

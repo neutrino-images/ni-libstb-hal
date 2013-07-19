@@ -310,7 +310,7 @@ static int PlaybackOpen(Context_t  *context, char * uri) {
 
         } /* upnp */
         else {
-            playback_err("Unknown stream!\n");
+            playback_err("Unknown stream (%s)\n", uri);
             return cERR_PLAYBACK_ERROR;
         }
     }

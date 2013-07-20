@@ -40,7 +40,6 @@
 
 #include "common.h"
 #include "output.h"
-#include "stm_ioctls.h"
 #include "writer.h"
 #include "misc.h"
 #include "pes.h"

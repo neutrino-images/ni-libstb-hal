@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
+#include <linux/dvb/stm_ioctls.h>
 #include <memory.h>
 #include <asm/types.h>
 #include <pthread.h>
@@ -38,7 +39,6 @@
 
 #include "common.h"
 #include "output.h"
-#include "stm_ioctls.h"
 #include "writer.h"
 #include "misc.h"
 #include "pes.h"

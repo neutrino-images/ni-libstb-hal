@@ -426,6 +426,12 @@ static void FFMPEGThread(Context_t *context) {
 		restart_audio_resampling = 1;
 		latestPts = 0;
 		seek_target_flag = 0;
+
+		// flush streams
+		unsigned int i;
+		for (i = 0; i < avContext->nb_streams; i++)
+			if (avContext->streams[i]->codec && avContext->streams[i]->codec->codec)
+				avcodec_flush_buffers(avContext->streams[i]->codec);
 	}
 
 	if (context->playback->BackWard) {
@@ -529,12 +535,6 @@ static void FFMPEGThread(Context_t *context) {
 
 			if (restart_audio_resampling) {
 				restart_audio_resampling = 0;
-
-				// flush streams
-				unsigned int i;
-				for (i = 0; i < avContext->nb_streams; i++)
-					if (avContext->streams[i]->codec && avContext->streams[i]->codec->codec)
-						avcodec_flush_buffers(avContext->streams[i]->codec);
 #ifdef USE_LIBSWRESAMPLE
 				if (swr) {
 					swr_free(&swr);

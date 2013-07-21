@@ -454,8 +454,7 @@ static void FFMPEGThread(Context_t *context) {
 
 	    ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, pid);
 
-	    if (videoTrack != NULL) {
-		if (videoTrack->Id == pid) {
+	    if (videoTrack && (videoTrack->Id == pid)) {
 		    currentVideoPts = videoTrack->pts = pts = calcPts(videoTrack->stream, packet.pts);
 
 		    if ((currentVideoPts > latestPts) && (currentVideoPts != INVALID_PTS_VALUE))
@@ -477,11 +476,7 @@ static void FFMPEGThread(Context_t *context) {
 		    if (context->output->video->Write(context, &avOut) < 0) {
 			ffmpeg_err("writing data to video device failed\n");
 		    }
-		}
-	    }
-
-	    if (audioTrack != NULL) {
-		if (audioTrack->Id == pid) {
+	    } else if (audioTrack && (audioTrack->Id == pid)) {
 		    currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, packet.pts);
 
 		    if ((currentAudioPts > latestPts) && (!videoTrack))
@@ -534,7 +529,6 @@ static void FFMPEGThread(Context_t *context) {
 
 			while(avpkt.size > 0)
 			{
-
 				int got_frame = 0;
 				if (!decoded_frame) {
 					if (!(decoded_frame = avcodec_alloc_frame())) {
@@ -659,7 +653,6 @@ static void FFMPEGThread(Context_t *context) {
 		    }
 		    else
 		    {
-
 			avOut.data       = packet.data;
 			avOut.len        = packet.size;
 			avOut.pts        = pts;
@@ -676,11 +669,9 @@ static void FFMPEGThread(Context_t *context) {
 			    ffmpeg_err("writing data to audio device failed\n");
 			}
 		    }
-		}
 	    }
 
-	    if (subtitleTrack != NULL) {
-		if (subtitleTrack->Id == pid) {
+	    if (subtitleTrack && (subtitleTrack->Id == pid)) {
 		    float duration=3.0;
 		    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
@@ -785,10 +776,8 @@ static void FFMPEGThread(Context_t *context) {
 			    free(line);
 			}
 		    } /* duration */
-		}
 	    }
-	    if (dvbsubtitleTrack != NULL) {
-		if (dvbsubtitleTrack->Id == pid) {
+	    else if (dvbsubtitleTrack && (dvbsubtitleTrack->Id == pid)) {
 		    dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, packet.pts);
 
 		    ffmpeg_printf(200, "DvbSubTitle index = %d\n",pid);
@@ -808,10 +797,7 @@ static void FFMPEGThread(Context_t *context) {
 		    {
 			//ffmpeg_err("writing data to dvbsubtitle fifo failed\n");
 		    }
-		}
-	    }
-	    if (teletextTrack != NULL) {
-		if (teletextTrack->Id == pid) {
+	    } else if (teletextTrack && (teletextTrack->Id == pid)) {
 		    teletextTrack->pts = pts = calcPts(teletextTrack->stream, packet.pts);
 
 		    ffmpeg_printf(200, "TeleText index = %d\n",pid);
@@ -831,7 +817,6 @@ static void FFMPEGThread(Context_t *context) {
 		    {
 			//ffmpeg_err("writing data to teletext fifo failed\n");
 		    }
-		}
 	    }
 
 	    if (packet.data)
@@ -1001,6 +986,9 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
 	if (encoding != NULL)
 	   ffmpeg_printf(1, "%d. encoding = %s - version %d\n", n, encoding, version);
+
+	if (!stream->id)
+		stream->id = n;
 
 	/* some values in track are unset and therefor copyTrack segfaults.
 	 * so set it by default to NULL!

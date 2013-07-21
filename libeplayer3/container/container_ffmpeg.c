@@ -598,7 +598,7 @@ static void FFMPEGThread(Context_t *context) {
 				uint8_t *output = NULL;
 				int in_samples = decoded_frame->nb_samples;
 				int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
-				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 0);
+				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
 				if (e < 0) {
 					fprintf(stderr, "av_samples_alloc: %d\n", -e);
 					continue;

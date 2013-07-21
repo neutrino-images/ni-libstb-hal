@@ -41,12 +41,7 @@
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
 #include <libavformat/avformat.h>
-#define USE_LIBSWRESAMPLE
-#ifdef USE_LIBSWRESAMPLE
-# include <libswresample/swresample.h>
-#else
-# include <libavresample/avresample.h>
-#endif
+#include <libswresample/swresample.h>
 #include <libavutil/opt.h>
 
 #include "common.h"
@@ -156,121 +151,114 @@ static void releaseMutex(const char *filename __attribute__((unused)), const con
     ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
-static char* Codec2Encoding(enum AVCodecID id, int* version)
+static char* Codec2Encoding(AVCodecContext *codec, int* version)
 {
-    fprintf(stderr, "Codec ID: %.8lx\n", (long)id);
-    switch (id)
+    fprintf(stderr, "Codec ID: %ld (%.8lx)\n", (long)codec->codec_id, (long)codec->codec_id);
+    switch (codec->codec_id)
     {
-    case CODEC_ID_MPEG1VIDEO:
+    case AV_CODEC_ID_MPEG1VIDEO:
         return "V_MPEG1";
-    case CODEC_ID_MPEG2VIDEO:
+    case AV_CODEC_ID_MPEG2VIDEO:
         return "V_MPEG1";
-    case CODEC_ID_H263:
-    case CODEC_ID_H263P:
-    case CODEC_ID_H263I:
+    case AV_CODEC_ID_H263:
+    case AV_CODEC_ID_H263P:
+    case AV_CODEC_ID_H263I:
         return "V_H263";
-    case CODEC_ID_FLV1:
+    case AV_CODEC_ID_FLV1:
         return "V_FLV";
-    case CODEC_ID_VP5:
-    case CODEC_ID_VP6:
-    case CODEC_ID_VP6F:
+    case AV_CODEC_ID_VP5:
+    case AV_CODEC_ID_VP6:
+    case AV_CODEC_ID_VP6F:
         return "V_VP6";
-    case CODEC_ID_RV10:
-    case CODEC_ID_RV20:
+    case AV_CODEC_ID_RV10:
+    case AV_CODEC_ID_RV20:
         return "V_RMV";
-    case CODEC_ID_MPEG4:
-    case CODEC_ID_MSMPEG4V1:
-    case CODEC_ID_MSMPEG4V2:
-    case CODEC_ID_MSMPEG4V3:
+    case AV_CODEC_ID_MPEG4:
+    case AV_CODEC_ID_MSMPEG4V1:
+    case AV_CODEC_ID_MSMPEG4V2:
+    case AV_CODEC_ID_MSMPEG4V3:
         return "V_MSCOMP";
-    case CODEC_ID_WMV1:
+    case AV_CODEC_ID_WMV1:
         *version = 1;
         return "V_WMV";
-    case CODEC_ID_WMV2:
+    case AV_CODEC_ID_WMV2:
         *version = 2;
         return "V_WMV";
-    case CODEC_ID_WMV3:
+    case AV_CODEC_ID_WMV3:
         *version = 3;
         return "V_WMV";
-    case CODEC_ID_VC1:
+    case AV_CODEC_ID_VC1:
         return "V_VC1";
-    case CODEC_ID_H264:
+    case AV_CODEC_ID_H264:
         return "V_MPEG4/ISO/AVC";
-    case CODEC_ID_AVS:
+    case AV_CODEC_ID_AVS:
         return "V_AVS";
-    case CODEC_ID_MP2:
+    case AV_CODEC_ID_MP2:
         return "A_MPEG/L3";
-    case CODEC_ID_MP3:
+    case AV_CODEC_ID_MP3:
         return "A_MP3";
-    case CODEC_ID_AAC:
-#if 1
-        return "A_IPCM";
-#else
+#if 0
+    case AV_CODEC_ID_AAC:
         return "A_AAC";
 #endif
-    case CODEC_ID_AC3:
+    case AV_CODEC_ID_AC3:
         return "A_AC3";
-    case CODEC_ID_DTS:
+    case AV_CODEC_ID_DTS:
         return "A_DTS";
-    case CODEC_ID_WMAV1:
-    case CODEC_ID_WMAV2:
-    case 86056: //CODEC_ID_WMAPRO
-#if 1
-        return "A_IPCM";
-#else
+#if 0
+    case AV_CODEC_ID_WMAV1:
+    case AV_CODEC_ID_WMAV2:
+    case AV_CODEC_ID_WMAPRO:
         return "A_WMA";
-#endif
-    case CODEC_ID_MLP:
+    case AV_CODEC_ID_MLP:
         return "A_MLP";
-    case CODEC_ID_RA_144:
+    case AV_CODEC_ID_RA_144:
         return "A_RMA";
-    case CODEC_ID_RA_288:
+    case AV_CODEC_ID_RA_288:
         return "A_RMA";
-    case CODEC_ID_VORBIS:
-        return "A_IPCM"; //return "A_VORBIS";
-    case CODEC_ID_FLAC: //86030
-        return "A_IPCM"; //return "A_FLAC";
+    case AV_CODEC_ID_VORBIS:
+        return "A_VORBIS";
+    case AV_CODEC_ID_FLAC:
+        return return "A_FLAC";
     case AV_CODEC_ID_PCM_S16LE:
-#if 1
-        return "A_IPCM";
-#else
 	return "A_PCM";
 #endif
 /* subtitle */
-    case CODEC_ID_SSA:
+    case AV_CODEC_ID_SSA:
         return "S_TEXT/ASS"; /* Hellmaster1024: seems to be ASS instead of SSA */
-    case CODEC_ID_TEXT: /* Hellmaster1024: i dont have most of this, but lets hope it is normal text :-) */
-    case CODEC_ID_DVD_SUBTITLE:
-    case CODEC_ID_DVB_SUBTITLE:
-    case CODEC_ID_XSUB:
-    case CODEC_ID_MOV_TEXT:
-    case CODEC_ID_HDMV_PGS_SUBTITLE:
-    case CODEC_ID_DVB_TELETEXT:
+    case AV_CODEC_ID_TEXT: /* Hellmaster1024: i dont have most of this, but lets hope it is normal text :-) */
+    case AV_CODEC_ID_DVD_SUBTITLE:
+    case AV_CODEC_ID_DVB_SUBTITLE:
+    case AV_CODEC_ID_XSUB:
+    case AV_CODEC_ID_MOV_TEXT:
+    case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
+    case AV_CODEC_ID_DVB_TELETEXT:
         return "S_TEXT/SRT"; /* fixme */
-    case CODEC_ID_SRT:
+    case AV_CODEC_ID_SRT:
         return "S_TEXT/SRT"; /* fixme */
     default:
-        ffmpeg_err("ERROR! CODEC NOT FOUND -> %d\n",id);
+	// Default to injected-pcm for unhandled audio types. --martii
+	if (codec->codec_type == AVMEDIA_TYPE_AUDIO)
+		return "A_IPCM";
+    	ffmpeg_err("Codec ID: %ld (%.8lx) not found\n", (long)codec->codec_id, (long)codec->codec_id);
     }
     return NULL;
 }
 
-long long int calcPts(AVStream* stream, AVPacket* packet)
+long long int calcPts(AVStream* stream, int64_t pts)
 {
-    long long int pts;
-
-    if ((stream == NULL) || (packet == NULL))
+    if (!stream)
     {
         ffmpeg_err("stream / packet null\n");
         return INVALID_PTS_VALUE;
     }
 
-    if(packet->pts == AV_NOPTS_VALUE)
+    if(pts == AV_NOPTS_VALUE)
         pts = INVALID_PTS_VALUE;
     else if (avContext->start_time == AV_NOPTS_VALUE)
-        pts = 90000.0 * (double)packet->pts * av_q2d(stream->time_base);
+        pts = 90000.0 * (double)pts * av_q2d(stream->time_base);
     else
-        pts = 90000.0 * (double)packet->pts * av_q2d(stream->time_base) - 90000.0 * avContext->start_time / AV_TIME_BASE;
+        pts = 90000.0 * (double)pts * av_q2d(stream->time_base) - 90000.0 * avContext->start_time / AV_TIME_BASE;
 
     if (pts & 0x8000000000000000ull)
         pts = INVALID_PTS_VALUE;
@@ -348,11 +336,7 @@ static void FFMPEGThread(Context_t *context) {
     int           err = 0;
     AudioVideoOut_t avOut;
 
-#ifdef USE_LIBSWRESAMPLE
     SwrContext *swr = NULL;
-#else
-    AVAudioResampleContext *avr = NULL;
-#endif
     AVFrame *decoded_frame = NULL;
     int out_sample_rate = 44100;
     uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
@@ -471,7 +455,7 @@ static void FFMPEGThread(Context_t *context) {
 
 	    if (videoTrack != NULL) {
 		if (videoTrack->Id == pid) {
-		    currentVideoPts = videoTrack->pts = pts = calcPts(videoTrack->stream, &packet);
+		    currentVideoPts = videoTrack->pts = pts = calcPts(videoTrack->stream, packet.pts);
 
 		    if ((currentVideoPts > latestPts) && (currentVideoPts != INVALID_PTS_VALUE))
 			latestPts = currentVideoPts;
@@ -497,7 +481,7 @@ static void FFMPEGThread(Context_t *context) {
 
 	    if (audioTrack != NULL) {
 		if (audioTrack->Id == pid) {
-		    currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, &packet);
+		    currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, packet.pts);
 
 		    if ((currentAudioPts > latestPts) && (!videoTrack))
 			latestPts = currentAudioPts;
@@ -535,18 +519,10 @@ static void FFMPEGThread(Context_t *context) {
 
 			if (restart_audio_resampling) {
 				restart_audio_resampling = 0;
-#ifdef USE_LIBSWRESAMPLE
 				if (swr) {
 					swr_free(&swr);
 					swr = NULL;
 				}
-#else
-				if (avr) {
-					avresample_close(avr);
-					avresample_free(&avr);
-					avr = NULL;
-				}
-#endif
 				if (decoded_frame) {
 					avcodec_free_frame(&decoded_frame);
 					decoded_frame = NULL;
@@ -580,22 +556,14 @@ static void FFMPEGThread(Context_t *context) {
 					continue;
 
 				int e;
-#ifdef USE_LIBSWRESAMPLE
 				if (!swr) {
-#else
-				if (!avr) {
-#endif
 					int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
 					int *rate = rates;
 					int in_rate = c->sample_rate;
 					while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
 						rate++;
 					out_sample_rate = *rate ? *rate : 44100;
-#ifdef USE_LIBSWRESAMPLE
 					swr = swr_alloc();
-#else
-					avr = avresample_alloc_context();
-#endif
 					if (c->channel_layout == 0) {
 						// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
 						c->channel_layout = AV_CH_LAYOUT_STEREO;
@@ -605,7 +573,6 @@ static void FFMPEGThread(Context_t *context) {
 					// player2 won't play mono
 					out_channel_layout = (c->channel_layout == AV_CH_LAYOUT_MONO) ? AV_CH_LAYOUT_STEREO : c->channel_layout;
 
-#ifdef USE_LIBSWRESAMPLE
 					av_opt_set_int(swr, "in_channel_layout",	c->channel_layout,	0);
 					av_opt_set_int(swr, "out_channel_layout",	out_channel_layout,	0);
 					av_opt_set_int(swr, "in_sample_rate",		c->sample_rate,		0);
@@ -621,50 +588,26 @@ static void FFMPEGThread(Context_t *context) {
 						swr_free(&swr);
 						swr = NULL;
 					}
-#else
-					av_opt_set_int(avr, "in_channel_layout",	c->channel_layout,	0);
-					av_opt_set_int(avr, "out_channel_layout",	out_channel_layout,	0);
-					av_opt_set_int(avr, "in_sample_rate",		c->sample_rate,		0);
-					av_opt_set_int(avr, "out_sample_rate",		out_sample_rate,	0);
-					av_opt_set_int(avr, "in_sample_fmt",		c->sample_fmt,		0);
-					av_opt_set_int(avr, "out_sample_fmt",		AV_SAMPLE_FMT_S16,	0);
-
-					e = avresample_open(avr);
-					if (e < 0) {
-						fprintf(stderr, "avresample_open: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
-							-e,
-							(int)c->channel_layout, (int)out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
-						avresample_free(&avr);
-						avr = NULL;
-					}
-#endif
 				}
 
 				uint8_t *output = NULL;
-#ifdef USE_LIBSWRESAMPLE
 				int in_samples = decoded_frame->nb_samples;
 				int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
-				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
+				e = av_samples_alloc(&output, NULL, 2, out_samples, AV_SAMPLE_FMT_S16, 0);
 				if (e < 0) {
 					fprintf(stderr, "av_samples_alloc: %d\n", -e);
 					continue;
 				}
-
+				int64_t next_in_pts = av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
+								 ((AVStream*) audioTrack->stream)->time_base.num * (int64_t)out_sample_rate * c->sample_rate,
+								 ((AVStream*) audioTrack->stream)->time_base.den);
+				int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
+								 ((AVStream*) audioTrack->stream)->time_base.den,
+								 ((AVStream*) audioTrack->stream)->time_base.num * (int64_t)out_sample_rate * c->sample_rate);
+				currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, next_out_pts);
+//fprintf(stderr, "apts=%lld vpts=%lld diff=%lldd\n",pts,videoTrack->pts,pts - videoTrack->pts);
 				out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
-#else
-				int in_samples = decoded_frame->nb_samples;
-				int out_linesize;
-				int out_samples = avresample_available(avr)
-					+ av_rescale_rnd(avresample_get_delay(avr) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
-				e = av_samples_alloc(&output, &out_linesize, 2, out_samples, AV_SAMPLE_FMT_S16, 1);
-				if (e < 0) {
-					fprintf(stderr, "av_samples_alloc: %d\n", -e);
-					continue;
-				}
 
-				out_samples = avresample_convert(avr, &output, out_linesize, out_samples,
-								      &decoded_frame->data[0], decoded_frame->linesize[0], in_samples);
-#endif
 				pcmPrivateData_t extradata;
 
 				extradata.uSampleRate = out_sample_rate;
@@ -736,7 +679,7 @@ static void FFMPEGThread(Context_t *context) {
 		    float duration=3.0;
 		    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
-		    pts = calcPts(subtitleTrack->stream, &packet);
+		    pts = calcPts(subtitleTrack->stream, packet.pts);
 
 		    if ((pts > latestPts) && (!videoTrack) && (!audioTrack))
 			latestPts = pts;
@@ -749,7 +692,7 @@ static void FFMPEGThread(Context_t *context) {
 			duration=((float)packet.duration)/1000.0;
 		    else if(packet.convergence_duration != 0 && packet.convergence_duration != AV_NOPTS_VALUE )
 			duration=((float)packet.convergence_duration)/1000.0;
-		    else if(((AVStream*)subtitleTrack->stream)->codec->codec_id == CODEC_ID_SSA)
+		    else if(((AVStream*)subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA)
 		    {
 			/*Hellmaster1024 if the duration is not stored in packet.duration or
 			  packet.convergence_duration we need to calculate it any other way, for SSA it is stored in
@@ -802,7 +745,7 @@ static void FFMPEGThread(Context_t *context) {
 
 			}
 			else
-			if(((AVStream*)subtitleTrack->stream)->codec->codec_id == CODEC_ID_SSA)
+			if(((AVStream*)subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA)
 			{
 			    SubtitleData_t data;
 
@@ -841,7 +784,7 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 	    if (dvbsubtitleTrack != NULL) {
 		if (dvbsubtitleTrack->Id == pid) {
-		    dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, &packet);
+		    dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, packet.pts);
 
 		    ffmpeg_printf(200, "DvbSubTitle index = %d\n",pid);
 
@@ -864,7 +807,7 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 	    if (teletextTrack != NULL) {
 		if (teletextTrack->Id == pid) {
-		    teletextTrack->pts = pts = calcPts(teletextTrack->stream, &packet);
+		    teletextTrack->pts = pts = calcPts(teletextTrack->stream, packet.pts);
 
 		    ffmpeg_printf(200, "TeleText index = %d\n",pid);
 
@@ -899,16 +842,8 @@ static void FFMPEGThread(Context_t *context) {
 
     } /* while */
 
-#ifdef USE_LIBSWRESAMPLE
-    if (swr) {
+    if (swr)
 	swr_free(&swr);
-    }
-#else
-    if (avr) {
-	avresample_close(avr);
-	avresample_free(&avr);
-    }
-#endif
     if (decoded_frame)
 	avcodec_free_frame(&decoded_frame);
 
@@ -1057,7 +992,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 	AVStream *stream = avContext->streams[n];
 	int version = 0;
 
-	char* encoding = Codec2Encoding(stream->codec->codec_id, &version);
+	char* encoding = Codec2Encoding(stream->codec, &version);
 
 	if (encoding != NULL)
 	   ffmpeg_printf(1, "%d. encoding = %s - version %d\n", n, encoding, version);
@@ -1176,7 +1111,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 			   printf("AVCODEC__INIT__FAILED\n");
 		}
 #if 0
-		else if(stream->codec->codec_id == CODEC_ID_AAC) {
+		else if(stream->codec->codec_id == AV_CODEC_ID_AAC) {
 		    ffmpeg_printf(10,"Create AAC ExtraData\n");
 		    ffmpeg_printf(10,"stream->codec->extradata_size %d\n", stream->codec->extradata_size);
 		    Hexdump(stream->codec->extradata, stream->codec->extradata_size);
@@ -1226,9 +1161,9 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 		    Hexdump(track.aacbuf,7);
 		    track.have_aacheader = 1;
 
-		} else if(stream->codec->codec_id == CODEC_ID_WMAV1
-		    || stream->codec->codec_id == CODEC_ID_WMAV2
-		    || stream->codec->codec_id == 86056 ) //CODEC_ID_WMAPRO) //if (stream->codec->extradata_size > 0)
+		} else if(stream->codec->codec_id == AV_CODEC_ID_WMAV1
+		    || stream->codec->codec_id == AV_CODEC_ID_WMAV2
+		    || stream->codec->codec_id == AV_CODEC_ID_WMAPRO) //if (stream->codec->extradata_size > 0)
 		{
 		    ffmpeg_printf(10,"Create WMA ExtraData\n");
 		    track.aacbuflen = 104 + stream->codec->extradata_size;
@@ -1273,13 +1208,13 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 		    unsigned short codec_id = 0;
 		    switch(stream->codec->codec_id) {
 			//TODO: What code for lossless ?
-			case 86056/*CODEC_ID_WMAPRO*/:
+			case AV_CODEC_ID_WMAPRO:
 			    codec_id = WMA_VERSION_9_PRO;
 			    break;
-			case CODEC_ID_WMAV2:
+			case AV_CODEC_ID_WMAV2:
 			    codec_id = WMA_VERSION_2_9 ;
 			    break;
-			case CODEC_ID_WMAV1:
+			case AV_CODEC_ID_WMAV1:
 			default:
 			    codec_id = WMA_VERSION_1;
 			    break;
@@ -1374,7 +1309,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
 	    ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name);
 
-	    if (stream->codec->codec_id == CODEC_ID_DVB_TELETEXT && context->manager->teletext) {
+	    if (stream->codec->codec_id == AV_CODEC_ID_DVB_TELETEXT && context->manager->teletext) {
 		ffmpeg_printf(10, "dvb_teletext\n");
 		int i = 0;
 		AVDictionaryEntry *t = NULL;
@@ -1389,7 +1324,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 			}
 			i++;
 		} while (t);
-	    } else if (stream->codec->codec_id == CODEC_ID_DVB_SUBTITLE && context->manager->dvbsubtitle) {
+	    } else if (stream->codec->codec_id == AV_CODEC_ID_DVB_SUBTITLE && context->manager->dvbsubtitle) {
 		ffmpeg_printf(10, "dvb_subtitle\n");
 		lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		if (context->manager->dvbsubtitle->Command(context, MANAGER_ADD, &track) < 0) {

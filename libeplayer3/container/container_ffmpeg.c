@@ -669,9 +669,7 @@ static void FFMPEGThread(Context_t *context) {
 			    ffmpeg_err("writing data to audio device failed\n");
 			}
 		    }
-	    }
-
-	    if (subtitleTrack && (subtitleTrack->Id == pid)) {
+	    } else if (subtitleTrack && (subtitleTrack->Id == pid)) {
 		    float duration=3.0;
 		    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
@@ -818,14 +816,14 @@ static void FFMPEGThread(Context_t *context) {
 			//ffmpeg_err("writing data to teletext fifo failed\n");
 		    }
 	    }
-
-	    if (packet.data)
-	       av_free_packet(&packet);
 	}
+
+	if (packet.data)
+		av_free_packet(&packet);
 	else  {
-	    ffmpeg_err("no data ->end of file reached ? \n");
-	    releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-	    break;
+		ffmpeg_err("no data ->end of file reached ? \n");
+		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		break;
 	}
 
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);

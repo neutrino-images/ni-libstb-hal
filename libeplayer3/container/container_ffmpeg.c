@@ -427,6 +427,12 @@ static void FFMPEGThread(Context_t *context) {
 
 	if (av_read_frame(avContext, &packet) == 0 )
 	{
+	    if (!packet.data) {
+		ffmpeg_err("no data ->end of file reached ? \n");
+		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		break;
+	    }
+
 	    long long int pts;
 	    Track_t * videoTrack = NULL;
 	    Track_t * audioTrack = NULL;
@@ -818,13 +824,7 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 	}
 
-	if (packet.data)
-		av_free_packet(&packet);
-	else  {
-		ffmpeg_err("no data ->end of file reached ? \n");
-		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-		break;
-	}
+	av_free_packet(&packet);
 
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 

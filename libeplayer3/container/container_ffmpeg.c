@@ -517,7 +517,6 @@ static void FFMPEGThread(Context_t *context) {
                     else if (audioTrack->inject_as_pcm == 1)
 		    {
 			AVCodecContext *c = ((AVStream*)(audioTrack->stream))->codec;
-			AVPacket avpkt = packet;
 
 			if (restart_audio_resampling) {
 				restart_audio_resampling = 0;
@@ -533,7 +532,7 @@ static void FFMPEGThread(Context_t *context) {
 				context->output->Command(context, OUTPUT_PLAY, NULL);
 			}
 
-			while(avpkt.size > 0)
+			while(packet.size > 0)
 			{
 				int got_frame = 0;
 				if (!decoded_frame) {
@@ -544,14 +543,14 @@ static void FFMPEGThread(Context_t *context) {
 				} else
 					avcodec_get_frame_defaults(decoded_frame);
 
-				int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, &avpkt);
+				int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, &packet);
 				if (len < 0) {
 //					fprintf(stderr, "avcodec_decode_audio4: %d\n", len);
 					break;
 				}
 
-				avpkt.data += len;
-				avpkt.size -= len;
+				packet.data += len;
+				packet.size -= len;
 				
 				if (!got_frame)
 					continue;

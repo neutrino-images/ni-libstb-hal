@@ -478,16 +478,6 @@ int LinuxDvbFlush(Context_t  *context __attribute__((unused)), char * type) {
                 linuxdvb_err("ioctl failed with errno %d\n", errno);
                 linuxdvb_err("VIDEO_CLEAR_BUFFER: %s\n", strerror(errno));
             }
-            if (ioctl(videofd, VIDEO_FLUSH ,NULL) == -1)
-            {
-                linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("VIDEO_FLUSH: %s\n", strerror(errno));
-            }
-            if (ioctl(videofd, VIDEO_STOP, NULL) == -1)
-            {
-                linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("VIDEO_STOP: %s\n", strerror(errno));
-            }
         }
 
         if (audio && audiofd != -1) {
@@ -496,17 +486,6 @@ int LinuxDvbFlush(Context_t  *context __attribute__((unused)), char * type) {
                 linuxdvb_err("ioctl failed with errno %d\n", errno);
                 linuxdvb_err("AUDIO_CLEAR_BUFFER: %s\n", strerror(errno));
             }
-            if (ioctl(audiofd, AUDIO_FLUSH ,NULL) == -1)
-            {
-                linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("AUDIO_FLUSH: %s\n", strerror(errno));
-            }
-            if (ioctl(audiofd, AUDIO_STOP, NULL) == -1)
-            {
-                linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("AUDIO_STOP: %s\n", strerror(errno));
-            }
-
         }
 
         releaseLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);

@@ -437,7 +437,6 @@ static void FFMPEGThread(Context_t *context) {
 	    Track_t * videoTrack = NULL;
 	    Track_t * audioTrack = NULL;
 	    Track_t * subtitleTrack = NULL;
-
 	    Track_t * dvbsubtitleTrack = NULL;
 	    Track_t * teletextTrack = NULL;
 
@@ -609,7 +608,6 @@ static void FFMPEGThread(Context_t *context) {
 								 ((AVStream*) audioTrack->stream)->time_base.den,
 								 ((AVStream*) audioTrack->stream)->time_base.num * (int64_t)out_sample_rate * c->sample_rate);
 				currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, next_out_pts);
-//fprintf(stderr, "apts=%lld vpts=%lld diff=%lldd\n",pts,videoTrack->pts,pts - videoTrack->pts);
 				out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
 				pcmPrivateData_t extradata;
@@ -959,10 +957,12 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 
     unsigned int n;
 
-    if (context->manager->audio)
-	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
     if (context->manager->video)
 	    context->manager->video->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->audio)
+	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
+    if (context->manager->subtitle)
+	    context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
     if (context->manager->dvbsubtitle)
 	    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     if (context->manager->teletext)

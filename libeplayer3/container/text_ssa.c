@@ -47,7 +47,7 @@
 
 #ifdef SSA_DEBUG
 
-static short debug_level = 0;
+static short debug_level = 10;
 
 #define ssa_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
@@ -263,7 +263,6 @@ static void SsaManagerDel(Context_t * context __attribute__((unused))) {
         for (i = 0; i < TrackCount; i++) {
             if (Tracks[i].File != NULL)
                 free(Tracks[i].File);
-
             Tracks[i].File = NULL;
         }
         free(Tracks);
@@ -386,15 +385,24 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
 
     return cERR_SSA_NO_ERROR;
 }
-static int SsaOpenSubtitle(Context_t *context __attribute__((unused)), int trackid) {
+
+static int SsaOpenSubtitle(Context_t *context __attribute__((unused)), int pid) {
     ssa_printf(10, "\n");
 
-    if(trackid < TEXTSSAOFFSET || (trackid % TEXTSSAOFFSET) >= TrackCount ) {
+    if(pid < TEXTSSAOFFSET) {
         ssa_err("trackid not for us\n");
         return cERR_SSA_ERROR;
     }
 
-    trackid %= TEXTSSAOFFSET;
+    int trackid;
+    for (trackid = 0; trackid < TrackCount; trackid++)
+	if (Tracks[trackid].Id == pid)
+		break;
+
+    if(trackid == TrackCount) {
+        ssa_err("trackid not for us\n");
+        return cERR_SSA_ERROR;
+    }
 
     ssa_printf(10, "%s\n", Tracks[trackid].File);
 

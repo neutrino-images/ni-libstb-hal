@@ -14,5 +14,5 @@ typedef struct Context_s {
     ManagerHandler_t	* manager;
 } Context_t;
 
-int container_ffmpeg_update_tracks(Context_t *context, char *filename);
+int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initial);
 #endif

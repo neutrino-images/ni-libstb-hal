@@ -55,7 +55,7 @@
 
 #ifdef ASS_DEBUG
 
-static short debug_level = 0;
+static short debug_level = 10;
 
 #define ass_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
@@ -116,8 +116,8 @@ static unsigned char isContainerRunning = 0;
 static ASS_Library *ass_library;
 static ASS_Renderer *ass_renderer;
 
-static float ass_font_scale = 0.7;
-static float ass_line_spacing = 0.7;
+static float ass_font_scale = 0.4; // was: 0.7
+static float ass_line_spacing = 0.4; // was: 0.7
 
 static unsigned int screen_width     = 0;
 static unsigned int screen_height    = 0;
@@ -592,7 +592,7 @@ int container_ass_init(Context_t *context)
                                       (int)(0.03 * screen_width ), (int)(0.03 * screen_width )  );
     }
     
-    ass_set_use_margins(ass_renderer, 0 );
+    ass_set_use_margins(ass_renderer, 1);
     ass_set_font_scale(ass_renderer, (ass_font_scale * screen_height) / 240.0);
 
     ass_set_hinting(ass_renderer, ASS_HINTING_LIGHT);

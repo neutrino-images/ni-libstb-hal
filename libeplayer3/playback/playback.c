@@ -135,7 +135,7 @@ status = 1;
                  
                  if (count == 200)
                  {
-                     playback_err("something went wrong, expect end but never reached?\n");
+//                     playback_err("something went wrong, expect end but never reached?\n");
                      dieNow = 1;
                  }
                  usleep(10000);
@@ -830,7 +830,7 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
         if (context->manager && context->manager->subtitle) {
             int trackid;
             
-            if (context->manager->subtitle->Command(context, *track == 0xffff ? MANAGER_DEL : MANAGER_SET, track) < 0)
+            if (context->manager->subtitle->Command(context, MANAGER_SET, track) < 0)
             {
                 playback_err("manager set track failed\n");
             }
@@ -896,7 +896,7 @@ static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* pid) {
         playback_err("no dvbsubtitle\n");
 
     if (*pid == 0xffff)
-	container_ffmpeg_update_tracks(context, context->playback->uri);
+	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -917,7 +917,7 @@ static int PlaybackSwitchTeletext(Context_t  *context, int* pid) {
         playback_err("no ttxsubtitle\n");
 
     if (*pid == 0xffff)
-	container_ffmpeg_update_tracks(context, context->playback->uri);
+	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
 
     playback_printf(10, "exiting with value %d\n", ret);
 

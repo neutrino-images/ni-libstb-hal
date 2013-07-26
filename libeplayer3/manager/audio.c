@@ -180,7 +180,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
         break;
     }
     case MANAGER_LIST: {
-	container_ffmpeg_update_tracks(context, context->playback->uri);
+	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
         *((char***)argument) = (char **)ManagerList(context);
         break;
     }

@@ -21,11 +21,11 @@
 /* Includes                      */
 /* ***************************** */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <sys/types.h>
@@ -384,15 +384,23 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
     return cERR_SRT_NO_ERROR;
 }
 
-static int SrtOpenSubtitle(Context_t *context __attribute__((unused)), int trackid) {
+static int SrtOpenSubtitle(Context_t *context __attribute__((unused)), int pid) {
     srt_printf(10, "\n");
 
-    if(trackid < TEXTSRTOFFSET || (trackid % TEXTSRTOFFSET) >= TrackCount) {
+    if(pid < TEXTSRTOFFSET) {
         srt_err("trackid not for us\n");
         return cERR_SRT_ERROR;
     }
 
-    trackid %= TEXTSRTOFFSET;
+    int trackid;
+    for (trackid = 0; trackid < TrackCount; trackid++)
+	if (Tracks[trackid].Id == pid)
+		break;
+
+    if(trackid == TrackCount) {
+        srt_err("trackid not for us\n");
+        return cERR_SRT_ERROR;
+    }
 
     srt_printf(10, "%s\n", Tracks[trackid].File);
 

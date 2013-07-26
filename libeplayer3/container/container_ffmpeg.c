@@ -427,12 +427,6 @@ static void FFMPEGThread(Context_t *context) {
 
 	if (av_read_frame(avContext, &packet) == 0 )
 	{
-	    if (!packet.data) {
-		ffmpeg_err("no data ->end of file reached ? \n");
-		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-		break;
-	    }
-
 	    long long int pts;
 	    Track_t * videoTrack = NULL;
 	    Track_t * audioTrack = NULL;
@@ -706,7 +700,7 @@ static void FFMPEGThread(Context_t *context) {
 		    if (duration > 0.0)
 		    {
 			/* is there a decoder ? */
-			if (avcodec_find_decoder(((AVStream*) subtitleTrack->stream)->codec->codec_id) != NULL)
+			if (((AVStream*) subtitleTrack->stream)->codec->codec)
 			{
 			   AVSubtitle sub;
 			   int got_sub_ptr;
@@ -739,41 +733,41 @@ static void FFMPEGThread(Context_t *context) {
 
 			       }
 			   }
-			}
 
-			if(((AVStream*)subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA)
-			{
-			    SubtitleData_t data;
+			    if(((AVStream*)subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA)
+			    {
+			        SubtitleData_t data;
 
-			    ffmpeg_printf(10, "videoPts %lld\n", currentVideoPts);
+			        ffmpeg_printf(10, "videoPts %lld\n", currentVideoPts);
 
-			    data.data      = packet.data;
-			    data.len       = packet.size;
-			    data.extradata = subtitleTrack->extraData;
-			    data.extralen  = subtitleTrack->extraSize;
-			    data.pts       = pts;
-			    data.duration  = duration;
+			        data.data      = packet.data;
+			        data.len       = packet.size;
+			        data.extradata = subtitleTrack->extraData;
+			        data.extralen  = subtitleTrack->extraSize;
+			        data.pts       = pts;
+			        data.duration  = duration;
 
-			    context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-			}
-			else
-			{
-			    /* hopefully native text ;) */
+			        context->container->assContainer->Command(context, CONTAINER_DATA, &data);
+			    }
+			    else
+			    {
+			        /* hopefully native text ;) */
 
-			    unsigned char* line = text_to_ass((char *)packet.data,pts/90,duration);
-			    ffmpeg_printf(50,"text line is %s\n",(char *)packet.data);
-			    ffmpeg_printf(50,"Sub line is %s\n",line);
-			    ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts,currentVideoPts/90000.0);
-			    SubtitleData_t data;
-			    data.data      = line;
-			    data.len       = strlen((char*)line);
-			    data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
-			    data.extralen  = strlen(DEFAULT_ASS_HEAD);
-			    data.pts       = pts;
-			    data.duration  = duration;
+			        unsigned char* line = text_to_ass((char *)packet.data,pts/90,duration);
+			        ffmpeg_printf(50,"text line is %s\n",(char *)packet.data);
+			        ffmpeg_printf(50,"Sub line is %s\n",line);
+			        ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts,currentVideoPts/90000.0);
+			        SubtitleData_t data;
+			        data.data      = line;
+			        data.len       = strlen((char*)line);
+			        data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
+			        data.extralen  = strlen(DEFAULT_ASS_HEAD);
+			        data.pts       = pts;
+			        data.duration  = duration;
 
-			    context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-			    free(line);
+			        context->container->assContainer->Command(context, CONTAINER_DATA, &data);
+			        free(line);
+			    }
 			}
 		    } /* duration */
 	    }
@@ -818,12 +812,15 @@ static void FFMPEGThread(Context_t *context) {
 			//ffmpeg_err("writing data to teletext fifo failed\n");
 		    }
 	    }
+	} else { // av_read_frame failed
+		ffmpeg_err("no data ->end of file reached ? \n");
+		av_free_packet(&packet);
+		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		break; // while
 	}
 
 	av_free_packet(&packet);
-
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-
     } /* while */
 
     if (swr)
@@ -924,10 +921,10 @@ int container_ffmpeg_init(Context_t *context, char * filename)
     terminating = 0;
     latestPts = 0;
     isContainerRunning = 1;
-    return container_ffmpeg_update_tracks(context, filename);
+    return container_ffmpeg_update_tracks(context, filename, 1);
 }
 
-int container_ffmpeg_update_tracks(Context_t *context, char *filename)
+int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initial)
 {
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
@@ -942,13 +939,14 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
     int teletextId = -1;
 
     context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
-    context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack);
+    if (initial)
+	context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack);
     context->manager->dvbsubtitle->Command(context, MANAGER_GET_TRACK, &dvbsubtitleTrack);
     context->manager->teletext->Command(context, MANAGER_GET_TRACK, &teletextTrack);
 
     if (audioTrack)
 	audioId = ((AVStream *) (audioTrack->stream))->id;
-    if (subtitleTrack)
+    if (initial && subtitleTrack)
 	subtitleId = ((AVStream *) (subtitleTrack->stream))->id;
     if (dvbsubtitleTrack)
 	dvbsubtitleId = ((AVStream *) (dvbsubtitleTrack->stream))->id;
@@ -961,7 +959,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 	    context->manager->video->Command(context, MANAGER_DEL, NULL);
     if (context->manager->audio)
 	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
-    if (context->manager->subtitle)
+    if (initial && context->manager->subtitle)
 	    context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
     if (context->manager->dvbsubtitle)
 	    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
@@ -1319,11 +1317,21 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename)
 		if (context->manager->dvbsubtitle->Command(context, MANAGER_ADD, &track) < 0) {
 		    ffmpeg_err("failed to add dvbsubtitle track %d\n", n);
 		}
-	    } else if (context->manager->subtitle)
-		if (context->manager->subtitle->Command(context, MANAGER_ADD, &track) < 0) {
+	    } else if (initial && context->manager->subtitle) {
+		if (!stream->codec->codec) {
+		    stream->codec->codec = avcodec_find_decoder(stream->codec->codec_id);
+		    if (!stream->codec->codec)
+			ffmpeg_err("avcodec_find_decoder failed for subtitle track %d\n", n);
+		    else if (avcodec_open2(stream->codec, stream->codec->codec, NULL)) {
+		    	ffmpeg_err("avcodec_open2 failed for subtitle track %d\n", n);
+		    	stream->codec->codec = NULL;
+		    }
+		}
+		if (stream->codec->codec && context->manager->subtitle->Command(context, MANAGER_ADD, &track) < 0) {
 		    /* konfetti: fixme: is this a reason to return with error? */
 		    ffmpeg_err("failed to add subtitle track %d\n", n);
 		}
+	    }
 
 	    break;
 	}

@@ -116,8 +116,8 @@ static unsigned char isContainerRunning = 0;
 static ASS_Library *ass_library;
 static ASS_Renderer *ass_renderer;
 
-static float ass_font_scale = 0.4; // was: 0.7
-static float ass_line_spacing = 0.4; // was: 0.7
+//static float ass_font_scale = 0.4; // was: 0.7
+//static float ass_line_spacing = 0.4; // was: 0.7
 
 static unsigned int screen_width     = 0;
 static unsigned int screen_height    = 0;
@@ -593,10 +593,10 @@ int container_ass_init(Context_t *context)
     }
     
     ass_set_use_margins(ass_renderer, 1);
-    ass_set_font_scale(ass_renderer, (ass_font_scale * screen_height) / 240.0);
+//    ass_set_font_scale(ass_renderer, (ass_font_scale * screen_height) / 240.0);
 
     ass_set_hinting(ass_renderer, ASS_HINTING_LIGHT);
-    ass_set_line_spacing(ass_renderer, (ass_line_spacing * screen_height) / 240.0);
+//    ass_set_line_spacing(ass_renderer, (ass_line_spacing * screen_height) / 240.0);
     ass_set_fonts(ass_renderer, ASS_FONT, "Arial", 0, NULL, 1);
 
     if(threeDMode == 0){

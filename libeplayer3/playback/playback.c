@@ -834,6 +834,7 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
             {
                 playback_err("manager set track failed\n");
             }
+#if 0
 	    if (*track == 0xffff) {
 		//CHECK FOR SUBTITLES
 		if (context->container && context->container->textSrtContainer)
@@ -845,6 +846,7 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
 		if (context->container && context->container->assContainer)
 		    context->container->assContainer->Command(context, CONTAINER_INIT, NULL);
 	    }
+#endif
             context->manager->subtitle->Command(context, MANAGER_GET, &trackid);
 
 /* konfetti: I make this hack a little bit nicer,

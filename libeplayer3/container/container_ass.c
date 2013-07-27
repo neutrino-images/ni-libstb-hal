@@ -293,30 +293,21 @@ void checkRegions()
 /* store a display region for later release */
 void storeRegion(unsigned int x, unsigned int y, unsigned int w, unsigned int h, time_t undisplay)
 {
-    region_t* new;
+    region_t** new = &firstRegion;
     
     ass_printf(100, "%d %d %d %d %ld\n", x, y, w, h, undisplay);
-    
-    if (firstRegion == NULL)
-    {
-        firstRegion = malloc(sizeof(region_t));
-        new = firstRegion;
-    } else
-    {
-        new = firstRegion;
-        while (new->next != NULL)
-            new = new->next;
-    
-        new->next = malloc(sizeof(region_t));
-        new = new->next;
-    }
 
-    new->next      = NULL;
-    new->x         = x;
-    new->y         = y;
-    new->w         = w;
-    new->h         = h;
-    new->undisplay = undisplay;
+    while (*new)
+	new = &(*new)->next;
+ 
+    *new = malloc(sizeof(region_t));
+
+    (*new)->next      = NULL;
+    (*new)->x         = x;
+    (*new)->y         = y;
+    (*new)->w         = w;
+    (*new)->h         = h;
+    (*new)->undisplay = undisplay;
 }
 
 /* **************************** */
@@ -397,10 +388,53 @@ static void ASSThread(Context_t *context) {
                 if (change != 0)
                     releaseRegions();
 
-                while (context && context->playback && context->playback->isPlaying &&
-                       (img) && (change != 0))
+		time_t now = time(NULL);
+		time_t undisplay = now + 10;
+
+		if (ass_track && ass_track->events)
+		undisplay = now + (ass_track->events->Duration + 500) / 90000;
+
+		if (shareFramebuffer) {
+			ASS_Image *it;
+			int x0 = screen_width - 1;
+			int y0 = screen_height - 1;
+			int x1 = 0;
+			int y1 = 0;
+			for (it = img; it; it = it->next) {
+				if (it->w && it->h) {
+					if (it->dst_x < x0)
+						x0 = it->dst_x;
+					if (it->dst_y < y0)
+						y0 = it->dst_y;
+					if (it->dst_x + it->w > x1)
+						x1 = it->dst_x + it->w;
+					if (it->dst_y + it->h > y1)
+						y1 = it->dst_y + it->h;
+				}
+			}
+			if (x1 > 0 && y1 > 0)
+			{
+				int x, y;
+				unsigned char *dst = destination + y0 * destStride + 4 * x0;
+				int destStrideDiff = destStride - (x1 - x0 + 1) * 4;
+				for (y = y0; y <= y1; y++) {
+					for (x = x0; x <= x1; x++) {
+						*dst++ = 128;
+						*dst++ = 128;
+						*dst++ = 128;
+						*dst++ = 128;
+					}
+					dst += destStrideDiff;
+				}
+				storeRegion(x0, y0, x1 - x0 + 1, y1 - y0 + 1, undisplay);
+				needsBlit = 1;
+			}
+		}
+
+                while (context && context->playback && context->playback->isPlaying && img)
                 {
                     WriterFBCallData_t out;
+#if 0
                     time_t now = time(NULL);
                     time_t undisplay = now + 10;
 
@@ -408,6 +442,7 @@ static void ASSThread(Context_t *context) {
                     {
                         undisplay = now + (ass_track->events->Duration + 500) / 90000;
                     }
+#endif
 
                     ass_printf(100, "w %d h %d s %d x %d y %d c %d chg %d now %ld und %ld\n", 
                                  img->w, img->h, img->stride, 
@@ -433,8 +468,10 @@ static void ASSThread(Context_t *context) {
                         out.destination   = destination;
                         out.destStride    = destStride;
 
+#if 0
                         storeRegion(img->dst_x, img->dst_y, 
                                     img->w, img->h, undisplay);
+#endif
                                     
                         if (shareFramebuffer)
                         {

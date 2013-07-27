@@ -155,10 +155,13 @@ static int writeData(void* _call)
             {
                 k = ((unsigned)src[x]) * opacity / 256;
 #if 1 // HAVE_SPARK_HARDWARE
-		*dst++ = b;
-		*dst++ = g;
-		*dst++ = r;
-		*dst++ = k;
+		if (src[x]) {
+			*dst++ = b;
+			*dst++ = g;
+			*dst++ = r;
+			*dst++ = k;
+		} else
+			dst += 4;
 #else
                 ck = 255 - k;
                 t = *dst;

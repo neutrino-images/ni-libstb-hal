@@ -2,6 +2,7 @@
 #define WRITER_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 typedef enum { eNone, eAudio, eVideo, eGfx} eWriterType_t;
 
@@ -33,7 +34,7 @@ typedef struct {
     int                    fd;
     unsigned int           Screen_Width;
     unsigned int           Screen_Height;
-    unsigned char*         destination;
+    uint32_t		   *destination;
     unsigned int           destStride;
 } WriterFBCallData_t;
 

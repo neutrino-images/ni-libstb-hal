@@ -95,112 +95,99 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 
 static int reset()
 {
-    return 0;
+	return 0;
 }
 
 static int writeData(void* _call)
 {
-    int res = 0;
-    
-    WriterFBCallData_t* call = (WriterFBCallData_t*) _call;
-    
-    fb_printf(100, "\n");
+	int res = 0;
 
-    if (call == NULL)
-    {
-        fb_err("call data is NULL...\n");
-        return 0;
-    }
+	WriterFBCallData_t* call = (WriterFBCallData_t*) _call;
 
-    if (call->destination == NULL)
-    {
-        fb_err("file pointer < 0. ignoring ...\n");
-        return 0;
-    }
-    
-    if (call->data != NULL)
-    {
-        unsigned int a = (unsigned int)_a(call->color);
-        unsigned int r = (unsigned int)_r(call->color);
-        unsigned int g = (unsigned int)_g(call->color);
-        unsigned int b = (unsigned int)_b(call->color);
-        unsigned int opacity = 255 - a;
-        int src_stride = call->Stride;
-        int dst_stride = call->destStride;
-        int dst_delta  = dst_stride - call->Width*4;
-        unsigned int x,y;
-        const unsigned char *src = call->data;
-        unsigned char *dst = call->destination + (call->y * dst_stride + call->x * 4);
-#if 1 // !HAVE_SPARK_HARDWARE
-        unsigned int k;
-#else
-        unsigned int k,ck,t;
-#endif
+	fb_printf(100, "\n");
 
-        fb_printf(100, "x           %d\n", call->x);
-        fb_printf(100, "y           %d\n", call->y);
-        fb_printf(100, "width       %d\n", call->Width);
-        fb_printf(100, "height      %d\n", call->Height);
-        fb_printf(100, "stride      %d\n", call->Stride);
-        fb_printf(100, "color       0x%.8x\n", call->color);
-        fb_printf(100, "data        %p\n", call->data);
-        fb_printf(100, "dest        %p\n", call->destination);
-        fb_printf(100, "dest.stride %d\n", call->destStride);
+	if (!call)
+	{
+		fb_err("call data is NULL...\n");
+		return 0;
+	}
 
-        fb_printf(100, "r 0x%hhx, g 0x%hhx, b 0x%hhx, a 0x%hhx, opacity 0x%hhx\n", r, g, b, a, opacity);
+	if (!call->destination)
+	{
+		fb_err("frame buffer == NULL. ignoring ...\n");
+		return 0;
+	}
 
-        for (y=0;y<call->Height;y++)
-        {
-            for (x = 0; x < call->Width; x++)
-            {
-                k = ((unsigned)src[x]) * opacity / 256;
-#if 1 // HAVE_SPARK_HARDWARE
-		if (src[x]) {
-			*dst++ = b;
-			*dst++ = g;
-			*dst++ = r;
-			*dst++ = k;
-		} else
-			dst += 4;
-#else
-                ck = 255 - k;
-                t = *dst;
-                *dst++ = (k*b + ck*t) / 256;
-                t = *dst;
-                *dst++ = (k*g + ck*t) / 256;
-                t = *dst;
-                *dst++ = (k*r + ck*t) / 256;
-                *dst++ = 0;
-#endif
-            }
+	if (call->data)
+	{
+		int src_stride = call->Stride;
+		unsigned int x,y;
+		const unsigned char *src = call->data;
+		int dst_stride = call->destStride/sizeof(uint32_t);
+		int dst_delta = dst_stride - call->Width;
+		uint32_t *dst = call->destination + call->y * dst_stride + call->x;
+		static uint32_t last_color = 0;
+		static uint32_t colortable[256];
+		if (last_color != call->color) {
+			// call->color is rgba, our spark frame buffer is argb
+			uint32_t c = call->color >> 8;
+			uint32_t a = 255 - (call->color & 0xff);
+			int i;
+			for (i = 0; i < 256; i++)
+			colortable[i] = c | (((a * i) >> 8) << 24);
+			last_color = call->color;
+		}
 
-            dst += dst_delta;
-            src += src_stride;
-        }
-    } else
-    {
-	 unsigned int y;
-         for (y = 0; y < call->Height; y++)
-                memset(call->destination + ((call->y + y) * call->destStride) + call->x * 4, 0, call->Width * 4);
-    }
 
-    fb_printf(100, "< %d\n", res);
-    return res;
+		fb_printf(100, "x		%d\n", call->x);
+		fb_printf(100, "y		%d\n", call->y);
+		fb_printf(100, "width		%d\n", call->Width);
+		fb_printf(100, "height		%d\n", call->Height);
+		fb_printf(100, "stride		%d\n", call->Stride);
+		fb_printf(100, "color		0x%.8x\n", call->color);
+		fb_printf(100, "data		%p\n", call->data);
+		fb_printf(100, "dest		%p\n", call->destination);
+		fb_printf(100, "dest.stride	%d\n", call->destStride);
+
+		for (y=0;y<call->Height;y++) {
+			for (x = 0; x < call->Width; x++) {
+				uint32_t c = colortable[src[x]];
+				if (c >> 24)
+					*dst++ = c;
+				else
+					dst++;
+			}
+			dst += dst_delta;
+			src += src_stride;
+		}
+	} else {
+		unsigned int y;
+		int dst_stride = call->destStride/sizeof(uint32_t);
+		uint32_t *dst = call->destination + call->y * dst_stride + call->x;
+
+		for (y = 0; y < call->Height; y++) {
+			memset(dst, 0, call->Width * 4);
+			dst += dst_stride;
+		}
+	}
+
+	fb_printf(100, "< %d\n", res);
+	return res;
 }
 
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
 static WriterCaps_t caps = {
-    "framebuffer",
-    eGfx,
-    "framebuffer",
-    0
+	"framebuffer",
+	eGfx,
+	"framebuffer",
+	0
 };
 
 struct Writer_s WriterFramebuffer = {
-    &reset,
-    &writeData,
-    NULL,
-    &caps
+	&reset,
+	&writeData,
+	NULL,
+	&caps
 };

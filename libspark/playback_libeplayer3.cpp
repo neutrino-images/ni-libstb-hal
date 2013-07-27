@@ -702,7 +702,7 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 }
 
 //
-cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)))
+cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;

@@ -123,8 +123,8 @@ static unsigned int screen_width     = 0;
 static unsigned int screen_height    = 0;
 static int          shareFramebuffer = 0;
 static int          framebufferFD    = -1;
-static unsigned char* destination    = NULL;
-static int            destStride       = 0;
+static uint32_t     *destination    = NULL;
+static int          destStride       = 0;
 static void	    (*framebufferBlit)(void) = NULL;
 
 static int needsBlit = 0;
@@ -414,19 +414,17 @@ static void ASSThread(Context_t *context) {
 			}
 			if (x1 > 0 && y1 > 0)
 			{
+				x1++;
+				y1++;
 				int x, y;
-				unsigned char *dst = destination + y0 * destStride + 4 * x0;
-				int destStrideDiff = destStride - (x1 - x0 + 1) * 4;
-				for (y = y0; y <= y1; y++) {
-					for (x = x0; x <= x1; x++) {
-						*dst++ = 128;
-						*dst++ = 128;
-						*dst++ = 128;
-						*dst++ = 128;
-					}
+				uint32_t *dst = destination + y0 * destStride/sizeof(uint32_t) + x0;
+				int destStrideDiff = destStride/sizeof(uint32_t) - (x1 - x0);
+				for (y = y0; y < y1; y++) {
+					for (x = x0; x < x1; x++)
+						*dst++ = 0x80808080;
 					dst += destStrideDiff;
 				}
-				storeRegion(x0, y0, x1 - x0 + 1, y1 - y0 + 1, undisplay);
+				storeRegion(x0, y0, x1 - x0, y1 - y0, undisplay);
 				needsBlit = 1;
 			}
 		}

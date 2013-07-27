@@ -19,10 +19,10 @@ class cPlayback
 		int mSubtitleStream;
 		int mDvbsubtitleStream;
 		int mTeletextStream;
-		void (*framebuffer_callback)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void));
+		void (*framebuffer_callback)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void));
 		bool Stop(void);
 	public:
-		cPlayback(int num = 0, void (*fbcb)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)) = NULL);
+		cPlayback(int num = 0, void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)) = NULL);
 		~cPlayback();
 
 		bool Open(playmode_t PlayMode);

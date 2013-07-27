@@ -473,18 +473,18 @@ int LinuxDvbFlush(Context_t  *context __attribute__((unused)), char * type) {
         getLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
 
         if (video && videofd != -1) {
-            if (ioctl(videofd, VIDEO_CLEAR_BUFFER) == -1)
+            if (ioctl(videofd, VIDEO_FLUSH, NULL) == -1)
             {
                 linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("VIDEO_CLEAR_BUFFER: %s\n", strerror(errno));
+                linuxdvb_err("VIDEO_FLUSH: %s\n", strerror(errno));
             }
         }
 
         if (audio && audiofd != -1) {
-            if (ioctl(audiofd, AUDIO_CLEAR_BUFFER) == -1)
+            if (ioctl(audiofd, AUDIO_FLUSH, NULL) == -1)
             {
                 linuxdvb_err("ioctl failed with errno %d\n", errno);
-                linuxdvb_err("AUDIO_CLEAR_BUFFER: %s\n", strerror(errno));
+                linuxdvb_err("AUDIO_FLUSH: %s\n", strerror(errno));
             }
         }
 
@@ -1082,6 +1082,8 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
     }
     case OUTPUT_CLEAR: {
         ret = LinuxDvbClear(context, (char*)argument);
+        reset(context);
+        sCURRENT_PTS = 0;
         break;
     }
     case OUTPUT_PTS: {

@@ -521,7 +521,7 @@ static void FFMPEGThread(Context_t *context) {
 					avcodec_free_frame(&decoded_frame);
 					decoded_frame = NULL;
 				}
-				context->output->Command(context, OUTPUT_FLUSH, NULL);
+				context->output->Command(context, OUTPUT_CLEAR, NULL);
 				context->output->Command(context, OUTPUT_PLAY, NULL);
 			}
 

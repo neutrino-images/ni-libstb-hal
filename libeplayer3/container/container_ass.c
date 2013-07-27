@@ -125,7 +125,9 @@ static int          shareFramebuffer = 0;
 static int          framebufferFD    = -1;
 static unsigned char* destination    = NULL;
 static int            destStride       = 0;
-static int	      threeDMode       =0;
+static void	    (*framebufferBlit)(void) = NULL;
+
+static int needsBlit = 0;
 
 static ASS_Track* ass_track = NULL;
 
@@ -212,13 +214,7 @@ void releaseRegions()
              out.destStride    = destStride;
 
              writer->writeData(&out);
-             if(threeDMode == 1){
-                 out.x = screen_width/2 + next->x;
-                 writer->writeData(&out);
-             }else if(threeDMode == 2){
-                 out.y = screen_height/2 + next->y;
-                 writer->writeData(&out);
-             }
+	     needsBlit = 1;
         }
         old  = next;
         next = next->next;
@@ -277,13 +273,7 @@ void checkRegions()
                 out.destStride    = destStride;
 
                 writer->writeData(&out);
-                if(threeDMode == 1){
-                    out.x = screen_width/2 + next->x;
-                    writer->writeData(&out);
-                }else if(threeDMode == 2){
-                    out.y = screen_height/2 + next->y;
-                    writer->writeData(&out);
-               }
+	        needsBlit = 1;
            }
            
            old = next;
@@ -450,13 +440,6 @@ static void ASSThread(Context_t *context) {
                         {
                             if(context && context->playback && context->playback->isPlaying && writer){
                                 writer->writeData(&out);
-                                if(threeDMode == 1){
-                                    out.x = screen_width/2 + img->dst_x;
-                                    writer->writeData(&out);
-                                }else if(threeDMode == 2){
-                                    out.y = screen_height/2 + img->dst_y;
-                                    writer->writeData(&out);
-                                }
                             }
                         }
                         else
@@ -489,6 +472,7 @@ static void ASSThread(Context_t *context) {
                                context->output && context->output->subtitle)
                                 context->output->subtitle->Write(context, &sub_out);
                         }
+		        needsBlit = 1;
                     }
 
                     /* Next image */
@@ -506,11 +490,19 @@ static void ASSThread(Context_t *context) {
             usleep(1000);
         }
         
+	if (needsBlit && framebufferBlit)
+	    framebufferBlit();
+        needsBlit = 0;
+
         /* cleanup no longer used but not overwritten regions */
 	getMutex(__LINE__);
         checkRegions();
 	releaseMutex(__LINE__);
     } /* while */
+
+    if (needsBlit && framebufferBlit)
+	framebufferBlit();
+    needsBlit = 0;
 
     hasPlayThreadStarted = 0;
 
@@ -524,8 +516,6 @@ static void ASSThread(Context_t *context) {
 
 int container_ass_init(Context_t *context)
 {
-    int modefd;
-    char buf[16];
     SubtitleOutputDef_t output;
 
     ass_printf(10, ">\n");
@@ -557,40 +547,20 @@ int container_ass_init(Context_t *context)
 
     context->output->subtitle->Command(context, OUTPUT_GET_SUBTITLE_OUTPUT, &output);
 
-    modefd=open("/proc/stb/video/3d_mode", O_RDWR);
-    if(modefd > 0){
-        read(modefd, buf, 15);
-        buf[15]='\0';
-        close(modefd);
-    }else threeDMode = 0;
-
-    if(strncmp(buf,"sbs",3)==0)threeDMode = 1;
-    else if(strncmp(buf,"tab",3)==0)threeDMode = 2;
-    else threeDMode = 0;
-
     screen_width     = output.screen_width;
     screen_height    = output.screen_height;
     shareFramebuffer = output.shareFramebuffer;
     framebufferFD    = output.framebufferFD;
     destination      = output.destination;
     destStride       = output.destStride;
+    framebufferBlit  = output.framebufferBlit;
     
-    ass_printf(10, "width %d, height %d, share %d, fd %d, 3D %d\n", 
-              screen_width, screen_height, shareFramebuffer, framebufferFD, threeDMode);
+    ass_printf(10, "width %d, height %d, share %d, fd %d\n", 
+              screen_width, screen_height, shareFramebuffer, framebufferFD);
 
-    if(threeDMode == 0){
-        ass_set_frame_size(ass_renderer, screen_width, screen_height);
-        ass_set_margins(ass_renderer, (int)(0.03 * screen_height), (int)(0.03 * screen_height) ,
-                                      (int)(0.03 * screen_width ), (int)(0.03 * screen_width )  );
-    }else if(threeDMode == 1){
-        ass_set_frame_size(ass_renderer, screen_width/2, screen_height);
-        ass_set_margins(ass_renderer, (int)(0.03 * screen_height), (int)(0.03 * screen_height) ,
-                                      (int)(0.03 * screen_width/2 ), (int)(0.03 * screen_width/2 )  );
-    }else if(threeDMode == 2){
-        ass_set_frame_size(ass_renderer, screen_width, screen_height/2);
-        ass_set_margins(ass_renderer, (int)(0.03 * screen_height/2), (int)(0.03 * screen_height/2) ,
-                                      (int)(0.03 * screen_width ), (int)(0.03 * screen_width )  );
-    }
+    ass_set_frame_size(ass_renderer, screen_width, screen_height);
+    ass_set_margins(ass_renderer, (int)(0.03 * screen_height), (int)(0.03 * screen_height) ,
+                                  (int)(0.03 * screen_width ), (int)(0.03 * screen_width )  );
     
     ass_set_use_margins(ass_renderer, 1);
 //    ass_set_font_scale(ass_renderer, (ass_font_scale * screen_height) / 240.0);
@@ -599,14 +569,7 @@ int container_ass_init(Context_t *context)
 //    ass_set_line_spacing(ass_renderer, (ass_line_spacing * screen_height) / 240.0);
     ass_set_fonts(ass_renderer, ASS_FONT, "Arial", 0, NULL, 1);
 
-    if(threeDMode == 0){
-        ass_set_aspect_ratio( ass_renderer, 1.0, 1.0);
-    }else if(threeDMode == 1){
-        ass_set_aspect_ratio( ass_renderer, 0.5, 1.0);
-    }else if(threeDMode == 2){
-        ass_set_aspect_ratio( ass_renderer, 1.0, 0.5);
-    }
-    
+    ass_set_aspect_ratio( ass_renderer, 1.0, 1.0);
 
     isContainerRunning = 1;
 

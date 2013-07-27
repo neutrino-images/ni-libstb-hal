@@ -109,6 +109,7 @@ static int            screen_height    = 0;
 static int            destStride       = 0;
 static int            shareFramebuffer = 0;
 static int            framebufferFD    = -1;
+static void	    (*framebufferBlit) = NULL;
 static unsigned char* destination      = NULL;
 
 /* ***************************** */
@@ -783,6 +784,7 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
         out->screen_height = screen_height;
         out->shareFramebuffer = shareFramebuffer;
         out->framebufferFD = framebufferFD;
+        out->framebufferBlit = framebufferBlit;
         out->destination = destination;
         out->destStride = destStride;
         break;
@@ -793,6 +795,7 @@ static int Command(void  *_context, OutputCmd_t command, void * argument) {
         screen_height = out->screen_height;
         shareFramebuffer = out->shareFramebuffer;
         framebufferFD = out->framebufferFD;
+        framebufferBlit = out->framebufferBlit;
         destination = out->destination;
         destStride = out->destStride;
         break;

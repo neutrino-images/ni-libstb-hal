@@ -121,6 +121,7 @@ typedef struct
     
     int            shareFramebuffer;
     int            framebufferFD;
+    void	   (*framebufferBlit)(void);
 } SubtitleOutputDef_t;
 
 #endif

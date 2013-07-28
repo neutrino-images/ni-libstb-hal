@@ -133,11 +133,12 @@ static int writeData(void* _call)
 			uint32_t c = call->color >> 8;
 			uint32_t a = 255 - (call->color & 0xff);
 			int i;
-			for (i = 0; i < 256; i++)
-			colortable[i] = c | (((a * i) >> 8) << 24);
+			for (i = 0; i < 256; i++) {
+				uint32_t k = (a * i) >> 8;
+				colortable[i] = k ? (c | (k << 24)) : 0;
+			}
 			last_color = call->color;
 		}
-
 
 		fb_printf(100, "x		%d\n", call->x);
 		fb_printf(100, "y		%d\n", call->y);
@@ -152,7 +153,7 @@ static int writeData(void* _call)
 		for (y=0;y<call->Height;y++) {
 			for (x = 0; x < call->Width; x++) {
 				uint32_t c = colortable[src[x]];
-				if (c >> 24)
+				if (c)
 					*dst++ = c;
 				else
 					dst++;

@@ -157,7 +157,6 @@ static char* Codec2Encoding(AVCodecContext *codec, int* version)
     switch (codec->codec_id)
     {
     case AV_CODEC_ID_MPEG1VIDEO:
-        return "V_MPEG1";
     case AV_CODEC_ID_MPEG2VIDEO:
         return "V_MPEG1";
     case AV_CODEC_ID_H263:
@@ -197,15 +196,13 @@ static char* Codec2Encoding(AVCodecContext *codec, int* version)
         return "A_MPEG/L3";
     case AV_CODEC_ID_MP3:
         return "A_MP3";
-#if 0
-    case AV_CODEC_ID_AAC:
-        return "A_AAC";
-#endif
     case AV_CODEC_ID_AC3:
         return "A_AC3";
     case AV_CODEC_ID_DTS:
         return "A_DTS";
 #if 0
+    case AV_CODEC_ID_AAC:
+        return "A_AAC";
     case AV_CODEC_ID_WMAV1:
     case AV_CODEC_ID_WMAV2:
     case AV_CODEC_ID_WMAPRO:
@@ -233,14 +230,13 @@ static char* Codec2Encoding(AVCodecContext *codec, int* version)
     case AV_CODEC_ID_MOV_TEXT:
     case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
     case AV_CODEC_ID_DVB_TELETEXT:
-        return "S_TEXT/SRT"; /* fixme */
     case AV_CODEC_ID_SRT:
         return "S_TEXT/SRT"; /* fixme */
     default:
-	// Default to injected-pcm for unhandled audio types. --martii
+	// Default to injected-pcm for unhandled audio types.
 	if (codec->codec_type == AVMEDIA_TYPE_AUDIO)
 		return "A_IPCM";
-    	ffmpeg_err("Codec ID: %ld (%.8lx) not found\n", (long)codec->codec_id, (long)codec->codec_id);
+    	ffmpeg_err("Codec ID %ld (%.8lx) not found\n", (long)codec->codec_id, (long)codec->codec_id);
     }
     return NULL;
 }
@@ -953,8 +949,6 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
     if (teletextTrack)
 	teletextId = ((AVStream *) (teletextTrack->stream))->id;
 
-    unsigned int n;
-
     if (context->manager->video)
 	    context->manager->video->Command(context, MANAGER_DEL, NULL);
     if (context->manager->audio)
@@ -970,6 +964,8 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
     av_dump_format(avContext, 0, filename, 0);
 
     ffmpeg_printf(1, "number streams %d\n", avContext->nb_streams);
+
+    unsigned int n;
 
     for ( n = 0; n < avContext->nb_streams; n++) {
 	Track_t track;

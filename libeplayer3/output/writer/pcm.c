@@ -152,7 +152,7 @@ static int prepareClipPlay(int uNoOfChannels, int uSampleRate, int uBitsPerSampl
 	SubFrameLen *= (uBitsPerSample / 8);
 
 	//rewrite PES size to have as many complete subframes per PES as we can
-	// FIXME: PES header size was hardcoded to 18 in previous code. It's 14 at the moment.
+	// FIXME: PES header size was hardcoded to 18 in previous code. Actual size returned by InsertPesHeader is 14.
 	SubFramesPerPES = ((2048 - 18) - sizeof(lpcm_prv))/SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
 
@@ -160,7 +160,8 @@ static int prepareClipPlay(int uNoOfChannels, int uSampleRate, int uBitsPerSampl
 	lpcm_prv[10] = uNoOfChannels - 1;
 
 	switch(uBitsPerSample) {
-		case 24: lpcm_prv[7] |= 0x20;
+		case 24:
+			lpcm_prv[7] |= 0x20;
 		case 16:
 			break;
 		default:

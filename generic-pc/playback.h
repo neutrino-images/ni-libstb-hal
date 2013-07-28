@@ -18,9 +18,9 @@ class cPlayback
 		int mSubtitleStream;
 		int mDvbsubtitleStream;
 		int mTeletextStream;
-		void (*framebuffer_callback)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *);
+		void (*framebuffer_callback)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void));
 	public:
-		cPlayback(int num __attribute__((unused))= 0, void (* /*fbcb*/)(unsigned char **, unsigned int *, unsigned int *, unsigned int *, int *) = NULL) { };
+		cPlayback(int, void (*)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)) = NULL) { };
 		bool Open(playmode_t PlayMode);
 		void Close(void);
 		bool Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3, int duration, bool no_probe = true);
@@ -42,7 +42,6 @@ class cPlayback
 		void FindAllSubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllDvbsubtitlePids(uint16_t *pids, uint16_t *numpids, std::string *language);
 		void FindAllTeletextsubtitlePids(uint16_t *pids, uint16_t *numpidt, std::string *tlanguage);
-
 		void RequestAbort(void);
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
 		bool SelectSubtitles(int pid);

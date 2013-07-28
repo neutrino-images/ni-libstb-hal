@@ -96,9 +96,7 @@ static const unsigned char clpcm_prv[14] = {   0xA0,   //sub_stream_id
 					0, 0    //resvd for copyright management
 			};
 
-static unsigned char lpcm_pes[18];
 static unsigned char lpcm_prv[14];
-
 static unsigned char breakBuffer[8192];
 static unsigned int breakBufferFillSize = 0;
 
@@ -193,7 +191,7 @@ static int writeData(void* _call)
 
 	pcm_printf(10, "AudioPts %lld\n", call->Pts);
 
-	if ((call->data == NULL) || (call->len <= 0)) {
+	if (!call->data || (call->len <= 0)) {
 		pcm_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
@@ -277,11 +275,10 @@ static int writeData(void* _call)
 			}
 		}
 
-
 		//increment err... subframe count?
 		lpcm_prv[1] = ((lpcm_prv[1]+SubFramesPerPES) & 0x1F);
 
-		iov[0].iov_len = InsertPesHeader (PesHeader, iov[1].iov_len + iov[2].iov_len, 0xBD, call->Pts, 0);
+		iov[0].iov_len = InsertPesHeader (PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, call->Pts, 0);
 		int len = writev(call->fd, iov, 3);
 		if (len < 0)
 			break;

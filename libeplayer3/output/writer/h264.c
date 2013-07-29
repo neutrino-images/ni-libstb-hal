@@ -92,7 +92,6 @@ typedef struct avcC_s
 /* ***************************** */
 const unsigned char Head[]                  = {0, 0, 0, 1};
 static int initialHeader = 1;
-//static int NoOtherBeginningFound = 1;
 static unsigned int        NalLengthBytes          = 1;
 
 /* ***************************** */
@@ -106,7 +105,6 @@ static unsigned int        NalLengthBytes          = 1;
 static int reset()
 {
     initialHeader = 1;
-    //NoOtherBeginningFound = 1;
     return 0;
 }
 
@@ -148,8 +146,6 @@ static int writeData(void* _call)
     }
 
     if((call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-// This seems to make playback unreliable. Disabled for now. --martii
-       //(call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x01 && NoOtherBeginningFound) ||
             (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff)))
     {
 	unsigned int PacketLength = 0;
@@ -172,7 +168,6 @@ static int writeData(void* _call)
         iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
 	return writev(call->fd, iov, ic);
     }
-    //NoOtherBeginningFound = 0;
 
     if (initialHeader)
     {

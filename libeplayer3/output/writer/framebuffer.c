@@ -118,20 +118,19 @@ static int writeData(void* _call)
 		return 0;
 	}
 
+	int dst_stride = call->destStride/sizeof(uint32_t);
+	int dst_delta = dst_stride - call->Width;
+	uint32_t *dst = call->destination + call->y * dst_stride + call->x;
+
 	if (call->data)
 	{
-		int src_stride = call->Stride;
-		unsigned int x,y;
-		const unsigned char *src = call->data;
-		int dst_stride = call->destStride/sizeof(uint32_t);
-		int dst_delta = dst_stride - call->Width;
-		uint32_t *dst = call->destination + call->y * dst_stride + call->x;
-		static uint32_t last_color = 0;
-		static uint32_t colortable[256];
+		int src_delta = call->Stride - call->Width;
+		unsigned char *src = call->data;
+		static uint32_t last_color = 0, colortable[256];
+
 		if (last_color != call->color) {
 			// call->color is rgba, our spark frame buffer is argb
-			uint32_t c = call->color >> 8;
-			uint32_t a = 255 - (call->color & 0xff);
+			uint32_t c = call->color >> 8, a = 255 - (call->color & 0xff);
 			int i;
 			for (i = 0; i < 256; i++) {
 				uint32_t k = (a * i) >> 8;
@@ -150,25 +149,21 @@ static int writeData(void* _call)
 		fb_printf(100, "dest		%p\n", call->destination);
 		fb_printf(100, "dest.stride	%d\n", call->destStride);
 
-		for (y=0;y<call->Height;y++) {
-			for (x = 0; x < call->Width; x++) {
-				uint32_t c = colortable[src[x]];
+		unsigned char *src_final = src + call->Height * call->Width;
+		for (; src < src_final; dst += dst_delta, src += src_delta) {
+			u_char *src_end = src + call->Width;
+			for (; src < src_end; dst++, src++) {
+				uint32_t c = colortable[*src];
 				if (c)
-					*dst++ = c;
-				else
-					dst++;
+					*dst = c;
 			}
-			dst += dst_delta;
-			src += src_stride;
 		}
 	} else {
-		unsigned int y;
-		int dst_stride = call->destStride/sizeof(uint32_t);
-		uint32_t *dst = call->destination + call->y * dst_stride + call->x;
-
-		for (y = 0; y < call->Height; y++) {
-			memset(dst, 0, call->Width * 4);
-			dst += dst_stride;
+		uint32_t *dst_final = dst + call->Width + call->Height * dst_stride;
+		for (; dst < dst_final; dst += dst_delta) {
+			uint32_t *dst_end = dst + call->Width;
+			for (; dst < dst_end; dst++)
+				*dst = 0;
 		}
 	}
 

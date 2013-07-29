@@ -73,6 +73,10 @@ bool cPlayback::SetSubtitlePid(unsigned short /*pid*/)
 	return true;
 }
 
+void cPlayback::GetPts(uint64_t &/*pts*/)
+{
+}
+
 bool cPlayback::SetDvbsubtitlePid(unsigned short /*pid*/)
 {
 	return true;

@@ -430,6 +430,11 @@ bool cPlayback::GetSpeed(int &speed) const
 	return true;
 }
 
+void cPlayback::GetPts(uint64_t &pts)
+{
+	player->playback->Command(player, PLAYBACK_PTS, (void*)pts);
+}
+
 // in milliseconds
 bool cPlayback::GetPosition(int &position, int &duration)
 {

@@ -106,7 +106,7 @@ static AVFormatContext*   avContext = NULL;
 
 static unsigned char isContainerRunning = 0;
 
-long long int latestPts = 0;
+static long long int latestPts = 0;
 
 static int restart_audio_resampling = 0;
 static off_t seek_target_bytes = 0;

@@ -215,7 +215,6 @@ static int writeData(void* _call)
             wmv_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 
             unsigned char       PesHeader[PES_MAX_HEADER_SIZE];
-            memset (PesHeader, '0', PES_MAX_HEADER_SIZE);
             int                 HeaderLength = InsertPesHeader (PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, call->Pts, 0);
 
             if(insertSampleHeader) {

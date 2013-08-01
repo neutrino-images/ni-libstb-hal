@@ -121,8 +121,6 @@ static int writeData(void* _call)
         return 0;
     }
 
-    memset (PesHeader, '0', PES_AUDIO_HEADER_SIZE);
-
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
     unsigned char *Data = (unsigned char *) malloc(call->len);

@@ -134,17 +134,6 @@ static int writeData(void* _call)
         return 0;
     }
 
-    wmv_printf(10, "VideoPts %lld\n", call->Pts);
-
-    wmv_printf(10, "Got Private Size %d\n", call->private_size);
-
-    memcpy(private_data.privateData, call->private_data,
-           call->private_size>WMV3_PRIVATE_DATA_LENGTH?WMV3_PRIVATE_DATA_LENGTH:call->private_size);
-
-    private_data.width = call->Width;
-    private_data.height = call->Height;
-    private_data.framerate = call->FrameRate;
-
     if ((call->data == NULL) || (call->len <= 0)) {
         wmv_err("parsing NULL Data. ignoring...\n");
         return 0;
@@ -155,10 +144,20 @@ static int writeData(void* _call)
         return 0;
     }
 
+    wmv_printf(10, "VideoPts %lld\n", call->Pts);
+    wmv_printf(10, "Got Private Size %d\n", call->private_size);
+
+    memcpy(private_data.privateData, call->private_data,
+           call->private_size>WMV3_PRIVATE_DATA_LENGTH?WMV3_PRIVATE_DATA_LENGTH:call->private_size);
+
+    private_data.width = call->Width;
+    private_data.height = call->Height;
+    private_data.framerate = call->FrameRate;
+
     if (initialHeader) {
-        unsigned char               PesPacket[PES_MIN_HEADER_SIZE+128];
-        unsigned char*              PesPtr;
-        unsigned int                MetadataLength;
+	unsigned char       	    PesHeader[PES_MAX_HEADER_SIZE];
+        unsigned char               PesPayload[128];
+        unsigned char*              PesPtr = PesPayload;
         unsigned int                crazyFramerate = 0;
 
         wmv_printf(10, "Framerate: %u\n", private_data.framerate);
@@ -168,7 +167,7 @@ static int writeData(void* _call)
         crazyFramerate = ((10000000.0 / private_data.framerate) * 1000.0);
         wmv_printf(10, "crazyFramerate: %u\n", crazyFramerate);
 
-        PesPtr          = &PesPacket[PES_MIN_HEADER_SIZE];
+	memset (PesPayload, 0, sizeof(PesPayload));
 
         memcpy (PesPtr, Metadata, sizeof(Metadata));
         PesPtr         += METADATA_STRUCT_C_START;
@@ -193,11 +192,13 @@ static int writeData(void* _call)
         *PesPtr++           = (crazyFramerate >> 16) & 0xff;
         *PesPtr++           =  crazyFramerate >> 24;
 
-        MetadataLength      = PesPtr - &PesPacket[PES_MIN_HEADER_SIZE];
+	struct iovec iov[2];
+	iov[0].iov_base = PesHeader;
+	iov[1].iov_base = PesPayload;
+	iov[1].iov_len = PesPtr - PesPayload;
+	iov[0].iov_len = InsertPesHeader (PesHeader, iov[1].iov_len, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
 
-        int HeaderLength        = InsertPesHeader (PesPacket, MetadataLength, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
-
-        len = write(call->fd,PesPacket, HeaderLength + MetadataLength);
+        len = writev(call->fd, iov, 2);
 
         initialHeader = 0;
     }

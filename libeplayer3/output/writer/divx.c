@@ -148,23 +148,21 @@ static int writeData(void* _call)
 
     struct iovec iov[4];
     int ic = 0;
-    iov[ic++].iov_base = PesHeader;
+    iov[ic].iov_base = PesHeader;
+    iov[ic++].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
     iov[ic].iov_base = FakeHeaders;
     iov[ic++].iov_len = FakeHeaderLength;
 
-    int len = 0;
     if (initialHeader) {
-        initialHeader = 0;
 	iov[ic].iov_base = call->private_data;
 	iov[ic++].iov_len = call->private_size;
-	len += call->private_size;
+
+        initialHeader = 0;
     }
     iov[ic].iov_base = call->data;
     iov[ic++].iov_len = call->len;
-    len += call->len;
-    iov[0].iov_len = InsertPesHeader (PesHeader, len, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
 
-    len = writev(call->fd, iov, ic);
+    int len = writev(call->fd, iov, ic);
 
     divx_printf(10, "xvid_Write < len=%d\n", len);
 

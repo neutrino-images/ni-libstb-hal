@@ -170,7 +170,7 @@ int main(int argc,char* argv[]) {
     out.screen_width = xRes;
     out.screen_height = yRes;
     out.framebufferFD = fd;
-    out.destination   = lfb;
+    out.destination   = (uint32_t *)lfb;
     out.destStride    = stride;
     out.shareFramebuffer = 1;
 

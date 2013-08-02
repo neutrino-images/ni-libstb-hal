@@ -68,10 +68,10 @@ if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); 
 #define TRACKWRAP 20
 #define MAXLINELENGTH 1000
 
+static const char FILENAME[] = "text_ssa.c";
+
 //Buffer size used in getLine function. Do not set to value less than 1 !!!
 #define SSA_BUFFER_SIZE 14
-
-static const char FILENAME[] = "text_ssa.c";
 
 /* ***************************** */
 /* Types                         */
@@ -240,9 +240,11 @@ static char ** SsaManagerList(Context_t  *context __attribute__((unused))) {
     if (Tracks != NULL) {
         char help[256];
         int i = 0, j = 0;
+
         tracklist = malloc(sizeof(char *) * ((TrackCount*2) + 1));
 
         for (i = 0, j = 0; i < TrackCount; i++, j+=2) {
+
             sprintf(help, "%d", Tracks[i].Id);
             tracklist[j]    = strdup(help);
             tracklist[j+1]  = strdup(Tracks[i].File);
@@ -303,7 +305,7 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
 
     ssa_printf(10, "folder: %s\n", FilenameFolder);
 
-    getExtension(copyFilename, &FilenameExtension);
+    FilenameExtension = getExtension(copyFilename);
 
     if (FilenameExtension == NULL)
     {
@@ -332,16 +334,13 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
             strcpy(subtitleFilename, (*dirzeiger).d_name);
 
             // Extension of Relativ Subtitle File Name
-            getExtension(subtitleFilename, &subtitleExtension);
+            subtitleExtension = getExtension(subtitleFilename);
 
             if (subtitleExtension == NULL)
                 continue;
 
             if ( strcmp(subtitleExtension, "ssa") != 0 && strcmp(subtitleExtension, "ass") != 0 )
-            {
-                free(subtitleExtension);
                 continue;
-            }
 
             /* cut extension */
             subtitleFilename[strlen(subtitleFilename) - strlen(subtitleExtension) - 1] = '\0';
@@ -372,17 +371,13 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
                 Subtitle.Id = i++;
                 context->manager->subtitle->Command(context, MANAGER_ADD, &Subtitle);
             }
-
-            free(subtitleExtension);
         } /* while */
 	closedir(dir);
     } /* if dir */
 
-    free(FilenameExtension);
     free(copyFilename);
 
     ssa_printf(10, "<\n");
-
     return cERR_SSA_NO_ERROR;
 }
 

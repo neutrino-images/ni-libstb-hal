@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <limits.h>
 #include "common.h"
 #include "misc.h"
 #include "subtitle.h"
@@ -302,7 +301,7 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
 
     srt_printf(10, "folder: %s\n", FilenameFolder);
 
-    getExtension(copyFilename, &FilenameExtension);
+    FilenameExtension = getExtension(copyFilename);
 
     if (FilenameExtension == NULL)
     {
@@ -331,16 +330,13 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
             strcpy(subtitleFilename, (*dirzeiger).d_name);
 
             // Extension of Relativ Subtitle File Name
-            getExtension(subtitleFilename, &subtitleExtension);
+            subtitleExtension = getExtension(subtitleFilename);
 
             if (subtitleExtension == NULL)
                 continue;
 
             if (strcmp(subtitleExtension, "srt") != 0)
-            {
-                free(subtitleExtension);
                 continue;
-            }
 
             /* cut extension */
             subtitleFilename[strlen(subtitleFilename) - strlen(subtitleExtension) - 1] = '\0';
@@ -371,13 +367,10 @@ static int SrtGetSubtitle(Context_t  *context, char * Filename) {
                 Subtitle.Id = i++,
                 context->manager->subtitle->Command(context, MANAGER_ADD, &Subtitle);
             }
-
-            free(subtitleExtension);
         } /* while */
 	closedir(dir);
     } /* if dir */
 
-    free(FilenameExtension);
     free(copyFilename);
 
     srt_printf(10, "<\n");
@@ -430,7 +423,6 @@ static int SrtCloseSubtitle(Context_t *context __attribute__((unused))) {
     return cERR_SRT_NO_ERROR;
 }
 
-
 static int SrtSwitchSubtitle(Context_t *context, int* arg) {
     int ret = cERR_SRT_NO_ERROR;
 
@@ -447,6 +439,7 @@ static int SrtSwitchSubtitle(Context_t *context, int* arg) {
 
         hasThreadStarted = 1;
     }
+
     return ret;
 }
 

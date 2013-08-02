@@ -11,7 +11,6 @@ typedef struct PlaybackHandler_s {
 
     unsigned char isFile;
     unsigned char isHttp;
-    unsigned char isUPNP;
 
     unsigned char isPlaying;
     unsigned char isPaused;

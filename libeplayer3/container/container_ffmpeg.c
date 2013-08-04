@@ -953,8 +953,10 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 	    context->manager->video->Command(context, MANAGER_DEL, NULL);
     if (context->manager->audio)
 	    context->manager->audio->Command(context, MANAGER_DEL, NULL);
-    if (initial && context->manager->subtitle)
+#if 0
+    if (context->manager->subtitle)
 	    context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
+#endif
     if (context->manager->dvbsubtitle)
 	    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     if (context->manager->teletext)

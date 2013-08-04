@@ -119,8 +119,6 @@ typedef struct
     unsigned int   screen_height;
     unsigned int   destStride;
     
-    int            shareFramebuffer;
-    int            framebufferFD;
     void	   (*framebufferBlit)(void);
 } SubtitleOutputDef_t;
 

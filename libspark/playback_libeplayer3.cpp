@@ -73,8 +73,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 		if (framebuffer_callback) {
 			SubtitleOutputDef_t so;
 			memset(&so, 0, sizeof(so));
-			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferFD, &so.framebufferBlit);
-			so.shareFramebuffer = 1;
+			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferBlit);
 			player->output->subtitle->Command(player, OUTPUT_SET_SUBTITLE_OUTPUT, (void*)&so);
 		}
 	}
@@ -707,7 +706,7 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 }
 
 //
-cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, int *, void (**)(void)))
+cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;

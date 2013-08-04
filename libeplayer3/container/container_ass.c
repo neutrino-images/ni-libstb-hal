@@ -122,8 +122,6 @@ static ASS_Renderer *ass_renderer;
 
 static unsigned int screen_width     = 0;
 static unsigned int screen_height    = 0;
-static int          shareFramebuffer = 0;
-static int          framebufferFD    = -1;
 static uint32_t     *destination    = NULL;
 static int          destStride       = 0;
 static void	    (*framebufferBlit)(void) = NULL;
@@ -202,7 +200,6 @@ void releaseRegions()
              ass_printf(100, "release: w %d h %d x %d y %d\n", 
                                  next->w, next->h, next->x, next->y);
 
-             out.fd            = framebufferFD;
              out.data          = NULL;
              out.Width         = next->w;
              out.Height        = next->h;
@@ -261,7 +258,6 @@ void checkRegions()
                 ass_printf(100, "release: w %d h %d x %d y %d\n", 
                                     next->w, next->h, next->x, next->y);
 
-                out.fd            = framebufferFD;
                 out.data          = NULL;
                 out.Width         = next->w;
                 out.Height        = next->h;
@@ -399,53 +395,42 @@ static void ASSThread(Context_t *context) {
 		if (ass_track && ass_track->events)
 			undisplay = now + (ass_track->events->Duration + 500) / 90000;
 
-		if (shareFramebuffer) {
-			ASS_Image *it;
-			int x0 = screen_width - 1;
-			int y0 = screen_height - 1;
-			int x1 = 0;
-			int y1 = 0;
-			for (it = img; it; it = it->next) {
-				if (it->w && it->h) {
-					if (it->dst_x < x0)
-						x0 = it->dst_x;
-					if (it->dst_y < y0)
-						y0 = it->dst_y;
-					if (it->dst_x + it->w > x1)
-						x1 = it->dst_x + it->w;
-					if (it->dst_y + it->h > y1)
-						y1 = it->dst_y + it->h;
-				}
+		ASS_Image *it;
+		int x0 = screen_width - 1;
+		int y0 = screen_height - 1;
+		int x1 = 0;
+		int y1 = 0;
+		for (it = img; it; it = it->next) {
+			if (it->w && it->h) {
+				if (it->dst_x < x0)
+					x0 = it->dst_x;
+				if (it->dst_y < y0)
+					y0 = it->dst_y;
+				if (it->dst_x + it->w > x1)
+					x1 = it->dst_x + it->w;
+				if (it->dst_y + it->h > y1)
+					y1 = it->dst_y + it->h;
 			}
-			if (x1 > 0 && y1 > 0)
-			{
-				x1++;
-				y1++;
-				int x, y;
-				uint32_t *dst = destination + y0 * destStride/sizeof(uint32_t) + x0;
-				int destStrideDiff = destStride/sizeof(uint32_t) - (x1 - x0);
-				for (y = y0; y < y1; y++) {
-					for (x = x0; x < x1; x++)
-						*dst++ = 0x80808080;
-					dst += destStrideDiff;
-				}
-				storeRegion(x0, y0, x1 - x0, y1 - y0, undisplay);
-				needsBlit = 1;
+		}
+		if (x1 > 0 && y1 > 0)
+		{
+			x1++;
+			y1++;
+			int x, y;
+			uint32_t *dst = destination + y0 * destStride/sizeof(uint32_t) + x0;
+			int destStrideDiff = destStride/sizeof(uint32_t) - (x1 - x0);
+			for (y = y0; y < y1; y++) {
+				for (x = x0; x < x1; x++)
+					*dst++ = 0x80808080;
+				dst += destStrideDiff;
 			}
+			storeRegion(x0, y0, x1 - x0, y1 - y0, undisplay);
+			needsBlit = 1;
 		}
 
                 while (context && context->playback && context->playback->isPlaying && img)
                 {
                     WriterFBCallData_t out;
-#if 0
-                    time_t now = time(NULL);
-                    time_t undisplay = now + 10;
-
-                    if (ass_track && ass_track->events)
-                    {
-                        undisplay = now + (ass_track->events->Duration + 500) / 90000;
-                    }
-#endif
 
                     ass_printf(100, "w %d h %d s %d x %d y %d c %d chg %d now %ld und %ld\n", 
                                  img->w, img->h, img->stride, 
@@ -457,7 +442,6 @@ static void ASSThread(Context_t *context) {
                      */
                     if ((img->w != 0) && (img->h != 0) && writer)
                     {
-                        out.fd            = framebufferFD;
                         out.data          = img->bitmap;
                         out.Width         = img->w;
                         out.Height        = img->h;
@@ -471,50 +455,9 @@ static void ASSThread(Context_t *context) {
                         out.destination   = destination;
                         out.destStride    = destStride;
 
-#if 0
-                        storeRegion(img->dst_x, img->dst_y, 
-                                    img->w, img->h, undisplay);
-#endif
-                                    
-                        if (shareFramebuffer)
-                        {
-                            if(context && context->playback && context->playback->isPlaying && writer){
-                                writer->writeData(&out);
-                            }
-                        }
-#if NO_SHARED_FRAMEBUFFER
-// currently not needed, but might be useful when switching to cst subtitle implementation in movieplayer
-                        else
-                        {
-                            /* application does not want to share framebuffer,
-                             * so there is hopefully installed an output callback
-                             * in the subtitle output!
-                             */
-                            SubtitleOut_t sub_out;
+                        if(context && context->playback && context->playback->isPlaying && writer)
+                            writer->writeData(&out);
 
-                            sub_out.type         = eSub_Gfx;
-
-                            if (ass_track->events)
-                            {
-                                /* fixme: check values */
-                                sub_out.pts          = ass_track->events->Start * 90.0;
-                                sub_out.duration     = ass_track->events->Duration / 1000.0;
-                            } else
-                            {
-                                sub_out.pts          = playPts;
-                                sub_out.duration     = 10.0;
-                            }
-                             
-                            sub_out.u.gfx.data   = img->bitmap;
-                            sub_out.u.gfx.Width  = img->w;
-                            sub_out.u.gfx.Height = img->h;
-                            sub_out.u.gfx.x      = img->dst_x;
-                            sub_out.u.gfx.y      = img->dst_y;
-                            if(context && context->playback && context->playback->isPlaying &&
-                               context->output && context->output->subtitle)
-                                context->output->subtitle->Write(context, &sub_out);
-                        }
-#endif
 		        needsBlit = 1;
                     }
 
@@ -587,14 +530,11 @@ int container_ass_init(Context_t *context)
 
     screen_width     = output.screen_width;
     screen_height    = output.screen_height;
-    shareFramebuffer = output.shareFramebuffer;
-    framebufferFD    = output.framebufferFD;
     destination      = output.destination;
     destStride       = output.destStride;
     framebufferBlit  = output.framebufferBlit;
     
-    ass_printf(10, "width %d, height %d, share %d, fd %d\n", 
-              screen_width, screen_height, shareFramebuffer, framebufferFD);
+    ass_printf(10, "width %d, height %d\n", screen_width, screen_height);
 
     ass_set_frame_size(ass_renderer, screen_width, screen_height);
     ass_set_margins(ass_renderer, (int)(0.03 * screen_height), (int)(0.03 * screen_height) ,

@@ -169,10 +169,8 @@ int main(int argc,char* argv[]) {
     /* for testing ass subtitles */
     out.screen_width = xRes;
     out.screen_height = yRes;
-    out.framebufferFD = fd;
     out.destination   = (uint32_t *)lfb;
     out.destStride    = stride;
-    out.shareFramebuffer = 1;
 
     player->output->subtitle->Command(player, (OutputCmd_t)OUTPUT_SET_SUBTITLE_OUTPUT, (void*) &out);
 

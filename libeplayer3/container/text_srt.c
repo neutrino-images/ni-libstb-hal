@@ -181,10 +181,7 @@ static void* SrtSubtitleThread(void *data) {
                 Text = strdup(Data);
             } else {
                 int length = strlen(Text) /* \0 -> \n */ + strlen(Data) + 2 /* \0 */;
-                char * tmpText = strdup(Text);
-
-                free(Text);
-
+                char * tmpText = Text;
                 Text = (char*)malloc(length);
 
                 strcpy(Text, tmpText);

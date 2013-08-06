@@ -549,7 +549,7 @@ bool cDemux::addPid(unsigned short Pid)
 	pesfds.push_back(pfd);
 	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
 	if (ret < 0)
-		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
+		lt_info("%s: DMX_ADD_PID (%m) pid=%hx\n", __func__, Pid);
 	return (ret != -1);
 }
 

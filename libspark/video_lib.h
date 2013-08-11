@@ -17,6 +17,16 @@ typedef enum {
 	ANALOG_SCART_MASK = 0x10
 } analog_mode_t;
 
+typedef enum {
+	COLORFORMAT_RGB = 0x10, // keep compatible with analog_mode_t
+	COLORFORMAT_YUV,
+	COLORFORMAT_CVBS,
+	COLORFORMAT_SVIDEO,
+	COLORFORMAT_HDMI_RGB,
+	COLORFORMAT_HDMI_YCBCR444,
+	COLORFORMAT_HDMI_YCBCR422
+} COLOR_FORMAT;
+
 
 typedef enum {
 	VIDEO_FORMAT_MPEG2 = 0,
@@ -192,6 +202,7 @@ class cVideo
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
+		void SetColorFormat(COLOR_FORMAT color_format);
 };
 
 #endif

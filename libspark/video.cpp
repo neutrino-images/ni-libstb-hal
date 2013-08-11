@@ -714,3 +714,32 @@ void cVideo::SetControl(int control, int value) {
 			proc_put(p, buf, len);
 	}
 }
+
+void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
+	const char *p = NULL;
+	switch(color_format) {
+	case COLORFORMAT_RGB:
+		p = "rgb";
+		break;
+        case COLORFORMAT_YUV:
+		p = "yuv";
+		break;
+        case COLORFORMAT_CVBS:
+		p = "cvbs";
+		break;
+        case COLORFORMAT_SVIDEO:
+		p = "svideo";
+		break;
+        case COLORFORMAT_HDMI_RGB:
+		p = "hdmi_rgb";
+		break;
+        case COLORFORMAT_HDMI_YCBCR444:
+		p = "hdmi_yuv";
+		break;
+        case COLORFORMAT_HDMI_YCBCR422:
+		p = "hdmi_422";
+		break;
+	}
+	if (p)
+		proc_put("/proc/stb/avs/0/colorformat", p, strlen(p));
+}

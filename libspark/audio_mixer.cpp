@@ -20,7 +20,7 @@
 #include <audio_mixer.h>
 
 mixerVolume::mixerVolume(const char *name, const char *card, long volume) {
-	sid = NULL;
+	snd_mixer_selem_id_t *sid = NULL;
 	elem = NULL;
 	handle = NULL;
 	min = 0;
@@ -58,8 +58,6 @@ mixerVolume::~mixerVolume()
 {
 	if (handle)
 		snd_mixer_close(handle);
-	if (sid)
-		snd_mixer_selem_id_free(sid);
 }
 
 bool mixerVolume::setVolume(long volume) {

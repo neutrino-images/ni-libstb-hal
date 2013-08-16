@@ -64,7 +64,7 @@ static const char FILENAME[] = __FILE__;
 /* Varaibles                     */
 /* ***************************** */
 
-static Track_t * Tracks;
+static Track_t * Tracks = NULL;
 static int TrackCount = 0;
 static int CurrentTrack = 0; //TRACK[0] as default.
 
@@ -87,6 +87,14 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
     {
         video_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
         return cERR_VIDEO_MGR_ERROR;
+    }
+
+    int i;
+    for (i = 0; i < TRACKWRAP; i++) {
+	if (Tracks[i].Id == track.Id) {
+		Tracks[i].pending = 0;
+        	return cERR_VIDEO_MGR_NO_ERROR;
+	}
     }
 
     if (TrackCount < TRACKWRAP) {
@@ -123,6 +131,8 @@ static char ** ManagerList(Context_t  *context __attribute__((unused))) {
         }
 
         for (i = 0, j = 0; i < TrackCount; i++, j+=2) {
+	    if (Tracks[i].pending)
+		continue;
 	    size_t len = strlen(Tracks[i].Name) + 20;
 	    char tmp[len];
 	    snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
@@ -228,6 +238,12 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument) {
     }
     case MANAGER_DEL: {
         ret = ManagerDel(context);
+        break;
+    }
+    case MANAGER_INIT_UPDATE: {
+	int i;
+	for (i = 0; i < TrackCount; i++)
+		Tracks[i].pending = 1;
         break;
     }
     default:

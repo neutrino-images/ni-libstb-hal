@@ -13,6 +13,7 @@ typedef enum {
     MANAGER_GETENCODING,
     MANAGER_DEL,
     MANAGER_GET_TRACK,
+    MANAGER_INIT_UPDATE
 } ManagerCmd_t;
 
 typedef enum {
@@ -56,6 +57,8 @@ typedef struct Track_s {
      * AVCodec is than used for softdecoding and stream will be injected as PCM */
     int                   inject_as_pcm;
     int                   inject_raw_pcm;
+
+    int			  pending;
 } Track_t;
 
 typedef struct Manager_s {

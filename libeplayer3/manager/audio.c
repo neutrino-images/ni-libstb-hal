@@ -83,6 +83,9 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
 
     if (Tracks == NULL) {
         Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
+	int i;
+	for (i = 0; i < TRACKWRAP; i++)
+		Tracks[i].Id = -1;
     }
 
     if (Tracks == NULL)

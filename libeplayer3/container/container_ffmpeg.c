@@ -861,11 +861,8 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 
     ffmpeg_printf(10, "filename %s\n", filename);
 
-    getMutex(FILENAME, __FUNCTION__,__LINE__);
-
     if (isContainerRunning) {
 	ffmpeg_err("ups already running?\n");
-	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	return cERR_CONTAINER_FFMPEG_RUNNING;
     }
 
@@ -887,7 +884,6 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 	av_strerror(err, error, 512);
 	ffmpeg_err("Cause: %s\n", error);
 
-	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	return cERR_CONTAINER_FFMPEG_OPEN;
     }
 
@@ -909,7 +905,6 @@ int container_ffmpeg_init(Context_t *context, char * filename)
         //for buffered io
         ffmpeg_buf_free();
         //for buffered io (end)
-	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 	return cERR_CONTAINER_FFMPEG_STREAM;
 #endif
     }
@@ -949,6 +944,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
     if (teletextTrack)
 	teletextId = ((AVStream *) (teletextTrack->stream))->id;
 
+    getMutex(FILENAME, __FUNCTION__,__LINE__);
     if (context->manager->video)
 	    context->manager->video->Command(context, MANAGER_DEL, NULL);
     if (context->manager->audio)
@@ -961,8 +957,8 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 	    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     if (context->manager->teletext)
 	    context->manager->teletext->Command(context, MANAGER_DEL, NULL);
-    ffmpeg_printf(20, "dump format\n");
 
+    ffmpeg_printf(20, "dump format\n");
     av_dump_format(avContext, 0, filename, 0);
 
     ffmpeg_printf(1, "number streams %d\n", avContext->nb_streams);
@@ -1344,14 +1340,16 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 
     } /* for */
 
-    if (audioId > -1 && context->playback)
-	context->playback->Command(context, PLAYBACK_SWITCH_AUDIO, &audioId);
-    if (subtitleId > -1 && context->playback)
-	context->playback->Command(context, PLAYBACK_SWITCH_SUBTITLE, &subtitleId);
-    if (dvbsubtitleId > -1 && context->playback)
-	context->playback->Command(context, PLAYBACK_SWITCH_DVBSUBTITLE, &dvbsubtitleId);
-    if (teletextId > -1 && context->playback)
-	context->playback->Command(context, PLAYBACK_SWITCH_TELETEXT, &teletextId);
+    if (context->playback) {
+	if (audioId > -1)
+		context->playback->Command(context, PLAYBACK_SWITCH_AUDIO, &audioId);
+	if (subtitleId > -1)
+		context->playback->Command(context, PLAYBACK_SWITCH_SUBTITLE, &subtitleId);
+	if (dvbsubtitleId > -1)
+		context->playback->Command(context, PLAYBACK_SWITCH_DVBSUBTITLE, &dvbsubtitleId);
+	if (teletextId > -1)
+		context->playback->Command(context, PLAYBACK_SWITCH_TELETEXT, &teletextId);
+    }
 
     releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 

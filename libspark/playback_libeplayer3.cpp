@@ -114,30 +114,11 @@ bool cPlayback::Start(char *filename, unsigned short vpid, int vtype, unsigned s
 	char file[strlen(filename) + 1];
 	*file = 0;
 
-	if(!strncmp("http://", filename, 7))
-	{
-	    printf("http://\n");
+	if (!strncmp("file://", filename, 7))
+		filename += 7;
+
+	if(strstr(filename, "://"))
             isHTTP = true;
-	}
-	else if(!strncmp("rtmp://", filename, 7))
-	{
-	    printf("rtmp://\n");
-            isHTTP = true;
-	}
-	else if(!strncmp("mms://", filename, 6))
-	{
-	    printf("mss://\n");
-            isHTTP = true;
-	}
-	else if(!strncmp("file://", filename, 7))
-	{
-	    printf("file://\n");
-	}
-	else if(!strncmp("upnp://", filename, 7))
-	{
-	    printf("upnp://\n");
-            isHTTP = true;
-	}
 	else if (pm == PLAYMODE_TS && no_probe)
 	    strcat(file, "myts://");
 	else

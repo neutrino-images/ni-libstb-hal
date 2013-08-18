@@ -39,7 +39,18 @@ hw_caps_t *get_hwcaps(void)
 	const char *tmp;
 	char buf[1024];
 	int len = -1, ret, val;
-	int fd = open("/proc/cmdline", O_RDONLY);
+	int fd = open (FP_DEV, O_RDWR);
+	if (fd != -1) {
+		ret = ioctl(fd, VFDGETVERSION, &val);
+		if (ret < 0)
+			fprintf(stderr, "[hardware_caps] %s: VFDGETVERSION %m\n", __func__);
+		else if (val == 1) { /* VFD, others not yet seen in the wild */
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 8;
+		}
+		close(fd);
+	}
+	fd = open("/proc/cmdline", O_RDONLY);
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);
@@ -62,6 +73,8 @@ hw_caps_t *get_hwcaps(void)
 				case 0x090008:
 					tmp = "Edision Pingulux";
 					caps.has_SCART = 1; // RCA qualifies ... --martii
+					if (caps.display_type == HW_DISPLAY_LINE_TEXT)
+						tmp = "Edision Pingulux Plus";
 					break;
 				case 0x09000a:
 					tmp = "Amiko Alien SDH8900";
@@ -145,17 +158,6 @@ hw_caps_t *get_hwcaps(void)
 		} else
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
-	}
-	fd = open (FP_DEV, O_RDWR);
-	if (fd != -1) {
-		ret = ioctl(fd, VFDGETVERSION, &val);
-		if (ret < 0)
-			fprintf(stderr, "[hardware_caps] %s: VFDGETVERSION %m\n", __func__);
-		else if (val == 1) { /* VFD, others not yet seen in the wild */
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 8;
-		}
-		close(fd);
 	}
 	return &caps;
 }

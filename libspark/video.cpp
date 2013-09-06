@@ -380,7 +380,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
-void cVideo::ShowPicture(const char * fname)
+void cVideo::ShowPicture(const char * fname, const char *_destname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
 	char destname[512];
@@ -398,22 +398,26 @@ void cVideo::ShowPicture(const char * fname)
     if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
 	strncpy(destname, fname, sizeof(destname));
     else {
-	strcpy(destname, "/var/cache");
-	if (stat(fname, &st2))
-	{
-		lt_info("%s: could not stat %s (%m)\n", __func__, fname);
-		return;
+	if (_destname)
+		strncpy(destname, _destname, sizeof(destname));
+	else {
+		strcpy(destname, "/var/cache");
+		if (stat(fname, &st2))
+		{
+			lt_info("%s: could not stat %s (%m)\n", __func__, fname);
+			return;
+		}
+		mkdir(destname, 0755);
+		/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
+		   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
+		   build that filename first...
+		   TODO: this could cause name clashes, use a hashing function instead... */
+		strcat(destname, fname);
+		p = &destname[strlen("/var/cache/")];
+		while ((p = strchr(p, '/')) != NULL)
+			*p = '.';
+		strcat(destname, ".m2v");
 	}
-	mkdir(destname, 0755);
-	/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
-	   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
-	   build that filename first...
-	   TODO: this could cause name clashes, use a hashing function instead... */
-	strcat(destname, fname);
-	p = &destname[strlen("/var/cache/")];
-	while ((p = strchr(p, '/')) != NULL)
-		*p = '.';
-	strcat(destname, ".m2v");
 	/* ...then check if it exists already... */
 	if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
 	{

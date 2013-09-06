@@ -211,7 +211,7 @@ void cVideo::SetVideoMode(analog_mode_t)
 {
 }
 
-void cVideo::ShowPicture(const char *fname)
+void cVideo::ShowPicture(const char *fname, const char *)
 {
 	lt_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))

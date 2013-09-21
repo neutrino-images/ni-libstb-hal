@@ -114,7 +114,7 @@ cDemux::~cDemux()
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
 	int devnum = num;
-	int flags = O_RDWR;
+	int flags = O_RDWR|O_CLOEXEC;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
@@ -127,7 +127,6 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		lt_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
 		return false;
 	}
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 

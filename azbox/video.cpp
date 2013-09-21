@@ -90,7 +90,7 @@ cVideo::cVideo(int, void *, void *)
 
 	blank_data = NULL; /* initialize */
 	blank_size = 0;
-	blankfd = open(blankname, O_RDONLY);
+	blankfd = open(blankname, O_RDONLY|O_CLOEXEC);
 	if (blankfd < 0)
 		lt_info("%s cannot open %s: %m", __func__, blankname);
 	else
@@ -129,7 +129,7 @@ void cVideo::openDevice(void)
 	if (fd != -1) /* already open */
 		return;
 retry:
-	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
+	if ((fd = open(VIDEO_DEVICE, O_RDWR|O_CLOEXEC)) < 0)
 	{
 		if (errno == EBUSY)
 		{
@@ -140,8 +140,6 @@ retry:
 		}
 		lt_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
 	}
-	else
-		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	playstate = VIDEO_STOPPED;
 }
 
@@ -387,7 +385,7 @@ void cVideo::ShowPicture(const char * fname)
 	   what we want. the mutex ensures proper ordering. */
 	pthread_mutex_lock(&stillp_mutex);
 
-	mfd = open(destname, O_RDONLY);
+	mfd = open(destname, O_RDONLY|O_CLOEXEC);
 	if (mfd < 0)
 	{
 		lt_info("%s cannot open %s: %m", __func__, destname);

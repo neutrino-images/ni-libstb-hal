@@ -137,10 +137,10 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		lt_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
 		return false;
 	}
-#endif
 	int n = DMX_SOURCE_FRONT0;
 	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
+#endif
 	if (uBufferSize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
@@ -383,6 +383,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	ioctl (fd, DMX_STOP);
 	if (ioctl(fd, DMX_SET_FILTER, &s_flt) < 0)
 		return false;
+	ioctl(fd, DMX_START);
 
 	return true;
 }

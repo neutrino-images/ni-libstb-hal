@@ -50,6 +50,7 @@ void cAudio::openDevice(void)
 void cAudio::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
+	ioctl(fd, AUDIO_CONTINUE); /* enigma2 also does CONTINUE before close... */
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -128,7 +129,9 @@ int cAudio::Start(void)
 int cAudio::Stop(void)
 {
 	lt_debug("%s\n", __func__);
-	return ioctl(fd, AUDIO_STOP);
+	ioctl(fd, AUDIO_STOP);
+	ioctl(fd, AUDIO_CONTINUE); /* no idea why we have to stop and then continue => enigma2 does it, too */
+	return 0;
 }
 
 bool cAudio::Pause(bool /*Pcm*/)

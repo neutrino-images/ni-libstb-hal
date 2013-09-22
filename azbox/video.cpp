@@ -146,8 +146,6 @@ retry:
 void cVideo::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
-	/* looks like sometimes close is unhappy about non-empty buffers */
-	Start();
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -286,16 +284,7 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		return 0;
 	}
 	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
-	bool stopped = false;
-	if (playstate == VIDEO_PLAYING)
-	{
-		lt_info("%s: playstate == VIDEO_PLAYING, stopping video\n", __func__);
-		Stop();
-		stopped = true;
-	}
 	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
-	if (stopped)
-		Start();
 
 	return ret;
 }

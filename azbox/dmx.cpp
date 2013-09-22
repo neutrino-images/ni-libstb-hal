@@ -211,10 +211,11 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 #endif
 	int rc;
 	int to = timeout;
-	struct pollfd ufds;
-	ufds.fd = fd;
-	ufds.events = POLLIN|POLLPRI|POLLERR;
-	ufds.revents = 0;
+	/* using a one-dimensional array seems to avoid strange segfaults / memory corruption?? */
+	struct pollfd ufds[1];
+	ufds[0].fd = fd;
+	ufds[0].events = POLLIN|POLLPRI|POLLERR;
+	ufds[0].revents = 0;
 
 	/* hack: if the frontend loses and regains lock, the demuxer often will not
 	 * return from read(), so as a "emergency exit" for e.g. NIT scan, set a (long)
@@ -225,7 +226,7 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	if (to > 0)
 	{
  retry:
-		rc = ::poll(&ufds, 1, to);
+		rc = ::poll(ufds, 1, to);
 		if (!rc)
 		{
 			if (timeout == 0) /* we took the emergency exit */
@@ -252,14 +253,14 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 			return 0;
 		}
 #endif
-		if (ufds.revents & POLLHUP) /* we get POLLHUP if e.g. a too big DMX_BUFFER_SIZE was set */
+		if (ufds[0].revents & POLLHUP) /* we get POLLHUP if e.g. a too big DMX_BUFFER_SIZE was set */
 		{
-			dmx_err("received %s,", "POLLHUP", ufds.revents);
+			dmx_err("received %s,", "POLLHUP", ufds[0].revents);
 			return -1;
 		}
-		if (!(ufds.revents & POLLIN)) /* we requested POLLIN but did not get it? */
+		if (!(ufds[0].revents & POLLIN)) /* we requested POLLIN but did not get it? */
 		{
-			dmx_err("received %s, please report!", "POLLIN", ufds.revents);
+			dmx_err("received %s, please report!", "POLLIN", ufds[0].revents);
 			return 0;
 		}
 	}

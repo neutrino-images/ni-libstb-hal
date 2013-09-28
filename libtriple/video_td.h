@@ -5,6 +5,7 @@
 #define video_format_t          vidDispSize_t
 //#define video_displayformat_t   vidDispMode_t
 #include "../common/cs_types.h"
+#include "dmx_td.h"
 
 #define STB_HAL_VIDEO_HAS_GETSCREENIMAGE 1
 
@@ -138,7 +139,7 @@ class cVideo
 		int video_standby;
 	public:
 		/* constructor & destructor */
-		cVideo(int mode, void *, void *);
+		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
 		void * GetTVEnc() { return NULL; };
@@ -188,6 +189,7 @@ class cVideo
 		int  CloseVBI(void) { return 0; };
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
+		void SetDemux(cDemux *dmx);
 		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 

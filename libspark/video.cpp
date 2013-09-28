@@ -141,9 +141,9 @@ out:
 }
 
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
-	lt_debug("%s\n", __FUNCTION__);
+	lt_debug("%s unit %u\n", __func__, unit);
 
 	//croppingMode = VID_DISPMODE_NORM;
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
@@ -666,4 +666,9 @@ int64_t cVideo::GetPTS(void)
 	if (ioctl(fd, VIDEO_GET_PTS, &pts) < 0)
 		lt_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
+}
+
+void cVideo::SetDemux(cDemux *)
+{
+	lt_debug("%s not implemented yet\n", __func__);
 }

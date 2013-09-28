@@ -74,7 +74,7 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size);
 #define VIDEO_STREAMTYPE_VC1_SM 5
 #define VIDEO_STREAMTYPE_MPEG1 6
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	lt_debug("%s\n", __FUNCTION__);
 
@@ -627,4 +627,9 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size)
 		write(fd, stuffing, sizeof(stuffing));
 	ioctl(fd, VIDEO_STOP, 0);
 	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+}
+
+void cVideo::SetDemux(cDemux *)
+{
+	lt_debug("%s: not implemented yet\n", __func__);
 }

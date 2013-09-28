@@ -65,7 +65,7 @@ static const AVRational aspect_ratios[6] = {
 	{ -1,-1 }
 };
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	lt_debug("%s\n", __func__);
 	av_register_all();
@@ -659,4 +659,9 @@ int64_t cVideo::GetPTS(void)
 		pts = buffers[buf_out].pts();
 	buf_m.unlock();
 	return pts;
+}
+
+void cVideo::SetDemux(cDemux *)
+{
+	lt_debug("%s: not implemented yet\n", __func__);
 }

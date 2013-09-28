@@ -490,6 +490,9 @@ bool cDemux::pesFilter(const unsigned short pid)
 	case DMX_VIDEO_CHANNEL:
 		p_flt.pes_type = DMX_PES_VIDEO;
 		break;
+	case DMX_PIP_CHANNEL: /* PIP is a special version of DMX_VIDEO_CHANNEL */
+		p_flt.pes_type = DMX_PES_VIDEO1;
+		break;
 	case DMX_PES_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;
 		p_flt.output  = DMX_OUT_TAP;

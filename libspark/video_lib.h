@@ -120,6 +120,7 @@ class cVideo
 	private:
 		/* video device */
 		int fd;
+		unsigned int devnum;
 		/* apparently we cannot query the driver's state
 		   => remember it */
 		video_play_state_t playstate;

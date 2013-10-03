@@ -109,6 +109,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
+#if 0
 	if (clipfd != -1 && mixer_fd != -1) {
 		int tmp = 0;
 		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
@@ -119,6 +120,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
+#endif
 
 	char str[4];
 	sprintf(str, "%d", v);

@@ -23,7 +23,7 @@ if test x"$BOXTYPE" = x"tripledragon"; then
 	TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)
 fi
 
-if test x$BOXTYPE = xgeneric; then
+if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
 	PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1])
 	PKG_CHECK_MODULES([AVCODEC], [libavcodec >= 54.28.0])
 	# don't know which version is exactly needed here...
@@ -39,6 +39,7 @@ azbox/Makefile
 generic-pc/Makefile
 libtriple/Makefile
 libspark/Makefile
+raspi/Makefile
 tools/Makefile
 ])
 

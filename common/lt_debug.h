@@ -23,6 +23,7 @@
 
 extern int debuglevel;
 
+void hal_set_threadname(const char *name);
 void _lt_debug(int facility, const void *, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 void _lt_info(int facility, const void *, const char *fmt, ...)  __attribute__ ((format (printf, 3, 4)));
 void lt_debug_init(void);

@@ -3,6 +3,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/prctl.h>
+#include <string.h>
+
 
 int cnxt_debug = 0; /* compat, unused */
 
@@ -75,4 +79,12 @@ void lt_debug_init(void)
 		}
 		fprintf(stderr, "\n");
 	}
+}
+
+void hal_set_threadname(const char *name)
+{
+	char threadname[17];
+	strncpy(threadname, name, sizeof(threadname));
+	threadname[16] = 0;
+	prctl (PR_SET_NAME, (unsigned long)&threadname);
 }

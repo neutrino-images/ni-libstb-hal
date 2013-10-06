@@ -39,9 +39,8 @@ void cAudio::openDevice(void)
 	lt_debug("%s\n", __func__);
 	if (fd < 0)
 	{
-		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
+		if ((fd = open(AUDIO_DEVICE, O_RDONLY|O_CLOEXEC)) < 0)
 			lt_info("openDevice: open failed (%m)\n");
-		fcntl(fd, F_SETFD, FD_CLOEXEC);
 		do_mute(true, false);
 	}
 	else
@@ -51,6 +50,7 @@ void cAudio::openDevice(void)
 void cAudio::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
+	ioctl(fd, AUDIO_CONTINUE); /* enigma2 also does CONTINUE before close... */
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -129,7 +129,9 @@ int cAudio::Start(void)
 int cAudio::Stop(void)
 {
 	lt_debug("%s\n", __func__);
-	return ioctl(fd, AUDIO_STOP);
+	ioctl(fd, AUDIO_STOP);
+	ioctl(fd, AUDIO_CONTINUE); /* no idea why we have to stop and then continue => enigma2 does it, too */
+	return 0;
 }
 
 bool cAudio::Pause(bool /*Pcm*/)
@@ -211,12 +213,11 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	}
 	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
-	clipfd = open(dsp_dev, O_WRONLY);
+	clipfd = open(dsp_dev, O_WRONLY|O_CLOEXEC);
 	if (clipfd < 0) {
 		lt_info("%s open %s: %m\n", dsp_dev, __FUNCTION__);
 		return -1;
 	}
-	fcntl(clipfd, F_SETFD, FD_CLOEXEC);
 	/* no idea if we ever get little_endian == 0 */
 	if (little_endian)
 		fmt = AFMT_S16_BE;
@@ -234,7 +235,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if (!mix_dev)
 		return 0;
 
-	mixer_fd = open(mix_dev, O_RDWR);
+	mixer_fd = open(mix_dev, O_RDWR|O_CLOEXEC);
 	if (mixer_fd < 0) {
 		lt_info("%s: open mixer %s failed (%m)\n", __func__, mix_dev);
 		/* not a real error */

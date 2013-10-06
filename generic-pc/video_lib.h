@@ -6,6 +6,7 @@
 #include <vector>
 #include <linux/dvb/video.h>
 #include "../common/cs_types.h"
+#include "dmx_lib.h"
 extern "C" {
 #include <libavutil/rational.h>
 }
@@ -147,7 +148,7 @@ class cVideo : public OpenThreads::Thread
 		int64_t GetPTS(void);
 	public:
 		/* constructor & destructor */
-		cVideo(int mode, void *, void *);
+		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
 		void * GetTVEnc() { return NULL; };
@@ -194,6 +195,7 @@ class cVideo : public OpenThreads::Thread
 		int  CloseVBI(void) { return 0; };
 		int  StartVBI(unsigned short) { return 0; };
 		int  StopVBI(void) { return 0; };
+		void SetDemux(cDemux *dmx);
 		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 		SWFramebuffer *getDecBuf(void);
 	private:

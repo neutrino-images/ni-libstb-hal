@@ -114,7 +114,7 @@ cDemux::~cDemux()
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
 	int devnum = num;
-	int flags = O_RDWR;
+	int flags = O_RDWR|O_CLOEXEC;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
@@ -127,7 +127,6 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		lt_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
 		return false;
 	}
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
@@ -138,10 +137,10 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		lt_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
 		return false;
 	}
-#endif
 	int n = DMX_SOURCE_FRONT0;
 	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
+#endif
 	if (uBufferSize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
@@ -212,10 +211,11 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 #endif
 	int rc;
 	int to = timeout;
-	struct pollfd ufds;
-	ufds.fd = fd;
-	ufds.events = POLLIN|POLLPRI|POLLERR;
-	ufds.revents = 0;
+	/* using a one-dimensional array seems to avoid strange segfaults / memory corruption?? */
+	struct pollfd ufds[1];
+	ufds[0].fd = fd;
+	ufds[0].events = POLLIN|POLLPRI|POLLERR;
+	ufds[0].revents = 0;
 
 	/* hack: if the frontend loses and regains lock, the demuxer often will not
 	 * return from read(), so as a "emergency exit" for e.g. NIT scan, set a (long)
@@ -226,7 +226,7 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	if (to > 0)
 	{
  retry:
-		rc = ::poll(&ufds, 1, to);
+		rc = ::poll(ufds, 1, to);
 		if (!rc)
 		{
 			if (timeout == 0) /* we took the emergency exit */
@@ -253,14 +253,14 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 			return 0;
 		}
 #endif
-		if (ufds.revents & POLLHUP) /* we get POLLHUP if e.g. a too big DMX_BUFFER_SIZE was set */
+		if (ufds[0].revents & POLLHUP) /* we get POLLHUP if e.g. a too big DMX_BUFFER_SIZE was set */
 		{
-			dmx_err("received %s,", "POLLHUP", ufds.revents);
+			dmx_err("received %s,", "POLLHUP", ufds[0].revents);
 			return -1;
 		}
-		if (!(ufds.revents & POLLIN)) /* we requested POLLIN but did not get it? */
+		if (!(ufds[0].revents & POLLIN)) /* we requested POLLIN but did not get it? */
 		{
-			dmx_err("received %s, please report!", "POLLIN", ufds.revents);
+			dmx_err("received %s, please report!", "POLLIN", ufds[0].revents);
 			return 0;
 		}
 	}
@@ -384,6 +384,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	ioctl (fd, DMX_STOP);
 	if (ioctl(fd, DMX_SET_FILTER, &s_flt) < 0)
 		return false;
+	ioctl(fd, DMX_START);
 
 	return true;
 }

@@ -74,7 +74,7 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size);
 #define VIDEO_STREAMTYPE_VC1_SM 5
 #define VIDEO_STREAMTYPE_MPEG1 6
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	lt_debug("%s\n", __FUNCTION__);
 
@@ -90,7 +90,7 @@ cVideo::cVideo(int, void *, void *)
 
 	blank_data = NULL; /* initialize */
 	blank_size = 0;
-	blankfd = open(blankname, O_RDONLY);
+	blankfd = open(blankname, O_RDONLY|O_CLOEXEC);
 	if (blankfd < 0)
 		lt_info("%s cannot open %s: %m", __func__, blankname);
 	else
@@ -129,7 +129,7 @@ void cVideo::openDevice(void)
 	if (fd != -1) /* already open */
 		return;
 retry:
-	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
+	if ((fd = open(VIDEO_DEVICE, O_RDWR|O_CLOEXEC)) < 0)
 	{
 		if (errno == EBUSY)
 		{
@@ -140,16 +140,12 @@ retry:
 		}
 		lt_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
 	}
-	else
-		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	playstate = VIDEO_STOPPED;
 }
 
 void cVideo::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
-	/* looks like sometimes close is unhappy about non-empty buffers */
-	Start();
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -288,16 +284,7 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		return 0;
 	}
 	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
-	bool stopped = false;
-	if (playstate == VIDEO_PLAYING)
-	{
-		lt_info("%s: playstate == VIDEO_PLAYING, stopping video\n", __func__);
-		Stop();
-		stopped = true;
-	}
 	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
-	if (stopped)
-		Start();
 
 	return ret;
 }
@@ -387,7 +374,7 @@ void cVideo::ShowPicture(const char * fname)
 	   what we want. the mutex ensures proper ordering. */
 	pthread_mutex_lock(&stillp_mutex);
 
-	mfd = open(destname, O_RDONLY);
+	mfd = open(destname, O_RDONLY|O_CLOEXEC);
 	if (mfd < 0)
 	{
 		lt_info("%s cannot open %s: %m", __func__, destname);
@@ -640,4 +627,9 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size)
 		write(fd, stuffing, sizeof(stuffing));
 	ioctl(fd, VIDEO_STOP, 0);
 	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+}
+
+void cVideo::SetDemux(cDemux *)
+{
+	lt_debug("%s: not implemented yet\n", __func__);
 }

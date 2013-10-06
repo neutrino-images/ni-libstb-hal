@@ -71,7 +71,6 @@
 /* Ugh... see comment in destructor for details... */
 #include "video_lib.h"
 extern cVideo *videoDecoder;
-extern cVideo *pipDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_DEMUX, this, args)
@@ -91,7 +90,6 @@ extern cVideo *pipDecoder;
 cDemux *videoDemux = NULL;
 cDemux *audioDemux = NULL;
 //cDemux *pcrDemux = NULL;
-cDemux *pipDemux = NULL;
 
 static const char *DMX_T[] = {
 	"DMX_INVALID",
@@ -156,8 +154,6 @@ cDemux::~cDemux()
 	 */
 	if (dmx_type == DMX_VIDEO_CHANNEL)
 		videoDecoder = NULL;
-	if (dmx_type == DMX_PIP_CHANNEL)
-		pipDecoder = NULL;
 }
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
@@ -496,6 +492,9 @@ bool cDemux::pesFilter(const unsigned short pid)
 	case DMX_VIDEO_CHANNEL:
 		p_flt.pes_type = DMX_PES_VIDEO;
 		break;
+	case DMX_PIP_CHANNEL: /* PIP is a special version of DMX_VIDEO_CHANNEL */
+		p_flt.pes_type = DMX_PES_VIDEO1;
+		break;
 	case DMX_PES_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;
 		p_flt.output  = DMX_OUT_TAP;
@@ -503,9 +502,6 @@ bool cDemux::pesFilter(const unsigned short pid)
 	case DMX_TP_CHANNEL:
 		p_flt.pes_type = DMX_PES_OTHER;
 		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
-		break;
-	case DMX_PIP_CHANNEL:
-		p_flt.pes_type = DMX_PES_VIDEO1;
 		break;
 	default:
 		lt_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);

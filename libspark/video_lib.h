@@ -130,7 +130,7 @@ class cVideo
 	private:
 		/* video device */
 		int fd;
-		int dev;
+		unsigned int devnum;
 		/* apparently we cannot query the driver's state
 		   => remember it */
 		video_play_state_t playstate;
@@ -153,7 +153,7 @@ class cVideo
 		void closeDevice(void);
 	public:
 		/* constructor & destructor */
-		cVideo(int mode, void *, void *, int dev = 0);
+		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
 		void * GetTVEnc() { return NULL; };

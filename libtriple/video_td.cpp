@@ -70,7 +70,7 @@ static pthread_mutex_t stillp_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* debugging hacks */
 static bool noscart = false;
 
-cVideo::cVideo(int, void *, void *)
+cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	lt_debug("%s\n", __FUNCTION__);
 	if ((fd = open(VIDEO_DEVICE, O_RDWR)) < 0)
@@ -1097,4 +1097,9 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	}
 	close(mfd);
 	return true;
+}
+
+void cVideo::SetDemux(cDemux *)
+{
+	lt_debug("%s: not implemented yet\n", __func__);
 }

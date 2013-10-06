@@ -6,7 +6,11 @@
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/video_lib.h"
 #elif HAVE_GENERIC_HARDWARE
+#if BOXMODEL_RASPI
+#include "../raspi/video_lib.h"
+#else
 #include "../generic-pc/video_lib.h"
+#endif
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
 #endif

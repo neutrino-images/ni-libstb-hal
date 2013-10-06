@@ -6,7 +6,11 @@
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/dmx_lib.h"
 #elif HAVE_GENERIC_HARDWARE
+#if BOXMODEL_RASPI
+#include "../raspi/dmx_lib.h"
+#else
 #include "../generic-pc/dmx_lib.h"
+#endif
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
 #endif

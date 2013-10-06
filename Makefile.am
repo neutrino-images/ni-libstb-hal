@@ -23,9 +23,15 @@ libstb_hal_la_LIBADD += \
 	azbox/libazbox.la
 endif
 if BOXTYPE_GENERIC
+if BOXMODEL_RASPI
+SUBDIRS += raspi
+libstb_hal_la_LIBADD += \
+	raspi/libraspi.la
+else
 SUBDIRS += generic-pc
 libstb_hal_la_LIBADD += \
 	generic-pc/libgeneric.la
+endif
 endif
 if BOXTYPE_SPARK
 libstb_hal_test_LDADD += -lasound

@@ -326,7 +326,6 @@ static void FFMPEGThread(Context_t *context) {
     strncpy(threadname, __func__, sizeof(threadname));
     threadname[16] = 0;
     prctl (PR_SET_NAME, (unsigned long)&threadname);
-    AVPacket   packet;
     off_t lastSeek = -1;
     long long int lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
     int           err = 0;
@@ -425,6 +424,9 @@ static void FFMPEGThread(Context_t *context) {
 	      showtime = av_gettime() + 300000; //jump back all 300ms
 	      context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
 	}
+
+	AVPacket   packet;
+	av_init_packet(&packet);
 
 	if (av_read_frame(avContext, &packet) == 0 )
 	{
@@ -907,8 +909,6 @@ int container_ffmpeg_init(Context_t *context, char * filename)
 	 * until other works are done and we can prove this.
 	 */
 	avformat_close_input(&avContext);
-        //for buffered io
-        ffmpeg_buf_free();
         //for buffered io (end)
 	return cERR_CONTAINER_FFMPEG_STREAM;
 #endif
@@ -1021,7 +1021,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 		track.Name      = "und";
 		track.Encoding  = encoding;
 		track.stream    = stream;
-		track.Id        = ((AVStream *) (track.stream))->id;
+		track.Id        = stream->id;
 
 		if(stream->duration == AV_NOPTS_VALUE) {
 		    ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
@@ -1057,7 +1057,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 
 		track.Encoding       = encoding;
 		track.stream         = stream;
-		track.Id        = ((AVStream *) (track.stream))->id;
+		track.Id	     = stream->id;
 		track.duration       = (double)stream->duration * av_q2d(stream->time_base) * 1000.0;
 		track.aacbuf         = 0;
 		track.have_aacheader = -1;
@@ -1255,7 +1255,7 @@ int container_ffmpeg_update_tracks(Context_t *context, char *filename, int initi
 
 	    track.Encoding       = encoding;
 	    track.stream         = stream;
-	    track.Id		 = ((AVStream *) (track.stream))->id;
+	    track.Id		 = stream->id;
 	    track.duration       = (double)stream->duration * av_q2d(stream->time_base) * 1000.0;
 
 	    track.aacbuf         = 0;

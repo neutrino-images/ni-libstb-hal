@@ -3,10 +3,6 @@ AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_MACRO_DIR([m4])
 AC_GNU_SOURCE
-LT_INIT
-
-## ugly, disables shared library build (not wanted yet)
-enable_shared=no
 
 TUXBOX_APPS
 TUXBOX_APPS_DIRECTORY
@@ -15,9 +11,14 @@ TUXBOX_BOXTYPE
 
 AC_PROG_CC
 AC_PROG_CXX
+## both disabled => libtool still defaults to static
+##                  at least the libtool I tested with ;-)
+## --enable-shared => build only shared
+## --enable-shared --enable-static => build both
+AC_DISABLE_SHARED
 AC_DISABLE_STATIC
 AC_SYS_LARGEFILE
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 
 if test x"$BOXTYPE" = x"tripledragon"; then
 	TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)

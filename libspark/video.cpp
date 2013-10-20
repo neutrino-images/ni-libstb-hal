@@ -154,13 +154,18 @@ static int hdmi_out(bool enable)
 		goto out;
 	}
 	hdmi_enabled = enable;
-	out.caps = STMFBIO_OUTPUT_CAPS_HDMI_CONFIG;
+	out.caps = STMFBIO_OUTPUT_CAPS_HDMI_CONFIG | STMFBIO_OUTPUT_CAPS_ANALOGUE_CONFIG;
 	out.activate = STMFBIO_ACTIVATE_IMMEDIATE;
-	out.analogue_config = 0;
 	if (enable)
+	{
+		out.analogue_config |= STMFBIO_OUTPUT_ANALOGUE_MASK;
 		out.hdmi_config &= ~STMFBIO_OUTPUT_HDMI_DISABLED;
+	}
 	else
+	{
+		out.analogue_config &= ~STMFBIO_OUTPUT_ANALOGUE_MASK;
 		out.hdmi_config |= STMFBIO_OUTPUT_HDMI_DISABLED;
+	}
 
 	ret = ioctl(fb, STMFBIO_SET_OUTPUT_CONFIG, &out);
 	if (ret < 0)

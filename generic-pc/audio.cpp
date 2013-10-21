@@ -202,6 +202,7 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 	freq = 0;
 	bitrate = 0;	/* not used, but easy to get :-) */
 	mode = 0;	/* default: stereo */
+	printf("cAudio::getAudioInfo c %p\n", c);
 	if (c) {
 		switch (c->codec_id) {
 			case AV_CODEC_ID_MP2:
@@ -266,7 +267,7 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 		}
 	}
 	lt_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n",
-		  __func__, type, layer, freq, bitrate, mode, c ? c->codec_id : 0);
+		  __func__, type, layer, freq, bitrate, mode, c?c->codec_id:-1);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)

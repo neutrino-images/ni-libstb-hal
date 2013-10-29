@@ -170,6 +170,7 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 
 	switch (type)
 	{
+		case AUDIO_FMT_DD_PLUS:
 		case AUDIO_FMT_DOLBY_DIGITAL:
 			bypass = AUDIO_STREAMTYPE_AC3;
  			break;

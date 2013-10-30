@@ -153,15 +153,14 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 }
 
-//AUDIO_ENCODING_AC3
-#define AUDIO_STREAMTYPE_AC3 0
-//AUDIO_ENCODING_MPEG2
-#define AUDIO_STREAMTYPE_MPEG 1
-//AUDIO_ENCODING_DTS
-#define AUDIO_STREAMTYPE_DTS 2
+// E2 streamtype values. These correspond to
+//  player2/linux/drivers/media/dvb/stm/dvb/dvb_audio.c:AudioIoctlSetBypassMode
+#define AUDIO_STREAMTYPE_AC3	0
+#define AUDIO_STREAMTYPE_MPEG	1
+#define AUDIO_STREAMTYPE_DTS	2
+#define AUDIO_STREAMTYPE_AAC	8
+#define AUDIO_STREAMTYPE_AACHE	9
 
-#define AUDIO_ENCODING_LPCM 2
-#define AUDIO_ENCODING_LPCMA 11
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
 	int bypass = AUDIO_STREAMTYPE_MPEG;
@@ -174,10 +173,15 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 		case AUDIO_FMT_DOLBY_DIGITAL:
 			bypass = AUDIO_STREAMTYPE_AC3;
  			break;
+		case AUDIO_FMT_AAC:
+			bypass = AUDIO_STREAMTYPE_AAC;
+			break;
+		case AUDIO_FMT_AAC_PLUS:
+			bypass = AUDIO_STREAMTYPE_AACHE;
+			break;
 		case AUDIO_FMT_DTS:
 			bypass = AUDIO_STREAMTYPE_DTS;
 			break;
-		case AUDIO_FMT_MPEG:
 		default:
 			break;
 	}

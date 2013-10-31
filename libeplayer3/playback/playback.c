@@ -743,7 +743,7 @@ static int PlaybackSwitchSubtitle(Context_t  *context, int* track) {
                 playback_err("manager set track failed\n");
             }
 #if 0
-	    if (*track == 0xffff) {
+	    if (*track < 0) {
 		//CHECK FOR SUBTITLES
 		if (context->container && context->container->textSrtContainer)
 		    context->container->textSrtContainer->Command(context, CONTAINER_INIT, context->playback->uri+7);
@@ -798,14 +798,14 @@ static int PlaybackSwitchDVBSubtitle(Context_t  *context, int* pid) {
     playback_printf(10, "Track: %d\n", *pid);
 
     if (context && context->manager && context->manager->dvbsubtitle ) {
-        if (context->manager->dvbsubtitle->Command(context, *pid == 0xffff ? MANAGER_DEL : MANAGER_SET, pid) < 0) {
+        if (context->manager->dvbsubtitle->Command(context, *pid < 0 ? MANAGER_DEL : MANAGER_SET, pid) < 0) {
                 playback_err("dvbsub manager set track failed\n");
          	ret = cERR_PLAYBACK_ERROR;
         }
     } else
         playback_err("no dvbsubtitle\n");
 
-    if (*pid == 0xffff)
+    if (*pid < 0)
 	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
 
     playback_printf(10, "exiting with value %d\n", ret);
@@ -819,14 +819,14 @@ static int PlaybackSwitchTeletext(Context_t  *context, int* pid) {
     playback_printf(10, "Track: %d\n", *pid);
 
     if (context && context->manager && context->manager->teletext ) {
-        if (context->manager->teletext->Command(context, *pid == 0xffff ? MANAGER_DEL : MANAGER_SET, pid)) {
+        if (context->manager->teletext->Command(context, *pid < 0 ? MANAGER_DEL : MANAGER_SET, pid)) {
                 playback_err("ttxsub manager set track failed\n");
          	ret = cERR_PLAYBACK_ERROR;
 	}
     } else
         playback_err("no ttxsubtitle\n");
 
-    if (*pid == 0xffff)
+    if (*pid < 0)
 	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
 
     playback_printf(10, "exiting with value %d\n", ret);

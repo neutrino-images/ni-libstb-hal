@@ -826,6 +826,9 @@ static void FFMPEGThread(Context_t *context) {
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
     } /* while */
 
+    if (context && context->playback && context->output && context->playback->abortRequested)
+	context->output->Command(context, OUTPUT_CLEAR, NULL);
+
     if (swr)
 	swr_free(&swr);
     if (decoded_frame)

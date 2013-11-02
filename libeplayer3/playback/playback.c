@@ -116,7 +116,9 @@ status = 1;
 
              while (!dieNow)
              {
-                 if (context && context->playback && context->playback->isPlaying)
+                 if (context && context->playback && context->playback->abortRequested)
+			dieNow = 1;
+                 else if (context && context->playback && context->playback->isPlaying)
                  {
                      int ret = context->playback->Command(context, PLAYBACK_PTS, &playPts);
 
@@ -125,7 +127,8 @@ status = 1;
                      if (ret != cERR_PLAYBACK_NO_ERROR || playPts + (2 * 90000) >= lastPts)
                          dieNow = 1;
                      
-                 } else
+                 }
+		else
                  {
                       playback_err("playback already died ?\n");
                       dieNow = 1;

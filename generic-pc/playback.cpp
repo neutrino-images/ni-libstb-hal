@@ -13,14 +13,14 @@ void cPlayback::Close(void)
 {
 }
 
-bool cPlayback::Start(char * filename, unsigned short vpid, int vtype, unsigned short apid, bool ac3, int duration, bool /*noprobe*/)
+bool cPlayback::Start(char * filename, int vpid, int vtype, int apid, bool ac3, int duration, bool /*noprobe*/)
 {
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d duration=%i\n",
 		FILENAME, __func__, filename, vpid, vtype, apid, ac3, duration);
 	return true;
 }
 
-bool cPlayback::SetAPid(unsigned short pid, bool /*ac3*/)
+bool cPlayback::SetAPid(int pid, bool /*ac3*/)
 {
 	printf("%s:%s pid %i\n", FILENAME, __func__, pid);
 	return true;
@@ -57,18 +57,18 @@ bool cPlayback::SetPosition(int position, bool)
 	return true;
 }
 
-void cPlayback::FindAllPids(uint16_t *, unsigned short *, uint16_t *numpida, std::string *)
+void cPlayback::FindAllPids(int *, unsigned int *, unsigned int *numpida, std::string *)
 {
 	printf("%s:%s\n", FILENAME, __func__);
 	*numpida = 0;
 }
 
-void cPlayback::FindAllSubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+void cPlayback::FindAllSubtitlePids(int * /*pids*/, unsigned int *numpids, std::string * /*language*/)
 {
 	*numpids = 0;
 }
 
-bool cPlayback::SetSubtitlePid(unsigned short /*pid*/)
+bool cPlayback::SetSubtitlePid(int /*pid*/)
 {
 	return true;
 }
@@ -77,22 +77,22 @@ void cPlayback::GetPts(uint64_t &/*pts*/)
 {
 }
 
-bool cPlayback::SetDvbsubtitlePid(unsigned short /*pid*/)
+bool cPlayback::SetDvbsubtitlePid(int /*pid*/)
 {
 	return true;
 }
 
-bool cPlayback::SetTeletextPid(unsigned short /*pid*/)
+bool cPlayback::SetTeletextPid(int /*pid*/)
 {
 	return true;
 }
 
-void cPlayback::FindAllDvbsubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+void cPlayback::FindAllDvbsubtitlePids(int * /*pids*/, unsigned int *numpidd, std::string * /*language*/)
 {
-	*numpids = 0;
+	*numpidd = 0;
 }
 
-void cPlayback::FindAllTeletextsubtitlePids(uint16_t * /*pids*/, uint16_t *numpids, std::string * /*language*/)
+void cPlayback::FindAllTeletextsubtitlePids(int * /*pids*/, unsigned int *numpids, std::string * /*language*/)
 {
 	*numpids = 0;
 }
@@ -105,11 +105,12 @@ void cPlayback::RequestAbort()
 {
 }
 
-unsigned short cPlayback::GetTeletextPid(void)
+int cPlayback::GetTeletextPid(void)
 {
+	return -1;
 }
 
-void cPlayback::FindAllSubs(uint16_t *, unsigned short *, uint16_t *numpida, std::string *)
+void cPlayback::FindAllSubs(int *, unsigned int *, unsigned int *numpida, std::string *)
 {
 	printf("%s:%s\n", FILENAME, __func__);
 	*numpida = 0;

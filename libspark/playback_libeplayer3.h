@@ -45,7 +45,7 @@ class cPlayback
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
 		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
-		void FindAllDvbsubtitlePids(int *pids, unsigned int *numpids, std::string *language);
+		void FindAllDvbsubtitlePids(int *pids, unsigned int *numpidd, std::string *language);
 		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage);
 		void RequestAbort(void);
 		bool isPlaying(void);

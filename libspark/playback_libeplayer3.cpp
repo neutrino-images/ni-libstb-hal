@@ -15,7 +15,7 @@ extern ManagerHandler_t		ManagerHandler;
 #include "playback_libeplayer3.h"
 #include "subtitle.h"
 
-static Context_t *player;
+static Context_t *player = NULL;
 
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
@@ -710,8 +710,17 @@ void cPlayback::SuspendSubtitle(bool b)
 }
 
 void cPlayback::RequestAbort() {
-	if (player->playback)
+	if (player && player->playback) {
 		player->playback->abortRequested = 1;
+		while (player->playback->isPlaying)
+			usleep(100000);
+	}
+}
+
+bool cPlayback::isPlaying() {
+	if (player && player->playback)
+		return player->playback->isPlaying;
+	return false;
 }
 #if 0
 bool cPlayback::IsPlaying(void) const

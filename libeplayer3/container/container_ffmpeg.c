@@ -346,7 +346,7 @@ static void FFMPEGThread(Context_t *context) {
     }
     ffmpeg_printf(10, "Running!\n");
 
-    while ( context && context->playback && context->playback->isPlaying ) {
+    while ( context && context->playback && context->playback->isPlaying && !context->playback->abortRequested ) {
 
         //IF MOVIE IS PAUSED, WAIT
         if (context->playback->isPaused) {

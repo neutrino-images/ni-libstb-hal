@@ -703,10 +703,12 @@ cPlayback::~cPlayback()
 
 void cPlayback::SuspendSubtitle(bool b)
 {
-	if (b)
-		player->playback->Command(player, PLAYBACK_FRAMEBUFFER_LOCK, 0);
-	else
-		player->playback->Command(player, PLAYBACK_FRAMEBUFFER_UNLOCK, 0);
+	if (player && player->playback) {
+		if (b)
+			player->playback->Command(player, PLAYBACK_FRAMEBUFFER_LOCK, 0);
+		else
+			player->playback->Command(player, PLAYBACK_FRAMEBUFFER_UNLOCK, 0);
+	}
 }
 
 void cPlayback::RequestAbort() {

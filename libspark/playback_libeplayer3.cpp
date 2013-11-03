@@ -213,7 +213,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 	{
 	   //pause playback in case of timeshift
 	   //FIXME: no picture on tv
-	   if (player->playback->Command(player, PLAYBACK_PAUSE, NULL) < 0)
+	   if (!player || !player->playback || player->playback->Command(player, PLAYBACK_PAUSE, NULL) < 0)
 	   {
 	      ret = false;
 	      printf("failed to pause playback\n");
@@ -268,8 +268,7 @@ bool cPlayback::Stop(void)
 		player->playback->Command(player,PLAYBACK_CLOSE, NULL);
 	if(player)
 		free(player);
-	if(player != NULL)
-		player = NULL;
+	player = NULL;
 
 	playing=false;
 	return true;
@@ -412,7 +411,8 @@ bool cPlayback::GetSpeed(int &speed) const
 
 void cPlayback::GetPts(uint64_t &pts)
 {
-	player->playback->Command(player, PLAYBACK_PTS, (void*)&pts);
+	if (player && player->playback)
+		player->playback->Command(player, PLAYBACK_PTS, (void*)&pts);
 }
 
 // in milliseconds

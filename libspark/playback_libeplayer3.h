@@ -49,6 +49,7 @@ class cPlayback
 		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage);
 		void RequestAbort(void);
 		bool isPlaying(void);
+		unsigned long long GetReadCount(void);
 #if 0
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
 		bool SelectSubtitles(int pid);

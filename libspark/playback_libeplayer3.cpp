@@ -724,6 +724,13 @@ bool cPlayback::isPlaying() {
 		return player->playback->isPlaying;
 	return false;
 }
+
+unsigned long long cPlayback::GetReadCount() {
+	if (player && player->playback) {
+		return player->playback->readCount;
+	}
+	return 0;
+}
 #if 0
 bool cPlayback::IsPlaying(void) const
 {

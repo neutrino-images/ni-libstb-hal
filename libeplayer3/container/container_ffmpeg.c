@@ -437,6 +437,8 @@ static void FFMPEGThread(Context_t *context) {
 	    Track_t * dvbsubtitleTrack = NULL;
 	    Track_t * teletextTrack = NULL;
 
+	    context->playback->readCount += packet.size;
+
 	    int pid = avContext->streams[packet.stream_index]->id;
 
 	    if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)

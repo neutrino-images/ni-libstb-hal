@@ -198,6 +198,8 @@ static char* Codec2Encoding(AVCodecContext *codec, int* version)
         return "A_MP3";
     case AV_CODEC_ID_AC3:
         return "A_AC3";
+    case AV_CODEC_ID_EAC3:
+        return "A_EAC3";
     case AV_CODEC_ID_DTS:
         return "A_DTS";
 #if 0

@@ -77,6 +77,7 @@ class cAudio
 		int Stop(void);
 		bool Pause(bool Pcm = true);
 		void SetStreamType(AUDIO_FORMAT type);
+		AUDIO_FORMAT GetStreamType(void) { return StreamType; }
 		void SetSyncMode(AVSYNC_TYPE Mode);
 
 		/* select channels */

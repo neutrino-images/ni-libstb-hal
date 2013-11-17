@@ -18,7 +18,7 @@ typedef struct PlaybackHandler_s {
     unsigned char isSeeking;
     unsigned char isCreationPhase;
 
-    float BackWard;
+    int BackWard;
     int SlowMotion;
     int Speed;
     int AVSync;

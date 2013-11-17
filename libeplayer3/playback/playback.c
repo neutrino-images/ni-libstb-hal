@@ -294,7 +294,10 @@ static int PlaybackPlay(Context_t  *context) {
             context->playback->isPlaying    = 1;
             context->playback->isPaused     = 0;
             context->playback->isForwarding = 0;
-            context->playback->BackWard     = 0;
+            if (context->playback->BackWard) {
+		    context->playback->BackWard     = 0;
+		    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	    }
             context->playback->SlowMotion   = 0;
             context->playback->Speed        = 1;
 
@@ -355,7 +358,10 @@ static int PlaybackPause(Context_t  *context) {
         context->playback->isPaused     = 1;
         //context->playback->isPlaying  = 1;
         context->playback->isForwarding = 0;
-        context->playback->BackWard     = 0;
+	if (context->playback->BackWard) {
+	    context->playback->BackWard     = 0;
+	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	}
         context->playback->SlowMotion   = 0;
         context->playback->Speed        = 1;
     } else
@@ -385,7 +391,10 @@ static int PlaybackContinue(Context_t  *context) {
         context->playback->isPaused     = 0;
         //context->playback->isPlaying  = 1;
         context->playback->isForwarding = 0;
-        context->playback->BackWard     = 0;
+	if (context->playback->BackWard) {
+	    context->playback->BackWard     = 0;
+	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	}
         context->playback->SlowMotion   = 0;
         context->playback->Speed        = 1;
     } else
@@ -410,7 +419,10 @@ static int PlaybackStop(Context_t  *context) {
         context->playback->isPaused     = 0;
         context->playback->isPlaying    = 0;
         context->playback->isForwarding = 0;
-        context->playback->BackWard     = 0;
+	if (context->playback->BackWard) {
+	    context->playback->BackWard     = 0;
+	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	}
         context->playback->SlowMotion   = 0;
         context->playback->Speed        = 0;
 
@@ -543,12 +555,11 @@ static int PlaybackFastBackward(Context_t  *context,int* speed) {
         {
             context->playback->isSeeking = 1;
             context->playback->Speed = *speed;
-            context->playback->BackWard = 2^(*speed);
+            context->playback->BackWard = 1;
          
-            playback_printf(1, "S %d B %f\n", context->playback->Speed, context->playback->BackWard);
+            playback_printf(1, "S %d B %d\n", context->playback->Speed, context->playback->BackWard);
         }
 
-        context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
         context->output->Command(context, OUTPUT_CLEAR, NULL);
         if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0)
         {
@@ -564,6 +575,8 @@ static int PlaybackFastBackward(Context_t  *context,int* speed) {
         ret = cERR_PLAYBACK_ERROR;
     }
 
+    if (context->playback->BackWard)
+        context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
     context->playback->isSeeking = 0;
     playback_printf(10, "exiting with value %d\n", ret);
 

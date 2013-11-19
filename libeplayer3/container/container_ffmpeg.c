@@ -114,12 +114,10 @@ static off_t seek_target_bytes = 0;
 static int do_seek_target_bytes = 0;
 static int64_t seek_target_seconds = 0.0;
 static int do_seek_target_seconds = 0;
-static int seek_target_flag = 0;
 
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
-static int container_ffmpeg_seek_bytes(off_t pos);
 static int container_ffmpeg_seek(Context_t *context, float sec, int absolute);
 
 /* ***************************** */
@@ -329,6 +327,7 @@ static void FFMPEGThread(Context_t *context) {
     threadname[16] = 0;
     prctl (PR_SET_NAME, (unsigned long)&threadname);
     int64_t lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
+    off_t lastPos = -1;
     AudioVideoOut_t avOut;
 
     SwrContext *swr = NULL;
@@ -377,44 +376,61 @@ static void FFMPEGThread(Context_t *context) {
 	      if(bofcount == 1)
 	      {
 		  showtime = av_gettime();
+    		  releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 		  usleep(100000);
 		  continue;
 	      }
 
-	      if (lastPts < 0)
-		      lastPts = (currentVideoPts > 0) ?  currentVideoPts : currentAudioPts;
+		if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
+		      if (lastPos < 0)
+			lastPos = avio_tell(avContext->pb);
 
-	      if (lastPts > 0) {
-		      do_seek_target_seconds = 1;
-		      do_seek_target_bytes = 0;
-		      lastPts += context->playback->Speed * 8 * AV_TIME_BASE;
-		      seek_target_seconds = lastPts;
-		      seek_target_flag = 0;
-		      showtime = av_gettime() + 300000; //jump back every 300ms
-	      }
+		      if (lastPos > 0) {
+				float br;
+				if (avContext->bit_rate)
+					br = avContext->bit_rate / 8.0;
+				else
+					br = 180000.0;
+				do_seek_target_seconds = 0;
+			      do_seek_target_bytes = 1;
+			      lastPos += context->playback->Speed * 8 * br;
+			      seek_target_bytes = lastPos;
+		      }
+		} else {
+		      if (lastPts < 0)
+			      lastPts = (currentVideoPts > 0) ?  currentVideoPts : currentAudioPts;
+
+		      if (lastPts > 0) {
+			      do_seek_target_seconds = 1;
+			      do_seek_target_bytes = 0;
+			      lastPts += context->playback->Speed * 8 * AV_TIME_BASE;
+			      seek_target_seconds = lastPts;
+		      }
+		}
+	      showtime = av_gettime() + 300000; //jump back every 300ms
 	} else {
 		bofcount = 0;
 		if (!context->playback->BackWard)
-			lastPts = -1;
+			lastPts = -1, lastPos = -1;
 	}
 
 	if (do_seek_target_seconds || do_seek_target_bytes) {
 		int res;
 		if (do_seek_target_seconds) {
-			int64_t seek_target_seconds_min = seek_target_seconds - 15 * AV_TIME_BASE;
 			if (seek_target_seconds < 0)
 				seek_target_seconds = 0;
-			if (seek_target_seconds_min < 0)
-				seek_target_seconds_min = 0;
-			res = avformat_seek_file(avContext, -1, seek_target_seconds_min, seek_target_seconds, INT64_MAX, seek_target_flag);
-		} else
-			res = container_ffmpeg_seek_bytes(seek_target_bytes);
+			res = avformat_seek_file(avContext, -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
+		} else {
+			if (seek_target_bytes < 0)
+				seek_target_bytes = 0;
+			res = avformat_seek_file(avContext, -1, INT64_MIN, seek_target_bytes, INT64_MAX, AVSEEK_FLAG_BYTE);
+		}
+
 		if (res < 0 && context->playback->BackWard)
 			bofcount = 1;
 		do_seek_target_seconds = do_seek_target_bytes = 0;
 		restart_audio_resampling = 1;
 		latestPts = 0;
-		seek_target_flag = 0;
 
 		// flush streams
 		unsigned int i;
@@ -427,8 +443,18 @@ static void FFMPEGThread(Context_t *context) {
 	AVPacket   packet;
 	av_init_packet(&packet);
 
-	if (av_read_frame(avContext, &packet) == 0 )
-	{
+	int av_res = av_read_frame(avContext, &packet);
+	if (av_res == AVERROR(EAGAIN)) {
+		av_free_packet(&packet);
+		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		continue;
+	}
+	if (av_res) { // av_read_frame failed
+		ffmpeg_err("no data ->end of file reached ?\n");
+		av_free_packet(&packet);
+		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		break; // while
+	}
 	    long long int pts;
 	    Track_t * videoTrack = NULL;
 	    Track_t * audioTrack = NULL;
@@ -816,12 +842,6 @@ static void FFMPEGThread(Context_t *context) {
 			//ffmpeg_err("writing data to teletext fifo failed\n");
 		    }
 	    }
-	} else { // av_read_frame failed
-		ffmpeg_err("no data ->end of file reached ? \n");
-		av_free_packet(&packet);
-		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-		break; // while
-	}
 
 	av_free_packet(&packet);
 	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
@@ -1424,27 +1444,10 @@ static int container_ffmpeg_stop(Context_t *context) {
     return ret;
 }
 
-static int container_ffmpeg_seek_bytes(off_t pos) {
-    int flag = AVSEEK_FLAG_BYTE;
-
-    ffmpeg_printf(20, "seeking to position %lld (bytes)\n", pos);
-
-    if (avformat_seek_file(avContext, -1, INT64_MIN, pos, INT64_MAX, flag) < 0)
-    {
-	ffmpeg_err( "Error seeking\n");
-	return cERR_CONTAINER_FFMPEG_ERR;
-    }
-
-    ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContext->pb));
-
-    return cERR_CONTAINER_FFMPEG_NO_ERROR;
-}
-
 static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
     Track_t * videoTrack = NULL;
     Track_t * audioTrack = NULL;
     Track_t * current = NULL;
-    seek_target_flag = 0;
 
     if (absolute) {
 	ffmpeg_printf(10, "goto %f sec\n", sec);

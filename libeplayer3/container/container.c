@@ -62,6 +62,7 @@ static void printContainerCapabilities() {
 }
 
 static int selectContainer(Context_t  *context, char * extension) {
+#if 0
     int i, j;
     int ret = -1;
 
@@ -86,6 +87,10 @@ static int selectContainer(Context_t  *context, char * extension) {
     }
 
     return ret;
+#else
+    context->container->selectedContainer = AvailableContainer[0];
+    return 0;
+#endif
 }
 
 

@@ -91,36 +91,34 @@ static int reset()
     return 0;
 }
 
-static int writeData(void* _call)
+static int writeData(void *_call)
 {
-    WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
+    WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 
-    unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
-    unsigned char  FakeHeaders[64]; // 64bytes should be enough to make the fake headers
-    unsigned int   FakeHeaderLength;
-    unsigned char  Version             = 5;
-    unsigned int   FakeStartCode       = (Version << 8) | PES_VERSION_FAKE_START_CODE;
-    unsigned int   usecPerFrame = 41708; /* Hellmaster1024: default value */
-    BitPacker_t ld = {FakeHeaders, 0, 32};
+    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+    unsigned char FakeHeaders[64];	// 64bytes should be enough to make the fake headers
+    unsigned int FakeHeaderLength;
+    unsigned char Version = 5;
+    unsigned int FakeStartCode =
+	(Version << 8) | PES_VERSION_FAKE_START_CODE;
+    unsigned int usecPerFrame = 41708;	/* Hellmaster1024: default value */
+    BitPacker_t ld = { FakeHeaders, 0, 32 };
 
     divx_printf(10, "\n");
 
-    if (call == NULL)
-    {
-        divx_err("call data is NULL...\n");
-        return 0;
+    if (call == NULL) {
+	divx_err("call data is NULL...\n");
+	return 0;
     }
 
-    if ((call->data == NULL) || (call->len <= 0))
-    {
-        divx_err("parsing NULL Data. ignoring...\n");
-        return 0;
+    if ((call->data == NULL) || (call->len <= 0)) {
+	divx_err("parsing NULL Data. ignoring...\n");
+	return 0;
     }
 
-    if (call->fd < 0)
-    {
-        divx_err("file pointer < 0. ignoring ...\n");
-        return 0;
+    if (call->fd < 0) {
+	divx_err("file pointer < 0. ignoring ...\n");
+	return 0;
     }
 
     divx_printf(10, "AudioPts %lld\n", call->Pts);
@@ -136,20 +134,22 @@ static int writeData(void* _call)
        PutBits(&ld, 0x0, 8);
        PutBits(&ld, 0x0, 8);
      */
-    PutBits(&ld, 0x1b0, 32);      // startcode
-    PutBits(&ld, 0, 8);           // profile = reserved
-    PutBits(&ld, 0x1b2, 32);      // startcode (user data)
-    PutBits(&ld, 0x53545443, 32); // STTC - an embedded ST timecode from an avi file
-    PutBits(&ld, usecPerFrame , 32);
+    PutBits(&ld, 0x1b0, 32);	// startcode
+    PutBits(&ld, 0, 8);		// profile = reserved
+    PutBits(&ld, 0x1b2, 32);	// startcode (user data)
+    PutBits(&ld, 0x53545443, 32);	// STTC - an embedded ST timecode from an avi file
+    PutBits(&ld, usecPerFrame, 32);
     // microseconds per frame
     FlushBits(&ld);
 
-    FakeHeaderLength    = (ld.Ptr - (FakeHeaders));
+    FakeHeaderLength = (ld.Ptr - (FakeHeaders));
 
     struct iovec iov[4];
     int ic = 0;
     iov[ic].iov_base = PesHeader;
-    iov[ic++].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, FakeStartCode);
+    iov[ic++].iov_len =
+	InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE,
+			call->Pts, FakeStartCode);
     iov[ic].iov_base = FakeHeaders;
     iov[ic++].iov_len = FakeHeaderLength;
 
@@ -157,7 +157,7 @@ static int writeData(void* _call)
 	iov[ic].iov_base = call->private_data;
 	iov[ic++].iov_len = call->private_size;
 
-        initialHeader = 0;
+	initialHeader = 0;
     }
     iov[ic].iov_base = call->data;
     iov[ic++].iov_len = call->len;

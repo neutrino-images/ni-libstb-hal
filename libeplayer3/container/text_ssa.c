@@ -78,7 +78,7 @@ static const char FILENAME[] = "text_ssa.c";
 /* ***************************** */
 
 typedef struct {
-    char * File;
+    char *File;
     int Id;
 } SsaTrack_t;
 
@@ -88,9 +88,9 @@ typedef struct {
 
 static pthread_t thread_sub;
 
-static SsaTrack_t * Tracks;
+static SsaTrack_t *Tracks;
 static int TrackCount = 0;
-FILE * fssa = NULL;
+FILE *fssa = NULL;
 
 static int hasThreadStarted = 0;
 
@@ -110,44 +110,40 @@ char *SSAgetLine()
 
     k = tamAux = 0;
 
-    if(SSA_BUFFER_SIZE>0)
-    {
+    if (SSA_BUFFER_SIZE > 0) {
 
-        strInput = (char*)malloc(1*sizeof(char));
-        strInput[0]='\0';
+	strInput = (char *) malloc(1 * sizeof(char));
+	strInput[0] = '\0';
 
-        while(tamAux!=1)
-        {
+	while (tamAux != 1) {
 
-            if((ch = fgetc(fssa))!=EOF)
-            {
-                ungetc(ch , fssa);
-                fgets(c, SSA_BUFFER_SIZE, fssa);
-                strAux = (char*)strchr(c,'\n');
-                tam = strlen(c);
-                if(strAux != NULL)
-                {
-                    tamAux = strlen(strAux);
-                    tam--;
-                }
+	    if ((ch = fgetc(fssa)) != EOF) {
+		ungetc(ch, fssa);
+		fgets(c, SSA_BUFFER_SIZE, fssa);
+		strAux = (char *) strchr(c, '\n');
+		tam = strlen(c);
+		if (strAux != NULL) {
+		    tamAux = strlen(strAux);
+		    tam--;
+		}
 
-                k = k + tam;
-                strInput = (char*)realloc(strInput, (k+1)*sizeof(char));
+		k = k + tam;
+		strInput =
+		    (char *) realloc(strInput, (k + 1) * sizeof(char));
 
-                if(k!=tam)
-                    strncat(strInput, c, tam);
-                else
-                    strncpy(strInput, c, tam);
+		if (k != tam)
+		    strncat(strInput, c, tam);
+		else
+		    strncpy(strInput, c, tam);
 
-                strInput[k] = '\0';
+		strInput[k] = '\0';
 
-            }
-            else {
-                tamAux = 1;
-                fclose(fssa);
-                fssa = NULL;
-            }
-        }
+	    } else {
+		tamAux = 1;
+		fclose(fssa);
+		fssa = NULL;
+	    }
+	}
 
     }
 
@@ -158,54 +154,55 @@ char *SSAgetLine()
 /* ***************************** */
 /* Worker Thread                 */
 /* ***************************** */
-static void* SsaSubtitleThread(void *Data) {
-    Context_t *context = (Context_t*) Data;
-    char *                 head =malloc(sizeof(char)*1);
+static void *SsaSubtitleThread(void *Data)
+{
+    Context_t *context = (Context_t *) Data;
+    char *head = malloc(sizeof(char) * 1);
 
     ssa_printf(10, "\n");
-    head[0]='\0';
+    head[0] = '\0';
 
 
-    while ( context && context->playback && context->playback->isPlaying && fssa ) {
-        char *line = NULL;
+    while (context && context->playback && context->playback->isPlaying
+	   && fssa) {
+	char *line = NULL;
 
-        do
-        {
-            line = SSAgetLine();
-            if(strncmp(line,"Dialogue: ",10)) {
-                int head_len = strlen(head);
-                int line_len = strlen(line);
-                head = realloc(head, line_len + head_len +2);
-                memcpy(head + head_len, line, sizeof(char)*line_len+1);
-                head[head_len + line_len] = '\n';
-                head[head_len + line_len + 1] = '\0';
-            }
-        } while (strncmp(line,"Dialogue: ",10)!=0 && fssa);
+	do {
+	    line = SSAgetLine();
+	    if (strncmp(line, "Dialogue: ", 10)) {
+		int head_len = strlen(head);
+		int line_len = strlen(line);
+		head = realloc(head, line_len + head_len + 2);
+		memcpy(head + head_len, line, sizeof(char) * line_len + 1);
+		head[head_len + line_len] = '\n';
+		head[head_len + line_len + 1] = '\0';
+	    }
+	} while (strncmp(line, "Dialogue: ", 10) != 0 && fssa);
 
-        /*Hellmaster 1024 since we have waited, we have to check if we are still paying */
-        if( context &&
-            context->playback &&
-            context->playback->isPlaying) {
-                SubtitleData_t data;
+	/*Hellmaster 1024 since we have waited, we have to check if we are still paying */
+	if (context && context->playback && context->playback->isPlaying) {
+	    SubtitleData_t data;
 
-                data.data      = (unsigned char*) line;
-                data.len       = strlen(line);
-                data.extradata = (unsigned char*) head;
-                data.extralen  = strlen(head);
-                data.pts       = 0;
-                data.duration  = 0.0;
-                context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-        }
-        free(line);
-        line = NULL;
-        continue;
+	    data.data = (unsigned char *) line;
+	    data.len = strlen(line);
+	    data.extradata = (unsigned char *) head;
+	    data.extralen = strlen(head);
+	    data.pts = 0;
+	    data.duration = 0.0;
+	    context->container->assContainer->Command(context,
+						      CONTAINER_DATA,
+						      &data);
+	}
+	free(line);
+	line = NULL;
+	continue;
     }
 
     hasThreadStarted = 0;
 
-    if(head) {
-        free(head);
-        head = NULL;
+    if (head) {
+	free(head);
+	head = NULL;
     }
     ssa_printf(0, "thread has ended\n");
 
@@ -217,88 +214,91 @@ static void* SsaSubtitleThread(void *Data) {
 /* Functions                     */
 /* ***************************** */
 
-static void SsaManagerAdd(Context_t  *context __attribute__((unused)), SsaTrack_t track) {
+static void SsaManagerAdd(Context_t * context
+			  __attribute__ ((unused)), SsaTrack_t track)
+{
     ssa_printf(10, "%s %d\n", track.File, track.Id);
 
     if (Tracks == NULL) {
-        Tracks = malloc(sizeof(SsaTrack_t) * TRACKWRAP);
+	Tracks = malloc(sizeof(SsaTrack_t) * TRACKWRAP);
     }
 
     if (TrackCount < TRACKWRAP) {
-        Tracks[TrackCount].File       = strdup(track.File);
-        Tracks[TrackCount].Id         = track.Id;
-        TrackCount++;
+	Tracks[TrackCount].File = strdup(track.File);
+	Tracks[TrackCount].Id = track.Id;
+	TrackCount++;
     }
 }
 
 #if 0
-static char ** SsaManagerList(Context_t  *context __attribute__((unused))) {
-    char ** tracklist = NULL;
+static char **SsaManagerList(Context_t * context __attribute__ ((unused)))
+{
+    char **tracklist = NULL;
 
     ssa_printf(10, "\n");
 
     if (Tracks != NULL) {
-        char help[256];
-        int i = 0, j = 0;
+	char help[256];
+	int i = 0, j = 0;
 
-        tracklist = malloc(sizeof(char *) * ((TrackCount*2) + 1));
+	tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
 
-        for (i = 0, j = 0; i < TrackCount; i++, j+=2) {
+	for (i = 0, j = 0; i < TrackCount; i++, j += 2) {
 
-            sprintf(help, "%d", Tracks[i].Id);
-            tracklist[j]    = strdup(help);
-            tracklist[j+1]  = strdup(Tracks[i].File);
-        }
-        tracklist[j] = NULL;
+	    sprintf(help, "%d", Tracks[i].Id);
+	    tracklist[j] = strdup(help);
+	    tracklist[j + 1] = strdup(Tracks[i].File);
+	}
+	tracklist[j] = NULL;
     }
 
     return tracklist;
 }
 #endif
 
-static void SsaManagerDel(Context_t * context __attribute__((unused))) {
+static void SsaManagerDel(Context_t * context __attribute__ ((unused)))
+{
     int i = 0;
 
     ssa_printf(10, "\n");
 
-    if(Tracks != NULL) {
-        for (i = 0; i < TrackCount; i++) {
-            if (Tracks[i].File != NULL)
-                free(Tracks[i].File);
-            Tracks[i].File = NULL;
-        }
-        free(Tracks);
-        Tracks = NULL;
+    if (Tracks != NULL) {
+	for (i = 0; i < TrackCount; i++) {
+	    if (Tracks[i].File != NULL)
+		free(Tracks[i].File);
+	    Tracks[i].File = NULL;
+	}
+	free(Tracks);
+	Tracks = NULL;
     }
 
     TrackCount = 0;
 }
 
-static int SsaGetSubtitle(Context_t  *context, char * Filename) {
+static int SsaGetSubtitle(Context_t * context, char *Filename)
+{
     struct dirent *dirzeiger;
-    DIR  *  dir;
-    int     i                    = TEXTSSAOFFSET;
-    char *  copyFilename         = NULL;
-    char *  FilenameExtension    = NULL;
-    char *  FilenameFolder       = NULL;
-    char *  FilenameShort        = NULL;
+    DIR *dir;
+    int i = TEXTSSAOFFSET;
+    char *copyFilename = NULL;
+    char *FilenameExtension = NULL;
+    char *FilenameFolder = NULL;
+    char *FilenameShort = NULL;
 
     ssa_printf(10, "\n");
 
-    if (Filename == NULL)
-    {
-       ssa_err("Filename NULL\n");
-       return cERR_SSA_ERROR;
+    if (Filename == NULL) {
+	ssa_err("Filename NULL\n");
+	return cERR_SSA_ERROR;
     }
 
     ssa_printf(10, "file: %s\n", Filename);
 
     copyFilename = strdup(Filename);
 
-    if (copyFilename == NULL)
-    {
-       ssa_err("copyFilename NULL\n");
-       return cERR_SSA_ERROR;
+    if (copyFilename == NULL) {
+	ssa_err("copyFilename NULL\n");
+	return cERR_SSA_ERROR;
     }
 
     FilenameFolder = dirname(copyFilename);
@@ -307,11 +307,10 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
 
     FilenameExtension = getExtension(copyFilename);
 
-    if (FilenameExtension == NULL)
-    {
-       ssa_err("FilenameExtension NULL\n");
-       free(copyFilename);
-       return cERR_SSA_ERROR;
+    if (FilenameExtension == NULL) {
+	ssa_err("FilenameExtension NULL\n");
+	free(copyFilename);
+	return cERR_SSA_ERROR;
     }
 
     ssa_printf(10, "ext: %s\n", FilenameExtension);
@@ -319,84 +318,94 @@ static int SsaGetSubtitle(Context_t  *context, char * Filename) {
     FilenameShort = basename(copyFilename);
 
     /* cut extension */
-    FilenameShort[strlen(FilenameShort) - strlen(FilenameExtension) - 1] = '\0';
+    FilenameShort[strlen(FilenameShort) - strlen(FilenameExtension) - 1] =
+	'\0';
 
     ssa_printf(10, "basename: %s\n", FilenameShort);
-    ssa_printf(10, "%s\n%s | %s | %s\n", copyFilename, FilenameFolder, FilenameShort, FilenameExtension);
+    ssa_printf(10, "%s\n%s | %s | %s\n", copyFilename, FilenameFolder,
+	       FilenameShort, FilenameExtension);
 
-    if((dir = opendir(FilenameFolder)) != NULL) {
-        while((dirzeiger = readdir(dir)) != NULL) {
-            char subtitleFilename[PATH_MAX];
-            char *subtitleExtension = NULL;
+    if ((dir = opendir(FilenameFolder)) != NULL) {
+	while ((dirzeiger = readdir(dir)) != NULL) {
+	    char subtitleFilename[PATH_MAX];
+	    char *subtitleExtension = NULL;
 
-            ssa_printf(20, "%s\n",(*dirzeiger).d_name);
+	    ssa_printf(20, "%s\n", (*dirzeiger).d_name);
 
-            strcpy(subtitleFilename, (*dirzeiger).d_name);
+	    strcpy(subtitleFilename, (*dirzeiger).d_name);
 
-            // Extension of Relativ Subtitle File Name
-            subtitleExtension = getExtension(subtitleFilename);
+	    // Extension of Relativ Subtitle File Name
+	    subtitleExtension = getExtension(subtitleFilename);
 
-            if (subtitleExtension == NULL)
-                continue;
+	    if (subtitleExtension == NULL)
+		continue;
 
-            if ( strcmp(subtitleExtension, "ssa") != 0 && strcmp(subtitleExtension, "ass") != 0 )
-                continue;
+	    if (strcmp(subtitleExtension, "ssa") != 0
+		&& strcmp(subtitleExtension, "ass") != 0)
+		continue;
 
-            /* cut extension */
-            subtitleFilename[strlen(subtitleFilename) - strlen(subtitleExtension) - 1] = '\0';
+	    /* cut extension */
+	    subtitleFilename[strlen(subtitleFilename) -
+			     strlen(subtitleExtension) - 1] = '\0';
 
-            ssa_printf(10, "%s %s\n", FilenameShort, subtitleFilename);
+	    ssa_printf(10, "%s %s\n", FilenameShort, subtitleFilename);
 
-            if (strncmp(FilenameShort, subtitleFilename,strlen(FilenameShort)) == 0)
-            {
-                char absSubtitleFileName[PATH_MAX];
-                /* found something of interest, so now make an absolut path name */
+	    if (strncmp
+		(FilenameShort, subtitleFilename,
+		 strlen(FilenameShort)) == 0) {
+		char absSubtitleFileName[PATH_MAX];
+		/* found something of interest, so now make an absolut path name */
 
-                sprintf(absSubtitleFileName, "%s/%s.%s", FilenameFolder, subtitleFilename, subtitleExtension);
+		sprintf(absSubtitleFileName, "%s/%s.%s", FilenameFolder,
+			subtitleFilename, subtitleExtension);
 
-                ssa_printf(10, "SSA: %s [%s]\n", subtitleExtension, subtitleFilename);
-                ssa_printf(10, "\t->%s\n", absSubtitleFileName);
+		ssa_printf(10, "SSA: %s [%s]\n", subtitleExtension,
+			   subtitleFilename);
+		ssa_printf(10, "\t->%s\n", absSubtitleFileName);
 
-                SsaTrack_t SsaSubtitle = {
-                        absSubtitleFileName,
-                        i,
-                };
+		SsaTrack_t SsaSubtitle = {
+		    absSubtitleFileName,
+		    i,
+		};
 
-                SsaManagerAdd(context, SsaSubtitle);
+		SsaManagerAdd(context, SsaSubtitle);
 
-                Track_t Subtitle;
+		Track_t Subtitle;
 		memset(&Subtitle, 0, sizeof(Subtitle));
-                Subtitle.Name = subtitleExtension;
-                Subtitle.Encoding = "S_TEXT/SSA";
-                Subtitle.Id = i++;
-                context->manager->subtitle->Command(context, MANAGER_ADD, &Subtitle);
-            }
-        } /* while */
+		Subtitle.Name = subtitleExtension;
+		Subtitle.Encoding = "S_TEXT/SSA";
+		Subtitle.Id = i++;
+		context->manager->subtitle->Command(context, MANAGER_ADD,
+						    &Subtitle);
+	    }
+	}			/* while */
 	closedir(dir);
-    } /* if dir */
-
+    }
+    /* if dir */
     free(copyFilename);
 
     ssa_printf(10, "<\n");
     return cERR_SSA_NO_ERROR;
 }
 
-static int SsaOpenSubtitle(Context_t *context __attribute__((unused)), int pid) {
+static int SsaOpenSubtitle(Context_t * context
+			   __attribute__ ((unused)), int pid)
+{
     ssa_printf(10, "\n");
 
-    if(pid < TEXTSSAOFFSET) {
-        ssa_err("trackid not for us\n");
-        return cERR_SSA_ERROR;
+    if (pid < TEXTSSAOFFSET) {
+	ssa_err("trackid not for us\n");
+	return cERR_SSA_ERROR;
     }
 
     int trackid;
     for (trackid = 0; trackid < TrackCount; trackid++)
 	if (Tracks[trackid].Id == pid)
-		break;
+	    break;
 
-    if(trackid == TrackCount) {
-        ssa_err("trackid not for us\n");
-        return cERR_SSA_ERROR;
+    if (trackid == TrackCount) {
+	ssa_err("trackid not for us\n");
+	return cERR_SSA_ERROR;
     }
 
     ssa_printf(10, "%s\n", Tracks[trackid].File);
@@ -405,19 +414,19 @@ static int SsaOpenSubtitle(Context_t *context __attribute__((unused)), int pid) 
 
     ssa_printf(10, "%s\n", fssa ? "fssa!=NULL" : "fssa==NULL");
 
-    if (!fssa)
-    {
-        ssa_err("cannot open file %s\n", Tracks[trackid].File);
-        return cERR_SSA_ERROR;
+    if (!fssa) {
+	ssa_err("cannot open file %s\n", Tracks[trackid].File);
+	return cERR_SSA_ERROR;
     }
     return cERR_SSA_NO_ERROR;
 }
 
-static int SsaCloseSubtitle(Context_t *context __attribute__((unused))) {
+static int SsaCloseSubtitle(Context_t * context __attribute__ ((unused)))
+{
     ssa_printf(10, "\n");
 
-    if(fssa)
-        fclose(fssa);
+    if (fssa)
+	fclose(fssa);
 
     /* this closes the thread! */
     fssa = NULL;
@@ -427,27 +436,29 @@ static int SsaCloseSubtitle(Context_t *context __attribute__((unused))) {
     return cERR_SSA_NO_ERROR;
 }
 
-static int SsaSwitchSubtitle(Context_t *context, int* arg) {
+static int SsaSwitchSubtitle(Context_t * context, int *arg)
+{
     int ret = cERR_SSA_NO_ERROR;
 
     ssa_printf(10, "\n");
 
     ret = SsaCloseSubtitle(context);
 
-    if (((ret |= SsaOpenSubtitle(context, *arg)) == cERR_SSA_NO_ERROR) && (!hasThreadStarted))
-    {
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-        pthread_create (&thread_sub, &attr, &SsaSubtitleThread, context);
+    if (((ret |= SsaOpenSubtitle(context, *arg)) == cERR_SSA_NO_ERROR)
+	&& (!hasThreadStarted)) {
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_create(&thread_sub, &attr, &SsaSubtitleThread, context);
 
-        hasThreadStarted = 1;
+	hasThreadStarted = 1;
     }
 
     return ret;
 }
 
-static int SsaDel(Context_t *context) {
+static int SsaDel(Context_t * context)
+{
     int ret = cERR_SSA_NO_ERROR;
 
     ssa_printf(10, "\n");
@@ -459,29 +470,30 @@ static int SsaDel(Context_t *context) {
     return ret;
 }
 
-static int Command(void  *_context, ContainerCmd_t command, void * argument) {
-    Context_t  *context = (Context_t*) _context;
+static int Command(void *_context, ContainerCmd_t command, void *argument)
+{
+    Context_t *context = (Context_t *) _context;
     int ret = cERR_SSA_NO_ERROR;
 
     ssa_printf(10, "\n");
 
-    switch(command) {
-    case CONTAINER_INIT: {
-        char * filename = (char *)argument;
-        ret = SsaGetSubtitle(context, filename);
-        break;
-    }
-    case CONTAINER_DEL: {
-        ret = SsaDel(context);
-        break;
-    }
-    case CONTAINER_SWITCH_SUBTITLE: {
-        ret = SsaSwitchSubtitle(context, (int*) argument);
-        break;
-    }
+    switch (command) {
+    case CONTAINER_INIT:{
+	    char *filename = (char *) argument;
+	    ret = SsaGetSubtitle(context, filename);
+	    break;
+	}
+    case CONTAINER_DEL:{
+	    ret = SsaDel(context);
+	    break;
+	}
+    case CONTAINER_SWITCH_SUBTITLE:{
+	    ret = SsaSwitchSubtitle(context, (int *) argument);
+	    break;
+	}
     default:
-        ssa_err("ConatinerCmd not supported! %d\n", command);
-        break;
+	ssa_err("ConatinerCmd not supported! %d\n", command);
+	break;
     }
 
     ssa_printf(10, "ret = %d\n", ret);

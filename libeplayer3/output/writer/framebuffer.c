@@ -95,95 +95,93 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 
 static int reset()
 {
-	return 0;
+    return 0;
 }
 
-static int writeData(void* _call)
+static int writeData(void *_call)
 {
-	int res = 0;
+    int res = 0;
 
-	WriterFBCallData_t* call = (WriterFBCallData_t*) _call;
+    WriterFBCallData_t *call = (WriterFBCallData_t *) _call;
 
-	fb_printf(100, "\n");
+    fb_printf(100, "\n");
 
-	if (!call)
-	{
-		fb_err("call data is NULL...\n");
-		return 0;
+    if (!call) {
+	fb_err("call data is NULL...\n");
+	return 0;
+    }
+
+    if (!call->destination) {
+	fb_err("frame buffer == NULL. ignoring ...\n");
+	return 0;
+    }
+
+    int dst_stride = call->destStride / sizeof(uint32_t);
+    int dst_delta = dst_stride - call->Width;
+    uint32_t *dst = call->destination + call->y * dst_stride + call->x;
+
+    if (call->data) {
+	int src_delta = call->Stride - call->Width;
+	unsigned char *src = call->data;
+	static uint32_t last_color = 0, colortable[256];
+
+	if (last_color != call->color) {
+	    // call->color is rgba, our spark frame buffer is argb
+	    uint32_t c = call->color >> 8, a = 255 - (call->color & 0xff);
+	    int i;
+	    for (i = 0; i < 256; i++) {
+		uint32_t k = (a * i) >> 8;
+		colortable[i] = k ? (c | (k << 24)) : 0;
+	    }
+	    last_color = call->color;
 	}
 
-	if (!call->destination)
-	{
-		fb_err("frame buffer == NULL. ignoring ...\n");
-		return 0;
+	fb_printf(100, "x		%d\n", call->x);
+	fb_printf(100, "y		%d\n", call->y);
+	fb_printf(100, "width		%d\n", call->Width);
+	fb_printf(100, "height		%d\n", call->Height);
+	fb_printf(100, "stride		%d\n", call->Stride);
+	fb_printf(100, "color		0x%.8x\n", call->color);
+	fb_printf(100, "data		%p\n", call->data);
+	fb_printf(100, "dest		%p\n", call->destination);
+	fb_printf(100, "dest.stride	%d\n", call->destStride);
+
+	unsigned char *src_final = src + call->Height * call->Width;
+	for (; src < src_final; dst += dst_delta, src += src_delta) {
+	    u_char *src_end = src + call->Width;
+	    for (; src < src_end; dst++, src++) {
+		uint32_t c = colortable[*src];
+		if (c)
+		    *dst = c;
+	    }
 	}
-
-	int dst_stride = call->destStride/sizeof(uint32_t);
-	int dst_delta = dst_stride - call->Width;
-	uint32_t *dst = call->destination + call->y * dst_stride + call->x;
-
-	if (call->data)
-	{
-		int src_delta = call->Stride - call->Width;
-		unsigned char *src = call->data;
-		static uint32_t last_color = 0, colortable[256];
-
-		if (last_color != call->color) {
-			// call->color is rgba, our spark frame buffer is argb
-			uint32_t c = call->color >> 8, a = 255 - (call->color & 0xff);
-			int i;
-			for (i = 0; i < 256; i++) {
-				uint32_t k = (a * i) >> 8;
-				colortable[i] = k ? (c | (k << 24)) : 0;
-			}
-			last_color = call->color;
-		}
-
-		fb_printf(100, "x		%d\n", call->x);
-		fb_printf(100, "y		%d\n", call->y);
-		fb_printf(100, "width		%d\n", call->Width);
-		fb_printf(100, "height		%d\n", call->Height);
-		fb_printf(100, "stride		%d\n", call->Stride);
-		fb_printf(100, "color		0x%.8x\n", call->color);
-		fb_printf(100, "data		%p\n", call->data);
-		fb_printf(100, "dest		%p\n", call->destination);
-		fb_printf(100, "dest.stride	%d\n", call->destStride);
-
-		unsigned char *src_final = src + call->Height * call->Width;
-		for (; src < src_final; dst += dst_delta, src += src_delta) {
-			u_char *src_end = src + call->Width;
-			for (; src < src_end; dst++, src++) {
-				uint32_t c = colortable[*src];
-				if (c)
-					*dst = c;
-			}
-		}
-	} else {
-		uint32_t *dst_final = dst + call->Width + call->Height * dst_stride;
-		for (; dst < dst_final; dst += dst_delta) {
-			uint32_t *dst_end = dst + call->Width;
-			for (; dst < dst_end; dst++)
-				*dst = 0;
-		}
+    } else {
+	uint32_t *dst_final =
+	    dst + call->Width + call->Height * dst_stride;
+	for (; dst < dst_final; dst += dst_delta) {
+	    uint32_t *dst_end = dst + call->Width;
+	    for (; dst < dst_end; dst++)
+		*dst = 0;
 	}
+    }
 
-	fb_printf(100, "< %d\n", res);
-	return res;
+    fb_printf(100, "< %d\n", res);
+    return res;
 }
 
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
 static WriterCaps_t caps = {
-	"framebuffer",
-	eGfx,
-	"framebuffer",
-	0
+    "framebuffer",
+    eGfx,
+    "framebuffer",
+    0
 };
 
 struct Writer_s WriterFramebuffer = {
-	&reset,
-	&writeData,
-	NULL,
-	&caps
+    &reset,
+    &writeData,
+    NULL,
+    &caps
 };

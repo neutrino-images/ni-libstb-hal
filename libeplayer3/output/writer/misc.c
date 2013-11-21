@@ -72,35 +72,33 @@ void PutBits(BitPacker_t * ld, unsigned int code, unsigned int length)
 
 #ifdef DEBUG_PUTBITS
     if (ld->debug)
-        dprintf("code = %d, length = %d, bit_buf = 0x%x, bit_left = %d\n", code, length, bit_buf, bit_left);
-#endif /* DEBUG_PUTBITS */
+	dprintf("code = %d, length = %d, bit_buf = 0x%x, bit_left = %d\n",
+		code, length, bit_buf, bit_left);
+#endif				/* DEBUG_PUTBITS */
 
-    if (length < bit_left)
-    {
-        /* fits into current buffer */
-        bit_buf = (bit_buf << length) | code;
-        bit_left -= length;
-    }
-    else
-    {
-        /* doesn't fit */
-        bit_buf <<= bit_left;
-        bit_buf |= code >> (length - bit_left);
-        ld->Ptr[0] = (char)(bit_buf >> 24);
-        ld->Ptr[1] = (char)(bit_buf >> 16);
-        ld->Ptr[2] = (char)(bit_buf >> 8);
-        ld->Ptr[3] = (char)bit_buf;
-        ld->Ptr   += 4;
-        length    -= bit_left;
-        bit_buf    = code & ((1 << length) - 1);
-        bit_left   = 32 - length;
-        bit_buf = code;
+    if (length < bit_left) {
+	/* fits into current buffer */
+	bit_buf = (bit_buf << length) | code;
+	bit_left -= length;
+    } else {
+	/* doesn't fit */
+	bit_buf <<= bit_left;
+	bit_buf |= code >> (length - bit_left);
+	ld->Ptr[0] = (char) (bit_buf >> 24);
+	ld->Ptr[1] = (char) (bit_buf >> 16);
+	ld->Ptr[2] = (char) (bit_buf >> 8);
+	ld->Ptr[3] = (char) bit_buf;
+	ld->Ptr += 4;
+	length -= bit_left;
+	bit_buf = code & ((1 << length) - 1);
+	bit_left = 32 - length;
+	bit_buf = code;
     }
 
 #ifdef DEBUG_PUTBITS
     if (ld->debug)
-        dprintf("bit_left = %d, bit_buf = 0x%x\n", bit_left, bit_buf);
-#endif /* DEBUG_PUTBITS */
+	dprintf("bit_left = %d, bit_buf = 0x%x\n", bit_left, bit_buf);
+#endif				/* DEBUG_PUTBITS */
 
     /* writeback */
     ld->BitBuffer = bit_buf;
@@ -110,15 +108,14 @@ void PutBits(BitPacker_t * ld, unsigned int code, unsigned int length)
 void FlushBits(BitPacker_t * ld)
 {
     ld->BitBuffer <<= ld->Remaining;
-    while (ld->Remaining < 32)
-    {
+    while (ld->Remaining < 32) {
 #ifdef DEBUG_PUTBITS
-        if (ld->debug)
-            dprintf("flushing 0x%2.2x\n", ld->BitBuffer >> 24);
-#endif /* DEBUG_PUTBITS */
-        *ld->Ptr++ = ld->BitBuffer >> 24;
-        ld->BitBuffer <<= 8;
-        ld->Remaining += 8;
+	if (ld->debug)
+	    dprintf("flushing 0x%2.2x\n", ld->BitBuffer >> 24);
+#endif				/* DEBUG_PUTBITS */
+	*ld->Ptr++ = ld->BitBuffer >> 24;
+	ld->BitBuffer <<= 8;
+	ld->Remaining += 8;
     }
     ld->Remaining = 32;
     ld->BitBuffer = 0;

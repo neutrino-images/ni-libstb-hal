@@ -20,8 +20,7 @@
 #ifndef pcm_h_
 #define pcm_h_
 
-typedef struct pcmPrivateData_s
-{
+typedef struct pcmPrivateData_s {
     int uNoOfChannels;
     int uSampleRate;
     int uBitsPerSample;

@@ -11,35 +11,34 @@
 
 /* metatdata map list:
  */
-char* metadata_map[] =
-{
- /* our tags      ffmpeg tag / id3v2 */  
-   "Title",       "TIT2",
-   "Title",       "TT2",
-   "Artist",      "TPE1",
-   "Artist",      "TP1",
-   "AlbumArtist", "TPE2",
-   "AlbumArtist", "TP2",
-   "Album",       "TALB",
-   "Album",       "TAL",
-   "Year",        "TDRL",  /* fixme */
-   "Year",        "TDRC",  /* fixme */
-   "Comment",     "unknown",
-   "Track",       "TRCK",
-   "Track",       "TRK",
-   "Copyright",   "TCOP",
-   "Composer",    "TCOM",
-   "Genre",       "TCON",
-   "Genre",       "TCO",   
-   "EncodedBy",   "TENC",   
-   "EncodedBy",   "TEN", 
-   "Language",    "TLAN",
-   "Performer",   "TPE3",
-   "Performer",   "TP3",
-   "Publisher",   "TPUB",
-   "Encoder",     "TSSE",
-   "Disc",        "TPOS",
-   NULL
+char *metadata_map[] = {
+    /* our tags      ffmpeg tag / id3v2 */
+    "Title", "TIT2",
+    "Title", "TT2",
+    "Artist", "TPE1",
+    "Artist", "TP1",
+    "AlbumArtist", "TPE2",
+    "AlbumArtist", "TP2",
+    "Album", "TALB",
+    "Album", "TAL",
+    "Year", "TDRL",		/* fixme */
+    "Year", "TDRC",		/* fixme */
+    "Comment", "unknown",
+    "Track", "TRCK",
+    "Track", "TRK",
+    "Copyright", "TCOP",
+    "Composer", "TCOM",
+    "Genre", "TCON",
+    "Genre", "TCO",
+    "EncodedBy", "TENC",
+    "EncodedBy", "TEN",
+    "Language", "TLAN",
+    "Performer", "TPE3",
+    "Performer", "TP3",
+    "Publisher", "TPUB",
+    "Encoder", "TSSE",
+    "Disc", "TPOS",
+    NULL
 };
 
 #endif

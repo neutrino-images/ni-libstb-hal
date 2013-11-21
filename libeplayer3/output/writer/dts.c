@@ -50,10 +50,10 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-#define PES_AUDIO_PRIVATE_HEADER_SIZE   16                                // consider maximum private header size.
+#define PES_AUDIO_PRIVATE_HEADER_SIZE   16	// consider maximum private header size.
 #define PES_AUDIO_HEADER_SIZE           (32 + PES_AUDIO_PRIVATE_HEADER_SIZE)
 #define PES_AUDIO_PACKET_SIZE           2028
-#define SPDIF_AUDIO_PACKET_SIZE         (1024 * sizeof(unsigned int) * 2) // stereo 32bit samples.
+#define SPDIF_AUDIO_PACKET_SIZE         (1024 * sizeof(unsigned int) * 2)	// stereo 32bit samples.
 
 #define DTS_DEBUG
 
@@ -93,52 +93,51 @@ static int reset()
     return 0;
 }
 
-static int writeData(void* _call)
+static int writeData(void *_call)
 {
-    WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
+    WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 
-    unsigned char   PesHeader[PES_AUDIO_HEADER_SIZE];
+    unsigned char PesHeader[PES_AUDIO_HEADER_SIZE];
 
     dts_printf(10, "\n");
 
-    if (call == NULL)
-    {
-        dts_err("call data is NULL...\n");
-        return 0;
+    if (call == NULL) {
+	dts_err("call data is NULL...\n");
+	return 0;
     }
 
     dts_printf(10, "AudioPts %lld\n", call->Pts);
 
-    if ((call->data == NULL) || (call->len <= 0))
-    {
-        dts_err("parsing NULL Data. ignoring...\n");
-        return 0;
+    if ((call->data == NULL) || (call->len <= 0)) {
+	dts_err("parsing NULL Data. ignoring...\n");
+	return 0;
     }
 
-    if (call->fd < 0)
-    {
-        dts_err("file pointer < 0. ignoring ...\n");
-        return 0;
+    if (call->fd < 0) {
+	dts_err("file pointer < 0. ignoring ...\n");
+	return 0;
     }
-
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
     unsigned char *Data = (unsigned char *) malloc(call->len);
     memcpy(Data, call->data, call->len);
 
     /* 16-bit byte swap all data before injecting it */
-    for (i=0; i< call->len; i+=2)
-    {
-        unsigned char Tmp = Data[i];
-        Data[i] = Data[i+1];
-        Data[i+1] = Tmp;
+    for (i = 0; i < call->len; i += 2) {
+	unsigned char Tmp = Data[i];
+	Data[i] = Data[i + 1];
+	Data[i + 1] = Tmp;
     }
 #endif
 
     struct iovec iov[2];
 
     iov[0].iov_base = PesHeader;
-    iov[0].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_AUDIO_PES_START_CODE/*PRIVATE_STREAM_1_PES_START_CODE*/, call->Pts, 0);
+    iov[0].iov_len =
+	InsertPesHeader(PesHeader, call->len,
+			MPEG_AUDIO_PES_START_CODE
+			/*PRIVATE_STREAM_1_PES_START_CODE */ , call->Pts,
+			0);
 #ifdef DO_BYTESPWAP
     iov[1].iov_base = Data;
 #else

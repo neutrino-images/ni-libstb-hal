@@ -189,11 +189,12 @@ else
    
 */
 
-static unsigned char DefaultAACHeader[]    =  {
+static unsigned char DefaultAACHeader[] = {
     0xff,
     0xf1,
-    /*0x00, 0x00*/0x50,  //((Profile & 0x03) << 6)  | (SampleIndex << 2) | ((Channels >> 2) & 0x01);s
-    0x80,                //(Channels & 0x03) << 6;
+				/*0x00, 0x00 */ 0x50,
+				//((Profile & 0x03) << 6)  | (SampleIndex << 2) | ((Channels >> 2) & 0x01);s
+    0x80,			//(Channels & 0x03) << 6;
     0x00,
     0x1f,
     0xfc
@@ -211,51 +212,48 @@ static int reset()
     return 0;
 }
 
-static int writeData(void* _call)
+static int writeData(void *_call)
 {
-    WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
+    WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
     unsigned char ExtraData[AAC_HEADER_LENGTH];
-    unsigned int  PacketLength;
+    unsigned int PacketLength;
 
     aac_printf(10, "\n");
 
-    if (call == NULL)
-    {
-        aac_err("call data is NULL...\n");
-        return 0;
+    if (call == NULL) {
+	aac_err("call data is NULL...\n");
+	return 0;
     }
 
     aac_printf(10, "AudioPts %lld\n", call->Pts);
 
-    PacketLength    = call->len + AAC_HEADER_LENGTH;
+    PacketLength = call->len + AAC_HEADER_LENGTH;
 
-    if ((call->data == NULL) || (call->len <= 0))
-    {
-        aac_err("parsing NULL Data. ignoring...\n");
-        return 0;
+    if ((call->data == NULL) || (call->len <= 0)) {
+	aac_err("parsing NULL Data. ignoring...\n");
+	return 0;
     }
 
-    if (call->fd < 0)
-    {
-        aac_err("file pointer < 0. ignoring ...\n");
-        return 0;
+    if (call->fd < 0) {
+	aac_err("file pointer < 0. ignoring ...\n");
+	return 0;
     }
 
-    if (call->private_data == NULL)
-    {
-        aac_printf(10, "private_data = NULL\n");
-	memcpy (ExtraData, DefaultAACHeader, AAC_HEADER_LENGTH);
-    }
-    else
-    	memcpy (ExtraData, call->private_data, AAC_HEADER_LENGTH);
+    if (call->private_data == NULL) {
+	aac_printf(10, "private_data = NULL\n");
+	memcpy(ExtraData, DefaultAACHeader, AAC_HEADER_LENGTH);
+    } else
+	memcpy(ExtraData, call->private_data, AAC_HEADER_LENGTH);
 
-    ExtraData[3]       |= (PacketLength >> 11) & 0x3;
-    ExtraData[4]        = (PacketLength >> 3) & 0xff;
-    ExtraData[5]       |= (PacketLength << 5) & 0xe0;
+    ExtraData[3] |= (PacketLength >> 11) & 0x3;
+    ExtraData[4] = (PacketLength >> 3) & 0xff;
+    ExtraData[5] |= (PacketLength << 5) & 0xe0;
 
-    unsigned int  HeaderLength = InsertPesHeader (PesHeader, PacketLength, AAC_AUDIO_PES_START_CODE, call->Pts, 0);
+    unsigned int HeaderLength =
+	InsertPesHeader(PesHeader, PacketLength, AAC_AUDIO_PES_START_CODE,
+			call->Pts, 0);
 
     struct iovec iov[3];
     iov[0].iov_base = PesHeader;

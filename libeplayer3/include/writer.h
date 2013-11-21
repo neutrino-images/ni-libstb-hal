@@ -4,52 +4,52 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef enum { eNone, eAudio, eVideo, eGfx} eWriterType_t;
+typedef enum { eNone, eAudio, eVideo, eGfx } eWriterType_t;
 
 typedef struct {
-    int                    fd;
-    unsigned char*         data;
-    unsigned int           len;
+    int fd;
+    unsigned char *data;
+    unsigned int len;
     unsigned long long int Pts;
-    unsigned char*         private_data;
-    unsigned int           private_size;
-    unsigned int           FrameRate;
-    unsigned int           FrameScale;
-    unsigned int           Width;
-    unsigned int           Height;
-    unsigned char          Version;
+    unsigned char *private_data;
+    unsigned int private_size;
+    unsigned int FrameRate;
+    unsigned int FrameScale;
+    unsigned int Width;
+    unsigned int Height;
+    unsigned char Version;
 } WriterAVCallData_t;
 
 typedef struct {
-    unsigned char*         data;
-    unsigned int           Width;
-    unsigned int           Height;
-    unsigned int           Stride;
-    unsigned int           color;
+    unsigned char *data;
+    unsigned int Width;
+    unsigned int Height;
+    unsigned int Stride;
+    unsigned int color;
 
-    unsigned int           x;       /* dst x ->given by ass */
-    unsigned int           y;       /* dst y ->given by ass */
+    unsigned int x;		/* dst x ->given by ass */
+    unsigned int y;		/* dst y ->given by ass */
 
     /* destination values if we use a shared framebuffer */
-    int                    fd;
-    unsigned int           Screen_Width;
-    unsigned int           Screen_Height;
-    uint32_t		   *destination;
-    unsigned int           destStride;
+    int fd;
+    unsigned int Screen_Width;
+    unsigned int Screen_Height;
+    uint32_t *destination;
+    unsigned int destStride;
 } WriterFBCallData_t;
 
 typedef struct WriterCaps_s {
-    char*          name;
-    eWriterType_t  type;
-    char*          textEncoding;
+    char *name;
+    eWriterType_t type;
+    char *textEncoding;
     /* fixme: revise if this is an enum! */
-    int            dvbEncoding;
+    int dvbEncoding;
 } WriterCaps_t;
 
 typedef struct Writer_s {
-    int           (* reset) ();
-    int           (* writeData) (void*);
-    int           (* writeReverseData) (void*);
+    int (*reset) ();
+    int (*writeData) (void *);
+    int (*writeReverseData) (void *);
     WriterCaps_t *caps;
 } Writer_t;
 
@@ -79,10 +79,10 @@ extern Writer_t WriterFramebuffer;
 extern Writer_t WriterPipe;
 extern Writer_t WriterDVBSubtitle;
 
-Writer_t* getWriter(char* encoding);
+Writer_t *getWriter(char *encoding);
 
-Writer_t* getDefaultVideoWriter();
-Writer_t* getDefaultAudioWriter();
-Writer_t* getDefaultFramebufferWriter();
+Writer_t *getDefaultVideoWriter();
+Writer_t *getDefaultAudioWriter();
+Writer_t *getDefaultFramebufferWriter();
 
 #endif

@@ -32,30 +32,29 @@ typedef enum {
     OUTPUT_SET_SUBTITLE_OUTPUT
 } OutputCmd_t;
 
-typedef struct
-{
-     unsigned char*         data;
-     unsigned int           len;
+typedef struct {
+    unsigned char *data;
+    unsigned int len;
 
-     unsigned char*         extradata;
-     unsigned int           extralen;
-     
-     unsigned long long int pts;
-     
-     float                  frameRate;
-     unsigned int           timeScale;
-     
-     unsigned int           width;
-     unsigned int           height;
-     
-     char*                  type;
+    unsigned char *extradata;
+    unsigned int extralen;
+
+    unsigned long long int pts;
+
+    float frameRate;
+    unsigned int timeScale;
+
+    unsigned int width;
+    unsigned int height;
+
+    char *type;
 } AudioVideoOut_t;
 
 typedef struct Output_s {
-    char * Name;
-    int (* Command) (/*Context_t*/void  *, OutputCmd_t, void *);
-    int (* Write) (/*Context_t*/void  *, void* privateData);
-    char ** Capabilities;
+    char *Name;
+    int (*Command) ( /*Context_t */ void *, OutputCmd_t, void *);
+    int (*Write) ( /*Context_t */ void *, void *privateData);
+    char **Capabilities;
 
 } Output_t;
 
@@ -64,13 +63,13 @@ extern Output_t SubtitleOutput;
 extern Output_t PipeOutput;
 
 typedef struct OutputHandler_s {
-    char * Name;
-    Output_t * audio;
-    Output_t * video;
-    Output_t * subtitle;
-    Output_t * dvbsubtitle;
-    Output_t * teletext;
-    int (* Command) (/*Context_t*/void  *, OutputCmd_t, void *);
+    char *Name;
+    Output_t *audio;
+    Output_t *video;
+    Output_t *subtitle;
+    Output_t *dvbsubtitle;
+    Output_t *teletext;
+    int (*Command) ( /*Context_t */ void *, OutputCmd_t, void *);
 } OutputHandler_t;
 
 #endif

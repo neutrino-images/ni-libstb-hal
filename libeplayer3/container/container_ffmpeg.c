@@ -1677,6 +1677,8 @@ static int Command(void  *_context, ContainerCmd_t command, void * argument)
 
     if (command != CONTAINER_INIT && !avContext)
 	return cERR_CONTAINER_FFMPEG_ERR;
+    if (command == CONTAINER_INIT && avContext)
+	return cERR_CONTAINER_FFMPEG_ERR;
     switch(command)
     {
     case CONTAINER_INIT:  {

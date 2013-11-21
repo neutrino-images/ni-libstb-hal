@@ -61,7 +61,7 @@ static void printContainerCapabilities() {
     container_printf(10, "\n");
 }
 
-static int selectContainer(Context_t  *context, char * extension) {
+static int selectContainer(Context_t  *context, char * extension __attribute__((unused))) {
 #if 0
     int i, j;
     int ret = -1;

@@ -95,7 +95,7 @@ static const char *FILENAME = "container_ffmpeg.c";
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 
@@ -108,7 +108,7 @@ static unsigned char isContainerRunning = 0;
 
 static long long int latestPts = 0;
 
-float seek_sec_abs = 0.0, seek_sec_rel = 0.0;
+float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -225,9 +225,9 @@ long long int calcPts(AVStream * stream, int64_t pts)
     else if (avContext->start_time == AV_NOPTS_VALUE)
 	pts = 90000.0 * (double) pts *av_q2d(stream->time_base);
     else
-	pts =
-	    90000.0 * (double) pts *av_q2d(stream->time_base) -
-	    90000.0 * avContext->start_time / AV_TIME_BASE;
+    pts =
+	90000.0 * (double) pts *av_q2d(stream->time_base) -
+	90000.0 * avContext->start_time / AV_TIME_BASE;
 
     if (pts & 0x8000000000000000ull)
 	pts = INVALID_PTS_VALUE;
@@ -303,9 +303,8 @@ static void FFMPEGThread(Context_t * context)
 
     hasPlayThreadStarted = 1;
 
-    int64_t lastPts = -1, currentVideoPts = -1, currentAudioPts =
+    int64_t currentVideoPts = -1, currentAudioPts =
 	-1, showtime = 0, bofcount = 0;
-    off_t lastPos = -1;
     AudioVideoOut_t avOut;
 
     SwrContext *swr = NULL;
@@ -334,9 +333,6 @@ static void FFMPEGThread(Context_t * context)
 	    continue;
 	}
 
-	if (!context->playback || !context->playback->isPlaying)
-	    continue;
-
 	int seek_target_flag = 0;
 	int64_t seek_target = INT64_MIN;
 
@@ -347,19 +343,13 @@ static void FFMPEGThread(Context_t * context)
 		seek_target_flag = AVSEEK_FLAG_BYTE;
 		seek_target = avio_tell(avContext->pb) + seek_sec_rel * br;
 	    } else {
-		lastPts =
-		    (currentVideoPts >
-		     0) ? currentVideoPts : currentAudioPts;
-		if (lastPts > 0)
-		    seek_target =
-			((currentVideoPts >
-			  0) ? currentVideoPts : currentAudioPts) +
-			seek_sec_rel * AV_TIME_BASE;
+		seek_target =
+		    ((((currentVideoPts >
+			0) ? currentVideoPts : currentAudioPts) /
+		      90000.0) + seek_sec_rel) * AV_TIME_BASE;
 	    }
 	    seek_sec_rel = 0.0;
-	    lastPts = -1;
-	    lastPos = -1;
-	} else if (seek_sec_abs != 0.0) {
+	} else if (seek_sec_abs >= 0.0) {
 	    if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
 		float br = (avContext->bit_rate) ? br =
 		    avContext->bit_rate / 8.0 : 180000.0;
@@ -368,9 +358,7 @@ static void FFMPEGThread(Context_t * context)
 	    } else {
 		seek_target = seek_sec_abs * AV_TIME_BASE;
 	    }
-	    seek_sec_abs = 0.0;
-	    lastPts = -1;
-	    lastPos = -1;
+	    seek_sec_abs = -1.0;
 	} else if (context->playback->BackWard && av_gettime() >= showtime) {
 	    context->output->Command(context, OUTPUT_CLEAR, "video");
 
@@ -381,35 +369,27 @@ static void FFMPEGThread(Context_t * context)
 	    }
 
 	    if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
-		if (lastPos < 0)
-		    lastPos = avio_tell(avContext->pb);
+		off_t pos = avio_tell(avContext->pb);
 
-		if (lastPos > 0) {
+		if (pos > 0) {
 		    float br;
 		    if (avContext->bit_rate)
 			br = avContext->bit_rate / 8.0;
 		    else
 			br = 180000.0;
-		    lastPos += context->playback->Speed * 8 * br;
+		    seek_target = pos + context->playback->Speed * 8 * br;
 		    seek_target_flag = AVSEEK_FLAG_BYTE;
-		    seek_target = lastPos;
 		}
 	    } else {
-		if (lastPts < 0)
-		    lastPts =
-			(currentVideoPts >
-			 0) ? currentVideoPts : currentAudioPts;
-
-		if (lastPts > 0) {
-		    lastPts += context->playback->Speed * 8 * AV_TIME_BASE;
-		    seek_target = lastPts;
-		}
+		seek_target =
+		    ((((currentVideoPts >
+			0) ? currentVideoPts : currentAudioPts) /
+		      90000.0) +
+		     context->playback->Speed * 8) * AV_TIME_BASE;;
 	    }
 	    showtime = av_gettime() + 300000;	//jump back every 300ms
 	} else {
 	    bofcount = 0;
-	    if (!context->playback->BackWard)
-		lastPts = -1, lastPos = -1;
 	}
 
 	if (seek_target > INT64_MIN) {
@@ -466,16 +446,16 @@ static void FFMPEGThread(Context_t * context)
 	    Command(context, MANAGER_GET_TRACK, &audioTrack) < 0)
 	    ffmpeg_err("error getting audio track\n");
 
-	if (context->manager->subtitle->
-	    Command(context, MANAGER_GET_TRACK, &subtitleTrack) < 0)
+	if (context->manager->subtitle->Command(context, MANAGER_GET_TRACK,
+						&subtitleTrack) < 0)
 	    ffmpeg_err("error getting subtitle track\n");
 
 	if (context->manager->dvbsubtitle->
 	    Command(context, MANAGER_GET_TRACK, &dvbsubtitleTrack) < 0)
 	    ffmpeg_err("error getting dvb subtitle track\n");
 
-	if (context->manager->teletext->
-	    Command(context, MANAGER_GET_TRACK, &teletextTrack) < 0)
+	if (context->manager->teletext->Command(context, MANAGER_GET_TRACK,
+						&teletextTrack) < 0)
 	    ffmpeg_err("error getting teletext track\n");
 
 	ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size,
@@ -588,7 +568,8 @@ static void FFMPEGThread(Context_t * context)
 		    if (!swr) {
 			int rates[] =
 			    { 48000, 96000, 192000, 44100, 88200, 176400,
-		      0 };
+			    0
+			};
 			int *rate = rates;
 			int in_rate = c->sample_rate;
 			while (*rate
@@ -670,8 +651,8 @@ static void FFMPEGThread(Context_t * context)
 			calcPts(audioTrack->stream, next_out_pts);
 		    out_samples =
 			swr_convert(swr, &output, out_samples,
-				    (const uint8_t **) &decoded_frame->
-				    data[0], in_samples);
+				    (const uint8_t **)
+				    &decoded_frame->data[0], in_samples);
 
 		    pcmPrivateData_t extradata;
 
@@ -912,11 +893,9 @@ static void FFMPEGThread(Context_t * context)
     if (decoded_frame)
 	avcodec_free_frame(&decoded_frame);
 
-    avformat_close_input(&avContext);
-
-    hasPlayThreadStarted = 0;
     if (context->playback)
-	context->playback->isPlaying = 0;
+	context->playback->abortRequested = 1;
+    hasPlayThreadStarted = 0;
 
     ffmpeg_printf(10, "terminating\n");
 }
@@ -957,6 +936,7 @@ int container_ffmpeg_init(Context_t * context, char *filename)
 	ffmpeg_err("ups already running?\n");
 	return cERR_CONTAINER_FFMPEG_RUNNING;
     }
+    isContainerRunning = 1;
 
     /* initialize ffmpeg */
     avcodec_register_all();
@@ -976,6 +956,7 @@ int container_ffmpeg_init(Context_t * context, char *filename)
 	av_strerror(err, error, 512);
 	ffmpeg_err("Cause: %s\n", error);
 
+	isContainerRunning = 0;
 	return cERR_CONTAINER_FFMPEG_OPEN;
     }
 
@@ -994,14 +975,13 @@ int container_ffmpeg_init(Context_t * context, char *filename)
 	 * until other works are done and we can prove this.
 	 */
 	avformat_close_input(&avContext);
-	//for buffered io (end)
+	isContainerRunning = 0;
 	return cERR_CONTAINER_FFMPEG_STREAM;
 #endif
     }
 
     terminating = 0;
     latestPts = 0;
-    isContainerRunning = 1;
     int res = container_ffmpeg_update_tracks(context, filename, 1);
     return res;
 }
@@ -1264,7 +1244,8 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename,
 		    memset(track.aacbuf, 0, track.aacbuflen);
 		    unsigned char ASF_Stream_Properties_Object[16] =
 			{ 0x91, 0x07, 0xDC, 0xB7, 0xB7, 0xA9, 0xCF, 0x11,
-0x8E, 0xE6, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65 };
+			0x8E, 0xE6, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
+		    };
 		    memcpy(track.aacbuf + 0, ASF_Stream_Properties_Object, 16);	// ASF_Stream_Properties_Object
 		    memcpy(track.aacbuf + 16, &track.aacbuflen, 4);	//FrameDateLength
 
@@ -1273,12 +1254,14 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename,
 
 		    unsigned char ASF_Audio_Media[16] =
 			{ 0x40, 0x9E, 0x69, 0xF8, 0x4D, 0x5B, 0xCF, 0x11,
-0xA8, 0xFD, 0x00, 0x80, 0x5F, 0x5C, 0x44, 0x2B };
+			0xA8, 0xFD, 0x00, 0x80, 0x5F, 0x5C, 0x44, 0x2B
+		    };
 		    memcpy(track.aacbuf + 24, ASF_Audio_Media, 16);	//ASF_Audio_Media
 
 		    unsigned char ASF_Audio_Spread[16] =
 			{ 0x50, 0xCD, 0xC3, 0xBF, 0x8F, 0x61, 0xCF, 0x11,
-0x8B, 0xB2, 0x00, 0xAA, 0x00, 0xB4, 0xE2, 0x20 };
+			0x8B, 0xB2, 0x00, 0xAA, 0x00, 0xB4, 0xE2, 0x20
+		    };
 		    memcpy(track.aacbuf + 40, ASF_Audio_Spread, 16);	//ASF_Audio_Spread
 
 		    memset(track.aacbuf + 56, 0, 4);	// time_offset (not used)
@@ -1547,10 +1530,8 @@ static int container_ffmpeg_stop(Context_t * context)
 	ffmpeg_err("Container not running\n");
 	return cERR_CONTAINER_FFMPEG_ERR;
     }
-    if (context->playback) {
-	context->playback->isPlaying = 0;
+    if (context->playback)
 	context->playback->abortRequested = 1;
-    }
 
     while (hasPlayThreadStarted != 0)
 	usleep(100000);
@@ -1574,7 +1555,7 @@ static int container_ffmpeg_seek(Context_t * context
     if (absolute)
 	seek_sec_abs = sec, seek_sec_rel = 0.0;
     else
-	seek_sec_abs = 0.0, seek_sec_rel = sec;
+	seek_sec_abs = -1.0, seek_sec_rel = sec;
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
@@ -1809,8 +1790,9 @@ static int Command(void *_context, ContainerCmd_t command, void *argument)
 
 static char *FFMPEG_Capabilities[] =
     { "avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg",
-"m2ts", "vob", "wmv", "wma", "asf", "mp2", "m4v", "m4a", "divx", "dat", "mpeg", "trp", "mts", "vdr",
-"ogg", "wav", "wtv", "ogm", "3gp", NULL };
+    "m2ts", "vob", "wmv", "wma", "asf", "mp2", "m4v", "m4a", "divx", "dat",
+    "mpeg", "trp", "mts", "vdr", "ogg", "wav", "wtv", "ogm", "3gp", NULL
+};
 
 Container_t FFMPEGContainer = {
     "FFMPEG",

@@ -29,7 +29,7 @@
 
 #define PLAYBACK_DEBUG
 
-static short debug_level = 0;
+static short debug_level = 50;
 
 static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG
@@ -73,100 +73,21 @@ static int PlaybackTerminate(Context_t * context);
 
 static void SupervisorThread(Context_t * context)
 {
-    int status = 0, lastStatus = 0;
-    long long int playPts = -1;
-    long long int lastPts = -1;
-    int dieNow = 0;
-    int count = 0;
+    hasThreadStarted = 1;
 
     playback_printf(10, ">\n");
 
-    while (context && context->playback && context->playback->isPlaying) {
-	if (context->container->selectedContainer != NULL)
-	    context->container->selectedContainer->Command(context,
-							   CONTAINER_STATUS,
-							   &status);
-	else
-	    dieNow = 1;
-
-	if (context->container->selectedContainer != NULL)
-	    context->container->selectedContainer->Command(context,
-							   CONTAINER_LAST_PTS,
-							   &lastPts);
-
-#ifdef FRAMECOUNT_WORKS
-// This is a good place to implement buffer managment
-	long long int frameCount = -1;
-	int ret =
-	    context->playback->Command(context, PLAYBACK_GET_FRAME_COUNT,
-				       &frameCount);
-	playback_printf(1, "Framecount = %ull\n", frameCount);
-	status = 1;
-#endif
-
-	if ((status == 0) && (status != lastStatus)) {
-	    playback_printf(1,
-			    "container has ended, syncing to playback pts ...\n");
-
-#define FLUSH_AFTER_CONTAINER_ENDED
-#ifdef FLUSH_AFTER_CONTAINER_ENDED
-	    // These means that we have injected everything we got, so flush it.
-	    // As this is a thread, the call should block the thread as long as frames are beeing played.
-	    // The main thread should not be blocked by this.
-	    // This also helps for files which dont have any pts at all
-	    if (context->output->Command(context, OUTPUT_FLUSH, NULL) < 0) {
-		playback_err("failed to flush output.\n");
-	    }
-#endif
-
-	    while (!dieNow) {
-		if (context && context->playback
-		    && context->playback->abortRequested)
-		    dieNow = 1;
-		else if (context && context->playback
-			 && context->playback->isPlaying) {
-		    int ret =
-			context->playback->Command(context, PLAYBACK_PTS,
-						   &playPts);
-
-		    playback_err
-			("playbackPts %lld ->lastPts %lld ret %d\n",
-			 playPts, lastPts, ret);
-
-		    if (ret != cERR_PLAYBACK_NO_ERROR
-			|| playPts + (2 * 90000) >= lastPts)
-			dieNow = 1;
-
-		} else {
-		    playback_err("playback already died ?\n");
-		    dieNow = 1;
-		}
-
-		count++;
-
-		if (count == 200) {
-//                     playback_err("something went wrong, expect end but never reached?\n");
-		    dieNow = 1;
-		}
-		usleep(10000);
-	    }
-	}
-
-	lastStatus = status;
-
-	if (dieNow)
-	    break;
-
-	usleep(10000);
-
-    }				/* while */
+    while (context && context->playback && context->playback->isPlaying
+	   && !context->playback->abortRequested)
+	usleep(100000);
 
     playback_printf(10, "<\n");
 
-    hasThreadStarted = 0;
+    hasThreadStarted = 2;
     PlaybackTerminate(context);
 
     playback_printf(0, "terminating\n");
+    hasThreadStarted = 0;
 }
 
 /* ***************************** */
@@ -210,16 +131,14 @@ static int PlaybackOpen(Context_t * context, char *uri)
 	if (context->container && context->container->textSrtContainer)
 	    context->container->textSrtContainer->Command(context,
 							  CONTAINER_INIT,
-							  context->
-							  playback->uri +
-							  7);
+							  context->playback->
+							  uri + 7);
 
 	if (context->container && context->container->textSsaContainer)
 	    context->container->textSsaContainer->Command(context,
 							  CONTAINER_INIT,
-							  context->
-							  playback->uri +
-							  7);
+							  context->playback->
+							  uri + 7);
 
 	if (context->container && context->container->assContainer)
 	    context->container->assContainer->Command(context,
@@ -245,8 +164,9 @@ static int PlaybackOpen(Context_t * context, char *uri)
     if ((context->container->Command(context, CONTAINER_ADD, extension) <
 	 0)
 	|| (!context->container->selectedContainer)
-	|| (context->container->selectedContainer->
-	    Command(context, CONTAINER_INIT, context->playback->uri) < 0))
+	|| (context->container->
+	    selectedContainer->Command(context, CONTAINER_INIT,
+				       context->playback->uri) < 0))
 	return cERR_PLAYBACK_ERROR;
 
     playback_printf(10, "exiting with value 0\n");
@@ -338,12 +258,9 @@ static int PlaybackPlay(Context_t * context)
 				    "Error creating thread, error:%d:%s\n",
 				    error, strerror(error));
 
-		    hasThreadStarted = 0;
 		    ret = cERR_PLAYBACK_ERROR;
 		} else {
 		    playback_printf(10, "Created thread\n");
-
-		    hasThreadStarted = 1;
 		}
 	    }
 
@@ -467,7 +384,7 @@ static int PlaybackStop(Context_t * context)
 	ret = cERR_PLAYBACK_ERROR;
     }
 
-    while ((hasThreadStarted != 0) && (--wait_time) > 0) {
+    while ((hasThreadStarted == 1) && (--wait_time) > 0) {
 	playback_printf(10,
 			"Waiting for supervisor thread to terminate itself, will try another %d times\n",
 			wait_time);
@@ -504,7 +421,6 @@ static int PlaybackTerminate(Context_t * context)
 	    context->container->selectedContainer->Command(context,
 							   CONTAINER_STOP,
 							   NULL);
-
 	context->playback->isPaused = 0;
 	context->playback->isPlaying = 0;
 	context->playback->isForwarding = 0;
@@ -522,7 +438,7 @@ static int PlaybackTerminate(Context_t * context)
 	 */
     }
 
-    while ((hasThreadStarted != 0) && (--wait_time) > 0) {
+    while ((hasThreadStarted == 1) && (--wait_time) > 0) {
 	playback_printf(10,
 			"Waiting for supervisor thread to terminate itself, will try another %d times\n",
 			wait_time);
@@ -550,8 +466,8 @@ static int PlaybackFastForward(Context_t * context, int *speed)
     /* Audio only forwarding not supported */
     if (context->playback->isVideo && !context->playback->isHttp
 	&& !context->playback->BackWard && (!context->playback->isPaused
-					    || context->playback->
-					    isPlaying)) {
+					    || context->
+					    playback->isPlaying)) {
 
 	if ((*speed <= 0) || (*speed > cMaxSpeed_ff)) {
 	    playback_err("speed %d out of range (1 - %d) \n", *speed,
@@ -817,8 +733,8 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
 	if (context->manager && context->manager->subtitle) {
 	    int trackid;
 
-	    if (context->manager->subtitle->
-		Command(context, MANAGER_SET, track) < 0) {
+	    if (context->manager->
+		subtitle->Command(context, MANAGER_SET, track) < 0) {
 		playback_err("manager set track failed\n");
 	    }
 #if 0
@@ -828,17 +744,15 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
 		    && context->container->textSrtContainer)
 		    context->container->textSrtContainer->Command(context,
 								  CONTAINER_INIT,
-								  context->
-								  playback->
-								  uri + 7);
+								  context->playback->uri
+								  + 7);
 
 		if (context->container
 		    && context->container->textSsaContainer)
 		    context->container->textSsaContainer->Command(context,
 								  CONTAINER_INIT,
-								  context->
-								  playback->
-								  uri + 7);
+								  context->playback->uri
+								  + 7);
 
 		if (context->container && context->container->assContainer)
 		    context->container->assContainer->Command(context,
@@ -895,9 +809,10 @@ static int PlaybackSwitchDVBSubtitle(Context_t * context, int *pid)
     playback_printf(10, "Track: %d\n", *pid);
 
     if (context && context->manager && context->manager->dvbsubtitle) {
-	if (context->manager->dvbsubtitle->
-	    Command(context, *pid < 0 ? MANAGER_DEL : MANAGER_SET,
-		    pid) < 0) {
+	if (context->manager->
+	    dvbsubtitle->Command(context,
+				 *pid < 0 ? MANAGER_DEL : MANAGER_SET,
+				 pid) < 0) {
 	    playback_err("dvbsub manager set track failed\n");
 	    ret = cERR_PLAYBACK_ERROR;
 	}
@@ -919,8 +834,9 @@ static int PlaybackSwitchTeletext(Context_t * context, int *pid)
     playback_printf(10, "Track: %d\n", *pid);
 
     if (context && context->manager && context->manager->teletext) {
-	if (context->manager->teletext->
-	    Command(context, *pid < 0 ? MANAGER_DEL : MANAGER_SET, pid)) {
+	if (context->manager->
+	    teletext->Command(context,
+			      *pid < 0 ? MANAGER_DEL : MANAGER_SET, pid)) {
 	    playback_err("ttxsub manager set track failed\n");
 	    ret = cERR_PLAYBACK_ERROR;
 	}
@@ -1036,7 +952,7 @@ static int Command(void *_context, PlaybackCmd_t command, void *argument)
 	    break;
 	}
     case PLAYBACK_GET_FRAME_COUNT:{
-				// 10
+	    // 10
 	    ret =
 		PlaybackGetFrameCount(context,
 				      (unsigned long long int *) argument);

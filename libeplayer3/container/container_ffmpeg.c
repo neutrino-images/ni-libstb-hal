@@ -98,7 +98,6 @@ static const char* FILENAME = "container_ffmpeg.c";
 /* Varaibles                     */
 /* ***************************** */
 
-static pthread_mutex_t mutex;
 
 static pthread_t PlayThread;
 static int hasPlayThreadStarted = 0;
@@ -109,11 +108,7 @@ static unsigned char isContainerRunning = 0;
 
 static long long int latestPts = 0;
 
-static int restart_audio_resampling = 0;
-static off_t seek_target_bytes = 0;
-static int do_seek_target_bytes = 0;
-static int64_t seek_target_seconds = 0.0;
-static int do_seek_target_seconds = 0;
+float seek_sec_abs = 0.0, seek_sec_rel = 0.0;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -123,31 +118,6 @@ static int container_ffmpeg_seek(Context_t *context, float sec, int absolute);
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
-
-static int mutexInitialized = 0;
-
-static void initMutex(void)
-{
-    pthread_mutex_init(&mutex, NULL);
-    mutexInitialized = 1;
-}
-
-static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line) {
-    ffmpeg_printf(100, "::%d requesting mutex\n", line);
-
-    if (!mutexInitialized)
-	initMutex();
-
-    pthread_mutex_lock(&mutex);
-
-    ffmpeg_printf(100, "::%d received mutex\n", line);
-}
-
-static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line) {
-    pthread_mutex_unlock(&mutex);
-
-    ffmpeg_printf(100, "::%d released mutex\n", line);
-}
 
 static char* Codec2Encoding(AVCodecContext *codec, int* version)
 {
@@ -326,6 +296,9 @@ static void FFMPEGThread(Context_t *context) {
     strncpy(threadname, __func__, sizeof(threadname));
     threadname[16] = 0;
     prctl (PR_SET_NAME, (unsigned long)&threadname);
+
+    hasPlayThreadStarted = 1;
+
     int64_t lastPts = -1, currentVideoPts = -1, currentAudioPts = -1, showtime = 0, bofcount = 0;
     off_t lastPos = -1;
     AudioVideoOut_t avOut;
@@ -335,6 +308,7 @@ static void FFMPEGThread(Context_t *context) {
     int out_sample_rate = 44100;
     int out_channels = 2;
     uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
+    int restart_audio_resampling = 0;
 
     ffmpeg_printf(10, "\n");
 
@@ -355,28 +329,41 @@ static void FFMPEGThread(Context_t *context) {
             continue;
         }
 
-        if (context->playback->isSeeking) {
-            ffmpeg_printf(10, "seeking\n");
-
-            usleep(100000);
-            continue;
-        }
-
-	getMutex(FILENAME, __FUNCTION__,__LINE__);
-
-	if (!context->playback || !context->playback->isPlaying) {
-    		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+	if (!context->playback || !context->playback->isPlaying)
 		continue;
-	}
 
-	if (context->playback->BackWard && av_gettime() >= showtime)
-	{
+	int seek_target_flag = 0;
+	int64_t seek_target = INT64_MIN;
+
+	if (seek_sec_rel != 0.0) {
+		if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
+		        float br = (avContext->bit_rate) ? br = avContext->bit_rate / 8.0 : 180000.0;
+			seek_target_flag = AVSEEK_FLAG_BYTE;
+			seek_target = avio_tell(avContext->pb) + seek_sec_rel * br;
+		} else {
+			lastPts = (currentVideoPts > 0) ?  currentVideoPts : currentAudioPts;
+		        if (lastPts > 0)
+			      seek_target = ((currentVideoPts > 0) ? currentVideoPts : currentAudioPts) + seek_sec_rel * AV_TIME_BASE;
+		}
+		seek_sec_rel = 0.0;
+		lastPts = -1;
+		lastPos = -1;
+	} else if (seek_sec_abs != 0.0) {
+		if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
+			      float br = (avContext->bit_rate) ? br = avContext->bit_rate / 8.0 : 180000.0;
+			      seek_target_flag = AVSEEK_FLAG_BYTE;
+			      seek_target = seek_sec_abs * br;
+		} else {
+			      seek_target = seek_sec_abs * AV_TIME_BASE;
+		}
+		seek_sec_abs = 0.0;
+		lastPts = -1;
+		lastPos = -1;
+	} else if (context->playback->BackWard && av_gettime() >= showtime) {
 	      context->output->Command(context, OUTPUT_CLEAR, "video");
 
-	      if(bofcount == 1)
-	      {
+	      if(bofcount == 1) {
 		  showtime = av_gettime();
-    		  releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 		  usleep(100000);
 		  continue;
 	      }
@@ -391,20 +378,17 @@ static void FFMPEGThread(Context_t *context) {
 					br = avContext->bit_rate / 8.0;
 				else
 					br = 180000.0;
-				do_seek_target_seconds = 0;
-			      do_seek_target_bytes = 1;
 			      lastPos += context->playback->Speed * 8 * br;
-			      seek_target_bytes = lastPos;
+			      seek_target_flag = AVSEEK_FLAG_BYTE;
+			      seek_target = lastPos;
 		      }
 		} else {
 		      if (lastPts < 0)
 			      lastPts = (currentVideoPts > 0) ?  currentVideoPts : currentAudioPts;
 
 		      if (lastPts > 0) {
-			      do_seek_target_seconds = 1;
-			      do_seek_target_bytes = 0;
 			      lastPts += context->playback->Speed * 8 * AV_TIME_BASE;
-			      seek_target_seconds = lastPts;
+			      seek_target = lastPts;
 		      }
 		}
 	      showtime = av_gettime() + 300000; //jump back every 300ms
@@ -414,21 +398,15 @@ static void FFMPEGThread(Context_t *context) {
 			lastPts = -1, lastPos = -1;
 	}
 
-	if (do_seek_target_seconds || do_seek_target_bytes) {
+	if (seek_target > INT64_MIN) {
 		int res;
-		if (do_seek_target_seconds) {
-			if (seek_target_seconds < 0)
-				seek_target_seconds = 0;
-			res = avformat_seek_file(avContext, -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
-		} else {
-			if (seek_target_bytes < 0)
-				seek_target_bytes = 0;
-			res = avformat_seek_file(avContext, -1, INT64_MIN, seek_target_bytes, INT64_MAX, AVSEEK_FLAG_BYTE);
-		}
+		if (seek_target < 0)
+			seek_target = 0;
+		res = avformat_seek_file(avContext, -1, INT64_MIN, seek_target, INT64_MAX, seek_target_flag);
 
 		if (res < 0 && context->playback->BackWard)
 			bofcount = 1;
-		do_seek_target_seconds = do_seek_target_bytes = 0;
+		seek_target = INT64_MIN;
 		restart_audio_resampling = 1;
 		latestPts = 0;
 
@@ -437,7 +415,6 @@ static void FFMPEGThread(Context_t *context) {
 		for (i = 0; i < avContext->nb_streams; i++)
 			if (avContext->streams[i]->codec && avContext->streams[i]->codec->codec)
 				avcodec_flush_buffers(avContext->streams[i]->codec);
-
 	}
 
 	AVPacket   packet;
@@ -446,13 +423,11 @@ static void FFMPEGThread(Context_t *context) {
 	int av_res = av_read_frame(avContext, &packet);
 	if (av_res == AVERROR(EAGAIN)) {
 		av_free_packet(&packet);
-		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 		continue;
 	}
 	if (av_res) { // av_read_frame failed
 		ffmpeg_err("no data ->end of file reached ?\n");
 		av_free_packet(&packet);
-		releaseMutex(FILENAME, __FUNCTION__,__LINE__);
 		break; // while
 	}
 	    long long int pts;
@@ -844,7 +819,6 @@ static void FFMPEGThread(Context_t *context) {
 	    }
 
 	av_free_packet(&packet);
-	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
     } /* while */
 
     if (context && context->playback && context->output && context->playback->abortRequested)
@@ -855,7 +829,11 @@ static void FFMPEGThread(Context_t *context) {
     if (decoded_frame)
 	avcodec_free_frame(&decoded_frame);
 
+    avformat_close_input(&avContext);
+
     hasPlayThreadStarted = 0;
+    if (context->playback)
+	    context->playback->isPlaying = 0;
 
     ffmpeg_printf(10, "terminating\n");
 }
@@ -1380,19 +1358,14 @@ static int container_ffmpeg_play(Context_t *context)
 
 	if((error = pthread_create(&PlayThread, &attr, (void *)&FFMPEGThread, context)) != 0) {
 	    ffmpeg_printf(10, "Error creating thread, error:%d:%s\n", error,strerror(error));
-
-	    hasPlayThreadStarted = 0;
 	    ret = cERR_CONTAINER_FFMPEG_ERR;
 	}
 	else {
 	    ffmpeg_printf(10, "Created thread\n");
-
-	    hasPlayThreadStarted = 1;
 	}
     }
     else {
 	ffmpeg_printf(10, "A thread already exists!\n");
-
 	ret = cERR_CONTAINER_FFMPEG_ERR;
     }
 
@@ -1403,7 +1376,6 @@ static int container_ffmpeg_play(Context_t *context)
 
 static int container_ffmpeg_stop(Context_t *context) {
     int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
-    int wait_time = 20;
 
     ffmpeg_printf(10, "\n");
 
@@ -1412,25 +1384,15 @@ static int container_ffmpeg_stop(Context_t *context) {
 	ffmpeg_err("Container not running\n");
 	return cERR_CONTAINER_FFMPEG_ERR;
     }
-    if (context->playback)
+    if (context->playback) {
 	context->playback->isPlaying = 0;
+	context->playback->abortRequested = 1;
+    }
 
-    while ( (hasPlayThreadStarted != 0) && (--wait_time) > 0 ) {
-	ffmpeg_printf(10, "Waiting for ffmpeg thread to terminate itself, will try another %d times\n", wait_time);
-
+    while (hasPlayThreadStarted != 0)
 	usleep(100000);
-    }
 
-    if (wait_time == 0) {
-	ffmpeg_err( "Timeout waiting for thread!\n");
-
-	ret = cERR_CONTAINER_FFMPEG_ERR;
-    }
-
-    hasPlayThreadStarted = 0;
     terminating = 1;
-
-    getMutex(FILENAME, __FUNCTION__,__LINE__);
 
     if (avContext)
 	avformat_close_input(&avContext);
@@ -1438,98 +1400,15 @@ static int container_ffmpeg_stop(Context_t *context) {
     isContainerRunning = 0;
     avformat_network_deinit();
 
-    releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-
     ffmpeg_printf(10, "ret %d\n", ret);
     return ret;
 }
 
-static int container_ffmpeg_seek(Context_t *context, float sec, int absolute) {
-    Track_t * videoTrack = NULL;
-    Track_t * audioTrack = NULL;
-    Track_t * current = NULL;
-
-    if (absolute) {
-	ffmpeg_printf(10, "goto %f sec\n", sec);
-
-	if (sec < 0.0)
-		sec = 0.0;
-    } else {
-	ffmpeg_printf(10, "seeking %f sec\n", sec);
-
-	if (sec == 0.0)
-	{
-	    ffmpeg_err("sec = 0.0 ignoring\n");
-	    return cERR_CONTAINER_FFMPEG_ERR;
-	}
-    }
-    context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
-    context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
-
-    if (videoTrack != NULL)
-	current = videoTrack;
-    else if (audioTrack != NULL)
-	current = audioTrack;
-
-    if (current == NULL) {
-	ffmpeg_err( "no track available to seek\n");
-	return cERR_CONTAINER_FFMPEG_ERR;
-    }
-
-    getMutex(FILENAME, __FUNCTION__,__LINE__);
-
-    if (!context->playback || !context->playback->isPlaying) {
-    	releaseMutex(FILENAME, __FUNCTION__,__LINE__);
-	return cERR_CONTAINER_FFMPEG_NO_ERROR;
-    }
-
-    ffmpeg_printf(10, "iformat->flags %d\n", avContext->iformat->flags);
-
-    if (avContext->iformat->flags & AVFMT_TS_DISCONT)
-    {
-/* konfetti: for ts streams seeking frame per seconds does not work (why?).
- * I take this algo partly from ffplay.c.
- *
- * seeking per HTTP does still not work very good. forward seeks everytime
- * about 10 seconds, backward does not work.
- */
-
-	off_t pos = avio_tell(avContext->pb);
-
-	ffmpeg_printf(10, "pos %lld %d\n", pos, avContext->bit_rate);
-
-	if (avContext->bit_rate)
-	{
-	    sec *= avContext->bit_rate / 8.0;
-	    ffmpeg_printf(10, "bit_rate %d\n", avContext->bit_rate);
-	}
-	else
-	{
-	    sec *= 180000.0;
-	}
+static int container_ffmpeg_seek(Context_t *context __attribute__((unused)), float sec, int absolute) {
 	if (absolute)
-	    pos = sec;
+		seek_sec_abs = sec, seek_sec_rel = 0.0;
 	else
-	    pos += sec;
-	if (pos < 0)
-	   pos = 0;
-
-	ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %f\n", pos, sec);
-
-	seek_target_bytes = pos;
-	do_seek_target_bytes = 1;
-
-    } else
-    {
-	if (!absolute)
-	    sec += ((float) current->pts / 90000.0f);
-	ffmpeg_printf(10, "2. seeking to position %f sec ->time base %f %d\n", sec, av_q2d(((AVStream*) current->stream)->time_base), AV_TIME_BASE);
-
-	seek_target_seconds = sec * AV_TIME_BASE;
-	do_seek_target_seconds = 1;
-    }
-
-    releaseMutex(FILENAME, __FUNCTION__,__LINE__);
+		seek_sec_abs = 0.0, seek_sec_rel = sec;
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 

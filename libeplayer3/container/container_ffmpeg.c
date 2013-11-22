@@ -101,20 +101,14 @@ static const char *FILENAME = "container_ffmpeg.c";
 
 static pthread_t PlayThread;
 static int hasPlayThreadStarted = 0;
-
 static AVFormatContext *avContext = NULL;
-
 static unsigned char isContainerRunning = 0;
-
 static long long int latestPts = 0;
-
-float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
+static float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
-static int container_ffmpeg_seek(Context_t * context, float sec,
-				 int absolute);
 
 /* ***************************** */
 /* MISC Functions                */

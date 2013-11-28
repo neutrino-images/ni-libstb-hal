@@ -47,6 +47,7 @@ void usage()
 	printf("\t-S <n>: show standby RC code (n = 0..4 or \"all\")\n");
 	printf("\t-B <n>:<predata><code>: set blue RC code (n = 0..4)\n");
 	printf("\t-S <n>:<predata><code>: set standby RC code\n");
+	printf("\t-p: set LED flashing period (in ms)\n");
 	printf("\t-l <n>: set LED <n> on\n");
 	printf("\t-L <n>: set LED <n> off\n");
 	printf("\t-i <n>: set icon <n> on\n");
@@ -130,6 +131,7 @@ int main(int argc, char **argv)
 	int ret, c, val;
 	time_t t, t2, diff;
 	struct tm *tmp;
+	int period = LOG_ON;
 
 	int fd = open(FP_DEV, O_RDWR);
 	if (fd < 0)
@@ -145,7 +147,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
-	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:i:I:")) != -1)
+	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:i:I:p:")) != -1)
 	{
 		switch (c)
 		{
@@ -219,8 +221,11 @@ int main(int argc, char **argv)
 			case 'P':
 				ret = ioctl(fd, VFDPOWEROFF);
 				break;
+			case 'p':
+				period = atoi(optarg)/10;
+				break;
 			case 'l': /* LED on */
-				aotom.u.led.on = LOG_ON;
+				aotom.u.led.on = period;
 				aotom.u.led.led_nr = atoi(optarg);
 				ioctl(fd, VFDSETLED, &aotom);
 				break;

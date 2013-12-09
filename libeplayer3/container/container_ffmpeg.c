@@ -532,6 +532,12 @@ static void FFMPEGThread(Context_t * context)
 		    }
 		    context->output->Command(context, OUTPUT_CLEAR, NULL);
 		    context->output->Command(context, OUTPUT_PLAY, NULL);
+
+		    AVCodec *codec =
+			avcodec_find_decoder(c->codec_id);
+
+		    if (!codec || avcodec_open2(c, codec, NULL))
+			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
 		}
 
 		while (packet.size > 0) {
@@ -548,7 +554,8 @@ static void FFMPEGThread(Context_t * context)
 			avcodec_decode_audio4(c, decoded_frame, &got_frame,
 					      &packet);
 		    if (len < 0) {
-//                                      fprintf(stderr, "avcodec_decode_audio4: %d\n", len);
+				restart_audio_resampling = 1;
+//				fprintf(stderr, "avcodec_decode_audio4: %d\n", len);
 			break;
 		    }
 
@@ -905,12 +912,18 @@ static int interrupt_cb(void *ctx)
     return p->abortRequested;
 }
 
+static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
+{
+	vfprintf(stderr, format, ap);
+}
 
 int container_ffmpeg_init(Context_t * context, char *filename)
 {
     int err;
 
     ffmpeg_printf(10, ">\n");
+
+    av_log_set_callback(log_callback);
 
     if (filename == NULL) {
 	ffmpeg_err("filename NULL\n");
@@ -956,8 +969,10 @@ int container_ffmpeg_init(Context_t * context, char *filename)
 
     avContext->iformat->flags |= AVFMT_SEEK_TO_PTS;
     avContext->flags = AVFMT_FLAG_GENPTS;
-    if (context->playback->noprobe)
+    if (context->playback->noprobe) {
+	ffmpeg_printf(10, "noprobe\n");
 	avContext->max_analyze_duration = 1;
+    }
 
     ffmpeg_printf(20, "find_streaminfo\n");
 
@@ -1159,16 +1174,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename,
 		    track.inject_as_pcm = 1;
 		    ffmpeg_printf(10, " Handle inject_as_pcm = %d\n",
 				  track.inject_as_pcm);
-
-		    AVCodec *codec =
-			avcodec_find_decoder(stream->codec->codec_id);
-
-//( (AVStream*) audioTrack->stream)->codec->flags |= CODEC_FLAG_TRUNCATED;
-		    if (codec != NULL
-			&& !avcodec_open2(stream->codec, codec, NULL))
-			printf("AVCODEC__INIT__SUCCESS\n");
-		    else
-			printf("AVCODEC__INIT__FAILED\n");
 		}
 #if 0
 		else if (stream->codec->codec_id == AV_CODEC_ID_AAC) {

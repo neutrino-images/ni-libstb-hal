@@ -33,8 +33,7 @@ Style: Default,Arial,64,16777215,0,16777215,0,0,0,2,2,2,2,20,20,10,0\n\n\
 [Events]\n\
 Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\n\n"
 
-static inline unsigned char *text_to_ass(char *text, long long int pts,
-					 double duration)
+static inline unsigned char *text_to_ass(char *text, long long int pts, double duration)
 {
     char buf[1024];
     unsigned int x, pos = 0;
@@ -64,9 +63,7 @@ static inline unsigned char *text_to_ass(char *text, long long int pts,
     ec -= 6000 * em;
     es = ec / 100;
     ec -= 100 * es;
-    snprintf(line, len,
-	     "Dialogue: Marked=0,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,Default,NTP,0000,0000,0000,!Effect,%s\n",
-	     sh, sm, ss, sc, eh, em, es, ec, buf);
+    snprintf(line, len, "Dialogue: Marked=0,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,Default,NTP,0000,0000,0000,!Effect,%s\n", sh, sm, ss, sc, eh, em, es, ec, buf);
 
     return (unsigned char *) line;
 

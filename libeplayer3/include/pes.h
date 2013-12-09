@@ -26,8 +26,7 @@
 #define VC1_VIDEO_PES_START_CODE	    0xfd
 #define AAC_AUDIO_PES_START_CODE            0xcf
 
-int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id,
-		    unsigned long long int pts, int pic_start_code);
+int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsigned long long int pts, int pic_start_code);
 int InsertVideoPrivateDataHeader(unsigned char *data, int payload_size);
 
 #endif

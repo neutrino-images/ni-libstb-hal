@@ -413,7 +413,7 @@ static int PlaybackTerminate(Context_t * context)
     if (context && context->playback && context->playback->isPlaying) {
 	//First Flush and than delete container, else e2 cant read length of file anymore
 
-	if (context->output->Command(context, OUTPUT_FLUSH, NULL) < 0) {
+	if (!context->playback->abortRequested && context->output->Command(context, OUTPUT_FLUSH, NULL) < 0) {
 	    playback_err("failed to flush output.\n");
 	}
 

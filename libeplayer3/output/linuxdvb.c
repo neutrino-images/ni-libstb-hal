@@ -705,26 +705,13 @@ int LinuxDvbPts(Context_t * context
     // pts is a non writting requests and can be done in parallel to other requests
     //getLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
 
-    if (videofd > -1
-	&& !ioctl(videofd, VIDEO_GET_PTS, (void *) &sCURRENT_PTS))
+    if ((videofd > -1 && !ioctl(videofd, VIDEO_GET_PTS, (void *) &sCURRENT_PTS))
+     || (audiofd > -1 && !ioctl(audiofd, AUDIO_GET_PTS, (void *) &sCURRENT_PTS)))
 	ret = cERR_LINUXDVB_NO_ERROR;
     else
-	linuxdvb_err("VIDEO_GET_PTS: %d (%s)\n", errno, strerror(errno));
-
-    if (ret != cERR_LINUXDVB_NO_ERROR) {
-	if (audiofd > -1
-	    && !ioctl(audiofd, AUDIO_GET_PTS, (void *) &sCURRENT_PTS))
-	    ret = cERR_LINUXDVB_NO_ERROR;
-	else
-	    linuxdvb_err("AUDIO_GET_PTS: %d (%s)\n", errno,
-			 strerror(errno));
-    }
-
-    if (ret != cERR_LINUXDVB_NO_ERROR)
 	sCURRENT_PTS = 0;
 
-    *((unsigned long long int *) pts) =
-	(unsigned long long int) sCURRENT_PTS;
+    *((unsigned long long int *) pts) = (unsigned long long int) sCURRENT_PTS;
 
     //releaseLinuxDVBMutex(FILENAME, __FUNCTION__,__LINE__);
 

@@ -821,7 +821,8 @@ static int interrupt_cb(void *ctx)
 
 static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
 {
-    vfprintf(stderr, format, ap);
+    if (debug_level > 10)
+	vfprintf(stderr, format, ap);
 }
 
 int container_ffmpeg_init(Context_t * context, char *filename)

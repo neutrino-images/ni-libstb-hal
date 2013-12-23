@@ -53,8 +53,8 @@ class cPlayback
 #if 0
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
 		bool SelectSubtitles(int pid);
-		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 #endif
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 #if 0
 		// Functions that are not used by movieplayer.cpp:
 		bool GetOffset(off64_t &offset);

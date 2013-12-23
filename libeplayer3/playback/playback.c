@@ -197,6 +197,7 @@ static int PlaybackClose(Context_t * context)
     context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
     context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     context->manager->teletext->Command(context, MANAGER_DEL, NULL);
+    context->manager->chapter->Command(context, MANAGER_DEL, NULL);
 
     context->playback->isPaused = 0;
     context->playback->isPlaying = 0;

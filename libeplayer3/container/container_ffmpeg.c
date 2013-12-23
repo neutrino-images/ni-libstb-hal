@@ -908,16 +908,23 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename, int init
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 
-    Track_t *audioTrack = NULL;
-    Track_t *subtitleTrack = NULL;
-    Track_t *dvbsubtitleTrack = NULL;
-    Track_t *teletextTrack = NULL;
-
-    context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
-    if (initial)
-	context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack);
-    context->manager->dvbsubtitle->Command(context, MANAGER_GET_TRACK, &dvbsubtitleTrack);
-    context->manager->teletext->Command(context, MANAGER_GET_TRACK, &teletextTrack);
+    if (context->manager->chapter) {
+	unsigned int i;
+	context->manager->video->Command(context, MANAGER_INIT_UPDATE, NULL);
+	for (i = 0; i < avContext->nb_chapters; i++) {
+	    Track_t track;
+	    memset(&track, 0, sizeof(track));
+	    track.Id = i;
+	    AVDictionaryEntry *title;
+	    AVChapter *ch = avContext->chapters[i];
+	    title = av_dict_get(ch->metadata, "title", NULL, 0);
+	    track.Name = strdup(title ? title->value : "und");
+	    ffmpeg_printf(10, "Chapter %s\n", track.Name);
+	    track.chapter_start = (double) ch->start * av_q2d(ch->time_base) * 1000.0;
+	    track.chapter_end = (double) ch->end * av_q2d(ch->time_base) * 1000.0;
+	    context->manager->chapter->Command(context, MANAGER_ADD, &track);
+	}
+    }
 
     if (context->manager->video)
 	context->manager->video->Command(context, MANAGER_INIT_UPDATE, NULL);

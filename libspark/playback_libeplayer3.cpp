@@ -190,6 +190,21 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 				free(TrackList);
 			}
 		}
+		//Chapters
+		if(player && player->manager && player->manager->chapter) {
+			char ** TrackList = NULL;
+			player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
+			if (TrackList != NULL) {
+				printf("Chapter List\n");
+				int i = 0;
+				for (i = 0; TrackList[i] != NULL; i+=2) {
+					printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+					free(TrackList[i]);
+					free(TrackList[i+1]);
+				}
+				free(TrackList);
+			}
+		}
 
 		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
 			player->output->Command(player, OUTPUT_OPEN, NULL);
@@ -683,14 +698,32 @@ bool cPlayback::SelectSubtitles(int pid)
 	printf("%s:%s pid %d\n", FILENAME, __func__, pid);
 	return false;
 }
+#endif
 
-/* another dummy function for DVD playback(?) */
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
 {
 	positions.clear();
 	titles.clear();
+
+	if(player && player->manager && player->manager->chapter) {
+		char ** TrackList = NULL;
+		player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL) {
+			printf("%s: Chapter List\n", __func__);
+			int i = 0;
+			for (i = 0; TrackList[i] != NULL; i+=2) {
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				int pos = atoi(TrackList[i]);
+				std::string title(TrackList[i + 1]);
+				positions.push_back(pos);
+				titles.push_back(title);
+				free(TrackList[i]);
+				free(TrackList[i+1]);
+			}
+			free(TrackList);
+		}
+	}
 }
-#endif
 
 //
 cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void)))

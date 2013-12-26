@@ -5,7 +5,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libeplayer3/include
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
-AM_LDFLAGS = -lpthread -lasound -lass \
+
+AM_LDFLAGS = -lpthread -lasound -lass -lrt\
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \

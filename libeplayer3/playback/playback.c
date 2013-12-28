@@ -587,28 +587,16 @@ static int PlaybackSeek(Context_t * context, float *pos, int absolute)
 
     playback_printf(10, "pos: %f\n", *pos);
 
-    if (context->playback->isPlaying && !context->playback->isForwarding
-	&& !context->playback->BackWard && !context->playback->SlowMotion
-	&& !context->playback->isPaused) {
-	context->playback->isSeeking = 1;
+    context->playback->isSeeking = 1;
 
-	context->output->Command(context, OUTPUT_CLEAR, NULL);
+    context->output->Command(context, OUTPUT_CLEAR, NULL);
 
-	if (absolute)
-	    context->container->selectedContainer->Command(context,
-							   CONTAINER_SEEK_ABS,
-							   pos);
-	else
-	    context->container->selectedContainer->Command(context,
-							   CONTAINER_SEEK,
-							   pos);
+    if (absolute)
+	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, pos);
+    else
+	context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
 
-	context->playback->isSeeking = 0;
-
-    } else {
-	playback_err("not possible\n");
-	ret = cERR_PLAYBACK_ERROR;
-    }
+    context->playback->isSeeking = 0;
 
     playback_printf(10, "exiting with value %d\n", ret);
 

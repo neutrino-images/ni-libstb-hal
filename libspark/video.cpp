@@ -415,43 +415,43 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 		lt_info("%s: video_standby == true\n", __func__);
 		return;
 	}
-    const char *lastDot = strrchr(fname, '.');
-    if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
-	strncpy(destname, fname, sizeof(destname));
-    else {
-	if (_destname)
-		strncpy(destname, _destname, sizeof(destname));
+	const char *lastDot = strrchr(fname, '.');
+	if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
+		strncpy(destname, fname, sizeof(destname));
 	else {
-		strcpy(destname, "/var/cache");
-		if (stat(fname, &st2))
-		{
-			lt_info("%s: could not stat %s (%m)\n", __func__, fname);
-			return;
+		if (_destname)
+			strncpy(destname, _destname, sizeof(destname));
+		else {
+			strcpy(destname, "/var/cache");
+			if (stat(fname, &st2))
+			{
+				lt_info("%s: could not stat %s (%m)\n", __func__, fname);
+				return;
+			}
+			mkdir(destname, 0755);
+			/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
+			   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
+			   build that filename first...
+			   TODO: this could cause name clashes, use a hashing function instead... */
+			strcat(destname, fname);
+			p = &destname[strlen("/var/cache/")];
+			while ((p = strchr(p, '/')) != NULL)
+				*p = '.';
+			strcat(destname, ".m2v");
 		}
-		mkdir(destname, 0755);
-		/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
-		   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
-		   build that filename first...
-		   TODO: this could cause name clashes, use a hashing function instead... */
-		strcat(destname, fname);
-		p = &destname[strlen("/var/cache/")];
-		while ((p = strchr(p, '/')) != NULL)
-			*p = '.';
-		strcat(destname, ".m2v");
+		/* ...then check if it exists already... */
+		if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
+		{
+			struct utimbuf u;
+			u.actime = time(NULL);
+			u.modtime = st2.st_mtime;
+			/* it does not exist or has a different date, so call ffmpeg... */
+			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 '%s' </dev/null",
+								fname, destname);
+			system(cmd); /* TODO: use libavcodec to directly convert it */
+			utime(destname, &u);
+		}
 	}
-	/* ...then check if it exists already... */
-	if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
-	{
-		struct utimbuf u;
-		u.actime = time(NULL);
-		u.modtime = st2.st_mtime;
-		/* it does not exist or has a different date, so call ffmpeg... */
-		sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 '%s' </dev/null",
-							fname, destname);
-		system(cmd); /* TODO: use libavcodec to directly convert it */
-		utime(destname, &u);
-	}
-    }
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
@@ -745,22 +745,22 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 	case COLORFORMAT_RGB:
 		p = "rgb";
 		break;
-        case COLORFORMAT_YUV:
+	case COLORFORMAT_YUV:
 		p = "yuv";
 		break;
-        case COLORFORMAT_CVBS:
+	case COLORFORMAT_CVBS:
 		p = "cvbs";
 		break;
-        case COLORFORMAT_SVIDEO:
+	case COLORFORMAT_SVIDEO:
 		p = "svideo";
 		break;
-        case COLORFORMAT_HDMI_RGB:
+	case COLORFORMAT_HDMI_RGB:
 		p = "hdmi_rgb";
 		break;
-        case COLORFORMAT_HDMI_YCBCR444:
+	case COLORFORMAT_HDMI_YCBCR444:
 		p = "hdmi_yuv";
 		break;
-        case COLORFORMAT_HDMI_YCBCR422:
+	case COLORFORMAT_HDMI_YCBCR422:
 		p = "hdmi_422";
 		break;
 	}

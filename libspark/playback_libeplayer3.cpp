@@ -757,7 +757,7 @@ void cPlayback::RequestAbort() {
 	}
 }
 
-bool cPlayback::isPlaying() {
+bool cPlayback::IsPlaying() {
 	if (player && player->playback)
 		return player->playback->isPlaying;
 	return false;

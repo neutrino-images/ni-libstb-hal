@@ -44,7 +44,7 @@ class cPlayback
 		void FindAllDvbsubtitlePids(int *pids, unsigned int *numpidd, std::string *language);
 		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage);
 		void RequestAbort(void);
-		bool isPlaying(void) { return false; }
+		bool IsPlaying(void) { return false; }
 		void FindAllSubs(int *pids, unsigned int *supported, unsigned int *numpida, std::string *language);
 		bool SelectSubtitles(int pid);
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);

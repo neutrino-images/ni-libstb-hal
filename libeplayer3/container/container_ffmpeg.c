@@ -256,7 +256,7 @@ float getDurationFromSSALine(unsigned char *line)
     return (float) msec / 1000.0;
 }
 
-/* search for metatdata in context and stream
+/* search for metadata in context and stream
  * and map it to our metadata.
  */
 
@@ -265,15 +265,12 @@ static char *searchMeta(AVDictionary * metadata, char *ourTag)
     AVDictionaryEntry *tag = NULL;
     int i = 0;
 
-    while (metadata_map[i] != NULL) {
-	if (strcmp(ourTag, metadata_map[i]) == 0) {
-	    while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
-		if (strcmp(tag->key, metadata_map[i + 1]) == 0) {
+    while (metadata_map[i]) {
+	if (!strcasecmp(ourTag, metadata_map[i]))
+	    while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+		if (!strcasecmp(tag->key, ourTag) || !strcmp(tag->key, metadata_map[i + 1]))
 		    return tag->value;
-		}
-	    }
-	}
-	i++;
+	i += 2;
     }
 
     return NULL;

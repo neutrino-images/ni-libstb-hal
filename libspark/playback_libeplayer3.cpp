@@ -726,6 +726,25 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 	}
 }
 
+void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
+{
+	keys.clear();
+	values.clear();
+	char **metadata = NULL;
+	if (player && player->playback) {
+		player->playback->Command(player, PLAYBACK_METADATA, &metadata);
+		if (metadata) {
+			for (char **m = metadata; *m;) {
+				keys.push_back(*m);
+				free(*m++);
+				values.push_back(*m);
+				free(*m++);
+			}
+			free(metadata);
+		}
+	}
+}
+
 //
 cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void)))
 {
@@ -769,6 +788,7 @@ unsigned long long cPlayback::GetReadCount() {
 	}
 	return 0;
 }
+
 #if 0
 bool cPlayback::IsPlaying(void) const
 {

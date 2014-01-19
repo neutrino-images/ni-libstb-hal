@@ -862,6 +862,17 @@ static int PlaybackInfo(Context_t * context, char **infoString)
     return ret;
 }
 
+static int PlaybackMetadata(Context_t * context, char ***metadata)
+{
+    int ret = cERR_PLAYBACK_NO_ERROR;
+
+    if (context->container && context->container->selectedContainer)
+	context->container->selectedContainer->Command(context,
+						       CONTAINER_METADATA,
+						       metadata);
+    return ret;
+}
+
 static int Command(void *_context, PlaybackCmd_t command, void *argument)
 {
     Context_t *context = (Context_t *) _context;	/* to satisfy compiler */
@@ -930,6 +941,10 @@ static int Command(void *_context, PlaybackCmd_t command, void *argument)
 	}
     case PLAYBACK_INFO:{
 	    ret = PlaybackInfo(context, (char **) argument);
+	    break;
+	}
+    case PLAYBACK_METADATA:{
+	    ret = PlaybackMetadata(context, (char ***) argument);
 	    break;
 	}
     case PLAYBACK_SLOWMOTION:{

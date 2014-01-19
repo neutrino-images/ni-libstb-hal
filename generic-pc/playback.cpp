@@ -122,6 +122,12 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 	titles.clear();
 }
 
+void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
+{
+	keys.clear();
+	values.clear();
+}
+
 cPlayback::cPlayback(int /*num*/)
 {
 	printf("%s:%s\n", FILENAME, __func__);

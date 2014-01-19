@@ -149,6 +149,8 @@ class cVideo
 		int video_standby;
 		int64_t GetPTS(void);
 
+		int brightness, contrast, saturation, hue;
+
 		void openDevice(void);
 		void closeDevice(void);
 	public:

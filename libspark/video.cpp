@@ -175,6 +175,11 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
 	lt_debug("%s unit %u\n", __func__, unit);
 
+	brightness = -1;
+	contrast = -1;
+	saturation = -1;
+	hue = -1;
+
 	//croppingMode = VID_DISPMODE_NORM;
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
 	scartvoltage = -1;
@@ -298,7 +303,16 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 #endif
 	playstate = VIDEO_PLAYING;
 	fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
-	return fop(ioctl, VIDEO_PLAY);
+	int res = fop(ioctl, VIDEO_PLAY);
+	if (brightness > -1)
+		SetControl(VIDEO_CONTROL_BRIGHTNESS, brightness);
+	if (contrast > -1)
+		SetControl(VIDEO_CONTROL_CONTRAST, contrast);
+	if (saturation > -1)
+		SetControl(VIDEO_CONTROL_SATURATION, saturation);
+	if (hue > -1)
+		SetControl(VIDEO_CONTROL_HUE, hue);
+	return res;
 }
 
 int cVideo::Stop(bool blank)
@@ -719,15 +733,19 @@ void cVideo::SetControl(int control, int value) {
 	const char *p = NULL;
 	switch (control) {
 	case VIDEO_CONTROL_BRIGHTNESS:
+		brightness = value;
 		p = "/proc/stb/video/plane/psi_brightness";
 		break;
 	case VIDEO_CONTROL_CONTRAST:
+		contrast = value;
 		p = "/proc/stb/video/plane/psi_contrast";
 		break;
 	case VIDEO_CONTROL_SATURATION:
+		saturation = value;
 		p = "/proc/stb/video/plane/psi_saturation";
 		break;
 	case VIDEO_CONTROL_HUE:
+		hue = value;
 		p = "/proc/stb/video/plane/psi_tint";
 		break;
 	}

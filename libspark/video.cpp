@@ -304,14 +304,22 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 	playstate = VIDEO_PLAYING;
 	fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	int res = fop(ioctl, VIDEO_PLAY);
-	if (brightness > -1)
+	if (brightness > -1) {
 		SetControl(VIDEO_CONTROL_BRIGHTNESS, brightness);
-	if (contrast > -1)
+		brightness = -1;
+	}
+	if (contrast > -1) {
 		SetControl(VIDEO_CONTROL_CONTRAST, contrast);
-	if (saturation > -1)
+		contrast = -1;
+	}
+	if (saturation > -1) {
 		SetControl(VIDEO_CONTROL_SATURATION, saturation);
-	if (hue > -1)
+		saturation = -1;
+	}
+	if (hue > -1) {
 		SetControl(VIDEO_CONTROL_HUE, hue);
+		hue = -1;
+	}
 	return res;
 }
 

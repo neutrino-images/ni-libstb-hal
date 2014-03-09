@@ -857,6 +857,7 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     avformat_network_init();
 
     context->playback->abortRequested = 0;
+    context->playback->abortPlayback = 0;
     avContext = avformat_alloc_context();
     avContext->interrupt_callback.callback = interrupt_cb;
     avContext->interrupt_callback.opaque = context->playback;

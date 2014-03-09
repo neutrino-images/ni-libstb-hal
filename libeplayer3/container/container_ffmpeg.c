@@ -799,7 +799,7 @@ static void FFMPEGThread(Context_t * context)
 	avcodec_free_frame(&decoded_frame);
 
     if (context->playback)
-	context->playback->abortRequested = 1;
+	context->playback->abortPlayback = 1;
     hasPlayThreadStarted = 0;
 
     ffmpeg_printf(10, "terminating\n");
@@ -813,7 +813,7 @@ static int terminating = 0;
 static int interrupt_cb(void *ctx)
 {
     PlaybackHandler_t *p = (PlaybackHandler_t *) ctx;
-    return p->abortRequested;
+    return p->abortPlayback | p->abortRequested;
 }
 
 static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)

@@ -39,6 +39,7 @@ typedef struct PlaybackHandler_s {
     unsigned char isTeletext;
     unsigned char mayWriteToFramebuffer;
     unsigned char abortRequested;
+    unsigned char abortPlayback;
 
     int (*Command) ( /*Context_t */ void *, PlaybackCmd_t, void *);
     char *uri;

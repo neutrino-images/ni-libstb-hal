@@ -78,7 +78,7 @@ static void SupervisorThread(Context_t * context)
     playback_printf(10, ">\n");
 
     while (context && context->playback && context->playback->isPlaying
-	   && !context->playback->abortRequested)
+	   && !(context->playback->abortRequested | context->playback->abortPlayback))
 	usleep(100000);
 
     playback_printf(10, "<\n");
@@ -1012,6 +1012,7 @@ PlaybackHandler_t PlaybackHandler = {
     0,
     0,
     1,
+    0,
     0,
     &Command,
     "",

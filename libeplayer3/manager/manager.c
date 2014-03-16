@@ -40,7 +40,6 @@
 extern Manager_t AudioManager;
 extern Manager_t VideoManager;
 extern Manager_t SubtitleManager;
-extern Manager_t DvbSubtitleManager;
 extern Manager_t TeletextManager;
 extern Manager_t ChapterManager;
 
@@ -49,7 +48,6 @@ ManagerHandler_t ManagerHandler = {
     &AudioManager,
     &VideoManager,
     &SubtitleManager,
-    &DvbSubtitleManager,
     &TeletextManager,
     &ChapterManager
 };

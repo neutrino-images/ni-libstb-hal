@@ -59,6 +59,7 @@ typedef struct Track_s {
     int inject_raw_pcm;
 
     int pending;
+    int is_static;
     long long int chapter_start;
     long long int chapter_end;
 } Track_t;
@@ -75,7 +76,6 @@ typedef struct ManagerHandler_s {
     Manager_t *audio;
     Manager_t *video;
     Manager_t *subtitle;
-    Manager_t *dvbsubtitle;
     Manager_t *teletext;
     Manager_t *chapter;
 } ManagerHandler_t;

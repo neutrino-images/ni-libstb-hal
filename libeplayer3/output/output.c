@@ -119,10 +119,6 @@ static void OutputAdd(Context_t * context, char *port)
 		    context->output->subtitle = AvailableOutput[i];
 		    return;
 		}
-		if (!strcmp("dvbsubtitle", port)) {
-		    context->output->dvbsubtitle = AvailableOutput[i];
-		    return;
-		}
 		if (!strcmp("teletext", port)) {
 		    context->output->teletext = AvailableOutput[i];
 		    return;
@@ -140,8 +136,6 @@ static void OutputDel(Context_t * context, char *port)
 	context->output->video = NULL;
     else if (!strcmp("subtitle", port))
 	context->output->subtitle = NULL;
-    else if (!strcmp("dvbsubtitle", port))
-	context->output->dvbsubtitle = NULL;
     else if (!strcmp("teletext", port))
 	context->output->teletext = NULL;
 
@@ -173,11 +167,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 			context->output->subtitle->Command(context,
 							   OUTPUT_OPEN,
 							   "subtitle");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -204,11 +193,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 			context->output->subtitle->Command(context,
 							   OUTPUT_CLOSE,
 							   "subtitle");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -252,11 +236,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 								   OUTPUT_PLAY,
 								   "subtitle");
 		    }
-		    if (context->playback->isDvbSubtitle)
-			ret |=
-			    context->output->dvbsubtitle->Command(context,
-								  command,
-								  "dvbsubtitle");
 		    if (context->playback->isTeletext)
 			ret |=
 			    context->output->teletext->Command(context,
@@ -284,11 +263,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 			context->output->subtitle->Command(context,
 							   OUTPUT_STOP,
 							   "subtitle");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -382,11 +356,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 							"audio");
 		//if (context->playback->isSubtitle)
 		//  ret |= context->output->subtitle->Command(context, OUTPUT_CONTINUE, "subtitle");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -424,11 +393,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 							"audio");
 		//if (context->playback->isSubtitle && (argument == NULL || *(char *) argument == 's'))
 		//  ret |= context->output->subtitle->Command(context, OUTPUT_CLEAR, "subtitle");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -464,11 +428,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 		    return context->output->video->Command(context,
 							   OUTPUT_SWITCH,
 							   "video");
-		if (context->playback->isDvbSubtitle)
-		    ret |=
-			context->output->dvbsubtitle->Command(context,
-							      command,
-							      "dvbsubtitle");
 		if (context->playback->isTeletext)
 		    ret |=
 			context->output->teletext->Command(context,
@@ -552,7 +511,6 @@ OutputHandler_t OutputHandler = {
     NULL,
     NULL,
     NULL,
-    NULL,			// dvbsubtitle
     NULL,			// teletext
     &Command
 };

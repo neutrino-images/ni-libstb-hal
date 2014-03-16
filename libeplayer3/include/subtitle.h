@@ -21,6 +21,8 @@
  *
  */
 
+#include <sys/types.h>
+
 #define DEFAULT_ASS_HEAD "[Script Info]\n\
 Original Script: (c) 2008\n\
 ScriptType: v4.00\n\
@@ -119,6 +121,7 @@ typedef struct {
     unsigned int destStride;
 
     void (*framebufferBlit) (void);
+    void (*dvbsubWrite) (void *, int64_t);
 } SubtitleOutputDef_t;
 
 #endif

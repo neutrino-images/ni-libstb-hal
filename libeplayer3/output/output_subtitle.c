@@ -38,6 +38,8 @@
 #include "output.h"
 #include "subtitle.h"
 
+#include <libavcodec/avcodec.h>
+
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
@@ -108,6 +110,7 @@ static int screen_height = 0;
 static int destStride = 0;
 static void (*framebufferBlit) = NULL;
 static uint32_t *destination = NULL;
+void (*dvbsubWrite)(AVSubtitle *, int64_t) = NULL;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -784,6 +787,7 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    out->screen_width = screen_width;
 	    out->screen_height = screen_height;
 	    out->framebufferBlit = framebufferBlit;
+	    out->dvbsubWrite = (void (*)(void *, int64_t))dvbsubWrite;
 	    out->destination = destination;
 	    out->destStride = destStride;
 	    break;
@@ -793,6 +797,7 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    screen_width = out->screen_width;
 	    screen_height = out->screen_height;
 	    framebufferBlit = out->framebufferBlit;
+	    dvbsubWrite = (void (*)(AVSubtitle *, int64_t))out->dvbsubWrite;
 	    destination = out->destination;
 	    destStride = out->destStride;
 	    break;

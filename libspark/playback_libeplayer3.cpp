@@ -68,13 +68,12 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
 		player->output->Command(player,OUTPUT_ADD, (void*)"video");
 		player->output->Command(player,OUTPUT_ADD, (void*)"subtitle");
-		player->output->Command(player,OUTPUT_ADD, (void*)"dvbsubtitle");
 		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
 
 		if (framebuffer_callback) {
 			SubtitleOutputDef_t so;
 			memset(&so, 0, sizeof(so));
-			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferBlit);
+			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferBlit, &so.dvbsubWrite);
 			player->output->subtitle->Command(player, OUTPUT_SET_SUBTITLE_OUTPUT, (void*)&so);
 		}
 	}
@@ -110,7 +109,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 	//create playback path
 	mAudioStream=0;
 	mSubtitleStream=-1;
-	mDvbsubtitleStream=-1;
 	mTeletextStream=-1;
 	char file[strlen(filename) + 1];
 	*file = 0;
@@ -151,21 +149,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 			player->manager->subtitle->Command(player, MANAGER_LIST, &TrackList);
 			if (TrackList != NULL) {
 				printf("SubtitleTrack List\n");
-				int i = 0;
-				for (i = 0; TrackList[i] != NULL; i+=2) {
-					printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-					free(TrackList[i]);
-					free(TrackList[i+1]);
-				}
-				free(TrackList);
-			}
-		}
-		//DVBSUB
-		if(player && player->manager && player->manager->dvbsubtitle) {
-			char ** TrackList = NULL;
-			player->manager->dvbsubtitle->Command(player, MANAGER_LIST, &TrackList);
-			if (TrackList != NULL) {
-				printf("DVBSubtitleTrack List\n");
 				int i = 0;
 				for (i = 0; TrackList[i] != NULL; i+=2) {
 					printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
@@ -276,7 +259,6 @@ bool cPlayback::Stop(void)
 		player->output->Command(player,OUTPUT_DEL, (void*)"audio");
 		player->output->Command(player,OUTPUT_DEL, (void*)"video");
 		player->output->Command(player,OUTPUT_DEL, (void*)"subtitle");
-		player->output->Command(player,OUTPUT_DEL, (void*)"dvbsubtitle");
 		player->output->Command(player,OUTPUT_DEL, (void*)"teletext");
 	}
 
@@ -310,18 +292,6 @@ bool cPlayback::SetSubtitlePid(int pid)
 		if(player && player->playback)
 				player->playback->Command(player, PLAYBACK_SWITCH_SUBTITLE, (void*)&i);
 		mSubtitleStream = pid;
-	}
-	return true;
-}
-
-bool cPlayback::SetDvbsubtitlePid(int pid)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	int i=pid;
-	if(pid!=mDvbsubtitleStream){
-		if(player && player->playback)
-				player->playback->Command(player, PLAYBACK_SWITCH_DVBSUBTITLE, (void*)&i);
-		mDvbsubtitleStream=pid;
 	}
 	return true;
 }
@@ -595,36 +565,6 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 	}
 }
 
-void cPlayback::FindAllDvbsubtitlePids(int *pids, unsigned int *numpids, std::string *language)
-{
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	int max_numpids = *numpids;
-	*numpids = 0;
-	if(player && player->manager && player->manager->dvbsubtitle) {
-		char ** TrackList = NULL;
-		player->manager->dvbsubtitle->Command(player, MANAGER_LIST, &TrackList);
-		if (TrackList != NULL) {
-			printf("DvbsubtitleTrack List\n");
-			int i = 0,j=0;
-			for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
-				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				if (j < max_numpids) {
-					int _pid;
-					char _lang[strlen(TrackList[i])];
-					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
-						pids[j]=_pid;
-						language[j]=std::string(_lang);
-					}
-				}
-				free(TrackList[i]);
-				free(TrackList[i+1]);
-			}
-			free(TrackList);
-			*numpids=j;
-		}
-	}
-}
-
 void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, std::string *language)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -746,7 +686,7 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 }
 
 //
-cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void)))
+cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;

@@ -195,7 +195,6 @@ static int PlaybackClose(Context_t * context)
     context->manager->audio->Command(context, MANAGER_DEL, NULL);
     context->manager->video->Command(context, MANAGER_DEL, NULL);
     context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
-    context->manager->dvbsubtitle->Command(context, MANAGER_DEL, NULL);
     context->manager->teletext->Command(context, MANAGER_DEL, NULL);
     context->manager->chapter->Command(context, MANAGER_DEL, NULL);
 
@@ -726,8 +725,8 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
 		subtitle->Command(context, MANAGER_SET, track) < 0) {
 		playback_err("manager set track failed\n");
 	    }
-#if 0
-	    if (*track < 0) {
+
+	    if (*track < 0 && !strcmp(context->playback->uri, "file://")) {
 		//CHECK FOR SUBTITLES
 		if (context->container
 		    && context->container->textSrtContainer)
@@ -748,7 +747,7 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
 							      CONTAINER_INIT,
 							      NULL);
 	    }
-#endif
+
 	    context->manager->subtitle->Command(context, MANAGER_GET,
 						&trackid);
 
@@ -791,31 +790,6 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
     return ret;
 }
 
-static int PlaybackSwitchDVBSubtitle(Context_t * context, int *pid)
-{
-    int ret = cERR_PLAYBACK_NO_ERROR;
-
-    playback_printf(10, "Track: %d\n", *pid);
-
-    if (context && context->manager && context->manager->dvbsubtitle) {
-	if (context->manager->
-	    dvbsubtitle->Command(context,
-				 *pid < 0 ? MANAGER_DEL : MANAGER_SET,
-				 pid) < 0) {
-	    playback_err("dvbsub manager set track failed\n");
-	    ret = cERR_PLAYBACK_ERROR;
-	}
-    } else
-	playback_err("no dvbsubtitle\n");
-
-    if (*pid < 0)
-	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
-}
-
 static int PlaybackSwitchTeletext(Context_t * context, int *pid)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -833,7 +807,7 @@ static int PlaybackSwitchTeletext(Context_t * context, int *pid)
 	playback_err("no ttxsubtitle\n");
 
     if (*pid < 0)
-	container_ffmpeg_update_tracks(context, context->playback->uri, 0);
+	container_ffmpeg_update_tracks(context, context->playback->uri);
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -960,10 +934,6 @@ static int Command(void *_context, PlaybackCmd_t command, void *argument)
 	    ret =
 		PlaybackGetFrameCount(context,
 				      (unsigned long long int *) argument);
-	    break;
-	}
-    case PLAYBACK_SWITCH_DVBSUBTITLE:{
-	    ret = PlaybackSwitchDVBSubtitle(context, (int *) argument);
 	    break;
 	}
     case PLAYBACK_SWITCH_TELETEXT:{

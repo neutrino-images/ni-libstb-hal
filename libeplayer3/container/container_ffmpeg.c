@@ -280,6 +280,8 @@ static char *searchMeta(AVDictionary * metadata, char *ourTag)
 /* Worker Thread                */
 /* **************************** */
 
+extern void (*dvbsubWrite)(AVSubtitle *, int64_t);
+
 static void FFMPEGThread(Context_t * context)
 {
     char threadname[17];
@@ -405,7 +407,6 @@ static void FFMPEGThread(Context_t * context)
 	Track_t *videoTrack = NULL;
 	Track_t *audioTrack = NULL;
 	Track_t *subtitleTrack = NULL;
-	Track_t *dvbsubtitleTrack = NULL;
 	Track_t *teletextTrack = NULL;
 
 	context->playback->readCount += packet_size;
@@ -420,9 +421,6 @@ static void FFMPEGThread(Context_t * context)
 
 	if (context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack) < 0)
 	    ffmpeg_err("error getting subtitle track\n");
-
-	if (context->manager->dvbsubtitle->Command(context, MANAGER_GET_TRACK, &dvbsubtitleTrack) < 0)
-	    ffmpeg_err("error getting dvb subtitle track\n");
 
 	if (context->manager->teletext->Command(context, MANAGER_GET_TRACK, &teletextTrack) < 0)
 	    ffmpeg_err("error getting teletext track\n");
@@ -692,80 +690,73 @@ static void FFMPEGThread(Context_t * context)
 		    } else {
 			unsigned int i;
 
-			ffmpeg_printf(0, "format %d\n", sub.format);
-			ffmpeg_printf(0, "start_display_time %d\n", sub.start_display_time);
-			ffmpeg_printf(0, "end_display_time %d\n", sub.end_display_time);
-			ffmpeg_printf(0, "num_rects %d\n", sub.num_rects);
-			ffmpeg_printf(0, "pts %lld\n", sub.pts);
+			ffmpeg_printf(20, "format %d\n", sub.format);
+			ffmpeg_printf(20, "start_display_time %d\n", sub.start_display_time);
+			ffmpeg_printf(20, "end_display_time %d\n", sub.end_display_time);
+			ffmpeg_printf(20, "num_rects %d\n", sub.num_rects);
+			ffmpeg_printf(20, "pts %lld\n", sub.pts);
 
 			for (i = 0; i < sub.num_rects; i++) {
 
-			    ffmpeg_printf(0, "x %d\n", sub.rects[i]->x);
-			    ffmpeg_printf(0, "y %d\n", sub.rects[i]->y);
-			    ffmpeg_printf(0, "w %d\n", sub.rects[i]->w);
-			    ffmpeg_printf(0, "h %d\n", sub.rects[i]->h);
-			    ffmpeg_printf(0, "nb_colors %d\n", sub.rects[i]->nb_colors);
-			    ffmpeg_printf(0, "type %d\n", sub.rects[i]->type);
-			    ffmpeg_printf(0, "text %s\n", sub.rects[i]->text);
-			    ffmpeg_printf(0, "ass %s\n", sub.rects[i]->ass);
+			    ffmpeg_printf(20, "x %d\n", sub.rects[i]->x);
+			    ffmpeg_printf(20, "y %d\n", sub.rects[i]->y);
+			    ffmpeg_printf(20, "w %d\n", sub.rects[i]->w);
+			    ffmpeg_printf(20, "h %d\n", sub.rects[i]->h);
+			    ffmpeg_printf(20, "nb_colors %d\n", sub.rects[i]->nb_colors);
+			    ffmpeg_printf(20, "type %d\n", sub.rects[i]->type);
 			    // pict ->AVPicture
 
 			}
 		    }
 
-		    if (((AVStream *) subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA) {
-			SubtitleData_t data;
-
-			ffmpeg_printf(10, "videoPts %lld\n", currentVideoPts);
-
-			data.data = packet_data;
-			data.len = packet_size;
-			data.extradata = subtitleTrack->extraData;
-			data.extralen = subtitleTrack->extraSize;
-			data.pts = pts;
-			data.duration = duration;
-
-			context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-		    } else {
-			/* hopefully native text ;) */
-
-			unsigned char *line = text_to_ass((char *) packet_data, pts / 90,
-							  duration);
-			ffmpeg_printf(50, "text line is %s\n", (char *) packet_data);
-			ffmpeg_printf(50, "Sub line is %s\n", line);
-			ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts, currentVideoPts / 90000.0);
-			SubtitleData_t data;
-			data.data = line;
-			data.len = strlen((char *) line);
-			data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
-			data.extralen = strlen(DEFAULT_ASS_HEAD);
-			data.pts = pts;
-			data.duration = duration;
-
-			context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-			free(line);
+		    if (got_sub_ptr && sub.num_rects > 0) {
+			    unsigned int i;
+			    switch (sub.rects[0]->type) {
+				case SUBTITLE_ASS:
+					for (i = 0; i < sub.num_rects && sub.rects[i]->type == SUBTITLE_ASS; i++) {
+						ffmpeg_printf(0, "ass %s\n", sub.rects[i]->ass);
+						ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts, currentVideoPts / 90000.0);
+						SubtitleData_t data;
+						data.data = packet_data;
+						data.len = packet_size;
+						data.extradata = subtitleTrack->extraData;
+						data.extralen = subtitleTrack->extraSize;
+						data.pts = pts;
+						data.duration = duration;
+						context->container->assContainer->Command(context, CONTAINER_DATA, &data);
+					}
+					avsubtitle_free(&sub);
+					break;
+				case SUBTITLE_TEXT:
+					for (i = 0; i < sub.num_rects && sub.rects[i]->type == SUBTITLE_TEXT; i++) {
+						ffmpeg_printf(0, "text %s\n", sub.rects[i]->text);
+						unsigned char *line = text_to_ass(sub.rects[i]->text, pts / 90, duration);
+						ffmpeg_printf(50, "Sub line is %s\n", line);
+						ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts, currentVideoPts / 90000.0);
+						SubtitleData_t data;
+						data.data = line;
+						data.len = strlen((char *) line);
+						data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
+						data.extralen = strlen(DEFAULT_ASS_HEAD);
+						data.pts = pts;
+						data.duration = duration;
+						context->container->assContainer->Command(context, CONTAINER_DATA, &data);
+						free(line);
+					}
+					avsubtitle_free(&sub);
+					break;
+				case SUBTITLE_BITMAP:
+					ffmpeg_printf(0, "bitmap\n");
+					if (dvbsubWrite)
+						(*dvbsubWrite)(&sub, pts);
+					// avsubtitle_free() will be called by handler
+					break;
+				default:
+					break;
+			    }
 		    }
 		}
 	    }			/* duration */
-	} else if (dvbsubtitleTrack && (dvbsubtitleTrack->Id == pid)) {
-	    dvbsubtitleTrack->pts = pts = calcPts(dvbsubtitleTrack->stream, packet.pts);
-
-	    ffmpeg_printf(200, "DvbSubTitle index = %d\n", pid);
-
-	    avOut.data = packet_data;
-	    avOut.len = packet_size;
-	    avOut.pts = pts;
-	    avOut.extradata = NULL;
-	    avOut.extralen = 0;
-	    avOut.frameRate = 0;
-	    avOut.timeScale = 0;
-	    avOut.width = 0;
-	    avOut.height = 0;
-	    avOut.type = "dvbsubtitle";
-
-	    if (context->output->dvbsubtitle->Write(context, &avOut) < 0) {
-		//ffmpeg_err("writing data to dvbsubtitle fifo failed\n");
-	    }
 	} else if (teletextTrack && (teletextTrack->Id == pid)) {
 	    teletextTrack->pts = pts = calcPts(teletextTrack->stream, packet.pts);
 
@@ -897,11 +888,11 @@ int container_ffmpeg_init(Context_t * context, char *filename)
 
     terminating = 0;
     latestPts = 0;
-    int res = container_ffmpeg_update_tracks(context, filename, 1);
+    int res = container_ffmpeg_update_tracks(context, filename);
     return res;
 }
 
-int container_ffmpeg_update_tracks(Context_t * context, char *filename, int initial)
+int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 {
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
@@ -928,12 +919,8 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename, int init
 	context->manager->video->Command(context, MANAGER_INIT_UPDATE, NULL);
     if (context->manager->audio)
 	context->manager->audio->Command(context, MANAGER_INIT_UPDATE, NULL);
-#if 0
     if (context->manager->subtitle)
 	context->manager->subtitle->Command(context, MANAGER_INIT_UPDATE, NULL);
-#endif
-    if (context->manager->dvbsubtitle)
-	context->manager->dvbsubtitle->Command(context, MANAGER_INIT_UPDATE, NULL);
     if (context->manager->teletext)
 	context->manager->teletext->Command(context, MANAGER_INIT_UPDATE, NULL);
 
@@ -1276,13 +1263,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename, int init
 			}
 			i++;
 		    } while (t);
-		} else if (stream->codec->codec_id == AV_CODEC_ID_DVB_SUBTITLE && context->manager->dvbsubtitle) {
-		    ffmpeg_printf(10, "dvb_subtitle\n");
-		    lang = av_dict_get(stream->metadata, "language", NULL, 0);
-		    if (context->manager->dvbsubtitle->Command(context, MANAGER_ADD, &track) < 0) {
-			ffmpeg_err("failed to add dvbsubtitle track %d\n", n);
-		    }
-		} else if (initial && context->manager->subtitle) {
+		} else if (context->manager->subtitle) {
 		    if (!stream->codec->codec) {
 			stream->codec->codec = avcodec_find_decoder(stream->codec->codec_id);
 			if (!stream->codec->codec)
@@ -1440,11 +1421,6 @@ static int container_ffmpeg_switch_audio(Context_t * context, int *arg)
 static int container_ffmpeg_switch_subtitle(Context_t * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
 {
     /* Hellmaster1024: nothing to do here! */
-    return cERR_CONTAINER_FFMPEG_NO_ERROR;
-}
-
-static int container_ffmpeg_switch_dvbsubtitle(Context_t * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
-{
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
@@ -1632,10 +1608,6 @@ static int Command(void *_context, ContainerCmd_t command, void *argument)
 	}
     case CONTAINER_LAST_PTS:{
 	    *((long long int *) argument) = latestPts;
-	    break;
-	}
-    case CONTAINER_SWITCH_DVBSUBTITLE:{
-	    ret = container_ffmpeg_switch_dvbsubtitle(context, (int *) argument);
 	    break;
 	}
     case CONTAINER_SWITCH_TELETEXT:{

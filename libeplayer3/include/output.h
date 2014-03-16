@@ -67,7 +67,6 @@ typedef struct OutputHandler_s {
     Output_t *audio;
     Output_t *video;
     Output_t *subtitle;
-    Output_t *dvbsubtitle;
     Output_t *teletext;
     int (*Command) ( /*Context_t */ void *, OutputCmd_t, void *);
 } OutputHandler_t;

@@ -5,11 +5,11 @@ CXXFLAGS = -Wall
 AM_CPPFLAGS = \
 	-I$(srcdir)/include
 
-libeplayer3_la_SOURCES =  \
+libeplayer3_la_SOURCES = \
 	container/container.c container/container_ffmpeg.c container/text_srt.c \
-    container/text_ssa.c container/container_ass.c \
+	container/text_ssa.c container/container_ass.c \
 	manager/audio.c manager/manager.c manager/subtitle.c manager/video.c \
-	manager/dvbsubtitle.c manager/teletext.c manager/chapter.c \
+	manager/teletext.c manager/chapter.c \
 	output/output_subtitle.c output/linuxdvb.c output/output.c output/output_pipe.c \
 	playback/playback.c output/writer/writer.c output/writer/aac.c output/writer/wmv.c \
 	output/writer/ac3.c output/writer/divx.c output/writer/wma.c output/writer/pes.c \

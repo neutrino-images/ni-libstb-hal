@@ -375,8 +375,8 @@ static int SsaGetSubtitle(Context_t * context, char *Filename)
 		Subtitle.Name = subtitleExtension;
 		Subtitle.Encoding = "S_TEXT/SSA";
 		Subtitle.Id = i++;
-		context->manager->subtitle->Command(context, MANAGER_ADD,
-						    &Subtitle);
+		Subtitle.is_static = 1;
+		context->manager->subtitle->Command(context, MANAGER_ADD, &Subtitle);
 	    }
 	}			/* while */
 	closedir(dir);
@@ -480,6 +480,7 @@ static int Command(void *_context, ContainerCmd_t command, void *argument)
     switch (command) {
     case CONTAINER_INIT:{
 	    char *filename = (char *) argument;
+	    SsaDel(context);
 	    ret = SsaGetSubtitle(context, filename);
 	    break;
 	}

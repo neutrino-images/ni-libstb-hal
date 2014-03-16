@@ -200,8 +200,7 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 	    break;
 	}
     case MANAGER_LIST:{
-	    container_ffmpeg_update_tracks(context, context->playback->uri,
-					   0);
+	    container_ffmpeg_update_tracks(context, context->playback->uri);
 	    *((char ***) argument) = (char **) ManagerList(context);
 	    break;
 	}
@@ -247,6 +246,11 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 	    subtitle_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME,
 				__FUNCTION__, *((int *) argument));
 
+	    if (*((int *) argument) < 0) {
+	    	CurrentTrack = -1;
+		break;
+	    }
+
 	    for (i = 0; i < TrackCount; i++)
 		if (Tracks[i].Id == *((int *) argument)) {
 		    CurrentTrack = i;
@@ -266,7 +270,8 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
     case MANAGER_INIT_UPDATE:{
 	    int i;
 	    for (i = 0; i < TrackCount; i++)
-		Tracks[i].pending = 1;
+		if (!Tracks[i].is_static)
+			Tracks[i].pending = 1;
 	    break;
 	}
     default:

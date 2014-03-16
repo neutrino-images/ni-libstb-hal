@@ -77,19 +77,9 @@ void cPlayback::GetPts(uint64_t &/*pts*/)
 {
 }
 
-bool cPlayback::SetDvbsubtitlePid(int /*pid*/)
-{
-	return true;
-}
-
 bool cPlayback::SetTeletextPid(int /*pid*/)
 {
 	return true;
-}
-
-void cPlayback::FindAllDvbsubtitlePids(int * /*pids*/, unsigned int *numpidd, std::string * /*language*/)
-{
-	*numpidd = 0;
 }
 
 void cPlayback::FindAllTeletextsubtitlePids(int * /*pids*/, unsigned int *numpids, std::string * /*language*/)

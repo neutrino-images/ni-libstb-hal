@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libspark.la
 
 AM_CPPFLAGS = -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/libeplayer3/include
 

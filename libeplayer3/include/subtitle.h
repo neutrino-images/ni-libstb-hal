@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 
+#if 0
 #define DEFAULT_ASS_HEAD "[Script Info]\n\
 Original Script: (c) 2008\n\
 ScriptType: v4.00\n\
@@ -76,7 +77,6 @@ typedef enum {
     eSub_Txt
 } SubType_t;
 
-
 typedef struct {
     unsigned char *data;
     int len;
@@ -102,6 +102,7 @@ typedef struct {
 	SubGfx_t gfx;
     } u;
 } SubtitleOut_t;
+#endif
 
 typedef struct {
     unsigned char *data;
@@ -115,13 +116,9 @@ typedef struct {
 } SubtitleData_t;
 
 typedef struct {
-    uint32_t *destination;
-    unsigned int screen_width;
-    unsigned int screen_height;
-    unsigned int destStride;
-
-    void (*framebufferBlit) (void);
     void (*dvbsubWrite) (void *, int64_t);
+    void (*dvbsubAssWrite)(void /*AVCodecContext*/ *c, void /*AVSubtitle*/ *sub, int pid);
+    void (*dvbsubAssClear) (void);
 } SubtitleOutputDef_t;
 
 #endif

@@ -130,15 +130,8 @@ static int Command(void *_context, ContainerCmd_t command, void *argument)
     return ret;
 }
 
-extern Container_t SrtContainer;
-extern Container_t SsaContainer;
-extern Container_t ASSContainer;
-
 ContainerHandler_t ContainerHandler = {
     "Output",
     NULL,
-    &SrtContainer,
-    &SsaContainer,
-    &ASSContainer,
     Command
 };

@@ -63,7 +63,7 @@
 
 #ifdef FFMPEG_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 0;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
 if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
@@ -227,35 +227,6 @@ long long int calcPts(AVStream * stream, int64_t pts)
     return pts;
 }
 
-/*Hellmaster1024: get the Duration of the subtitle from the SSA line*/
-float getDurationFromSSALine(unsigned char *line)
-{
-    int i, h, m, s, ms;
-    char *Text = strdup((char *) line);
-    char *ptr1;
-    char *ptr[10];
-    long int msec;
-
-    ptr1 = Text;
-    ptr[0] = Text;
-    for (i = 0; i < 3 && *ptr1 != '\0'; ptr1++) {
-	if (*ptr1 == ',') {
-	    ptr[++i] = ptr1 + 1;
-	    *ptr1 = '\0';
-	}
-    }
-
-    sscanf(ptr[2], "%d:%d:%d.%d", &h, &m, &s, &ms);
-    msec = (ms * 10) + (s * 1000) + (m * 60 * 1000) + (h * 24 * 60 * 1000);
-    sscanf(ptr[1], "%d:%d:%d.%d", &h, &m, &s, &ms);
-    msec -= (ms * 10) + (s * 1000) + (m * 60 * 1000) + (h * 24 * 60 * 1000);
-
-    ffmpeg_printf(10, "%s %s %f\n", ptr[2], ptr[1], (float) msec / 1000.0);
-
-    free(Text);
-    return (float) msec / 1000.0;
-}
-
 /* search for metadata in context and stream
  * and map it to our metadata.
  */
@@ -280,7 +251,10 @@ static char *searchMeta(AVDictionary * metadata, char *ourTag)
 /* Worker Thread                */
 /* **************************** */
 
-extern void (*dvbsubWrite)(AVSubtitle *, int64_t);
+// from neutrino-mp/lib/dvbsub.cpp
+extern void dvbsub_write(AVSubtitle *, int64_t);
+extern void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
+extern void dvbsub_ass_clear(void);
 
 static void FFMPEGThread(Context_t * context)
 {
@@ -658,27 +632,6 @@ static void FFMPEGThread(Context_t * context)
 	    if ((pts > latestPts) && (!videoTrack) && (!audioTrack))
 		latestPts = pts;
 
-	    /*Hellmaster1024: in mkv the duration for ID_TEXT is stored in convergence_duration */
-	    ffmpeg_printf(20, "Packet duration %d\n", packet.duration);
-	    ffmpeg_printf(20, "Packet convergence_duration %lld\n", packet.convergence_duration);
-
-	    if (packet.duration != 0)	// FIXME: packet.duration is 32 bit, AV_NOPTS_VALUE is 64 bit --martii
-		duration = ((float) packet.duration) / 1000.0;
-	    else if (packet.convergence_duration != 0 && packet.convergence_duration != AV_NOPTS_VALUE)
-		duration = ((float) packet.convergence_duration) / 1000.0;
-	    else if (((AVStream *) subtitleTrack->stream)->codec->codec_id == AV_CODEC_ID_SSA) {
-		/*Hellmaster1024 if the duration is not stored in packet.duration or
-		   packet.convergence_duration we need to calculate it any other way, for SSA it is stored in
-		   the Text line */
-		duration = getDurationFromSSALine(packet_data);
-	    } else {
-		/* no clue yet */
-	    }
-
-	    /* konfetti: I've found cases where the duration from getDurationFromSSALine
-	     * is zero (start end and are really the same in text). I think it make's
-	     * no sense to pass those.
-	     */
 	    if (duration > 0.0) {
 		/* is there a decoder ? */
 		if (((AVStream *) subtitleTrack->stream)->codec->codec) {
@@ -687,68 +640,17 @@ static void FFMPEGThread(Context_t * context)
 
 		    if (avcodec_decode_subtitle2(((AVStream *) subtitleTrack->stream)->codec, &sub, &got_sub_ptr, &packet) < 0) {
 			ffmpeg_err("error decoding subtitle\n");
-		    } else {
-			unsigned int i;
-
-			ffmpeg_printf(20, "format %d\n", sub.format);
-			ffmpeg_printf(20, "start_display_time %d\n", sub.start_display_time);
-			ffmpeg_printf(20, "end_display_time %d\n", sub.end_display_time);
-			ffmpeg_printf(20, "num_rects %d\n", sub.num_rects);
-			ffmpeg_printf(20, "pts %lld\n", sub.pts);
-
-			for (i = 0; i < sub.num_rects; i++) {
-
-			    ffmpeg_printf(20, "x %d\n", sub.rects[i]->x);
-			    ffmpeg_printf(20, "y %d\n", sub.rects[i]->y);
-			    ffmpeg_printf(20, "w %d\n", sub.rects[i]->w);
-			    ffmpeg_printf(20, "h %d\n", sub.rects[i]->h);
-			    ffmpeg_printf(20, "nb_colors %d\n", sub.rects[i]->nb_colors);
-			    ffmpeg_printf(20, "type %d\n", sub.rects[i]->type);
-			    // pict ->AVPicture
-
-			}
 		    }
 
 		    if (got_sub_ptr && sub.num_rects > 0) {
-			    unsigned int i;
 			    switch (sub.rects[0]->type) {
+				case SUBTITLE_TEXT: // FIXME?
 				case SUBTITLE_ASS:
-					for (i = 0; i < sub.num_rects && sub.rects[i]->type == SUBTITLE_ASS; i++) {
-						ffmpeg_printf(0, "ass %s\n", sub.rects[i]->ass);
-						ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts, currentVideoPts / 90000.0);
-						SubtitleData_t data;
-						data.data = packet_data;
-						data.len = packet_size;
-						data.extradata = subtitleTrack->extraData;
-						data.extralen = subtitleTrack->extraSize;
-						data.pts = pts;
-						data.duration = duration;
-						context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-					}
-					avsubtitle_free(&sub);
-					break;
-				case SUBTITLE_TEXT:
-					for (i = 0; i < sub.num_rects && sub.rects[i]->type == SUBTITLE_TEXT; i++) {
-						ffmpeg_printf(0, "text %s\n", sub.rects[i]->text);
-						unsigned char *line = text_to_ass(sub.rects[i]->text, pts / 90, duration);
-						ffmpeg_printf(50, "Sub line is %s\n", line);
-						ffmpeg_printf(20, "videoPts %lld %f\n", currentVideoPts, currentVideoPts / 90000.0);
-						SubtitleData_t data;
-						data.data = line;
-						data.len = strlen((char *) line);
-						data.extradata = (unsigned char *) DEFAULT_ASS_HEAD;
-						data.extralen = strlen(DEFAULT_ASS_HEAD);
-						data.pts = pts;
-						data.duration = duration;
-						context->container->assContainer->Command(context, CONTAINER_DATA, &data);
-						free(line);
-					}
-					avsubtitle_free(&sub);
+					dvbsub_ass_write(((AVStream *) subtitleTrack->stream)->codec, &sub, pid);
 					break;
 				case SUBTITLE_BITMAP:
 					ffmpeg_printf(0, "bitmap\n");
-					if (dvbsubWrite)
-						(*dvbsubWrite)(&sub, pts);
+					dvbsub_write(&sub, pts);
 					// avsubtitle_free() will be called by handler
 					break;
 				default:
@@ -784,6 +686,8 @@ static void FFMPEGThread(Context_t * context)
     if (context && context->playback && context->output && context->playback->abortRequested)
 	context->output->Command(context, OUTPUT_CLEAR, NULL);
 
+    dvbsub_ass_clear();
+
     if (swr)
 	swr_free(&swr);
     if (decoded_frame)
@@ -811,6 +715,91 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 {
     if (debug_level > 10)
 	vfprintf(stderr, format, ap);
+}
+
+static void container_ffmpeg_read_subtitle(Context_t * context, const char *filename, const char *format, int pid) {
+fprintf(stderr, "%s %d\n", __func__, __LINE__);
+	char *lastDot = strrchr(filename, '.');
+	if (!lastDot)
+		return;
+fprintf(stderr, "%s %d\n", __func__, __LINE__);
+	char *subfile = alloca(strlen(filename) + strlen(format));
+	strcpy(subfile, filename);
+	strcpy(subfile + (lastDot + 1 - filename), format);
+fprintf(stderr, "%s %d\n", __func__, __LINE__);
+
+	AVFormatContext *avfc = avformat_alloc_context();
+fprintf(stderr, "%s %d: %s\n", __func__, __LINE__, subfile);
+	if (avformat_open_input(&avfc, subfile, av_find_input_format(format), 0)) {
+        	avformat_free_context(avfc);
+		return;
+        }
+fprintf(stderr, "%s %d\n", __func__, __LINE__);
+        avformat_find_stream_info(avfc, NULL);
+	if (avfc->nb_streams != 1) {
+        	avformat_free_context(avfc);
+		return;
+	}
+fprintf(stderr, "%s %d\n", __func__, __LINE__);
+
+        AVCodecContext *c = avfc->streams[0]->codec;
+        AVCodec *codec = avcodec_find_decoder(c->codec_id);
+	if (!codec) {
+        	avformat_free_context(avfc);
+		return;
+	}
+
+        // fprintf(stderr, "codec=%s\n", avcodec_get_name(c->codec_id));
+        if (avcodec_open2(c, codec, NULL) < 0) {
+		fprintf(stderr, "%s %d: avcodec_open\n", __FILE__, __LINE__);
+        	avformat_free_context(avfc);
+		return;
+	}
+        AVSubtitle sub;
+        AVPacket avpkt;
+        av_init_packet(&avpkt);
+#if 0
+	// FIXME, use custom values
+        if (c->subtitle_header && !strcmp(format, "srt")) {
+                av_freep(&c->subtitle_header);
+
+		#define ASS_DEFAULT_FONT        "Arial"
+		#define ASS_DEFAULT_FONT_SIZE   16
+		#define ASS_DEFAULT_COLOR       0xffffff
+
+        		ff_ass_subtitle_header(c, ASS_DEFAULT_FONT, ASS_DEFAULT_FONT_SIZE, ASS_DEFAULT_COLOR, 0, 0, 0, 0, 2);
+	}
+#endif
+
+        if (c->subtitle_header)
+                fprintf(stderr, "%s\n", c->subtitle_header);
+
+        while (av_read_frame(avfc, &avpkt) > -1) {
+                int got_sub = 0;
+                avcodec_decode_subtitle2(c, &sub, &got_sub, &avpkt);
+                if (got_sub)
+			dvbsub_ass_write(c, &sub, pid);
+                av_free_packet(&avpkt);
+        }
+        avformat_close_input(&avfc);
+        avformat_free_context(avfc);
+
+	Track_t track;
+	memset(&track, 0, sizeof(track));
+	track.Name = (char *) format;
+	track.is_static = 1;
+	track.Id = pid;
+	track.Encoding = strcmp(format, "srt") ? "S_TEXT/ASS" : "S_TEXT/SRT";
+	context->manager->subtitle->Command(context, MANAGER_ADD, &track);
+}
+
+static void container_ffmpeg_read_subtitles(Context_t * context, const char *filename) {
+	if (strncmp(filename, "file://", 7))
+		return;
+	filename += 7;
+	container_ffmpeg_read_subtitle(context, filename, "srt", 0xFFFF);
+	container_ffmpeg_read_subtitle(context, filename, "ass", 0xFFFE);
+	container_ffmpeg_read_subtitle(context, filename, "ssa", 0xFFFD);
 }
 
 int container_ffmpeg_init(Context_t * context, char *filename)
@@ -889,6 +878,7 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     terminating = 0;
     latestPts = 0;
     int res = container_ffmpeg_update_tracks(context, filename);
+    container_ffmpeg_read_subtitles(context, filename);
     return res;
 }
 
@@ -983,16 +973,16 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		else
 		    track.TimeScale = 1000;
 
-		ffmpeg_printf(10, "bit_rate = %d\n", stream->codec->bit_rate);
-		ffmpeg_printf(10, "flags = %d\n", stream->codec->flags);
-		ffmpeg_printf(10, "frame_bits = %d\n", stream->codec->frame_bits);
-		ffmpeg_printf(10, "time_base.den %d\n", stream->time_base.den);
-		ffmpeg_printf(10, "time_base.num %d\n", stream->time_base.num);
-		ffmpeg_printf(10, "frame_rate %d\n", stream->r_frame_rate.num);
-		ffmpeg_printf(10, "TimeScale %d\n", stream->r_frame_rate.den);
+		ffmpeg_printf(20, "bit_rate = %d\n", stream->codec->bit_rate);
+		ffmpeg_printf(20, "flags = %d\n", stream->codec->flags);
+		ffmpeg_printf(20, "frame_bits = %d\n", stream->codec->frame_bits);
+		ffmpeg_printf(20, "time_base.den %d\n", stream->time_base.den);
+		ffmpeg_printf(20, "time_base.num %d\n", stream->time_base.num);
+		ffmpeg_printf(20, "frame_rate %d\n", stream->r_frame_rate.num);
+		ffmpeg_printf(20, "TimeScale %d\n", stream->r_frame_rate.den);
 
-		ffmpeg_printf(10, "frame_rate %d\n", track.frame_rate);
-		ffmpeg_printf(10, "TimeScale %d\n", track.TimeScale);
+		ffmpeg_printf(20, "frame_rate %d\n", track.frame_rate);
+		ffmpeg_printf(20, "TimeScale %d\n", track.TimeScale);
 
 		track.Name = "und";
 		track.Encoding = encoding;
@@ -1234,17 +1224,10 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		track.extraData = stream->codec->extradata;
 		track.extraSize = stream->codec->extradata_size;
 
-		ffmpeg_printf(1, "subtitle codec %d\n", stream->codec->codec_id);
-		ffmpeg_printf(1, "subtitle width %d\n", stream->codec->width);
-		ffmpeg_printf(1, "subtitle height %d\n", stream->codec->height);
-		ffmpeg_printf(1, "subtitle stream %p\n", stream);
-
-		if (stream->duration == AV_NOPTS_VALUE) {
-		    ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
-		    track.duration = (double) avContext->duration / 1000.0;
-		} else {
-		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
-		}
+		ffmpeg_printf(10, "subtitle codec %d\n", stream->codec->codec_id);
+		ffmpeg_printf(10, "subtitle width %d\n", stream->codec->width);
+		ffmpeg_printf(10, "subtitle height %d\n", stream->codec->height);
+		ffmpeg_printf(10, "subtitle stream %p\n", stream);
 
 		ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name);
 

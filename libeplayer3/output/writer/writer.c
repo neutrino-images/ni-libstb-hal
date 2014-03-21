@@ -81,7 +81,6 @@ static Writer_t *AvailableWriter[] = {
     &WriterVideoH263,
     &WriterVideoFLV,
     &WriterVideoVC1,
-    &WriterFramebuffer,
     NULL
 };
 

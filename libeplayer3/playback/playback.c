@@ -126,25 +126,6 @@ static int PlaybackOpen(Context_t * context, char *uri)
 	extension = getExtension(context->playback->uri + 7);
 	if (!extension)
 	    return cERR_PLAYBACK_ERROR;
-
-	//CHECK FOR SUBTITLES
-	if (context->container && context->container->textSrtContainer)
-	    context->container->textSrtContainer->Command(context,
-							  CONTAINER_INIT,
-							  context->playback->
-							  uri + 7);
-
-	if (context->container && context->container->textSsaContainer)
-	    context->container->textSsaContainer->Command(context,
-							  CONTAINER_INIT,
-							  context->playback->
-							  uri + 7);
-
-	if (context->container && context->container->assContainer)
-	    context->container->assContainer->Command(context,
-						      CONTAINER_INIT,
-						      NULL);
-
     } else if (strstr(uri, "://")) {
 	context->playback->isHttp = 1;
 	extension = "mp3";
@@ -183,14 +164,6 @@ static int PlaybackClose(Context_t * context)
     if (context->container->Command(context, CONTAINER_DEL, NULL) < 0) {
 	playback_err("container delete failed\n");
     }
-
-    if (context->container && context->container->textSrtContainer)
-	context->container->textSrtContainer->Command(context,
-						      CONTAINER_DEL, NULL);
-
-    if (context->container && context->container->textSsaContainer)
-	context->container->textSsaContainer->Command(context,
-						      CONTAINER_DEL, NULL);
 
     context->manager->audio->Command(context, MANAGER_DEL, NULL);
     context->manager->video->Command(context, MANAGER_DEL, NULL);
@@ -726,56 +699,7 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
 		playback_err("manager set track failed\n");
 	    }
 
-	    if (*track < 0 && !strcmp(context->playback->uri, "file://")) {
-		//CHECK FOR SUBTITLES
-		if (context->container
-		    && context->container->textSrtContainer)
-		    context->container->textSrtContainer->Command(context,
-								  CONTAINER_INIT,
-								  context->playback->uri
-								  + 7);
-
-		if (context->container
-		    && context->container->textSsaContainer)
-		    context->container->textSsaContainer->Command(context,
-								  CONTAINER_INIT,
-								  context->playback->uri
-								  + 7);
-
-		if (context->container && context->container->assContainer)
-		    context->container->assContainer->Command(context,
-							      CONTAINER_INIT,
-							      NULL);
-	    }
-
-	    context->manager->subtitle->Command(context, MANAGER_GET,
-						&trackid);
-
-/* konfetti: I make this hack a little bit nicer,
- * but its still a hack in my opinion ;)
- */
-	    if (context->container && context->container->assContainer)
-		context->container->assContainer->Command(context,
-							  CONTAINER_SWITCH_SUBTITLE,
-							  &trackid);
-
-	    if (trackid >= TEXTSRTOFFSET) {
-		if (context->container
-		    && context->container->textSrtContainer)
-		    context->container->textSrtContainer->Command(context,
-								  CONTAINER_SWITCH_SUBTITLE,
-								  &trackid);
-	    }
-	    if (trackid >= TEXTSSAOFFSET) {
-		if (context->container
-		    && context->container->textSsaContainer)
-		    context->container->textSsaContainer->Command(context,
-								  CONTAINER_SWITCH_SUBTITLE,
-								  &trackid);
-	    }
-
-
-
+	    context->manager->subtitle->Command(context, MANAGER_GET, &trackid);
 	} else {
 	    ret = cERR_PLAYBACK_ERROR;
 	    playback_err("no subtitle\n");

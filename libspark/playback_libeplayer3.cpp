@@ -67,15 +67,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 	if(player && player->output) {
 		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
 		player->output->Command(player,OUTPUT_ADD, (void*)"video");
-		player->output->Command(player,OUTPUT_ADD, (void*)"subtitle");
 		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
-
-		if (framebuffer_callback) {
-			SubtitleOutputDef_t so;
-			memset(&so, 0, sizeof(so));
-			framebuffer_callback(&so.destination, &so.screen_width, &so.screen_height, &so.destStride, &so.framebufferBlit, &so.dvbsubWrite);
-			player->output->subtitle->Command(player, OUTPUT_SET_SUBTITLE_OUTPUT, (void*)&so);
-		}
 	}
 
 	return 0;
@@ -686,11 +678,10 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 }
 
 //
-cPlayback::cPlayback(int num __attribute__((unused)), void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t)))
+cPlayback::cPlayback(int num __attribute__((unused)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;
-	framebuffer_callback = fbcb;
 }
 
 cPlayback::~cPlayback()

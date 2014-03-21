@@ -20,24 +20,6 @@ typedef struct {
     unsigned char Version;
 } WriterAVCallData_t;
 
-typedef struct {
-    unsigned char *data;
-    unsigned int Width;
-    unsigned int Height;
-    unsigned int Stride;
-    unsigned int color;
-
-    unsigned int x;		/* dst x ->given by ass */
-    unsigned int y;		/* dst y ->given by ass */
-
-    /* destination values if we use a shared framebuffer */
-    int fd;
-    unsigned int Screen_Width;
-    unsigned int Screen_Height;
-    uint32_t *destination;
-    unsigned int destStride;
-} WriterFBCallData_t;
-
 typedef struct WriterCaps_s {
     char *name;
     eWriterType_t type;
@@ -75,7 +57,6 @@ extern Writer_t WriterVideoMSCOMP;
 extern Writer_t WriterVideoH263;
 extern Writer_t WriterVideoFLV;
 extern Writer_t WriterVideoVC1;
-extern Writer_t WriterFramebuffer;
 extern Writer_t WriterPipe;
 extern Writer_t WriterDVBSubtitle;
 

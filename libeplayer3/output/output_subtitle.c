@@ -105,12 +105,10 @@ static int readPointer = 0;
 static int writePointer = 0;
 static int hasThreadStarted = 0;
 static int isSubtitleOpened = 0;
-static int screen_width = 0;
-static int screen_height = 0;
-static int destStride = 0;
-static void (*framebufferBlit) = NULL;
-static uint32_t *destination = NULL;
 void (*dvbsubWrite)(AVSubtitle *, int64_t) = NULL;
+void (*dvbsubAssWrite)(AVCodecContext *, AVSubtitle *, int) = NULL;
+void (*dvbsubAssClear)(void) = NULL;
+
 
 /* ***************************** */
 /* Prototypes                    */
@@ -784,22 +782,16 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	}
     case OUTPUT_GET_SUBTITLE_OUTPUT:{
 	    SubtitleOutputDef_t *out = (SubtitleOutputDef_t *) argument;
-	    out->screen_width = screen_width;
-	    out->screen_height = screen_height;
-	    out->framebufferBlit = framebufferBlit;
 	    out->dvbsubWrite = (void (*)(void *, int64_t))dvbsubWrite;
-	    out->destination = destination;
-	    out->destStride = destStride;
+	    out->dvbsubAssWrite = (void (*)(void *, void *, int))dvbsubAssWrite;
+	    out->dvbsubAssClear = (void (*)(void))dvbsubAssClear;
 	    break;
 	}
     case OUTPUT_SET_SUBTITLE_OUTPUT:{
 	    SubtitleOutputDef_t *out = (SubtitleOutputDef_t *) argument;
-	    screen_width = out->screen_width;
-	    screen_height = out->screen_height;
-	    framebufferBlit = out->framebufferBlit;
 	    dvbsubWrite = (void (*)(AVSubtitle *, int64_t))out->dvbsubWrite;
-	    destination = out->destination;
-	    destStride = out->destStride;
+	    dvbsubAssWrite = (void (*)(AVCodecContext *, AVSubtitle *, int))out->dvbsubAssWrite;
+	    dvbsubAssClear = (void (*)(void))out->dvbsubAssClear;
 	    break;
 	}
     case OUTPUT_SUBTITLE_REGISTER_FUNCTION:{
@@ -825,7 +817,6 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    ret = cERR_SUBTITLE_ERROR;
 	    break;
 	}
-
     default:
 	subtitle_err("OutputCmd %d not supported!\n", command);
 	ret = cERR_SUBTITLE_ERROR;

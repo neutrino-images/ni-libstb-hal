@@ -18,10 +18,9 @@ class cPlayback
 		int mAudioStream;
 		int mSubtitleStream;
 		int mTeletextStream;
-		void (*framebuffer_callback)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t));
 		bool Stop(void);
 	public:
-		cPlayback(int num = 0, void (*fbcb)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t)) = NULL);
+		cPlayback(int num = 0);
 		~cPlayback();
 
 		bool Open(playmode_t PlayMode);

@@ -17,12 +17,11 @@ class cPlayback
 		int mAudioStream;
 		int mSubtitleStream;
 		int mTeletextStream;
-		void (*framebuffer_callback)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t));
 	public:
-		cPlayback(int, void (*)(uint32_t **, unsigned int *, unsigned int *, unsigned int *, void (**)(void), void (**)(void *, int64_t)) = NULL) { };
+		cPlayback(int);
 		bool Open(playmode_t PlayMode);
 		void Close(void);
-		bool Start(char * filename, int vpid, int vtype, int apid, bool ac3, int duration, bool no_probe = true);
+		bool Start(char *filename, int vpid, int vtype, int apid, bool ac3, int duration, bool no_probe = true);
 		bool Stop(void);
 		bool SetAPid(int pid, bool ac3);
 		bool SetSubtitlePid(int pid);

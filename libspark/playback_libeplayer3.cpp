@@ -14,7 +14,6 @@ extern ContainerHandler_t	ContainerHandler;
 extern ManagerHandler_t		ManagerHandler;
 
 #include "playback_libeplayer3.h"
-#include "subtitle.h"
 
 static Context_t *player = NULL;
 

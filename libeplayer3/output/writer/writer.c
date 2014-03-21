@@ -144,22 +144,3 @@ Writer_t *getDefaultAudioWriter()
 
     return NULL;
 }
-
-Writer_t *getDefaultFramebufferWriter()
-{
-    int i;
-
-    for (i = 0; AvailableWriter[i] != NULL; i++) {
-	writer_printf(10, "%s\n", AvailableWriter[i]->caps->textEncoding);
-	if (strcmp(AvailableWriter[i]->caps->textEncoding, "framebuffer")
-	    == 0) {
-	    writer_printf(50, "%s: found writer \"%s\"\n", __func__,
-			  AvailableWriter[i]->caps->name);
-	    return AvailableWriter[i];
-	}
-    }
-
-    writer_printf(1, "%s: no writer found\n", __func__);
-
-    return NULL;
-}

@@ -45,7 +45,6 @@ class cPlayback
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		//
-		cPlayback(int num = 0);
 		~cPlayback();
 };
 

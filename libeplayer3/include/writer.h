@@ -58,12 +58,10 @@ extern Writer_t WriterVideoH263;
 extern Writer_t WriterVideoFLV;
 extern Writer_t WriterVideoVC1;
 extern Writer_t WriterPipe;
-extern Writer_t WriterDVBSubtitle;
 
 Writer_t *getWriter(char *encoding);
 
 Writer_t *getDefaultVideoWriter();
 Writer_t *getDefaultAudioWriter();
-Writer_t *getDefaultFramebufferWriter();
 
 #endif

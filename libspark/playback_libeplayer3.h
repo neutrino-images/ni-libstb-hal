@@ -33,7 +33,6 @@ class cPlayback
 		int GetAPid(void) { return mAudioStream; }
 		int GetSubtitlePid(void) { return mSubtitleStream; }
 		int GetTeletextPid(void);
-		void SuspendSubtitle(bool);
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;
 		bool GetPosition(int &position, int &duration);

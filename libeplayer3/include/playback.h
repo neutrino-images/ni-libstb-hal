@@ -8,9 +8,7 @@ typedef enum { PLAYBACK_OPEN, PLAYBACK_CLOSE, PLAYBACK_PLAY, PLAYBACK_STOP,
     PLAYBACK_PTS, PLAYBACK_LENGTH, PLAYBACK_SWITCH_AUDIO,
     PLAYBACK_SWITCH_SUBTITLE, PLAYBACK_INFO, PLAYBACK_METADATA, PLAYBACK_SLOWMOTION,
     PLAYBACK_FASTBACKWARD, PLAYBACK_GET_FRAME_COUNT,
-    PLAYBACK_SWITCH_TELETEXT, PLAYBACK_SWITCH_DVBSUBTITLE,
-    PLAYBACK_FRAMEBUFFER_LOCK,
-    PLAYBACK_FRAMEBUFFER_UNLOCK
+    PLAYBACK_SWITCH_TELETEXT
 } PlaybackCmd_t;
 
 typedef struct PlaybackHandler_s {
@@ -37,7 +35,6 @@ typedef struct PlaybackHandler_s {
     unsigned char isSubtitle;
     unsigned char isDvbSubtitle;
     unsigned char isTeletext;
-    unsigned char mayWriteToFramebuffer;
     unsigned char abortRequested;
     unsigned char abortPlayback;
 

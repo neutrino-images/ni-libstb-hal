@@ -21,10 +21,6 @@ typedef struct BitPacker_s {
 
 #define INVALID_PTS_VALUE                       0x200000000ull
 
-/* subtitle hacks ->for file subtitles */
-#define TEXTSRTOFFSET 100
-#define TEXTSSAOFFSET 200
-
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */

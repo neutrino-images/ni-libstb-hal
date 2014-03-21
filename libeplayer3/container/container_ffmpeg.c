@@ -53,7 +53,6 @@
 #endif
 #include "pcm.h"
 #include "ffmpeg_metadata.h"
-#include "subtitle.h"
 
 /* ***************************** */
 /* Makros/Constants              */

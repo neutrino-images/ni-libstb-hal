@@ -216,9 +216,9 @@ long long int calcPts(AVStream * stream, int64_t pts)
     if (pts == AV_NOPTS_VALUE)
 	pts = INVALID_PTS_VALUE;
     else if (avContext->start_time == AV_NOPTS_VALUE)
-	pts = 90000.0 * (double) pts *av_q2d(stream->time_base);
+	pts = 90000.0 * (double) pts * av_q2d(stream->time_base);
     else
-    pts = 90000.0 * (double) pts *av_q2d(stream->time_base) - 90000.0 * avContext->start_time / AV_TIME_BASE;
+	pts = 90000.0 * (double) pts * av_q2d(stream->time_base) - 90000.0 * avContext->start_time / AV_TIME_BASE;
 
     if (pts & 0x8000000000000000ull)
 	pts = INVALID_PTS_VALUE;
@@ -485,12 +485,9 @@ static void FFMPEGThread(Context_t * context)
 			} else
 			    avcodec_get_frame_defaults(decoded_frame);
 
-			int len = avcodec_decode_audio4(c, decoded_frame,
-							&got_frame,
-							&packet);
+			int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, &packet);
 			if (len < 0) {
 			    restart_audio_resampling = 1;
-//			    fprintf(stderr, "avcodec_decode_audio4: %d\n", len);
 			    break;
 			}
 
@@ -502,10 +499,7 @@ static void FFMPEGThread(Context_t * context)
 
 			int e;
 			if (!swr) {
-			    int rates[] = { 48000, 96000, 192000, 44100, 88200,
-				176400,
-				0
-			    };
+			    int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
 			    int *rate = rates;
 			    int in_rate = c->sample_rate;
 			    while (*rate && ((*rate / in_rate) * in_rate != *rate)
@@ -546,18 +540,16 @@ static void FFMPEGThread(Context_t * context)
 
 			uint8_t *output = NULL;
 			int in_samples = decoded_frame->nb_samples;
-			int out_samples = av_rescale_rnd(swr_get_delay(swr,
-								       c->sample_rate) + in_samples,
-							 out_sample_rate,
-							 c->sample_rate, AV_ROUND_UP);
+			int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
 			e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
 			if (e < 0) {
 			    fprintf(stderr, "av_samples_alloc: %d\n", -e);
 			    continue;
 			}
-			int64_t next_in_pts = av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-							 ((AVStream *) audioTrack->stream)->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
-							 ((AVStream *) audioTrack->stream)->time_base.den);
+			// FIXME. PTS calculation is probably broken.
+			int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
+							  ((AVStream *) audioTrack->stream)->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
+							  ((AVStream *) audioTrack->stream)->time_base.den);
 			int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
 							  ((AVStream *) audioTrack->stream)->time_base.den,
 							  ((AVStream *) audioTrack->stream)->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
@@ -575,7 +567,7 @@ static void FFMPEGThread(Context_t * context)
 			avOut.data = output;
 			avOut.len = out_samples * sizeof(short) * out_channels;
 
-			avOut.pts = pts;
+			avOut.pts = videoTrack ? pts : 0;
 			avOut.extradata = (unsigned char *) &extradata;
 			avOut.extralen = sizeof(extradata);
 			avOut.frameRate = 0;

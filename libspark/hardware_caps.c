@@ -44,7 +44,7 @@ hw_caps_t *get_hwcaps(void)
 		ret = ioctl(fd, VFDGETVERSION, &val);
 		if (ret < 0)
 			fprintf(stderr, "[hardware_caps] %s: VFDGETVERSION %m\n", __func__);
-		else if (val == 1) { /* VFD, others not yet seen in the wild */
+		else if (val & 1) { /* VFD = 1, DVFD = 3 */
 			caps.display_type = HW_DISPLAY_LINE_TEXT;
 			caps.display_xres = 8;
 		}

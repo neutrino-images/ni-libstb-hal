@@ -769,6 +769,7 @@ static void container_ffmpeg_read_subtitle(Context_t * context, const char *file
 
         while (av_read_frame(avfc, &avpkt) > -1) {
 		AVSubtitle sub;
+	    	memset(&sub, 0, sizeof(sub));
                 int got_sub = 0;
                 avcodec_decode_subtitle2(c, &sub, &got_sub, &avpkt);
                 if (got_sub)

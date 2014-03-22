@@ -635,6 +635,7 @@ static void FFMPEGThread(Context_t * context)
 		/* is there a decoder ? */
 		if (((AVStream *) subtitleTrack->stream)->codec->codec) {
 		    AVSubtitle sub;
+		    memset(&sub, 0, sizeof(sub));
 		    int got_sub_ptr;
 
 		    if (avcodec_decode_subtitle2(((AVStream *) subtitleTrack->stream)->codec, &sub, &got_sub_ptr, &packet) < 0) {
@@ -717,29 +718,23 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 }
 
 static void container_ffmpeg_read_subtitle(Context_t * context, const char *filename, const char *format, int pid) {
-fprintf(stderr, "%s %d\n", __func__, __LINE__);
 	char *lastDot = strrchr(filename, '.');
 	if (!lastDot)
 		return;
-fprintf(stderr, "%s %d\n", __func__, __LINE__);
 	char *subfile = alloca(strlen(filename) + strlen(format));
 	strcpy(subfile, filename);
 	strcpy(subfile + (lastDot + 1 - filename), format);
-fprintf(stderr, "%s %d\n", __func__, __LINE__);
 
 	AVFormatContext *avfc = avformat_alloc_context();
-fprintf(stderr, "%s %d: %s\n", __func__, __LINE__, subfile);
 	if (avformat_open_input(&avfc, subfile, av_find_input_format(format), 0)) {
         	avformat_free_context(avfc);
 		return;
         }
-fprintf(stderr, "%s %d\n", __func__, __LINE__);
         avformat_find_stream_info(avfc, NULL);
 	if (avfc->nb_streams != 1) {
         	avformat_free_context(avfc);
 		return;
 	}
-fprintf(stderr, "%s %d\n", __func__, __LINE__);
 
         AVCodecContext *c = avfc->streams[0]->codec;
         AVCodec *codec = avcodec_find_decoder(c->codec_id);
@@ -754,7 +749,6 @@ fprintf(stderr, "%s %d\n", __func__, __LINE__);
         	avformat_free_context(avfc);
 		return;
 	}
-        AVSubtitle sub;
         AVPacket avpkt;
         av_init_packet(&avpkt);
 #if 0
@@ -774,6 +768,7 @@ fprintf(stderr, "%s %d\n", __func__, __LINE__);
                 fprintf(stderr, "%s\n", c->subtitle_header);
 
         while (av_read_frame(avfc, &avpkt) > -1) {
+		AVSubtitle sub;
                 int got_sub = 0;
                 avcodec_decode_subtitle2(c, &sub, &got_sub, &avpkt);
                 if (got_sub)
@@ -877,6 +872,24 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     terminating = 0;
     latestPts = 0;
     int res = container_ffmpeg_update_tracks(context, filename);
+
+    unsigned int n, found_av = 0;
+    for (n = 0; n < avContext->nb_streams; n++) {
+	AVStream *stream = avContext->streams[n];
+	switch (stream->codec->codec_type) {
+	case AVMEDIA_TYPE_AUDIO:
+	case AVMEDIA_TYPE_VIDEO:
+		found_av = 1;
+	default:
+		break;
+    	}
+    }
+    if (!found_av) {
+	avformat_close_input(&avContext);
+	isContainerRunning = 0;
+	return cERR_CONTAINER_FFMPEG_STREAM;
+    }
+
     container_ffmpeg_read_subtitles(context, filename);
     return res;
 }

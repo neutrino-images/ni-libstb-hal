@@ -66,7 +66,6 @@ bool cPlayback::Open(playmode_t PlayMode)
 	if(player && player->output) {
 		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
 		player->output->Command(player,OUTPUT_ADD, (void*)"video");
-		player->output->Command(player,OUTPUT_ADD, (void*)"teletext");
 	}
 
 	return 0;
@@ -249,8 +248,6 @@ bool cPlayback::Stop(void)
 	if(player && player->output) {
 		player->output->Command(player,OUTPUT_DEL, (void*)"audio");
 		player->output->Command(player,OUTPUT_DEL, (void*)"video");
-		player->output->Command(player,OUTPUT_DEL, (void*)"subtitle");
-		player->output->Command(player,OUTPUT_DEL, (void*)"teletext");
 	}
 
 	if(player && player->playback)
@@ -572,7 +569,7 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
 				if (j < max_numpids) {
 					int _pid;
-					if (2 != sscanf(TrackList[i], "%d %*s %d %*d %*d", &_pid, &type))
+					if (2 != sscanf(TrackList[i], "%*d %d %*s %d %*d %*d", &_pid, &type))
 						continue;
 					if (type != 2 && type != 5) // return subtitles only
 						continue;
@@ -602,11 +599,11 @@ int cPlayback::GetTeletextPid(void)
 			for (i = 0; TrackList[i] != NULL; i+=2) {
 				int type = 0;
 				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				if (!pid) {
-					if (2 != sscanf(TrackList[i], "%d %*s %d %*d %*d", &pid, &type))
+				if (pid < 0) {
+					if (2 != sscanf(TrackList[i], "%*d %d %*s %d %*d %*d", &pid, &type))
 						continue;
 					if (type != 1)
-						pid = 0;
+						pid = -1;
 				}
 				free(TrackList[i]);
 				free(TrackList[i+1]);

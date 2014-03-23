@@ -65,7 +65,6 @@ static const char *FILENAME = "output.c";
 
 static Output_t *AvailableOutput[] = {
     &LinuxDvbOutput,
-    &PipeOutput,
     NULL
 };
 
@@ -112,10 +111,6 @@ static void OutputAdd(Context_t * context, char *port)
 		}
 		if (!strcmp("video", port)) {
 		    context->output->video = AvailableOutput[i];
-		    return;
-		}
-		if (!strcmp("teletext", port)) {
-		    context->output->teletext = AvailableOutput[i];
 		    return;
 		}
 	    }

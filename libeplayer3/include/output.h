@@ -55,7 +55,6 @@ typedef struct Output_s {
 
 extern Output_t LinuxDvbOutput;
 extern Output_t SubtitleOutput;
-extern Output_t PipeOutput;
 
 typedef struct OutputHandler_s {
     char *Name;

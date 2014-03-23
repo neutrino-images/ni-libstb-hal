@@ -57,7 +57,6 @@ extern Writer_t WriterVideoMSCOMP;
 extern Writer_t WriterVideoH263;
 extern Writer_t WriterVideoFLV;
 extern Writer_t WriterVideoVC1;
-extern Writer_t WriterPipe;
 
 Writer_t *getWriter(char *encoding);
 

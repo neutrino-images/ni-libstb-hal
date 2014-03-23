@@ -229,10 +229,12 @@ long long int calcPts(AVStream * stream, int64_t pts)
 /* Worker Thread                */
 /* **************************** */
 
-// from neutrino-mp/lib/dvbsub.cpp
+// from neutrino-mp/lib/libdvbsubtitle/dvbsub.cpp
 extern void dvbsub_write(AVSubtitle *, int64_t);
 extern void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
 extern void dvbsub_ass_clear(void);
+// from neutrino-mp/lib/lib/libtuxtxt/tuxtxt_common.h
+extern void teletext_write(int pid, uint8_t *data, int size);
 
 static void FFMPEGThread(Context_t * context)
 {
@@ -631,24 +633,7 @@ static void FFMPEGThread(Context_t * context)
 		}
 	    }			/* duration */
 	} else if (teletextTrack && (teletextTrack->Id == pid)) {
-	    teletextTrack->pts = pts = calcPts(teletextTrack->stream, packet.pts);
-
-	    ffmpeg_printf(200, "TeleText index = %d\n", pid);
-
-	    avOut.data = packet_data;
-	    avOut.len = packet_size;
-	    avOut.pts = pts;
-	    avOut.extradata = NULL;
-	    avOut.extralen = 0;
-	    avOut.frameRate = 0;
-	    avOut.timeScale = 0;
-	    avOut.width = 0;
-	    avOut.height = 0;
-	    avOut.type = "teletext";
-
-	    if (context->output->teletext->Write(context, &avOut) < 0) {
-		//ffmpeg_err("writing data to teletext fifo failed\n");
-	    }
+		teletext_write(pid, packet_data, packet_size);
 	}
 
 	av_free_packet(&packet);

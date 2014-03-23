@@ -297,7 +297,7 @@ static void FFMPEGThread(Context_t * context)
 
 	if (seek_sec_rel != 0.0) {
 	    if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
-		float br = (avContext->bit_rate) ? br = avContext->bit_rate / 8.0 : 180000.0;
+		float br = (avContext->bit_rate) ? avContext->bit_rate / 8.0 : 180000.0;
 		seek_target_flag = AVSEEK_FLAG_BYTE;
 		seek_target = avio_tell(avContext->pb) + seek_sec_rel * br;
 	    } else {
@@ -306,7 +306,7 @@ static void FFMPEGThread(Context_t * context)
 	    seek_sec_rel = 0.0;
 	} else if (seek_sec_abs >= 0.0) {
 	    if (avContext->iformat->flags & AVFMT_TS_DISCONT) {
-		float br = (avContext->bit_rate) ? br = avContext->bit_rate / 8.0 : 180000.0;
+		float br = (avContext->bit_rate) ? avContext->bit_rate / 8.0 : 180000.0;
 		seek_target_flag = AVSEEK_FLAG_BYTE;
 		seek_target = seek_sec_abs * br;
 	    } else {

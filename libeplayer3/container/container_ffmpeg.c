@@ -807,8 +807,9 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     avContext->iformat->flags |= AVFMT_SEEK_TO_PTS;
     avContext->flags = AVFMT_FLAG_GENPTS;
     if (context->playback->noprobe) {
-	ffmpeg_printf(10, "noprobe\n");
+	ffmpeg_printf(5, "noprobe\n");
 	avContext->max_analyze_duration = 1;
+	avContext->probesize = 8192;
     }
 
     ffmpeg_printf(20, "find_streaminfo\n");

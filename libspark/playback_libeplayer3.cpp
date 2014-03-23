@@ -92,8 +92,8 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 	bool ret = false;
 	bool isHTTP = false;
 	
-	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n",
-		FILENAME, __FUNCTION__, filename, vpid, vtype, apid, ac3);
+	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d, no_probe=%d\n",
+		FILENAME, __FUNCTION__, filename, vpid, vtype, apid, ac3, no_probe);
 
 	init_jump = -1;
 	//create playback path
@@ -108,7 +108,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 
 	if(strstr(filename, "://"))
             isHTTP = true;
-	else if (pm == PLAYMODE_TS && no_probe)
+	else if (no_probe)
 	    strcat(file, "myts://");
 	else
 	    strcat(file, "file://");

@@ -124,8 +124,6 @@ static void OutputDel(Context_t * context, char *port)
 	context->output->audio = NULL;
     else if (!strcmp("video", port))
 	context->output->video = NULL;
-    else if (!strcmp("teletext", port))
-	context->output->teletext = NULL;
 
 }
 
@@ -141,20 +139,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_OPEN:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_OPEN,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_OPEN, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_OPEN,
-							"audio");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    ret |= context->output->audio->Command(context, OUTPUT_OPEN, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -162,20 +149,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_CLOSE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_CLOSE,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_CLOSE, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_CLOSE,
-							"audio");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    ret |= context->output->audio->Command(context, OUTPUT_CLOSE, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -195,23 +171,11 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_PLAY:{		// 4
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret =
-			context->output->video->Command(context,
-							OUTPUT_PLAY,
-							"video");
+		    ret = context->output->video->Command(context, OUTPUT_PLAY, "video");
 
 		if (!ret) {	// success or not executed, dunn care
 		    if (context->playback->isAudio)
-			ret =
-			    context->output->audio->Command(context,
-							    OUTPUT_PLAY,
-							    "audio");
-
-		    if (context->playback->isTeletext)
-			ret |=
-			    context->output->teletext->Command(context,
-							       command,
-							       "teletext");
+			ret = context->output->audio->Command(context, OUTPUT_PLAY, "audio");
 		}
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
@@ -221,19 +185,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
 		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_STOP,
-							"video");
+			context->output->video->Command(context, OUTPUT_STOP, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_STOP,
-							"audio");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    ret |= context->output->audio->Command(context, OUTPUT_STOP, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -241,15 +195,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_FLUSH:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_FLUSH,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_FLUSH, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_FLUSH,
-							"audio");
+		    ret |= context->output->audio->Command(context, OUTPUT_FLUSH, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -257,15 +205,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_PAUSE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_PAUSE,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_PAUSE, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_PAUSE,
-							"audio");
+		    ret |= context->output->audio->Command(context, OUTPUT_PAUSE, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -273,15 +215,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_FASTFORWARD:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_FASTFORWARD,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_FASTFORWARD, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_FASTFORWARD,
-							"audio");
+		    ret |= context->output->audio->Command(context, OUTPUT_FASTFORWARD, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -289,15 +225,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_REVERSE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_REVERSE,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_REVERSE, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_REVERSE,
-							"audio");
+		    ret |= context->output->audio->Command(context, OUTPUT_REVERSE, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -305,32 +235,17 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_CONTINUE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_CONTINUE,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_CONTINUE, "video");
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_CONTINUE,
-							"audio");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    ret |= context->output->audio->Command(context, OUTPUT_CONTINUE, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
 	}
     case OUTPUT_AVSYNC:{
 	    if (context && context->playback) {
-		if (context->playback->isVideo
-		    && context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_AVSYNC,
-							"audio");
+		if (context->playback->isVideo && context->playback->isAudio)
+		    ret |= context->output->audio->Command(context, OUTPUT_AVSYNC, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -339,21 +254,10 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    if (context && context->playback) {
 		if (context->playback->isVideo
 		    && (argument == NULL || *(char *) argument == 'v'))
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_CLEAR,
-							"video");
+		    ret |= context->output->video->Command(context, OUTPUT_CLEAR, "video");
 		if (context->playback->isAudio
 		    && (argument == NULL || *(char *) argument == 'a'))
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_CLEAR,
-							"audio");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    ret |= context->output->audio->Command(context, OUTPUT_CLEAR, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -361,13 +265,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_PTS:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    return context->output->video->Command(context,
-							   OUTPUT_PTS,
-							   argument);
+		    return context->output->video->Command(context, OUTPUT_PTS, argument);
 		if (context->playback->isAudio)
-		    return context->output->audio->Command(context,
-							   OUTPUT_PTS,
-							   argument);
+		    return context->output->audio->Command(context, OUTPUT_PTS, argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -375,18 +275,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_SWITCH:{
 	    if (context && context->playback) {
 		if (context->playback->isAudio)
-		    return context->output->audio->Command(context,
-							   OUTPUT_SWITCH,
-							   "audio");
+		    return context->output->audio->Command(context, OUTPUT_SWITCH, "audio");
 		if (context->playback->isVideo)
-		    return context->output->video->Command(context,
-							   OUTPUT_SWITCH,
-							   "video");
-		if (context->playback->isTeletext)
-		    ret |=
-			context->output->teletext->Command(context,
-							   command,
-							   "teletext");
+		    return context->output->video->Command(context, OUTPUT_SWITCH, "video");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -395,14 +286,10 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
 		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_SLOWMOTION,
-							"video");
+			context->output->video->Command(context, OUTPUT_SLOWMOTION, "video");
 		if (context->playback->isAudio)
 		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_SLOWMOTION,
-							"audio");
+			context->output->audio->Command(context, OUTPUT_SLOWMOTION, "audio");
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -410,10 +297,7 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_AUDIOMUTE:{
 	    if (context && context->playback) {
 		if (context->playback->isAudio)
-		    ret |=
-			context->output->audio->Command(context,
-							OUTPUT_AUDIOMUTE,
-							(char *) argument);
+		    ret |= context->output->audio->Command(context, OUTPUT_AUDIOMUTE, (char *) argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -421,10 +305,7 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_DISCONTINUITY_REVERSE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |=
-			context->output->video->Command(context,
-							OUTPUT_DISCONTINUITY_REVERSE,
-							(void *) argument);
+		    ret |= context->output->video->Command(context, OUTPUT_DISCONTINUITY_REVERSE, (void *) argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -432,13 +313,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
     case OUTPUT_GET_FRAME_COUNT:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    return context->output->video->Command(context,
-							   OUTPUT_GET_FRAME_COUNT,
-							   argument);
+		    return context->output->video->Command(context, OUTPUT_GET_FRAME_COUNT, argument);
 		if (context->playback->isAudio)
-		    return context->output->audio->Command(context,
-							   OUTPUT_GET_FRAME_COUNT,
-							   argument);
+		    return context->output->audio->Command(context, OUTPUT_GET_FRAME_COUNT, argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -460,7 +337,5 @@ OutputHandler_t OutputHandler = {
     "Output",
     NULL,
     NULL,
-    NULL,
-    NULL,			// teletext
     &Command
 };

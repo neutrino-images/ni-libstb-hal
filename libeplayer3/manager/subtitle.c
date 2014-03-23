@@ -76,7 +76,7 @@ static int CurrentTrack = -1;	//no as default.
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t * context, Track_t track)
+static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track)
 {
 
     subtitle_mgr_printf(10, "%s::%s %s %s %d\n", FILENAME, __FUNCTION__,
@@ -111,9 +111,6 @@ static int ManagerAdd(Context_t * context, Track_t track)
 			 FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
 	return cERR_SUBTITLE_MGR_ERROR;
     }
-
-    if (TrackCount > 0)
-	context->playback->isSubtitle = 1;
 
     subtitle_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
@@ -155,7 +152,7 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
     return tracklist;
 }
 
-static int ManagerDel(Context_t * context)
+static int ManagerDel(Context_t * context __attribute__((unused)))
 {
 
     int i = 0;
@@ -177,7 +174,6 @@ static int ManagerDel(Context_t * context)
 
     TrackCount = 0;
     CurrentTrack = -1;
-    context->playback->isSubtitle = 0;
 
     subtitle_mgr_printf(10, "%s::%s return no error\n", FILENAME,
 			__FUNCTION__);

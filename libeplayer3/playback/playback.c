@@ -112,11 +112,9 @@ static int PlaybackOpen(Context_t * context, char *uri)
 
     context->playback->uri = strdup(uri);
 
-    context->playback->isFile = 0;
     context->playback->isHttp = 0;
 
     if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7)) {
-	context->playback->isFile = 1;
 	if (!strncmp("myts://", uri, 7)) {
 	    memcpy(context->playback->uri, "file", 4);
 	    context->playback->noprobe = 1;
@@ -486,7 +484,6 @@ static int PlaybackFastBackward(Context_t * context, int *speed)
 	    context->playback->BackWard = 0;
 	    context->playback->Speed = 0;	/* reverse end */
 	} else {
-	    context->playback->isSeeking = 1;
 	    context->playback->Speed = *speed;
 	    context->playback->BackWard = 1;
 
@@ -499,7 +496,6 @@ static int PlaybackFastBackward(Context_t * context, int *speed)
 	    playback_err("OUTPUT_REVERSE failed\n");
 	    context->playback->BackWard = 0;
 	    context->playback->Speed = 1;
-	    context->playback->isSeeking = 0;
 	    ret = cERR_PLAYBACK_ERROR;
 	}
     } else {
@@ -509,7 +505,6 @@ static int PlaybackFastBackward(Context_t * context, int *speed)
 
     if (context->playback->BackWard)
 	context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
-    context->playback->isSeeking = 0;
     playback_printf(10, "exiting with value %d\n", ret);
 
     return ret;
@@ -559,16 +554,12 @@ static int PlaybackSeek(Context_t * context, float *pos, int absolute)
 
     playback_printf(10, "pos: %f\n", *pos);
 
-    context->playback->isSeeking = 1;
-
     context->output->Command(context, OUTPUT_CLEAR, NULL);
 
     if (absolute)
 	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, pos);
     else
 	context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
-
-    context->playback->isSeeking = 0;
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -853,10 +844,6 @@ static int Command(void *_context, PlaybackCmd_t command, void *argument)
 PlaybackHandler_t PlaybackHandler = {
     "Playback",
     -1,
-    0,
-    0,
-    0,
-    0,
     0,
     0,
     0,

@@ -16,13 +16,11 @@ typedef struct PlaybackHandler_s {
 
     int fd;
 
-    unsigned char isFile;
     unsigned char isHttp;
 
     unsigned char isPlaying;
     unsigned char isPaused;
     unsigned char isForwarding;
-    unsigned char isSeeking;
     unsigned char isCreationPhase;
 
     int BackWard;
@@ -32,8 +30,6 @@ typedef struct PlaybackHandler_s {
 
     unsigned char isVideo;
     unsigned char isAudio;
-    unsigned char isSubtitle;
-    unsigned char isDvbSubtitle;
     unsigned char abortRequested;
     unsigned char abortPlayback;
 

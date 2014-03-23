@@ -738,28 +738,6 @@ static int PlaybackSwitchTeletext(Context_t * context, int *pid)
     return ret;
 }
 
-static int PlaybackInfo(Context_t * context, char **infoString)
-{
-    int ret = cERR_PLAYBACK_NO_ERROR;
-
-    playback_printf(10, "\n");
-
-/* konfetti comment: 
- * removed if clause here (playback running) because its 
- * not necessary for all container. e.g. in case of ffmpeg 
- * container playback must not play to get the info.
- */
-
-    if (context->container && context->container->selectedContainer)
-	context->container->selectedContainer->Command(context,
-						       CONTAINER_INFO,
-						       infoString);
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
-}
-
 static int PlaybackMetadata(Context_t * context, char ***metadata)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -835,10 +813,6 @@ static int Command(void *_context, PlaybackCmd_t command, void *argument)
 	}
     case PLAYBACK_SWITCH_SUBTITLE:{
 	    ret = PlaybackSwitchSubtitle(context, (int *) argument);
-	    break;
-	}
-    case PLAYBACK_INFO:{
-	    ret = PlaybackInfo(context, (char **) argument);
 	    break;
 	}
     case PLAYBACK_METADATA:{

@@ -52,7 +52,6 @@
 #include "aac.h"
 #endif
 #include "pcm.h"
-#include "ffmpeg_metadata.h"
 
 /* ***************************** */
 /* Makros/Constants              */
@@ -224,26 +223,6 @@ long long int calcPts(AVStream * stream, int64_t pts)
 	pts = INVALID_PTS_VALUE;
 
     return pts;
-}
-
-/* search for metadata in context and stream
- * and map it to our metadata.
- */
-
-static char *searchMeta(AVDictionary * metadata, char *ourTag)
-{
-    AVDictionaryEntry *tag = NULL;
-    int i = 0;
-
-    while (metadata_map[i]) {
-	if (!strcasecmp(ourTag, metadata_map[i]))
-	    while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-		if (!strcasecmp(tag->key, ourTag) || !strcmp(tag->key, metadata_map[i + 1]))
-		    return tag->value;
-	i += 2;
-    }
-
-    return NULL;
 }
 
 /* **************************** */
@@ -1417,62 +1396,6 @@ static int container_ffmpeg_switch_teletext(Context_t * context __attribute__ ((
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-/* konfetti comment: I dont like the mechanism of overwriting
- * the pointer in infostring. This lead in most cases to
- * user errors, like it is in the current version (libeplayer2 <-->e2->servicemp3.cpp)
- * From e2 there is passed a tag=strdup here and we overwrite this
- * strdupped tag. This lead to dangling pointers which are never freed!
- * I do not free the string here because this is the wrong way. The mechanism
- * should be changed, or e2 should pass it in a different way...
- */
-static int container_ffmpeg_get_info(Context_t * context, char **infoString)
-{
-    Track_t *videoTrack = NULL;
-    Track_t *audioTrack = NULL;
-    char *meta = NULL;
-
-    ffmpeg_printf(20, ">\n");
-
-    if (avContext != NULL) {
-	if ((infoString == NULL) || (*infoString == NULL)) {
-	    ffmpeg_err("infostring NULL\n");
-	    return cERR_CONTAINER_FFMPEG_ERR;
-	}
-
-	ffmpeg_printf(20, "%s\n", *infoString);
-
-	context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
-	context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
-
-	if ((meta = searchMeta(avContext->metadata, *infoString)) == NULL) {
-	    if (audioTrack != NULL) {
-		AVStream *stream = audioTrack->stream;
-
-		meta = searchMeta(stream->metadata, *infoString);
-	    }
-
-	    if ((meta == NULL) && (videoTrack != NULL)) {
-		AVStream *stream = videoTrack->stream;
-
-		meta = searchMeta(stream->metadata, *infoString);
-	    }
-	}
-
-	if (meta != NULL) {
-	    *infoString = strdup(meta);
-	} else {
-	    ffmpeg_printf(1, "no metadata found for \"%s\"\n", *infoString);
-	    *infoString = strdup("not found");
-	}
-    } else {
-	ffmpeg_err("avContext NULL\n");
-	return cERR_CONTAINER_FFMPEG_ERR;
-    }
-
-    return cERR_CONTAINER_FFMPEG_NO_ERROR;
-
-}
-
 static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 {
 	Track_t *videoTrack = NULL;
@@ -1582,20 +1505,8 @@ static int Command(void *_context, ContainerCmd_t command, void *argument)
 	    ret = container_ffmpeg_switch_subtitle(context, (int *) argument);
 	    break;
 	}
-    case CONTAINER_INFO:{
-	    ret = container_ffmpeg_get_info(context, (char **) argument);
-	    break;
-	}
     case CONTAINER_METADATA:{
 	    ret = container_ffmpeg_get_metadata(context, (char ***) argument);
-	    break;
-	}
-    case CONTAINER_STATUS:{
-	    *((int *) argument) = hasPlayThreadStarted;
-	    break;
-	}
-    case CONTAINER_LAST_PTS:{
-	    *((long long int *) argument) = latestPts;
 	    break;
 	}
     case CONTAINER_SWITCH_TELETEXT:{

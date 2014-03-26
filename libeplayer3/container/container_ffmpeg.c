@@ -103,7 +103,6 @@ static pthread_t PlayThread;
 static int hasPlayThreadStarted = 0;
 static AVFormatContext *avContext = NULL;
 static unsigned char isContainerRunning = 0;
-static long long int latestPts = 0;
 static float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 
 /* ***************************** */
@@ -333,7 +332,6 @@ static void FFMPEGThread(Context_t * context)
 		bofcount = 1;
 	    seek_target = INT64_MIN;
 	    restart_audio_resampling = 1;
-	    latestPts = 0;
 
 	    // flush streams
 	    unsigned int i;
@@ -384,10 +382,6 @@ static void FFMPEGThread(Context_t * context)
 	if (videoTrack && (videoTrack->Id == pid)) {
 	    currentVideoPts = videoTrack->pts = pts = calcPts(videoTrack->stream, packet.pts);
 
-	    if ((currentVideoPts > latestPts)
-		&& (currentVideoPts != INVALID_PTS_VALUE))
-		latestPts = currentVideoPts;
-
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
 
 	    avOut.data = packet_data;
@@ -407,9 +401,6 @@ static void FFMPEGThread(Context_t * context)
 	} else if (audioTrack && (audioTrack->Id == pid)) {
 	    if (!context->playback->BackWard) {
 		currentAudioPts = audioTrack->pts = pts = calcPts(audioTrack->stream, packet.pts);
-
-		if ((currentAudioPts > latestPts) && (!videoTrack))
-		    latestPts = currentAudioPts;
 
 		ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
 		if (audioTrack->inject_raw_pcm == 1) {
@@ -600,9 +591,6 @@ static void FFMPEGThread(Context_t * context)
 	    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
 	    pts = calcPts(subtitleTrack->stream, packet.pts);
-
-	    if ((pts > latestPts) && (!videoTrack) && (!audioTrack))
-		latestPts = pts;
 
 	    if (duration > 0.0) {
 		/* is there a decoder ? */
@@ -828,7 +816,6 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     }
 
     terminating = 0;
-    latestPts = 0;
     int res = container_ffmpeg_update_tracks(context, filename);
 
     unsigned int n, found_av = 0;

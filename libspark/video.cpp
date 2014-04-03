@@ -554,7 +554,7 @@ int cVideo::getBlank(void)
 		return 0;
 	while ((r = getline(&line, &n, f)) != -1)
 	{
-		if (r <= strlen("mailbox")) /* should not happen... */
+		if (r <= (ssize_t) strlen("mailbox")) /* should not happen... */
 			continue;
 		line[r - 1] = 0; /* remove \n */
 		if (!strcmp(&line[r - 1 - strlen("mailbox")], "mailbox"))

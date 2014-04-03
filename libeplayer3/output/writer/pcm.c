@@ -125,8 +125,7 @@ static int prepareClipPlay(int uNoOfChannels, int uSampleRate,
 
     memcpy(lpcm_prv, clpcm_prv, sizeof(lpcm_prv));
 
-    //figure out size of subframe
-    //and set up sample rate
+    // figure out size of subframe and set up sample rate
     switch (uSampleRate) {
     case 48000:
 	SubFrameLen = 40;
@@ -172,8 +171,7 @@ static int prepareClipPlay(int uNoOfChannels, int uSampleRate,
     case 16:
 	break;
     default:
-	printf("inappropriate bits per sample (%d) - must be 16 or 24\n",
-	       uBitsPerSample);
+	printf("inappropriate bits per sample (%d) - must be 16 or 24\n", uBitsPerSample);
 	return 1;
     }
 
@@ -240,16 +238,12 @@ static int writeData(void *_call)
 	}
 	//get first PES's worth
 	if (breakBufferFillSize > 0) {
-	    memcpy(injectBuffer, breakBuffer,
-		   sizeof(unsigned char) * breakBufferFillSize);
-	    memcpy(&injectBuffer[breakBufferFillSize], &buffer[pos],
-		   sizeof(unsigned char) * (SubFrameLen -
-					    breakBufferFillSize));
+	    memcpy(injectBuffer, breakBuffer, sizeof(unsigned char) * breakBufferFillSize);
+	    memcpy(&injectBuffer[breakBufferFillSize], &buffer[pos], sizeof(unsigned char) * (SubFrameLen - breakBufferFillSize));
 	    pos += (SubFrameLen - breakBufferFillSize);
 	    breakBufferFillSize = 0;
 	} else {
-	    memcpy(injectBuffer, &buffer[pos],
-		   sizeof(unsigned char) * SubFrameLen);
+	    memcpy(injectBuffer, &buffer[pos], sizeof(unsigned char) * SubFrameLen);
 	    pos += SubFrameLen;
 	}
 
@@ -291,9 +285,7 @@ static int writeData(void *_call)
 	//increment err... subframe count?
 	lpcm_prv[1] = ((lpcm_prv[1] + SubFramesPerPES) & 0x1F);
 
-	iov[0].iov_len =
-	    InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len,
-			    PCM_PES_START_CODE, call->Pts, 0);
+	iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, call->Pts, 0);
 	int len = writev(call->fd, iov, 3);
 	if (len < 0)
 	    break;

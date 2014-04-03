@@ -59,15 +59,18 @@ void cAudio::openDevice(void)
 
 void cAudio::closeDevice(void)
 {
-	if (fd >= 0)
+	if (fd > -1) {
 		close(fd);
-	fd = -1;
-	if (clipfd >= 0)
+		fd = -1;
+	}
+	if (clipfd > -1) {
 		close(clipfd);
-	clipfd = -1;
-	if (mixer_fd >= 0)
+		clipfd = -1;
+	}
+	if (mixer_fd > -1) {
 		close(mixer_fd);
-	mixer_fd = -1;
+		mixer_fd = -1;
+	}
 }
 
 int cAudio::do_mute(bool enable, bool remember)
@@ -172,7 +175,7 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 		case AUDIO_FMT_DD_PLUS:
 		case AUDIO_FMT_DOLBY_DIGITAL:
 			bypass = AUDIO_STREAMTYPE_AC3;
- 			break;
+			break;
 		case AUDIO_FMT_AAC:
 			bypass = AUDIO_STREAMTYPE_AAC;
 			break;
@@ -205,12 +208,11 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	const char *dsp_dev = getenv("DSP_DEVICE");
 	const char *mix_dev = getenv("MIX_DEVICE");
 	lt_debug("%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
-	if (clipfd >= 0) {
+	if (clipfd > -1) {
 		lt_info("%s: clipfd already opened (%d)\n", __FUNCTION__, clipfd);
 		return -1;
 	}
 	mixer_num = -1;
-	mixer_fd = -1;
 	/* a different DSP device can be given with DSP_DEVICE and MIX_DEVICE
 	 * if this device cannot be opened, we fall back to the internal OSS device
 	 * Example:
@@ -222,7 +224,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
 		if (dsp_dev)
 			lt_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-				" fall back to /dev/dsp1\n", __func__, dsp_dev);
+					" fall back to /dev/dsp1\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp1";
 	}
 	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
@@ -267,7 +269,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	usable = devmask & stereo;
 	if (usable == 0) {
 		lt_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
-			__func__, devmask, stereo);
+				__func__, devmask, stereo);
 		close(mixer_fd);
 		mixer_fd = -1;
 		return 0; /* TODO: should we treat this as error? */
@@ -276,13 +278,13 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if (__builtin_popcount (usable) != 1) {
 		/* TODO: this code is not yet tested as I have only single-mixer devices... */
 		lt_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
-			"%s: querying MIX_NUMBER environment variable...\n",
-			__func__, devmask, stereo, __func__);
+				"%s: querying MIX_NUMBER environment variable...\n",
+				__func__, devmask, stereo, __func__);
 		const char *tmp = getenv("MIX_NUMBER");
 		if (tmp)
 			mixer_num = atoi(tmp);
 		lt_info("%s: mixer_num is %d -> device %08x\n",
-			__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
+				__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
 	} else {
 		mixer_num = 0;
@@ -300,7 +302,7 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 {
 	int ret;
 	// lt_debug("cAudio::%s\n", __FUNCTION__);
-	if (clipfd <= 0) {
+	if (clipfd < 0) {
 		lt_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
@@ -313,15 +315,16 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 int cAudio::StopClip()
 {
 	lt_debug("%s\n", __FUNCTION__);
-	if (clipfd <= 0) {
+	if (clipfd < 0) {
 		lt_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
 	close(clipfd);
 	clipfd = -1;
-	if (mixer_fd >= 0)
+	if (mixer_fd >= -1) {
 		close(mixer_fd);
-	mixer_fd = -1;
+		mixer_fd = -1;
+	}
 	setVolume(volume, volume);
 	return 0;
 };

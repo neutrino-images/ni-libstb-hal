@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
+extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
+}
 
 typedef enum {
     OUTPUT_INIT,
@@ -46,7 +48,7 @@ typedef struct {
 
     int64_t pts;
 
-    char *type;
+    const char *type;
 
     AVFormatContext *avfc;
     AVStream *stream;
@@ -57,10 +59,10 @@ struct Context_s;
 typedef struct Context_s Context_t;
 
 typedef struct Output_s {
-    char *Name;
-    int (*Command) (Context_t *, OutputCmd_t, void *);
+    const char *Name;
+    int (*Command) (Context_t *, OutputCmd_t, const char *);
     int (*Write) (Context_t *, AudioVideoOut_t *privateData);
-    char **Capabilities;
+    const char **Capabilities;
 
 } Output_t;
 
@@ -68,10 +70,10 @@ extern Output_t LinuxDvbOutput;
 extern Output_t SubtitleOutput;
 
 typedef struct OutputHandler_s {
-    char *Name;
+    const char *Name;
     Output_t *audio;
     Output_t *video;
-    int (*Command) (Context_t *, OutputCmd_t, void *);
+    int (*Command) (Context_t *, OutputCmd_t, const char *);
 } OutputHandler_t;
 
 #endif

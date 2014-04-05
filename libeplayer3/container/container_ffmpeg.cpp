@@ -103,7 +103,7 @@ static float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 /* MISC Functions                */
 /* ***************************** */
 
-static char *Codec2Encoding(AVCodecContext * codec)
+static const char *Codec2Encoding(AVCodecContext * codec)
 {
     fprintf(stderr, "Codec ID: %ld (%.8lx)\n", (long) codec->codec_id, (long) codec->codec_id);
     switch (codec->codec_id) {
@@ -214,14 +214,15 @@ int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 /* **************************** */
 
 // from neutrino-mp/lib/libdvbsubtitle/dvbsub.cpp
-extern void dvbsub_write(AVSubtitle *, int64_t);
-extern void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
-extern void dvbsub_ass_clear(void);
+extern "C" void dvbsub_write(AVSubtitle *, int64_t);
+extern "C" void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
+extern "C" void dvbsub_ass_clear(void);
 // from neutrino-mp/lib/lib/libtuxtxt/tuxtxt_common.h
-extern void teletext_write(int pid, uint8_t *data, int size);
+extern "C" void teletext_write(int pid, uint8_t *data, int size);
 
-static void FFMPEGThread(Context_t * context)
+static void *FFMPEGThread(void *arg)
 {
+    Context_t *context = (Context_t *) arg;
     char threadname[17];
     strncpy(threadname, __func__, sizeof(threadname));
     threadname[16] = 0;
@@ -443,6 +444,7 @@ static void FFMPEGThread(Context_t * context)
     hasPlayThreadStarted = 0;
 
     ffmpeg_printf(10, "terminating\n");
+    pthread_exit(NULL);
 }
 
 /* **************************** */
@@ -463,10 +465,10 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 }
 
 static void container_ffmpeg_read_subtitle(Context_t * context, const char *filename, const char *format, int pid) {
-	char *lastDot = strrchr(filename, '.');
+	const char *lastDot = strrchr(filename, '.');
 	if (!lastDot)
 		return;
-	char *subfile = alloca(strlen(filename) + strlen(format));
+	char *subfile = (char *) alloca(strlen(filename) + strlen(format));
 	strcpy(subfile, filename);
 	strcpy(subfile + (lastDot + 1 - filename), format);
 
@@ -496,18 +498,6 @@ static void container_ffmpeg_read_subtitle(Context_t * context, const char *file
 	}
         AVPacket avpkt;
         av_init_packet(&avpkt);
-#if 0
-	// FIXME, use custom values
-        if (c->subtitle_header && !strcmp(format, "srt")) {
-                av_freep(&c->subtitle_header);
-
-		#define ASS_DEFAULT_FONT        "Arial"
-		#define ASS_DEFAULT_FONT_SIZE   16
-		#define ASS_DEFAULT_COLOR       0xffffff
-
-        		ff_ass_subtitle_header(c, ASS_DEFAULT_FONT, ASS_DEFAULT_FONT_SIZE, ASS_DEFAULT_COLOR, 0, 0, 0, 0, 2);
-	}
-#endif
 
         if (c->subtitle_header)
                 fprintf(stderr, "%s\n", c->subtitle_header);
@@ -525,8 +515,7 @@ static void container_ffmpeg_read_subtitle(Context_t * context, const char *file
         avformat_free_context(avfc);
 
 	Track_t track;
-	memset(&track, 0, sizeof(track));
-	track.Name = (char *) format;
+	track.Name = format;
 	track.is_static = 1;
 	track.Id = pid;
 	track.Encoding = strcmp(format, "srt") ? "S_TEXT/ASS" : "S_TEXT/SRT";
@@ -542,7 +531,7 @@ static void container_ffmpeg_read_subtitles(Context_t * context, const char *fil
 	container_ffmpeg_read_subtitle(context, filename, "ssa", 0xFFFD);
 }
 
-int container_ffmpeg_init(Context_t * context, char *filename)
+int container_ffmpeg_init(Context_t * context, const char *filename)
 {
     int err;
 
@@ -640,7 +629,7 @@ int container_ffmpeg_init(Context_t * context, char *filename)
     return res;
 }
 
-int container_ffmpeg_update_tracks(Context_t * context, char *filename)
+int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 {
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
@@ -650,13 +639,12 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 	context->manager->video->Command(context, MANAGER_INIT_UPDATE, NULL);
 	for (i = 0; i < avContext->nb_chapters; i++) {
 	    Track_t track;
-	    memset(&track, 0, sizeof(track));
 	    track.Id = i;
 	    AVDictionaryEntry *title;
 	    AVChapter *ch = avContext->chapters[i];
 	    title = av_dict_get(ch->metadata, "title", NULL, 0);
 	    track.Name = strdup(title ? title->value : "und");
-	    ffmpeg_printf(10, "Chapter %s\n", track.Name);
+	    ffmpeg_printf(10, "Chapter %s\n", track.Name.c_str());
 	    track.chapter_start = (double) ch->start * av_q2d(ch->time_base) * 1000.0;
 	    track.chapter_end = (double) ch->end * av_q2d(ch->time_base) * 1000.0;
 	    context->manager->chapter->Command(context, MANAGER_ADD, &track);
@@ -683,18 +671,13 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 	Track_t track;
 	AVStream *stream = avContext->streams[n];
 
-	char *encoding = Codec2Encoding(stream->codec);
+	const char *encoding = Codec2Encoding(stream->codec);
 
 	if (encoding != NULL)
 	    ffmpeg_printf(1, "%d. encoding = %s\n", n, encoding);
 
 	if (!stream->id)
-	    stream->id = n;
-
-	/* some values in track are unset and therefor copyTrack segfaults.
-	 * so set it by default to NULL!
-	 */
-	memset(&track, 0, sizeof(track));
+	    stream->id = n + 1;
 
 	track.avfc = avContext;
 	track.stream = stream;
@@ -736,7 +719,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 
 		track.Name = lang ? lang->value : "und";
 
-		ffmpeg_printf(10, "Language %s\n", track.Name);
+		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
 		track.Encoding = encoding;
 		track.Id = stream->id;
@@ -770,7 +753,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 
 		track.Name = lang ? lang->value : "und";
 
-		ffmpeg_printf(10, "Language %s\n", track.Name);
+		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
 		track.Encoding = encoding;
 		track.Id = stream->id;
@@ -786,7 +769,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		ffmpeg_printf(10, "subtitle height %d\n", stream->codec->height);
 		ffmpeg_printf(10, "subtitle stream %p\n", stream);
 
-		ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name);
+		ffmpeg_printf(10, "FOUND SUBTITLE %s\n", track.Name.c_str());
 
 		if (stream->codec->codec_id == AV_CODEC_ID_DVB_TELETEXT && context->manager->teletext) {
 		    ffmpeg_printf(10, "dvb_teletext\n");
@@ -853,7 +836,7 @@ static int container_ffmpeg_play(Context_t * context)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	if ((error = pthread_create(&PlayThread, &attr, (void *) &FFMPEGThread, context)) != 0) {
+	if ((error = pthread_create(&PlayThread, &attr, FFMPEGThread, context)) != 0) {
 	    ffmpeg_printf(10, "Error creating thread, error:%d:%s\n", error, strerror(error));
 	    ret = cERR_CONTAINER_FFMPEG_ERR;
 	} else {
@@ -997,7 +980,7 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	if (audioTrack)
 		psize += av_dict_count(((AVStream *)(audioTrack->stream))->metadata);
 
-	*p = malloc(sizeof(char *) * psize * 2);
+	*p = (char **) malloc(sizeof(char *) * psize * 2);
 	if (!*p) {
 		fprintf(stderr, "MALLOC %s:%d\n", __func__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_ERR;
@@ -1030,7 +1013,7 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int Command(Context_t *context, ContainerCmd_t command, void *argument)
+static int Command(Context_t *context, ContainerCmd_t command, const char *argument)
 {
     int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 
@@ -1042,8 +1025,7 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument)
 	return cERR_CONTAINER_FFMPEG_ERR;
     switch (command) {
     case CONTAINER_INIT:{
-	    char *filename = (char *) argument;
-	    ret = container_ffmpeg_init(context, filename);
+	    ret = container_ffmpeg_init(context, argument);
 	    break;
 	}
     case CONTAINER_PLAY:{
@@ -1096,7 +1078,7 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument)
     return ret;
 }
 
-static char *FFMPEG_Capabilities[] = { "avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg",
+static const char *FFMPEG_Capabilities[] = { "avi", "mkv", "mp4", "ts", "mov", "flv", "flac", "mp3", "mpg",
     "m2ts", "vob", "wmv", "wma", "asf", "mp2", "m4v", "m4a", "divx", "dat",
     "mpeg", "trp", "mts", "vdr", "ogg", "wav", "wtv", "ogm", "3gp", NULL
 };

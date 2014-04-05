@@ -71,8 +71,9 @@ static int PlaybackTerminate(Context_t * context);
 /* Supervisor Thread            */
 /* **************************** */
 
-static void SupervisorThread(Context_t * context)
+static void *SupervisorThread(void *arg)
 {
+    Context_t *context = (Context_t *) arg;
     hasThreadStarted = 1;
 
     playback_printf(10, ">\n");
@@ -88,6 +89,7 @@ static void SupervisorThread(Context_t * context)
 
     playback_printf(0, "terminating\n");
     hasThreadStarted = 0;
+    pthread_exit(NULL);
 }
 
 /* ***************************** */
@@ -108,44 +110,32 @@ static int PlaybackOpen(Context_t * context, char *uri)
 	return cERR_PLAYBACK_ERROR;
     }
 
-    char *extension = NULL;
-
-    context->playback->uri = strdup(uri);
-
     context->playback->isHttp = 0;
 
     if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7)) {
 	if (!strncmp("myts://", uri, 7)) {
-	    memcpy(context->playback->uri, "file", 4);
+	    context->playback->uri = "file";
+	    context->playback->uri += (uri + 4);
 	    context->playback->noprobe = 1;
-	} else
+	} else {
 	    context->playback->noprobe = 0;
-
-	extension = getExtension(context->playback->uri + 7);
-	if (!extension)
-	    return cERR_PLAYBACK_ERROR;
+	    context->playback->uri = uri;
+	}
     } else if (strstr(uri, "://")) {
 	context->playback->isHttp = 1;
-	extension = "mp3";
 	if (!strncmp("mms://", uri, 6)) {
-	    // mms is in reality called rtsp, and ffmpeg expects this
-	    char *tUri = (char *) malloc(strlen(uri) + 2);
-	    strncpy(tUri + 1, uri, strlen(uri) + 1);
-	    strncpy(tUri, "mmst", 4);
-	    free(context->playback->uri);
-	    context->playback->uri = tUri;
-	}
+	    context->playback->uri = "mmst";
+	    context->playback->uri += (uri + 3);
+	} else
+	    context->playback->uri = uri;
     } else {
 	playback_err("Unknown stream (%s)\n", uri);
 	return cERR_PLAYBACK_ERROR;
     }
 
-    if ((context->container->Command(context, CONTAINER_ADD, extension) <
-	 0)
+    if ((context->container->Command(context, CONTAINER_ADD, NULL) < 0)
 	|| (!context->container->selectedContainer)
-	|| (context->container->
-	    selectedContainer->Command(context, CONTAINER_INIT,
-				       context->playback->uri) < 0))
+	|| (context->container->selectedContainer->Command(context, CONTAINER_INIT, context->playback->uri.c_str()) < 0))
 	return cERR_PLAYBACK_ERROR;
 
     playback_printf(10, "exiting with value 0\n");
@@ -175,10 +165,7 @@ static int PlaybackClose(Context_t * context)
     context->playback->BackWard = 0;
     context->playback->SlowMotion = 0;
     context->playback->Speed = 0;
-    if (context->playback->uri) {
-	free(context->playback->uri);
-	context->playback->uri = NULL;
-    }
+    context->playback->uri.clear();
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -222,9 +209,7 @@ static int PlaybackPlay(Context_t * context)
 					    PTHREAD_CREATE_DETACHED);
 
 		if ((error =
-		     pthread_create(&supervisorThread, &attr,
-				    (void *) &SupervisorThread,
-				    context)) != 0) {
+		     pthread_create(&supervisorThread, &attr, SupervisorThread, context)) != 0) {
 		    playback_printf(10,
 				    "Error creating thread, error:%d:%s\n",
 				    error, strerror(error));
@@ -557,9 +542,9 @@ static int PlaybackSeek(Context_t * context, float *pos, int absolute)
     context->output->Command(context, OUTPUT_CLEAR, NULL);
 
     if (absolute)
-	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, pos);
+	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, (const char *)pos);
     else
-	context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
+	context->container->selectedContainer->Command(context, CONTAINER_SEEK, (const char *)pos);
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -575,7 +560,7 @@ static int PlaybackPts(Context_t * context, unsigned long long int *pts)
     *pts = 0;
 
     if (context->playback->isPlaying) {
-	ret = context->output->Command(context, OUTPUT_PTS, pts);
+	ret = context->output->Command(context, OUTPUT_PTS, (const char *)pts);
     } else {
 	playback_err("not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -598,7 +583,7 @@ static int PlaybackGetFrameCount(Context_t * context,
     if (context->playback->isPlaying) {
 	ret =
 	    context->output->Command(context, OUTPUT_GET_FRAME_COUNT,
-				     frameCount);
+				     (const char *)frameCount);
     } else {
 	playback_err("not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -621,7 +606,7 @@ static int PlaybackLength(Context_t * context, double *length)
 	if (context->container && context->container->selectedContainer)
 	    context->container->selectedContainer->Command(context,
 							   CONTAINER_LENGTH,
-							   length);
+							   (const char *)length);
     } else {
 	playback_err("not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -654,14 +639,11 @@ static int PlaybackSwitchAudio(Context_t * context, int *track)
 	    //PlaybackPause(context);
 
 	    if (context->output && context->output->audio)
-		context->output->audio->Command(context, OUTPUT_SWITCH,
-						(void *) "audio");
+		context->output->audio->Command(context, OUTPUT_SWITCH, "audio");
 
 	    if (context->container
 		&& context->container->selectedContainer)
-		context->container->selectedContainer->Command(context,
-							       CONTAINER_SWITCH_AUDIO,
-							       &nextrackid);
+		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_AUDIO, (const char *)&nextrackid);
 
 	    //PlaybackContinue(context);
 	}
@@ -722,7 +704,7 @@ static int PlaybackSwitchTeletext(Context_t * context, int *pid)
 	playback_err("no ttxsubtitle\n");
 
     if (*pid < 0)
-	container_ffmpeg_update_tracks(context, context->playback->uri);
+	container_ffmpeg_update_tracks(context, context->playback->uri.c_str());
 
     playback_printf(10, "exiting with value %d\n", ret);
 
@@ -736,7 +718,7 @@ static int PlaybackMetadata(Context_t * context, char ***metadata)
     if (context->container && context->container->selectedContainer)
 	context->container->selectedContainer->Command(context,
 						       CONTAINER_METADATA,
-						       metadata);
+						       (const char *)metadata);
     return ret;
 }
 

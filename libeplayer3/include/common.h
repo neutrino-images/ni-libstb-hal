@@ -16,5 +16,5 @@ typedef struct Context_s {
     int64_t *currentAudioPtsP;
 } Context_t;
 
-int container_ffmpeg_update_tracks(Context_t * context, char *filename);
+int container_ffmpeg_update_tracks(Context_t * context, const char *filename);
 #endif

@@ -243,7 +243,7 @@ static int writeData(WriterAVCallData_t *call)
 		insertSampleHeader = 0;
 	    }
 
-	    PacketStart = malloc(call->len + HeaderLength);
+	    PacketStart = (unsigned char *) malloc(call->len + HeaderLength);
 	    memcpy(PacketStart, PesHeader, HeaderLength);
 	    memcpy(PacketStart + HeaderLength, call->data + Position,
 		   PacketLength);

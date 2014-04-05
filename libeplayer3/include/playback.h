@@ -1,6 +1,7 @@
 #ifndef PLAYBACK_H_
 #define PLAYBACK_H_
 #include <sys/types.h>
+#include <string>
 
 typedef enum { PLAYBACK_OPEN, PLAYBACK_CLOSE, PLAYBACK_PLAY, PLAYBACK_STOP,
     PLAYBACK_PAUSE, PLAYBACK_CONTINUE, PLAYBACK_FLUSH, PLAYBACK_TERM,
@@ -15,7 +16,7 @@ struct Context_s;
 typedef struct Context_s Context_t;
 
 typedef struct PlaybackHandler_s {
-    char *Name;
+    const char *Name;
 
     int fd;
 
@@ -37,7 +38,7 @@ typedef struct PlaybackHandler_s {
     unsigned char abortPlayback;
 
     int (*Command) ( Context_t *, PlaybackCmd_t, void *);
-    char *uri;
+    std::string uri;
     unsigned char noprobe;	/* hack: only minimal probing in av_find_stream_info */
     unsigned long long readCount;
 } PlaybackHandler_t;

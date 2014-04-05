@@ -1040,7 +1040,7 @@ static int reset(Context_t * context)
     return ret;
 }
 
-static int Command(Context_t *context, OutputCmd_t command, void *argument)
+static int Command(Context_t *context, OutputCmd_t command, const char *argument)
 {
     int ret = cERR_LINUXDVB_NO_ERROR;
 
@@ -1141,7 +1141,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
     return ret;
 }
 
-static char *LinuxDvbCapabilities[] = { "audio", "video", NULL };
+static const char *LinuxDvbCapabilities[] = { "audio", "video", NULL };
 
 struct Output_s LinuxDvbOutput = {
     "LinuxDvb",

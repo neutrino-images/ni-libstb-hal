@@ -3,12 +3,15 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string>
 
+extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
+}
 
 typedef enum {
     MANAGER_ADD,
@@ -28,8 +31,8 @@ typedef enum {
 } eTrackTypeEplayer;
 
 typedef struct Track_s {
-    char *Name;
-    char *Encoding;
+    std::string Name;
+    const char *Encoding;
     int Id;
 
     /* new field for ffmpeg - add at the end so no problem
@@ -50,20 +53,21 @@ typedef struct Track_s {
     int is_static;
     long long int chapter_start;
     long long int chapter_end;
+    Track_s() : Encoding(NULL), Id(0), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0) {}
 } Track_t;
 
 struct Context_s;
 typedef struct Context_s Context_t;
 
 typedef struct Manager_s {
-    char *Name;
+    const char *Name;
     int (*Command) ( Context_t *, ManagerCmd_t, void *);
-    char **Capabilities;
+    const char **Capabilities;
 
 } Manager_t;
 
 typedef struct ManagerHandler_s {
-    char *Name;
+    const char *Name;
     Manager_t *audio;
     Manager_t *video;
     Manager_t *subtitle;

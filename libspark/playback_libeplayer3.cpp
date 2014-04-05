@@ -64,8 +64,8 @@ bool cPlayback::Open(playmode_t PlayMode)
 
 	//Registration of output devices
 	if(player && player->output) {
-		player->output->Command(player,OUTPUT_ADD, (void*)"audio");
-		player->output->Command(player,OUTPUT_ADD, (void*)"video");
+		player->output->Command(player,OUTPUT_ADD, "audio");
+		player->output->Command(player,OUTPUT_ADD, "video");
 	}
 
 	return 0;
@@ -246,8 +246,8 @@ bool cPlayback::Stop(void)
 		player->output->Command(player, OUTPUT_CLOSE, NULL);
 
 	if(player && player->output) {
-		player->output->Command(player,OUTPUT_DEL, (void*)"audio");
-		player->output->Command(player,OUTPUT_DEL, (void*)"video");
+		player->output->Command(player,OUTPUT_DEL, "audio");
+		player->output->Command(player,OUTPUT_DEL, "video");
 	}
 
 	if(player && player->playback)

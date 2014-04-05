@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <map>
 
 #include "manager.h"
 #include "common.h"
@@ -30,7 +31,6 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-#define TRACKWRAP 64
 
 #define CHAPTER_MGR_DEBUG
 
@@ -64,9 +64,7 @@ static const char FILENAME[] = __FILE__;
 /* Varaibles                     */
 /* ***************************** */
 
-static Track_t *Tracks = NULL;
-static int TrackCount = 0;
-static int CurrentTrack = 0;	//TRACK[0] as default.
+static std::map<int,Track_t> Tracks;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -78,101 +76,33 @@ static int CurrentTrack = 0;	//TRACK[0] as default.
 
 static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track)
 {
-    chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	Tracks[track.Id] = track;
 
-    if (Tracks == NULL) {
-	Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
-	int i;
-	for (i = 0; i < TRACKWRAP; i++)
-	    Tracks[i].Id = -1;
-    }
-
-    if (Tracks == NULL) {
-	chapter_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
-	return cERR_CHAPTER_MGR_ERROR;
-    }
-
-    int i;
-    for (i = 0; i < TRACKWRAP; i++) {
-	if (Tracks[i].Id == track.Id) {
-	    Tracks[i].pending = 0;
-	    return cERR_CHAPTER_MGR_NO_ERROR;
-	}
-    }
-
-    if (TrackCount < TRACKWRAP) {
-	copyTrack(&Tracks[TrackCount], &track);
-
-	TrackCount++;
-    } else {
-	chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME,
-		      __FUNCTION__, TrackCount, TRACKWRAP);
-	return cERR_CHAPTER_MGR_ERROR;
-    }
-
-    chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-
-    return cERR_CHAPTER_MGR_NO_ERROR;
+	return cERR_CHAPTER_MGR_NO_ERROR;
 }
 
 static char **ManagerList(Context_t * context __attribute__ ((unused)))
 {
-    int i = 0, j = 0;
-    char **tracklist = NULL;
+	int j = 0;
+	char **tracklist = (char **) malloc(sizeof(char *) * ((Tracks.size() * 2) + 1));
 
-    chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-
-    if (Tracks != NULL) {
-
-	tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
-
-	if (tracklist == NULL) {
-	    chapter_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
-	    return NULL;
-	}
-
-	for (i = 0, j = 0; i < TrackCount; i++, j += 2) {
-	    if (Tracks[i].pending)
-		continue;
-	    char tmp[20];
-	    snprintf(tmp, sizeof(tmp), "%d", (int)Tracks[i].chapter_start);
-	    tracklist[j] = strdup(tmp);
-	    tracklist[j + 1] = strdup(Tracks[i].Name);
+	for(std::map<int,Track_t>::iterator it = Tracks.begin(); it != Tracks.end(); ++it)
+	{
+		size_t len = it->second.Name.length() + 20;
+		char tmp[len];
+		snprintf(tmp, len, "%d %s\n", it->second.Id, it->second.Name.c_str());
+		tracklist[j] = strdup(tmp);
+		tracklist[j + 1] = strdup(it->second.Encoding);
 	}
 	tracklist[j] = NULL;
-    }
-
-    chapter_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME,
-		     __FUNCTION__, tracklist, j, TrackCount);
 
     return tracklist;
 }
 
 static int ManagerDel(Context_t * context __attribute__((unused)))
 {
-    int i = 0;
-
-    chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-
-    if (Tracks != NULL) {
-	for (i = 0; i < TrackCount; i++) {
-	    freeTrack(&Tracks[i]);
-	}
-	free(Tracks);
-	Tracks = NULL;
-    } else {
-	chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME,
-		      __FUNCTION__);
-	return cERR_CHAPTER_MGR_ERROR;
-    }
-
-    TrackCount = 0;
-    CurrentTrack = 0;
-
-    chapter_mgr_printf(10, "%s::%s return no error\n", FILENAME,
-		     __FUNCTION__);
-
-    return cERR_CHAPTER_MGR_NO_ERROR;
+	Tracks.clear();
+	return cERR_CHAPTER_MGR_NO_ERROR;
 }
 
 static int Command(Context_t *context, ManagerCmd_t command, void *argument)
@@ -183,12 +113,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 
     switch (command) {
     case MANAGER_ADD:{
-	    Track_t *track = argument;
+	    Track_t *track = (Track_t *) argument;
 	    ret = ManagerAdd(context, *track);
 	    break;
 	}
     case MANAGER_LIST:{
-	    container_ffmpeg_update_tracks(context, context->playback->uri);
+	    container_ffmpeg_update_tracks(context, context->playback->uri.c_str());
 	    *((char ***) argument) = (char **) ManagerList(context);
 	    break;
 	}
@@ -197,14 +127,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 	    break;
 	}
     case MANAGER_INIT_UPDATE:{
-	    int i;
-	    for (i = 0; i < TrackCount; i++)
-		Tracks[i].pending = 1;
-	    break;
+		for (std::map<int,Track_t>::iterator it = Tracks.begin(); it != Tracks.end(); ++it)
+			it->second.pending = 1;
+		break;
 	}
     default:
-	chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME,
-		      __FUNCTION__, command);
+	chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
 	ret = cERR_CHAPTER_MGR_ERROR;
 	break;
     }

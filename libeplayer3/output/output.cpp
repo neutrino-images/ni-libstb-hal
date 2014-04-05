@@ -127,7 +127,7 @@ static void OutputDel(Context_t * context, char *port)
 
 }
 
-static int Command(Context_t *context, OutputCmd_t command, void *argument)
+static int Command(Context_t *context, OutputCmd_t command, const char *argument)
 {
     int ret = cERR_OUTPUT_NO_ERROR;
 
@@ -264,9 +264,9 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
     case OUTPUT_PTS:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    return context->output->video->Command(context, OUTPUT_PTS, argument);
+		    return context->output->video->Command(context, OUTPUT_PTS, (const char *) argument);
 		if (context->playback->isAudio)
-		    return context->output->audio->Command(context, OUTPUT_PTS, argument);
+		    return context->output->audio->Command(context, OUTPUT_PTS, (const char *) argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -296,7 +296,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
     case OUTPUT_AUDIOMUTE:{
 	    if (context && context->playback) {
 		if (context->playback->isAudio)
-		    ret |= context->output->audio->Command(context, OUTPUT_AUDIOMUTE, (char *) argument);
+		    ret |= context->output->audio->Command(context, OUTPUT_AUDIOMUTE, (const char *) argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -304,7 +304,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
     case OUTPUT_DISCONTINUITY_REVERSE:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    ret |= context->output->video->Command(context, OUTPUT_DISCONTINUITY_REVERSE, (void *) argument);
+		    ret |= context->output->video->Command(context, OUTPUT_DISCONTINUITY_REVERSE, (const char *) argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
@@ -312,9 +312,9 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
     case OUTPUT_GET_FRAME_COUNT:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)
-		    return context->output->video->Command(context, OUTPUT_GET_FRAME_COUNT, argument);
+		    return context->output->video->Command(context, OUTPUT_GET_FRAME_COUNT, (const char *)argument);
 		if (context->playback->isAudio)
-		    return context->output->audio->Command(context, OUTPUT_GET_FRAME_COUNT, argument);
+		    return context->output->audio->Command(context, OUTPUT_GET_FRAME_COUNT, (const char *)argument);
 	    } else
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;

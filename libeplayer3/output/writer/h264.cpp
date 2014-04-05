@@ -163,7 +163,7 @@ static int writeData(WriterAVCallData_t *call)
 	/*Hellmaster1024: some packets will only be accepted by the player if we send one byte more than
 	   data is available. The content of this byte does not matter. It will be ignored
 	   by the player */
-	iov[ic].iov_base = "";
+	iov[ic].iov_base = (char *) "";
 	iov[ic++].iov_len = 1;
 	iov[0].iov_len =
 	    InsertPesHeader(PesHeader, PacketLength,

@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
+extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
+}
 
 typedef enum { eNone, eAudio, eVideo, eGfx } eWriterType_t;
 
@@ -32,9 +34,9 @@ typedef struct {
 } WriterAVCallData_t;
 
 typedef struct WriterCaps_s {
-    char *name;
+    const char *name;
     eWriterType_t type;
-    char *textEncoding;
+    const char *textEncoding;
     /* fixme: revise if this is an enum! */
     int dvbEncoding;
 } WriterCaps_t;

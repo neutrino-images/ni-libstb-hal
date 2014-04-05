@@ -103,7 +103,7 @@ static float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 /* MISC Functions                */
 /* ***************************** */
 
-static char *Codec2Encoding(AVCodecContext * codec, int *version)
+static char *Codec2Encoding(AVCodecContext * codec)
 {
     fprintf(stderr, "Codec ID: %ld (%.8lx)\n", (long) codec->codec_id, (long) codec->codec_id);
     switch (codec->codec_id) {
@@ -129,13 +129,8 @@ static char *Codec2Encoding(AVCodecContext * codec, int *version)
     case AV_CODEC_ID_MSMPEG4V3:
 	return "V_MSCOMP";
     case AV_CODEC_ID_WMV1:
-	*version = 1;
-	return "V_WMV";
     case AV_CODEC_ID_WMV2:
-	*version = 2;
-	return "V_WMV";
     case AV_CODEC_ID_WMV3:
-	*version = 3;
 	return "V_WMV";
     case AV_CODEC_ID_VC1:
 	return "V_VC1";
@@ -687,12 +682,11 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
     for (n = 0; n < avContext->nb_streams; n++) {
 	Track_t track;
 	AVStream *stream = avContext->streams[n];
-	int version = 0;
 
-	char *encoding = Codec2Encoding(stream->codec, &version);
+	char *encoding = Codec2Encoding(stream->codec);
 
 	if (encoding != NULL)
-	    ffmpeg_printf(1, "%d. encoding = %s - version %d\n", n, encoding, version);
+	    ffmpeg_printf(1, "%d. encoding = %s\n", n, encoding);
 
 	if (!stream->id)
 	    stream->id = n;

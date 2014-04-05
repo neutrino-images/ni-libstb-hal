@@ -42,7 +42,6 @@ typedef struct Track_s {
 
     /* length of track */
     int64_t duration;
-//CHECK    int64_t pts;
 
     /* context from ffmpeg */
     AVFormatContext *avfc;

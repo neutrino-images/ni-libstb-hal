@@ -340,7 +340,7 @@ static void *FFMPEGThread(void *arg)
 	ffmpeg_printf(200, "packet_size %d - index %d\n", packet.size, pid);
 
 	if (videoTrack && (videoTrack->Id == pid)) {
-	    currentVideoPts = /* CHECK videoTrack->pts = */pts = calcPts(avContext, videoTrack->stream, packet.pts);
+	    currentVideoPts = pts = calcPts(avContext, videoTrack->stream, packet.pts);
 
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
 
@@ -356,7 +356,7 @@ static void *FFMPEGThread(void *arg)
 	} else if (audioTrack && (audioTrack->Id == pid)) {
 	    context->currentAudioPtsP = &currentAudioPts; //FIXME, temporary workaround only
 	    if (!context->playback->BackWard) {
-		currentAudioPts = /* CHECK audioTrack->pts = */pts = calcPts(avContext, audioTrack->stream, packet.pts);
+		currentAudioPts = pts = calcPts(avContext, audioTrack->stream, packet.pts);
 
 		ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
 		avOut.pts = pts;

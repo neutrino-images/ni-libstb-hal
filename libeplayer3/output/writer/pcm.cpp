@@ -274,21 +274,12 @@ AVFrame *decoded_frame = NULL;
 int out_sample_rate = 44100;
 int out_channels = 2;
 uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
-int restart_audio_resampling = 0;
+int restart_audio_resampling = 1;
 
 static int reset()
 {
     initialHeader = 1;
-
-    if (swr) {
-	swr_free(&swr);
-	swr = NULL; //FIXME: Needed?
-    }
-    if (decoded_frame) {
-	av_frame_free(&decoded_frame);
-	decoded_frame = NULL; //FIXME: Needed?
-    }
-
+    restart_audio_resampling = 1;
     return 0;
 }
 
@@ -306,10 +297,16 @@ static int writeData(WriterAVCallData_t *call)
 
 	if (restart_audio_resampling) {
 		restart_audio_resampling = 0;
-		reset();
+		initialHeader = 1;
 
-		call->context->output->Command(call->context, OUTPUT_CLEAR, NULL);
-		call->context->output->Command(call->context, OUTPUT_PLAY, NULL);
+		if (swr) {
+			swr_free(&swr);
+			swr = NULL; //FIXME: Needed?
+		}
+		if (decoded_frame) {
+			av_frame_free(&decoded_frame);
+			decoded_frame = NULL; //FIXME: Needed?
+		}
 
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
 
@@ -395,7 +392,7 @@ static int writeData(WriterAVCallData_t *call)
 		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
 						call->stream->time_base.den,
 						call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
-		*(call->context->currentAudioPtsP) = /* audioTrack->pts = */ pts = calcPts(call->avfc, call->stream, next_out_pts);
+		*(call->context->currentAudioPtsP) = pts = calcPts(call->avfc, call->stream, next_out_pts);
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
 		uSampleRate = out_sample_rate;

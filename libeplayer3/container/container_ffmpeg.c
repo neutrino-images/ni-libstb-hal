@@ -386,36 +386,16 @@ static void FFMPEGThread(Context_t * context)
 		currentAudioPts = /* CHECK audioTrack->pts = */pts = calcPts(avContext, audioTrack->stream, packet.pts);
 
 		ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
-		if (audioTrack->inject_raw_pcm == 1) {
-		    ffmpeg_printf(200, "write audio raw pcm\n");
+		avOut.data = packet_data;
+		avOut.len = packet_size;
+		avOut.pts = pts;
+		avOut.packet = &packet;
+		avOut.type = "audio";
+		avOut.stream = audioTrack->stream;
+		avOut.avfc = avContext;
 
-		    avOut.uNoOfChannels = ((AVStream *) audioTrack->stream)->codec->channels;
-		    avOut.uSampleRate = ((AVStream *) audioTrack->stream)->codec->sample_rate;
-		    avOut.uBitsPerSample = 16;
-		    avOut.bLittleEndian = 1;
-
-		    avOut.data = packet_data;
-		    avOut.len = packet_size;
-		    avOut.pts = pts;
-		    avOut.packet = &packet;
-		    avOut.type = "audio";
-		    avOut.stream = audioTrack->stream;
-		    avOut.avfc = avContext;
-
-		    if (context->output->audio->Write(context, &avOut) < 0)
-			ffmpeg_err("(raw pcm) writing data to audio device failed\n");
-		} else {
-		    avOut.data = packet_data;
-		    avOut.len = packet_size;
-		    avOut.pts = pts;
-		    avOut.packet = &packet;
-		    avOut.type = "audio";
-		    avOut.stream = audioTrack->stream;
-		    avOut.avfc = avContext;
-
-		    if (context->output->audio->Write(context, &avOut) < 0)
+		if (context->output->audio->Write(context, &avOut) < 0)
 			ffmpeg_err("writing data to audio device failed\n");
-		}
 	    }
 	} else if (subtitleTrack && (subtitleTrack->Id == pid)) {
 	    float duration = 3.0;

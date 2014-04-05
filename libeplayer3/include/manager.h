@@ -45,15 +45,6 @@ typedef struct Track_s {
     AVFormatContext *avfc;
     /* stream from ffmpeg */
     AVStream *stream;
-    /* codec extra data (header or some other stuff) */
-//    int uNoOfChannels;
-//    int uSampleRate;
-//    int uBitsPerSample;
-//    int bLittleEndian;
-
-    /* If player2 or the elf do not support decoding of audio codec set this.
-     * AVCodec is than used for softdecoding and stream will be injected as PCM */
-    int inject_raw_pcm;
 
     int pending;
     int is_static;

@@ -182,9 +182,8 @@ static int ManagerDel(Context_t * context __attribute__((unused)))
 }
 
 
-static int Command(void *_context, ManagerCmd_t command, void *argument)
+static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
-    Context_t *context = (Context_t *) _context;
     int ret = cERR_TELETEXT_MGR_NO_ERROR;
 
     teletext_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);

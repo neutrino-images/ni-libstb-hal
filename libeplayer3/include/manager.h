@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <libavutil/avutil.h>
+#include <libavutil/time.h>
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libavutil/opt.h>
+
 typedef enum {
     MANAGER_ADD,
     MANAGER_LIST,
@@ -44,14 +50,16 @@ typedef struct Track_s {
     int height;
 
     /* stream from ffmpeg */
-    void *stream;
+    AVStream *stream;
     /* codec extra data (header or some other stuff) */
-    void *extraData;
+    uint8_t *extraData;
     int extraSize;
 
+#if 0
     uint8_t *aacbuf;
     unsigned int aacbuflen;
     int have_aacheader;
+#endif
 
     /* If player2 or the elf do not support decoding of audio codec set this.
      * AVCodec is than used for softdecoding and stream will be injected as PCM */
@@ -64,9 +72,12 @@ typedef struct Track_s {
     long long int chapter_end;
 } Track_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct Manager_s {
     char *Name;
-    int (*Command) ( /*Context_t */ void *, ManagerCmd_t, void *);
+    int (*Command) ( Context_t *, ManagerCmd_t, void *);
     char **Capabilities;
 
 } Manager_t;

@@ -91,10 +91,8 @@ static int reset()
     return 0;
 }
 
-static int writeData(void *_call)
+static int writeData(WriterAVCallData_t *call)
 {
-    WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
     unsigned char FakeHeaders[64];	// 64bytes should be enough to make the fake headers
     unsigned int FakeHeaderLength;

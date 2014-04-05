@@ -2,6 +2,7 @@
 #define OUTPUT_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 typedef enum {
     OUTPUT_INIT,
@@ -28,13 +29,13 @@ typedef enum {
 } OutputCmd_t;
 
 typedef struct {
-    unsigned char *data;
+    uint8_t *data;
     unsigned int len;
 
-    unsigned char *extradata;
+    uint8_t *extradata;
     unsigned int extralen;
 
-    unsigned long long int pts;
+    uint64_t pts;
 
     float frameRate;
     unsigned int timeScale;
@@ -45,10 +46,13 @@ typedef struct {
     char *type;
 } AudioVideoOut_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct Output_s {
     char *Name;
-    int (*Command) ( /*Context_t */ void *, OutputCmd_t, void *);
-    int (*Write) ( /*Context_t */ void *, void *privateData);
+    int (*Command) (Context_t *, OutputCmd_t, void *);
+    int (*Write) (Context_t *, AudioVideoOut_t *privateData);
     char **Capabilities;
 
 } Output_t;
@@ -60,7 +64,7 @@ typedef struct OutputHandler_s {
     char *Name;
     Output_t *audio;
     Output_t *video;
-    int (*Command) ( /*Context_t */ void *, OutputCmd_t, void *);
+    int (*Command) (Context_t *, OutputCmd_t, void *);
 } OutputHandler_t;
 
 #endif

@@ -41,9 +41,8 @@ if (debug_level >= level) printf(x); } while (0)
 #define container_err(x...)
 #endif
 
-static int Command(void *_context, ContainerCmd_t command, void *argument __attribute__((unused)))
+static int Command(Context_t *context, ContainerCmd_t command, void *argument __attribute__((unused)))
 {
-    Context_t *context = (Context_t *) _context;
     int ret = 0;
 
     container_printf(10, "%s::%s\n", __FILE__, __func__);

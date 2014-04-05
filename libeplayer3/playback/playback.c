@@ -740,9 +740,8 @@ static int PlaybackMetadata(Context_t * context, char ***metadata)
     return ret;
 }
 
-static int Command(void *_context, PlaybackCmd_t command, void *argument)
+static int Command(Context_t *context, PlaybackCmd_t command, void *argument)
 {
-    Context_t *context = (Context_t *) _context;	/* to satisfy compiler */
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(20, "Command %d\n", command);

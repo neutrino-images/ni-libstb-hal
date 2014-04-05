@@ -8,10 +8,10 @@ typedef enum { eNone, eAudio, eVideo, eGfx } eWriterType_t;
 
 typedef struct {
     int fd;
-    unsigned char *data;
+    uint8_t *data;
     unsigned int len;
-    unsigned long long int Pts;
-    unsigned char *private_data;
+    uint64_t Pts;
+    uint8_t *private_data;
     unsigned int private_size;
     unsigned int FrameRate;
     unsigned int FrameScale;
@@ -30,8 +30,8 @@ typedef struct WriterCaps_s {
 
 typedef struct Writer_s {
     int (*reset) ();
-    int (*writeData) (void *);
-    int (*writeReverseData) (void *);
+    int (*writeData) (WriterAVCallData_t *);
+    int (*writeReverseData) (WriterAVCallData_t *);
     WriterCaps_t *caps;
 } Writer_t;
 

@@ -11,6 +11,9 @@ typedef enum { PLAYBACK_OPEN, PLAYBACK_CLOSE, PLAYBACK_PLAY, PLAYBACK_STOP,
     PLAYBACK_SWITCH_TELETEXT
 } PlaybackCmd_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct PlaybackHandler_s {
     char *Name;
 
@@ -33,7 +36,7 @@ typedef struct PlaybackHandler_s {
     unsigned char abortRequested;
     unsigned char abortPlayback;
 
-    int (*Command) ( /*Context_t */ void *, PlaybackCmd_t, void *);
+    int (*Command) ( Context_t *, PlaybackCmd_t, void *);
     char *uri;
     unsigned char noprobe;	/* hack: only minimal probing in av_find_stream_info */
     unsigned long long readCount;

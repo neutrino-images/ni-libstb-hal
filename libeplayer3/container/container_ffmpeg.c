@@ -39,12 +39,6 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 
-#include <libavutil/avutil.h>
-#include <libavutil/time.h>
-#include <libavformat/avformat.h>
-#include <libswresample/swresample.h>
-#include <libavutil/opt.h>
-
 #include "common.h"
 #include "misc.h"
 #include "debug.h"
@@ -450,7 +444,7 @@ static void FFMPEGThread(Context_t * context)
 		    while (packet_size > 0) {
 			int got_frame = 0;
 			if (!decoded_frame) {
-			    if (!(decoded_frame = avcodec_alloc_frame())) {
+			    if (!(decoded_frame = av_frame_alloc())) {
 				fprintf(stderr, "out of memory\n");
 				exit(1);
 			    }
@@ -1430,9 +1424,8 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int Command(void *_context, ContainerCmd_t command, void *argument)
+static int Command(Context_t *context, ContainerCmd_t command, void *argument)
 {
-    Context_t *context = (Context_t *) _context;
     int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 
     ffmpeg_printf(50, "Command %d\n", command);

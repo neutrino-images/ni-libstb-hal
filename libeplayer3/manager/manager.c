@@ -90,7 +90,9 @@ void freeTrack(Track_t * track)
     if (track->language != NULL)
 	free(track->language);
 
+#if 0
     if (track->aacbuf != NULL)
 	free(track->aacbuf);
+#endif
 
 }

@@ -12,19 +12,23 @@
 
 typedef enum { eNone, eAudio, eVideo, eGfx } eWriterType_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct {
     int fd;
     uint8_t *data;
     unsigned int len;
-    uint64_t Pts;
+    int64_t Pts;
     int uNoOfChannels;
     int uSampleRate;
     int uBitsPerSample;
     int bLittleEndian;
-    /* context from ffmpeg */
+    int restart_audio_resampling;
     AVFormatContext *avfc;
-    /* stream from ffmpeg */
     AVStream *stream;
+    AVPacket *packet;
+    Context_t *context;
 } WriterAVCallData_t;
 
 typedef struct WriterCaps_s {

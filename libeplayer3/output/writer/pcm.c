@@ -289,34 +289,187 @@ static int writeData(WriterAVCallData_t *call)
     return size;
 }
 
+
+SwrContext *swr = NULL;
+AVFrame *decoded_frame = NULL;
+int out_sample_rate = 44100;
+int out_channels = 2;
+uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
+int restart_audio_resampling = 0;
+
+static int resetIpcm()
+{
+    if (swr)
+	swr_free(&swr);
+    if (decoded_frame)
+	av_frame_free(&decoded_frame);
+
+    return 0;
+}
+
+int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
+
+static int writeDataIpcm(WriterAVCallData_t *call)
+{
+	AVCodecContext *c = call->stream->codec;
+	AVPacket *packet = call->packet;
+	uint8_t *packet_data = packet->data;
+	unsigned int packet_size = packet->size;
+
+	if (call->restart_audio_resampling)
+		call->restart_audio_resampling = 1;	
+
+	if (restart_audio_resampling) {
+		restart_audio_resampling = 0;
+		if (swr) {
+			swr_free(&swr);
+			swr = NULL;
+		}
+		if (decoded_frame) {
+			av_frame_free(&decoded_frame);
+			decoded_frame = NULL;
+		}
+		call->context->output->Command(call->context, OUTPUT_CLEAR, NULL);
+		call->context->output->Command(call->context, OUTPUT_PLAY, NULL);
+
+		AVCodec *codec = avcodec_find_decoder(c->codec_id);
+
+		if (!codec || avcodec_open2(c, codec, NULL))
+			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
+		}
+
+		while (packet_size > 0) {
+			int got_frame = 0;
+			if (!decoded_frame) {
+			if (!(decoded_frame = av_frame_alloc())) {
+			fprintf(stderr, "out of memory\n");
+			exit(1);
+		}
+	} else
+		av_frame_unref(decoded_frame);
+
+		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
+		if (len < 0) {
+			restart_audio_resampling = 1;
+			break;
+		}
+
+		packet_data += len;
+		packet_size -= len;
+
+		if (!got_frame)
+			continue;
+
+		int e;
+		if (!swr) {
+			int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
+			int *rate = rates;
+			int in_rate = c->sample_rate;
+			while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
+				rate++;
+			out_sample_rate = *rate ? *rate : 44100;
+			swr = swr_alloc();
+			out_channels = c->channels;
+			if (c->channel_layout == 0) {
+				// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
+				c->channel_layout = AV_CH_LAYOUT_STEREO;
+			}
+
+			out_channel_layout = c->channel_layout;
+			// player2 won't play mono
+			if (out_channel_layout == AV_CH_LAYOUT_MONO) {
+				out_channel_layout = AV_CH_LAYOUT_STEREO;
+				out_channels = 2;
+			}
+
+			av_opt_set_int(swr, "in_channel_layout", c->channel_layout, 0);
+			av_opt_set_int(swr, "out_channel_layout", out_channel_layout, 0);
+			av_opt_set_int(swr, "in_sample_rate", c->sample_rate, 0);
+			av_opt_set_int(swr, "out_sample_rate", out_sample_rate, 0);
+			av_opt_set_int(swr, "in_sample_fmt", c->sample_fmt, 0);
+			av_opt_set_int(swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+
+			e = swr_init(swr);
+			if (e < 0) {
+				fprintf(stderr,
+					"swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+					-e, (int) c->channel_layout,
+					(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
+				swr_free(&swr);
+				swr = NULL;
+			}
+		}
+
+		uint8_t *output = NULL;
+		int in_samples = decoded_frame->nb_samples;
+		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
+		e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+		if (e < 0) {
+			fprintf(stderr, "av_samples_alloc: %d\n", -e);
+			continue;
+		}
+		// FIXME. PTS calculation is probably broken.
+		int64_t pts;
+		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
+			call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
+			call->stream->time_base.den);
+		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
+			call->stream->time_base.den,
+			call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
+			*(call->context->currentAudioPtsP) = /* audioTrack->pts = */ pts = calcPts(call->avfc, call->stream, next_out_pts);
+			out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **)
+			&decoded_frame->data[0], in_samples);
+
+		WriterAVCallData_t pcmOut;
+		pcmOut.fd = call->fd;
+		pcmOut.uSampleRate = out_sample_rate;
+		pcmOut.uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
+		pcmOut.uBitsPerSample = 16;
+		pcmOut.bLittleEndian = 1;
+
+		pcmOut.data = output;
+		pcmOut.len = out_samples * sizeof(short) * out_channels;
+
+		pcmOut.Pts = pts; // FIXME  videoTrack ? pts : 0;
+		pcmOut.stream = call->stream;
+		pcmOut.avfc = call->avfc;
+		pcmOut.packet = NULL;
+
+		writeData(&pcmOut);
+
+		av_freep(&output);
+	}
+	return packet->size;
+}
+
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
 
 static WriterCaps_t caps_pcm = {
-    "pcm",
-    eAudio,
-    "A_PCM",
-    AUDIO_ENCODING_LPCMA
+	"pcm",
+	eAudio,
+	"A_PCM",
+	AUDIO_ENCODING_LPCMA
 };
 
 struct Writer_s WriterAudioPCM = {
-    &reset,
-    &writeData,
-    NULL,
-    &caps_pcm
+	&reset,
+	&writeData,
+	NULL,
+	&caps_pcm
 };
 
 static WriterCaps_t caps_ipcm = {
-    "ipcm",
-    eAudio,
-    "A_IPCM",
-    AUDIO_ENCODING_LPCMA
+	"ipcm",
+	eAudio,
+	"A_IPCM",
+	AUDIO_ENCODING_LPCMA
 };
 
 struct Writer_s WriterAudioIPCM = {
-    &reset,
-    &writeData,
-    NULL,
-    &caps_ipcm
+	&resetIpcm,
+	&writeDataIpcm,
+	NULL,
+	&caps_ipcm
 };

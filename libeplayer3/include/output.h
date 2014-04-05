@@ -42,15 +42,15 @@ typedef struct {
     int uSampleRate;
     int uBitsPerSample;
     int bLittleEndian;
+    int restart_audio_resampling;
 
-    uint64_t pts;
+    int64_t pts;
 
     char *type;
 
-    /* context from ffmpeg */
     AVFormatContext *avfc;
-    /* stream from ffmpeg */
     AVStream *stream;
+    AVPacket *packet;
 } AudioVideoOut_t;
 
 struct Context_s;

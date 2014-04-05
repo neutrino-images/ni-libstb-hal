@@ -38,8 +38,8 @@ typedef struct Track_s {
     char *language;
 
     /* length of track */
-    uint64_t duration;
-    uint64_t pts;
+    int64_t duration;
+//CHECK    int64_t pts;
 
     /* context from ffmpeg */
     AVFormatContext *avfc;
@@ -53,7 +53,6 @@ typedef struct Track_s {
 
     /* If player2 or the elf do not support decoding of audio codec set this.
      * AVCodec is than used for softdecoding and stream will be injected as PCM */
-    int inject_as_pcm;
     int inject_raw_pcm;
 
     int pending;

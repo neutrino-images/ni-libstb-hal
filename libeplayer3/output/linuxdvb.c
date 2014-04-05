@@ -940,6 +940,7 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    call.data = out->data;
 	    call.len = out->len;
 	    call.Pts = out->pts;
+	    call.packet = out->packet;
 
 	    if (writer->writeData)
 		res = writer->writeData(&call);
@@ -977,12 +978,14 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    call.data = out->data;
 	    call.len = out->len;
 	    call.Pts = out->pts;
+	    call.packet = out->packet;
 
 	    call.uNoOfChannels = out->uNoOfChannels;
 	    call.uSampleRate = out->uSampleRate;
 	    call.uBitsPerSample = out->uBitsPerSample;
 	    call.bLittleEndian = out->bLittleEndian;
-
+	    call.restart_audio_resampling = out->restart_audio_resampling;
+	    call.context = context;
 
 	    if (writer->writeData)
 		res = writer->writeData(&call);

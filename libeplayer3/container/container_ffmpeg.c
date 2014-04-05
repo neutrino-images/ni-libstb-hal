@@ -42,10 +42,6 @@
 #include "common.h"
 #include "misc.h"
 #include "debug.h"
-#if 0
-#include "aac.h"
-#endif
-#include "pcm.h"
 
 /* ***************************** */
 /* Makros/Constants              */
@@ -381,8 +377,6 @@ static void FFMPEGThread(Context_t * context)
 	    avOut.data = packet_data;
 	    avOut.len = packet_size;
 	    avOut.pts = pts;
-	    avOut.extradata = videoTrack->extraData;
-	    avOut.extralen = videoTrack->extraSize;
 	    avOut.frameRate = videoTrack->frame_rate;
 	    avOut.timeScale = videoTrack->TimeScale;
 	    avOut.width = videoTrack->width;
@@ -402,17 +396,14 @@ static void FFMPEGThread(Context_t * context)
 		if (audioTrack->inject_raw_pcm == 1) {
 		    ffmpeg_printf(200, "write audio raw pcm\n");
 
-		    pcmPrivateData_t extradata;
-		    extradata.uNoOfChannels = ((AVStream *) audioTrack->stream)->codec->channels;
-		    extradata.uSampleRate = ((AVStream *) audioTrack->stream)->codec->sample_rate;
-		    extradata.uBitsPerSample = 16;
-		    extradata.bLittleEndian = 1;
+		    avOut.uNoOfChannels = ((AVStream *) audioTrack->stream)->codec->channels;
+		    avOut.uSampleRate = ((AVStream *) audioTrack->stream)->codec->sample_rate;
+		    avOut.uBitsPerSample = 16;
+		    avOut.bLittleEndian = 1;
 
 		    avOut.data = packet_data;
 		    avOut.len = packet_size;
 		    avOut.pts = pts;
-		    avOut.extradata = (unsigned char *) &extradata;
-		    avOut.extralen = sizeof(extradata);
 		    avOut.frameRate = 0;
 		    avOut.timeScale = 0;
 		    avOut.width = 0;
@@ -527,19 +518,15 @@ static void FFMPEGThread(Context_t * context)
 			out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **)
 						  &decoded_frame->data[0], in_samples);
 
-			pcmPrivateData_t extradata;
-
-			extradata.uSampleRate = out_sample_rate;
-			extradata.uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
-			extradata.uBitsPerSample = 16;
-			extradata.bLittleEndian = 1;
+			avOut.uSampleRate = out_sample_rate;
+			avOut.uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
+			avOut.uBitsPerSample = 16;
+			avOut.bLittleEndian = 1;
 
 			avOut.data = output;
 			avOut.len = out_samples * sizeof(short) * out_channels;
 
 			avOut.pts = videoTrack ? pts : 0;
-			avOut.extradata = (unsigned char *) &extradata;
-			avOut.extralen = sizeof(extradata);
 			avOut.frameRate = 0;
 			avOut.timeScale = 0;
 			avOut.width = 0;
@@ -552,32 +539,10 @@ static void FFMPEGThread(Context_t * context)
 			    ffmpeg_err("writing data to audio device failed\n");
 			av_freep(&output);
 		    }
-#if 0
-		} else if (audioTrack->have_aacheader == 1) {
-		    ffmpeg_printf(200, "write audio aac\n");
-
-		    avOut.data = packet_data;
-		    avOut.len = packet_size;
-		    avOut.pts = pts;
-		    avOut.extradata = audioTrack->aacbuf;
-		    avOut.extralen = audioTrack->aacbuflen;
-		    avOut.frameRate = 0;
-		    avOut.timeScale = 0;
-		    avOut.width = 0;
-		    avOut.height = 0;
-		    avOut.type = "audio";
-		    avOut.stream = audioTrack->stream;
-		    avOut.avfc = avContext;
-
-		    if (context->output->audio->Write(context, &avOut) < 0)
-			ffmpeg_err("(aac) writing data to audio device failed\n");
-#endif
 		} else {
 		    avOut.data = packet_data;
 		    avOut.len = packet_size;
 		    avOut.pts = pts;
-		    avOut.extradata = NULL;
-		    avOut.extralen = 0;
 		    avOut.frameRate = 0;
 		    avOut.timeScale = 0;
 		    avOut.width = 0;
@@ -914,15 +879,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		track.width = stream->codec->width;
 		track.height = stream->codec->height;
 
-		track.extraData = stream->codec->extradata;
-		track.extraSize = stream->codec->extradata_size;
-
 		track.frame_rate = stream->r_frame_rate.num;
-
-#if 0
-		track.aacbuf = 0;
-		track.have_aacheader = -1;
-#endif
 
 		double frame_rate = av_q2d(stream->r_frame_rate);	/* rational to double */
 
@@ -986,10 +943,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		track.Encoding = encoding;
 		track.Id = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
-#if 0
-		track.aacbuf = 0;
-		track.have_aacheader = -1;
-#endif
 
 		if (stream->duration == AV_NOPTS_VALUE) {
 		    ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
@@ -1002,151 +955,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		    track.inject_as_pcm = 1;
 		    ffmpeg_printf(10, " Handle inject_as_pcm = %d\n", track.inject_as_pcm);
 		}
-#if 0
-		else if (stream->codec->codec_id == AV_CODEC_ID_AAC) {
-		    ffmpeg_printf(10, "Create AAC ExtraData\n");
-		    ffmpeg_printf(10, "stream->codec->extradata_size %d\n", stream->codec->extradata_size);
-		    Hexdump(stream->codec->extradata, stream->codec->extradata_size);
-
-		    /* extradata
-		       13 10 56 e5 9d 48 00 (anderen cops)
-		       object_type: 00010 2 = LC
-		       sample_rate: 011 0 6 = 24000
-		       chan_config: 0010 2 = Stereo
-		       000 0
-		       1010110 111 = 0x2b7
-		       00101 = SBR
-		       1
-		       0011 = 48000
-		       101 01001000 = 0x548
-		       ps = 0
-		       0000000
-		     */
-
-		    unsigned int object_type = 2;	// LC
-		    unsigned int sample_index = aac_get_sample_rate_index(stream->codec->sample_rate);
-		    unsigned int chan_config = stream->codec->channels;
-		    if (stream->codec->extradata_size >= 2) {
-			object_type = stream->codec->extradata[0] >> 3;
-			sample_index = ((stream->codec->extradata[0] & 0x7) << 1)
-			    + (stream->codec->extradata[1] >> 7);
-			chan_config = (stream->codec->extradata[1] >> 3)
-			    && 0xf;
-		    }
-
-		    ffmpeg_printf(10, "aac object_type %d\n", object_type);
-		    ffmpeg_printf(10, "aac sample_index %d\n", sample_index);
-		    ffmpeg_printf(10, "aac chan_config %d\n", chan_config);
-
-		    object_type -= 1;	// Cause of ADTS
-
-		    track.aacbuflen = AAC_HEADER_LENGTH;
-		    track.aacbuf = malloc(8);
-		    track.aacbuf[0] = 0xFF;
-		    track.aacbuf[1] = 0xF1;
-		    track.aacbuf[2] = ((object_type & 0x03) << 6) | (sample_index << 2) | ((chan_config >> 2) & 0x01);
-		    track.aacbuf[3] = (chan_config & 0x03) << 6;
-		    track.aacbuf[4] = 0x00;
-		    track.aacbuf[5] = 0x1F;
-		    track.aacbuf[6] = 0xFC;
-
-		    printf("AAC_HEADER -> ");
-		    Hexdump(track.aacbuf, 7);
-		    track.have_aacheader = 1;
-
-		} else if (stream->codec->codec_id == AV_CODEC_ID_WMAV1 || stream->codec->codec_id == AV_CODEC_ID_WMAV2 || stream->codec->codec_id == AV_CODEC_ID_WMAPRO)	//if (stream->codec->extradata_size > 0)
-		{
-		    ffmpeg_printf(10, "Create WMA ExtraData\n");
-		    track.aacbuflen = 104 + stream->codec->extradata_size;
-		    track.aacbuf = malloc(track.aacbuflen);
-		    memset(track.aacbuf, 0, track.aacbuflen);
-		    unsigned char ASF_Stream_Properties_Object[16] = { 0x91, 0x07, 0xDC, 0xB7, 0xB7, 0xA9, 0xCF, 0x11,
-			0x8E, 0xE6, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
-		    };
-		    memcpy(track.aacbuf + 0, ASF_Stream_Properties_Object, 16);	// ASF_Stream_Properties_Object
-		    memcpy(track.aacbuf + 16, &track.aacbuflen, 4);	//FrameDateLength
-
-		    unsigned int sizehi = 0;
-		    memcpy(track.aacbuf + 20, &sizehi, 4);	// sizehi (not used)
-
-		    unsigned char ASF_Audio_Media[16] = { 0x40, 0x9E, 0x69, 0xF8, 0x4D, 0x5B, 0xCF, 0x11,
-			0xA8, 0xFD, 0x00, 0x80, 0x5F, 0x5C, 0x44, 0x2B
-		    };
-		    memcpy(track.aacbuf + 24, ASF_Audio_Media, 16);	//ASF_Audio_Media
-
-		    unsigned char ASF_Audio_Spread[16] = { 0x50, 0xCD, 0xC3, 0xBF, 0x8F, 0x61, 0xCF, 0x11,
-			0x8B, 0xB2, 0x00, 0xAA, 0x00, 0xB4, 0xE2, 0x20
-		    };
-		    memcpy(track.aacbuf + 40, ASF_Audio_Spread, 16);	//ASF_Audio_Spread
-
-		    memset(track.aacbuf + 56, 0, 4);	// time_offset (not used)
-		    memset(track.aacbuf + 60, 0, 4);	// time_offset_hi (not used)
-
-		    unsigned int type_specific_data_length = 18 + stream->codec->extradata_size;
-		    memcpy(track.aacbuf + 64, &type_specific_data_length, 4);	//type_specific_data_length
-
-		    unsigned int error_correction_data_length = 8;
-		    memcpy(track.aacbuf + 68, &error_correction_data_length, 4);	//error_correction_data_length
-
-		    unsigned short flags = 1;	// stream_number
-		    memcpy(track.aacbuf + 72, &flags, 2);	//flags
-
-		    unsigned int reserved = 0;
-		    memcpy(track.aacbuf + 74, &reserved, 4);	// reserved
-
-		    // type_specific_data
-#define WMA_VERSION_1           0x160
-#define WMA_VERSION_2_9         0x161
-#define WMA_VERSION_9_PRO       0x162
-#define WMA_LOSSLESS            0x163
-		    unsigned short codec_id = 0;
-		    switch (stream->codec->codec_id) {
-			//TODO: What code for lossless ?
-		    case AV_CODEC_ID_WMAPRO:
-			codec_id = WMA_VERSION_9_PRO;
-			break;
-		    case AV_CODEC_ID_WMAV2:
-			codec_id = WMA_VERSION_2_9;
-			break;
-		    case AV_CODEC_ID_WMAV1:
-		    default:
-			codec_id = WMA_VERSION_1;
-			break;
-		    }
-		    memcpy(track.aacbuf + 78, &codec_id, 2);	//codec_id
-
-		    unsigned short number_of_channels = stream->codec->channels;
-		    memcpy(track.aacbuf + 80, &number_of_channels, 2);	//number_of_channels
-
-		    unsigned int samples_per_second = stream->codec->sample_rate;
-		    ffmpeg_printf(1, "samples_per_second = %d\n", samples_per_second);
-		    memcpy(track.aacbuf + 82, &samples_per_second, 4);	//samples_per_second
-
-		    unsigned int average_number_of_bytes_per_second = stream->codec->bit_rate / 8;
-		    ffmpeg_printf(1, "average_number_of_bytes_per_second = %d\n", average_number_of_bytes_per_second);
-		    memcpy(track.aacbuf + 86, &average_number_of_bytes_per_second, 4);	//average_number_of_bytes_per_second
-
-		    unsigned short block_alignment = stream->codec->block_align;
-		    ffmpeg_printf(1, "block_alignment = %d\n", block_alignment);
-		    memcpy(track.aacbuf + 90, &block_alignment, 2);	//block_alignment
-
-		    unsigned short bits_per_sample = stream->codec->sample_fmt >= 0 ? (stream->codec->sample_fmt + 1) * 8 : 8;
-		    ffmpeg_printf(1, "bits_per_sample = %d (%d)\n", bits_per_sample, stream->codec->sample_fmt);
-		    memcpy(track.aacbuf + 92, &bits_per_sample, 2);	//bits_per_sample
-
-		    memcpy(track.aacbuf + 94, &stream->codec->extradata_size, 2);	//bits_per_sample
-
-		    memcpy(track.aacbuf + 96, stream->codec->extradata, stream->codec->extradata_size);
-
-		    ffmpeg_printf(1, "aacbuf:\n");
-		    Hexdump(track.aacbuf, track.aacbuflen);
-
-		    //ffmpeg_printf(1, "priv_data:\n");
-		    //Hexdump(stream->codec->priv_data, track.aacbuflen);
-
-		    track.have_aacheader = 1;
-		}
-#endif
 
 		if (context->manager->audio) {
 		    if (context->manager->audio->Command(context, MANAGER_ADD, &track) < 0) {
@@ -1182,9 +990,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 
 		track.width = -1;	/* will be filled online from videotrack */
 		track.height = -1;	/* will be filled online from videotrack */
-
-		track.extraData = stream->codec->extradata;
-		track.extraSize = stream->codec->extradata_size;
 
 		ffmpeg_printf(10, "subtitle codec %d\n", stream->codec->codec_id);
 		ffmpeg_printf(10, "subtitle width %d\n", stream->codec->width);

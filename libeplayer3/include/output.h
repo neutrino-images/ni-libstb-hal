@@ -38,8 +38,10 @@ typedef struct {
     uint8_t *data;
     unsigned int len;
 
-    uint8_t *extradata;
-    unsigned int extralen;
+    int uNoOfChannels;
+    int uSampleRate;
+    int uBitsPerSample;
+    int bLittleEndian;
 
     uint64_t pts;
 

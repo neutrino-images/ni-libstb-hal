@@ -152,8 +152,8 @@ static int writeData(WriterAVCallData_t *call)
     iov[ic++].iov_len = FakeHeaderLength;
 
     if (initialHeader) {
-	iov[ic].iov_base = call->private_data;
-	iov[ic++].iov_len = call->private_size;
+	iov[ic].iov_base = call->stream->codec->extradata;
+	iov[ic++].iov_len = call->stream->codec->extradata_size;
 
 	initialHeader = 0;
     }

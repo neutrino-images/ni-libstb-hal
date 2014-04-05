@@ -141,12 +141,9 @@ static int writeData(WriterAVCallData_t *call)
     }
 
     wmv_printf(10, "VideoPts %lld\n", call->Pts);
-    wmv_printf(10, "Got Private Size %d\n", call->private_size);
+    wmv_printf(10, "Got Private Size %d\n", call->stream->codec->extradata_size);
 
-    memcpy(private_data.privateData, call->private_data,
-	   call->private_size >
-	   WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->
-	   private_size);
+    memcpy(private_data.privateData, call->stream->codec->extradata, call->stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->stream->codec->extradata_size);
 
     private_data.width = call->Width;
     private_data.height = call->Height;

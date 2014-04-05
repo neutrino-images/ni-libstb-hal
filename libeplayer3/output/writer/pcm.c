@@ -46,7 +46,6 @@
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
-#include "pcm.h"
 
 /* ***************************** */
 /* Makros/Constants              */
@@ -207,15 +206,12 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    pcmPrivateData_t *pcmPrivateData =
-	(pcmPrivateData_t *) call->private_data;
-
     if (initialHeader) {
 	initialHeader = 0;
-	prepareClipPlay(pcmPrivateData->uNoOfChannels,
-			pcmPrivateData->uSampleRate,
-			pcmPrivateData->uBitsPerSample,
-			pcmPrivateData->bLittleEndian);
+	prepareClipPlay(call->uNoOfChannels,
+			call->uSampleRate,
+			call->uBitsPerSample,
+			call->bLittleEndian);
     }
 
     unsigned char *buffer = call->data;
@@ -254,7 +250,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[2].iov_len = SubFrameLen;
 
 	//write the PCM data
-	if (pcmPrivateData->uBitsPerSample == 16) {
+	if (call->uBitsPerSample == 16) {
 	    for (n = 0; n < SubFrameLen; n += 2) {
 		unsigned char tmp;
 		tmp = injectBuffer[n];

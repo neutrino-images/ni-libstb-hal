@@ -65,9 +65,9 @@ static Writer_t *AvailableWriter[] = {
     &WriterAudioMPEGL3,
     &WriterAudioAC3,
     &WriterAudioEAC3,
-    &WriterAudioAAC,
+//    &WriterAudioAAC,
     &WriterAudioDTS,
-    &WriterAudioWMA,
+//    &WriterAudioWMA,
     &WriterAudioFLAC,
     &WriterAudioVORBIS,
 

@@ -914,8 +914,8 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
     audio = !strcmp("audio", out->type);
 
     linuxdvb_printf(20,
-		    "DataLength=%u PrivateLength=%u Pts=%llu FrameRate=%f\n",
-		    out->len, out->extralen, out->pts, out->frameRate);
+		    "DataLength=%u Pts=%llu FrameRate=%f\n",
+		    out->len, out->pts, out->frameRate);
     linuxdvb_printf(20, "v%d a%d\n", video, audio);
 
     if (video) {
@@ -942,8 +942,6 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    call.data = out->data;
 	    call.len = out->len;
 	    call.Pts = out->pts;
-	    call.private_data = out->extradata;
-	    call.private_size = out->extralen;
 	    call.FrameRate = out->frameRate;
 	    call.FrameScale = out->timeScale;
 	    call.Width = out->width;
@@ -986,11 +984,15 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    call.data = out->data;
 	    call.len = out->len;
 	    call.Pts = out->pts;
-	    call.private_data = out->extradata;
-	    call.private_size = out->extralen;
 	    call.FrameRate = out->frameRate;
 	    call.FrameScale = out->timeScale;
 	    call.Version = 0;	/* -1; unsigned char cannot be negative */
+
+	    call.uNoOfChannels = out->uNoOfChannels;
+	    call.uSampleRate = out->uSampleRate;
+	    call.uBitsPerSample = out->uBitsPerSample;
+	    call.bLittleEndian = out->bLittleEndian;
+
 
 	    if (writer->writeData)
 		res = writer->writeData(&call);

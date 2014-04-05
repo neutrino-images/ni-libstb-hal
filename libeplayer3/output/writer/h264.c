@@ -153,9 +153,9 @@ static int writeData(WriterAVCallData_t *call)
 	iov[ic++].iov_base = PesHeader;
 	if (initialHeader) {
 	    initialHeader = 0;
-	    iov[ic].iov_base = call->private_data;
-	    iov[ic++].iov_len = call->private_size;
-	    PacketLength += call->private_size;
+	    iov[ic].iov_base = call->stream->codec->extradata;
+	    iov[ic++].iov_len = call->stream->codec->extradata_size;
+	    PacketLength += call->stream->codec->extradata_size;
 	}
 	iov[ic].iov_base = call->data;
 	iov[ic++].iov_len = call->len;
@@ -173,7 +173,7 @@ static int writeData(WriterAVCallData_t *call)
     }
 
     if (initialHeader) {
-	avcC_t *avcCHeader = (avcC_t *) call->private_data;
+	avcC_t *avcCHeader = (avcC_t *) call->stream->codec->extradata;
 	unsigned int i;
 	unsigned int ParamSets;
 	unsigned int ParamOffset;

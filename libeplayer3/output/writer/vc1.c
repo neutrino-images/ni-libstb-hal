@@ -144,7 +144,7 @@ static int writeData(WriterAVCallData_t *call)
 
     vc1_printf(10, "VideoPts %lld\n", call->Pts);
 
-    vc1_printf(10, "Got Private Size %d\n", call->private_size);
+    vc1_printf(10, "Got Private Size %d\n", call->stream->codec->extradata_size);
 
 
     if (initialHeader) {
@@ -202,8 +202,8 @@ static int writeData(WriterAVCallData_t *call)
 
 	/* For VC1 the codec private data is a standard vc1 sequence header so we just copy it to the output */
 	iov[0].iov_base = PesHeader;
-	iov[1].iov_base = call->private_data;
-	iov[1].iov_len = call->private_size;
+	iov[1].iov_base = call->stream->codec->extradata;
+	iov[1].iov_len = call->stream->codec->extradata_size;
 	iov[0].iov_len =
 	    InsertPesHeader(PesHeader, iov[1].iov_len,
 			    VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE,

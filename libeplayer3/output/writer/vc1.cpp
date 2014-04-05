@@ -132,7 +132,7 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	vc1_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -214,18 +214,18 @@ static int writeData(WriterAVCallData_t *call)
 	initialHeader = 0;
     }
 
-    if (call->len > 0 && call->data) {
-	unsigned int Position = 0;
+    if (call->packet->size > 0 && call->packet->data) {
+	int Position = 0;
 	unsigned char insertSampleHeader = 1;
 
-	while (Position < call->len) {
+	while (Position < call->packet->size) {
 
 	    int PacketLength =
-		(call->len - Position) <=
-		MAX_PES_PACKET_SIZE ? (call->len -
+		(call->packet->size - Position) <=
+		MAX_PES_PACKET_SIZE ? (call->packet->size -
 				       Position) : MAX_PES_PACKET_SIZE;
 
-	    int Remaining = call->len - Position - PacketLength;
+	    int Remaining = call->packet->size - Position - PacketLength;
 
 	    vc1_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n",
 		       PacketLength, Remaining, Position);
@@ -242,12 +242,12 @@ static int writeData(WriterAVCallData_t *call)
 /*
 		    vc1_printf(10, "Data Start: {00 00 01 0d} - ");
 		    int i;
-		    for (i = 0; i < 4; i++) vc1_printf(10, "%02x ", call->data[i]);
+		    for (i = 0; i < 4; i++) vc1_printf(10, "%02x ", call->packet->data[i]);
 		    vc1_printf(10, "\n");
 */
 
-		if (!FrameHeaderSeen && (call->len > 3)
-		    && (memcmp(call->data, Vc1FrameStartCode, 4) == 0))
+		if (!FrameHeaderSeen && (call->packet->size > 3)
+		    && (memcmp(call->packet->data, Vc1FrameStartCode, 4) == 0))
 		    FrameHeaderSeen = 1;
 		if (!FrameHeaderSeen) {
 		    memcpy(&PesHeader[HeaderLength], Vc1FrameStartCode,
@@ -260,7 +260,7 @@ static int writeData(WriterAVCallData_t *call)
 	    struct iovec iov[2];
 	    iov[0].iov_base = PesHeader;
 	    iov[0].iov_len = HeaderLength;
-	    iov[1].iov_base = call->data + Position;
+	    iov[1].iov_base = call->packet->data + Position;
 	    iov[1].iov_len = PacketLength;
 
 	    ssize_t l = writev(call->fd, iov, 2);

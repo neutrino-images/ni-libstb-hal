@@ -196,7 +196,7 @@ static int writeData(WriterAVCallData_t *call)
 
     pcm_printf(10, "AudioPts %lld\n", call->Pts);
 
-    if (!call->data || (call->len <= 0)) {
+    if (!call->packet->data || (call->packet->size <= 0)) {
 	pcm_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -214,8 +214,8 @@ static int writeData(WriterAVCallData_t *call)
 			call->bLittleEndian);
     }
 
-    unsigned char *buffer = call->data;
-    unsigned int size = call->len;
+    unsigned char *buffer = call->packet->data;
+    unsigned int size = call->packet->size;
 
     unsigned int n;
     unsigned char *injectBuffer = (unsigned char *) malloc(SubFrameLen);
@@ -427,8 +427,10 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 		pcmOut.uBitsPerSample = 16;
 		pcmOut.bLittleEndian = 1;
 
-		pcmOut.data = output;
-		pcmOut.len = out_samples * sizeof(short) * out_channels;
+		AVPacket packet;
+		packet.data = output;
+		packet.size = out_samples * sizeof(short) * out_channels;
+		pcmOut.packet = &packet;
 
 		pcmOut.Pts = pts; // FIXME  videoTrack ? pts : 0;
 		pcmOut.stream = call->stream;

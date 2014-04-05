@@ -102,7 +102,7 @@ static int writeData(WriterAVCallData_t *call)
 
     flac_printf(10, "AudioPts %lld\n", call->Pts);
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	flac_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -115,10 +115,10 @@ static int writeData(WriterAVCallData_t *call)
     struct iovec iov[2];
     iov[0].iov_base = PesHeader;
     iov[0].iov_len =
-	InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE,
+	InsertPesHeader(PesHeader, call->packet->size, MPEG_AUDIO_PES_START_CODE,
 			call->Pts, 0);
-    iov[1].iov_base = call->data;
-    iov[1].iov_len = call->len;
+    iov[1].iov_base = call->packet->data;
+    iov[1].iov_len = call->packet->size;
 
     int len = writev(call->fd, iov, 2);
 

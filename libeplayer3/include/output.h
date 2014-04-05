@@ -37,9 +37,6 @@ typedef enum {
 } OutputCmd_t;
 
 typedef struct {
-    uint8_t *data;
-    unsigned int len;
-
     int uNoOfChannels;
     int uSampleRate;
     int uBitsPerSample;

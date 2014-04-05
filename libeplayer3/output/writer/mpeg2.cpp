@@ -105,7 +105,7 @@ static int writeData(WriterAVCallData_t *call)
 
     mpeg2_printf(10, "VideoPts %lld\n", call->Pts);
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	mpeg2_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -115,11 +115,11 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    while (Position < call->len) {
-	int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-	    (call->len - Position) : MAX_PES_PACKET_SIZE;
+    while (Position < call->packet->size) {
+	int PacketLength = (call->packet->size - Position) <= MAX_PES_PACKET_SIZE ?
+	    (call->packet->size - Position) : MAX_PES_PACKET_SIZE;
 
-	int Remaining = call->len - Position - PacketLength;
+	int Remaining = call->packet->size - Position - PacketLength;
 
 	mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n",
 		     PacketLength, Remaining, Position);
@@ -128,7 +128,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len =
 	    InsertPesHeader(PesHeader, PacketLength, 0xe0, call->Pts, 0);
-	iov[1].iov_base = call->data + Position;
+	iov[1].iov_base = call->packet->data + Position;
 	iov[1].iov_len = PacketLength;
 
 	ssize_t l = writev(call->fd, iov, 2);

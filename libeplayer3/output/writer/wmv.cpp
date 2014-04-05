@@ -125,16 +125,6 @@ static int writeData(WriterAVCallData_t *call)
 
     wmv_printf(10, "\n");
 
-    if (call == NULL) {
-	wmv_err("call data is NULL...\n");
-	return 0;
-    }
-
-    if ((call->data == NULL) || (call->len <= 0)) {
-	wmv_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
-
     if (call->fd < 0) {
 	wmv_err("file pointer < 0. ignoring ...\n");
 	return 0;
@@ -200,20 +190,12 @@ static int writeData(WriterAVCallData_t *call)
 	initialHeader = 0;
     }
 
-    if (call->len > 0 && call->data) {
+    if (call->packet->size > 0 && call->packet->data) {
 	unsigned int Position = 0;
 	unsigned char insertSampleHeader = 1;
-	while (Position < call->len) {
+	while (Position < call->packet->size) {
 
-	    int PacketLength =
-		(call->len - Position) <=
-		MAX_PES_PACKET_SIZE ? (call->len -
-				       Position) : MAX_PES_PACKET_SIZE;
-
-	    int Remaining = call->len - Position - PacketLength;
-
-	    wmv_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n",
-		       PacketLength, Remaining, Position);
+	    int PacketLength = (call->packet->size - Position) <= MAX_PES_PACKET_SIZE ? (call->packet->size - Position) : MAX_PES_PACKET_SIZE;
 
 	    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 	    memset(PesHeader, '0', PES_MAX_HEADER_SIZE);
@@ -226,9 +208,7 @@ static int writeData(WriterAVCallData_t *call)
 		unsigned int PesLength;
 		unsigned int PrivateHeaderLength;
 
-		PrivateHeaderLength =
-		    InsertVideoPrivateDataHeader(&PesHeader[HeaderLength],
-						 call->len);
+		PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->packet->size);
 		/* Update PesLength */
 		PesLength = PesHeader[PES_LENGTH_BYTE_0] +
 		    (PesHeader[PES_LENGTH_BYTE_1] << 8) +
@@ -243,9 +223,9 @@ static int writeData(WriterAVCallData_t *call)
 		insertSampleHeader = 0;
 	    }
 
-	    PacketStart = (unsigned char *) malloc(call->len + HeaderLength);
+	    PacketStart = (unsigned char *) malloc(call->packet->size + HeaderLength);
 	    memcpy(PacketStart, PesHeader, HeaderLength);
-	    memcpy(PacketStart + HeaderLength, call->data + Position,
+	    memcpy(PacketStart + HeaderLength, call->packet->data + Position,
 		   PacketLength);
 
 	    len =

@@ -19,8 +19,6 @@ typedef struct Context_s Context_t;
 
 typedef struct {
     int fd;
-    uint8_t *data;
-    unsigned int len;
     int64_t Pts;
     int uNoOfChannels;
     int uSampleRate;

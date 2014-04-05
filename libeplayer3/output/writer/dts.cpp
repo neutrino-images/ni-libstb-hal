@@ -106,7 +106,7 @@ static int writeData(WriterAVCallData_t *call)
 
     dts_printf(10, "AudioPts %lld\n", call->Pts);
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	dts_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -117,11 +117,11 @@ static int writeData(WriterAVCallData_t *call)
     }
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
-    unsigned char *Data = (unsigned char *) malloc(call->len);
-    memcpy(Data, call->data, call->len);
+    unsigned char *Data = (unsigned char *) malloc(call->packet->size);
+    memcpy(Data, call->packet->data, call->packet->size);
 
     /* 16-bit byte swap all data before injecting it */
-    for (i = 0; i < call->len; i += 2) {
+    for (i = 0; i < call->packet->size; i += 2) {
 	unsigned char Tmp = Data[i];
 	Data[i] = Data[i + 1];
 	Data[i + 1] = Tmp;
@@ -132,16 +132,16 @@ static int writeData(WriterAVCallData_t *call)
 
     iov[0].iov_base = PesHeader;
     iov[0].iov_len =
-	InsertPesHeader(PesHeader, call->len,
+	InsertPesHeader(PesHeader, call->packet->size,
 			MPEG_AUDIO_PES_START_CODE
 			/*PRIVATE_STREAM_1_PES_START_CODE */ , call->Pts,
 			0);
 #ifdef DO_BYTESPWAP
     iov[1].iov_base = Data;
 #else
-    iov[1].iov_base = call->data;
+    iov[1].iov_base = call->packet->data;
 #endif
-    iov[1].iov_len = call->len;
+    iov[1].iov_len = call->packet->size;
 
     int len = writev(call->fd, iov, 2);
 

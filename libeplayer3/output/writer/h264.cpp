@@ -132,7 +132,7 @@ static int writeData(WriterAVCallData_t *call)
     h264_printf(10, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta,
 		TimeScale);
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	h264_err("NULL Data. ignoring...\n");
 	return 0;
     }
@@ -142,12 +142,12 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    if ((call->len > 3)
+    if ((call->packet->size > 3)
 	&&
-	((call->data[0] == 0x00 && call->data[1] == 0x00
-	  && call->data[2] == 0x00 && call->data[3] == 0x01)
-	 || (call->data[0] == 0xff && call->data[1] == 0xff
-	     && call->data[2] == 0xff && call->data[3] == 0xff))) {
+	((call->packet->data[0] == 0x00 && call->packet->data[1] == 0x00
+	  && call->packet->data[2] == 0x00 && call->packet->data[3] == 0x01)
+	 || (call->packet->data[0] == 0xff && call->packet->data[1] == 0xff
+	     && call->packet->data[2] == 0xff && call->packet->data[3] == 0xff))) {
 	unsigned int PacketLength = 0;
 	unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
 	iov[ic++].iov_base = PesHeader;
@@ -157,9 +157,9 @@ static int writeData(WriterAVCallData_t *call)
 	    iov[ic++].iov_len = call->stream->codec->extradata_size;
 	    PacketLength += call->stream->codec->extradata_size;
 	}
-	iov[ic].iov_base = call->data;
-	iov[ic++].iov_len = call->len;
-	PacketLength += call->len;
+	iov[ic].iov_base = call->packet->data;
+	iov[ic++].iov_len = call->packet->size;
+	PacketLength += call->packet->size;
 	/*Hellmaster1024: some packets will only be accepted by the player if we send one byte more than
 	   data is available. The content of this byte does not matter. It will be ignored
 	   by the player */
@@ -305,7 +305,7 @@ static int writeData(WriterAVCallData_t *call)
 	initialHeader = 0;
     }
 
-    unsigned int SampleSize = call->len;
+    unsigned int SampleSize = call->packet->size;
     unsigned int NalStart = 0;
     unsigned int VideoPosition = 0;
 
@@ -314,7 +314,7 @@ static int writeData(WriterAVCallData_t *call)
 	unsigned char NalData[4];
 	int NalPresent = 1;
 
-	memcpy(NalData, call->data + VideoPosition, NalLengthBytes);
+	memcpy(NalData, call->packet->data + VideoPosition, NalLengthBytes);
 	VideoPosition += NalLengthBytes;
 	NalStart += NalLengthBytes;
 	switch (NalLengthBytes) {
@@ -356,7 +356,7 @@ static int writeData(WriterAVCallData_t *call)
 		iov[ic++].iov_len = sizeof(Head);
 	    }
 
-	    iov[ic].iov_base = call->data + VideoPosition;
+	    iov[ic].iov_base = call->packet->data + VideoPosition;
 	    iov[ic++].iov_len = NalLength;
 	    VideoPosition += NalLength;
 
@@ -394,7 +394,7 @@ static int writeReverseData(WriterAVCallData_t *call)
 
     h264_printf(10, "VideoPts %lld\n", call->Pts);
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	h264_err("NULL Data. ignoring...\n");
 	return 0;
     }

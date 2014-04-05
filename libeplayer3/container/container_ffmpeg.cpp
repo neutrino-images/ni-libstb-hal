@@ -334,14 +334,14 @@ static void *FFMPEGThread(void *arg)
 	    break;		// while
 	}
 	long long int pts;
-	uint8_t *packet_data = packet.data;
-	int packet_size = packet.size;
 	Track_t *videoTrack = NULL;
 	Track_t *audioTrack = NULL;
 	Track_t *subtitleTrack = NULL;
 	Track_t *teletextTrack = NULL;
 
-	context->playback->readCount += packet_size;
+	context->playback->readCount += packet.size;
+
+	avOut.packet = &packet;
 
 	int pid = avContext->streams[packet.stream_index]->id;
 
@@ -357,17 +357,14 @@ static void *FFMPEGThread(void *arg)
 	if (context->manager->teletext->Command(context, MANAGER_GET_TRACK, &teletextTrack) < 0)
 	    ffmpeg_err("error getting teletext track\n");
 
-	ffmpeg_printf(200, "packet_size %d - index %d\n", packet_size, pid);
+	ffmpeg_printf(200, "packet_size %d - index %d\n", packet.size, pid);
 
 	if (videoTrack && (videoTrack->Id == pid)) {
 	    currentVideoPts = /* CHECK videoTrack->pts = */pts = calcPts(avContext, videoTrack->stream, packet.pts);
 
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
 
-	    avOut.data = packet_data;
-	    avOut.len = packet_size;
 	    avOut.pts = pts;
-	    avOut.packet = &packet;
 
 	    avOut.type = "video";
 	    avOut.stream = videoTrack->stream;
@@ -382,10 +379,7 @@ static void *FFMPEGThread(void *arg)
 		currentAudioPts = /* CHECK audioTrack->pts = */pts = calcPts(avContext, audioTrack->stream, packet.pts);
 
 		ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
-		avOut.data = packet_data;
-		avOut.len = packet_size;
 		avOut.pts = pts;
-		avOut.packet = &packet;
 		avOut.type = "audio";
 		avOut.stream = audioTrack->stream;
 		avOut.avfc = avContext;
@@ -428,7 +422,7 @@ static void *FFMPEGThread(void *arg)
 		}
 	    }			/* duration */
 	} else if (teletextTrack && (teletextTrack->Id == pid)) {
-		teletext_write(pid, packet_data, packet_size);
+		teletext_write(pid, packet.data, packet.size);
 	}
 
 	av_free_packet(&packet);

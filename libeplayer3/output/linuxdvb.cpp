@@ -913,7 +913,7 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
     video = !strcmp("video", out->type);
     audio = !strcmp("audio", out->type);
 
-    linuxdvb_printf(20, "DataLength=%u Pts=%llu\n", out->len, out->pts);
+    linuxdvb_printf(20, "DataLength=%u Pts=%llu\n", out->packet->size, out->pts);
     linuxdvb_printf(20, "v%d a%d\n", video, audio);
 
     if (video) {
@@ -937,8 +937,6 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    ret = cERR_LINUXDVB_ERROR;
 	} else {
 	    call.fd = videofd;
-	    call.data = out->data;
-	    call.len = out->len;
 	    call.Pts = out->pts;
 	    call.packet = out->packet;
 
@@ -975,8 +973,6 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    ret = cERR_LINUXDVB_ERROR;
 	} else {
 	    call.fd = audiofd;
-	    call.data = out->data;
-	    call.len = out->len;
 	    call.Pts = out->pts;
 	    call.packet = out->packet;
 

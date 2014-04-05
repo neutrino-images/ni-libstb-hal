@@ -109,7 +109,7 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    if ((call->data == NULL) || (call->len <= 0)) {
+    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
 	divx_err("parsing NULL Data. ignoring...\n");
 	return 0;
     }
@@ -147,7 +147,7 @@ static int writeData(WriterAVCallData_t *call)
     int ic = 0;
     iov[ic].iov_base = PesHeader;
     iov[ic++].iov_len =
-	InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE,
+	InsertPesHeader(PesHeader, call->packet->size, MPEG_VIDEO_PES_START_CODE,
 			call->Pts, FakeStartCode);
     iov[ic].iov_base = FakeHeaders;
     iov[ic++].iov_len = FakeHeaderLength;
@@ -158,8 +158,8 @@ static int writeData(WriterAVCallData_t *call)
 
 	initialHeader = 0;
     }
-    iov[ic].iov_base = call->data;
-    iov[ic++].iov_len = call->len;
+    iov[ic].iov_base = call->packet->data;
+    iov[ic++].iov_len = call->packet->size;
 
     int len = writev(call->fd, iov, ic);
 

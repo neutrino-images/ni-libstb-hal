@@ -38,16 +38,8 @@ typedef struct Track_s {
     char *language;
 
     /* length of track */
-    long long int duration;
-    unsigned int frame_rate;
-    unsigned int TimeScale;
-    int version;
-    long long int pts;
-
-    /* for later use: */
-    eTrackTypeEplayer type;
-    int width;
-    int height;
+    uint64_t duration;
+    uint64_t pts;
 
     /* context from ffmpeg */
     AVFormatContext *avfc;

@@ -145,9 +145,10 @@ static int writeData(WriterAVCallData_t *call)
 
     memcpy(private_data.privateData, call->stream->codec->extradata, call->stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->stream->codec->extradata_size);
 
-    private_data.width = call->Width;
-    private_data.height = call->Height;
-    private_data.framerate = call->FrameRate;
+    private_data.width = call->stream->codec->width;
+    private_data.height = call->stream->codec->height;
+    private_data.framerate = 1000.0 * av_q2d(call->stream->r_frame_rate);      /* rational to double */
+
 
 #define PES_MIN_HEADER_SIZE 9
     if (initialHeader) {
@@ -156,7 +157,6 @@ static int writeData(WriterAVCallData_t *call)
 	unsigned int MetadataLength;
 	unsigned int crazyFramerate = 0;
 
-	wmv_printf(10, "Framerate: %u\n", private_data.framerate);
 	wmv_printf(10, "biWidth: %d\n", private_data.width);
 	wmv_printf(10, "biHeight: %d\n", private_data.height);
 

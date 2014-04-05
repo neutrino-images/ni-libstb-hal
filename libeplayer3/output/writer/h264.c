@@ -124,8 +124,9 @@ static int writeData(WriterAVCallData_t *call)
 	return 0;
     }
 
-    TimeDelta = call->FrameRate;
-    TimeScale = call->FrameScale;
+    TimeDelta = 1000.0 * av_q2d(call->stream->r_frame_rate);      /* rational to double */
+    TimeScale = (TimeDelta < 23970) ? 1001 : 1000; /* fixme: revise this */
+
     VideoPts = call->Pts;
 
     h264_printf(10, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta,
@@ -148,8 +149,7 @@ static int writeData(WriterAVCallData_t *call)
 	 || (call->data[0] == 0xff && call->data[1] == 0xff
 	     && call->data[2] == 0xff && call->data[3] == 0xff))) {
 	unsigned int PacketLength = 0;
-	unsigned int FakeStartCode =
-	    (call->Version << 8) | PES_VERSION_FAKE_START_CODE;
+	unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
 	iov[ic++].iov_base = PesHeader;
 	if (initialHeader) {
 	    initialHeader = 0;

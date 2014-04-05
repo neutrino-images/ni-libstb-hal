@@ -45,12 +45,6 @@ typedef struct {
 
     uint64_t pts;
 
-    float frameRate;
-    unsigned int timeScale;
-
-    unsigned int width;
-    unsigned int height;
-
     char *type;
 
     /* context from ffmpeg */

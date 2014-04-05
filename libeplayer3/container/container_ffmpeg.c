@@ -377,10 +377,7 @@ static void FFMPEGThread(Context_t * context)
 	    avOut.data = packet_data;
 	    avOut.len = packet_size;
 	    avOut.pts = pts;
-	    avOut.frameRate = videoTrack->frame_rate;
-	    avOut.timeScale = videoTrack->TimeScale;
-	    avOut.width = videoTrack->width;
-	    avOut.height = videoTrack->height;
+
 	    avOut.type = "video";
 	    avOut.stream = videoTrack->stream;
 	    avOut.avfc = avContext;
@@ -404,10 +401,6 @@ static void FFMPEGThread(Context_t * context)
 		    avOut.data = packet_data;
 		    avOut.len = packet_size;
 		    avOut.pts = pts;
-		    avOut.frameRate = 0;
-		    avOut.timeScale = 0;
-		    avOut.width = 0;
-		    avOut.height = 0;
 		    avOut.type = "audio";
 		    avOut.stream = audioTrack->stream;
 		    avOut.avfc = avContext;
@@ -527,10 +520,6 @@ static void FFMPEGThread(Context_t * context)
 			avOut.len = out_samples * sizeof(short) * out_channels;
 
 			avOut.pts = videoTrack ? pts : 0;
-			avOut.frameRate = 0;
-			avOut.timeScale = 0;
-			avOut.width = 0;
-			avOut.height = 0;
 			avOut.type = "audio";
 		        avOut.stream = audioTrack->stream;
 		        avOut.avfc = avContext;
@@ -543,10 +532,6 @@ static void FFMPEGThread(Context_t * context)
 		    avOut.data = packet_data;
 		    avOut.len = packet_size;
 		    avOut.pts = pts;
-		    avOut.frameRate = 0;
-		    avOut.timeScale = 0;
-		    avOut.width = 0;
-		    avOut.height = 0;
 		    avOut.type = "audio";
 		    avOut.stream = audioTrack->stream;
 		    avOut.avfc = avContext;
@@ -873,38 +858,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 	    ffmpeg_printf(10, "CODEC_TYPE_VIDEO %d\n", stream->codec->codec_type);
 
 	    if (encoding != NULL) {
-		track.type = eTypeES;
-		track.version = version;
-
-		track.width = stream->codec->width;
-		track.height = stream->codec->height;
-
-		track.frame_rate = stream->r_frame_rate.num;
-
-		double frame_rate = av_q2d(stream->r_frame_rate);	/* rational to double */
-
-		ffmpeg_printf(10, "frame_rate = %f\n", frame_rate);
-
-		track.frame_rate = frame_rate * 1000.0;
-
-		/* fixme: revise this */
-
-		if (track.frame_rate < 23970)
-		    track.TimeScale = 1001;
-		else
-		    track.TimeScale = 1000;
-
-		ffmpeg_printf(20, "bit_rate = %d\n", stream->codec->bit_rate);
-		ffmpeg_printf(20, "flags = %d\n", stream->codec->flags);
-		ffmpeg_printf(20, "frame_bits = %d\n", stream->codec->frame_bits);
-		ffmpeg_printf(20, "time_base.den %d\n", stream->time_base.den);
-		ffmpeg_printf(20, "time_base.num %d\n", stream->time_base.num);
-		ffmpeg_printf(20, "frame_rate %d\n", stream->r_frame_rate.num);
-		ffmpeg_printf(20, "TimeScale %d\n", stream->r_frame_rate.den);
-
-		ffmpeg_printf(20, "frame_rate %d\n", track.frame_rate);
-		ffmpeg_printf(20, "TimeScale %d\n", track.TimeScale);
-
 		track.Name = "und";
 		track.Encoding = encoding;
 		track.avfc = avContext;
@@ -932,7 +885,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 
 	    if (encoding != NULL) {
 		AVDictionaryEntry *lang;
-		track.type = eTypeES;
 
 		lang = av_dict_get(stream->metadata, "language", NULL, 0);
 
@@ -987,9 +939,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		track.aacbuf = 0;
 		track.have_aacheader = -1;
 #endif
-
-		track.width = -1;	/* will be filled online from videotrack */
-		track.height = -1;	/* will be filled online from videotrack */
 
 		ffmpeg_printf(10, "subtitle codec %d\n", stream->codec->codec_id);
 		ffmpeg_printf(10, "subtitle width %d\n", stream->codec->width);

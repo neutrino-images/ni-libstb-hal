@@ -155,11 +155,12 @@ static int writeData(WriterAVCallData_t *call)
 	unsigned int crazyFramerate = 0;
 	struct iovec iov[2];
 
-	vc1_printf(10, "Framerate: %u\n", call->FrameRate);
-	vc1_printf(10, "biWidth: %d\n", call->Width);
-	vc1_printf(10, "biHeight: %d\n", call->Height);
+	vc1_printf(10, "Framerate: %f\n", 1000.0 * av_q2d(call->stream->r_frame_rate));
+	vc1_printf(10, "biWidth: %d\n", call->stream->codec->width);
+	vc1_printf(10, "biHeight: %d\n", call->stream->codec->height);
 
-	crazyFramerate = ((10000000.0 / call->FrameRate) * 1000.0);
+	crazyFramerate = ((10000000.0 / av_q2d(call->stream->r_frame_rate)));
+
 	vc1_printf(10, "crazyFramerate: %u\n", crazyFramerate);
 
 	memset(PesPayload, 0, sizeof(PesPayload));
@@ -175,14 +176,14 @@ static int writeData(WriterAVCallData_t *call)
 	PesPtr += WMV3_PRIVATE_DATA_LENGTH;
 
 	/* Metadata Header Struct A */
-	*PesPtr++ = (call->Height >> 0) & 0xff;
-	*PesPtr++ = (call->Height >> 8) & 0xff;
-	*PesPtr++ = (call->Height >> 16) & 0xff;
-	*PesPtr++ = call->Height >> 24;
-	*PesPtr++ = (call->Width >> 0) & 0xff;
-	*PesPtr++ = (call->Width >> 8) & 0xff;
-	*PesPtr++ = (call->Width >> 16) & 0xff;
-	*PesPtr++ = call->Width >> 24;
+	*PesPtr++ = (call->stream->codec->height >> 0) & 0xff;
+	*PesPtr++ = (call->stream->codec->height >> 8) & 0xff;
+	*PesPtr++ = (call->stream->codec->height >> 16) & 0xff;
+	*PesPtr++ = call->stream->codec->height >> 24;
+	*PesPtr++ = (call->stream->codec->width >> 0) & 0xff;
+	*PesPtr++ = (call->stream->codec->width >> 8) & 0xff;
+	*PesPtr++ = (call->stream->codec->width >> 16) & 0xff;
+	*PesPtr++ = call->stream->codec->width >> 24;
 
 	PesPtr += 12;		/* Skip flag word and Struct B first 8 bytes */
 

@@ -121,7 +121,8 @@ static int writeData(WriterAVCallData_t *call)
 
     divx_printf(10, "AudioPts %lld\n", call->Pts);
 
-    usecPerFrame = 1000000000 / call->FrameRate;
+    usecPerFrame = 1000000 / av_q2d(call->stream->r_frame_rate);
+
     divx_printf(10, "Microsecends per frame = %d\n", usecPerFrame);
 
     memset(FakeHeaders, 0, sizeof(FakeHeaders));

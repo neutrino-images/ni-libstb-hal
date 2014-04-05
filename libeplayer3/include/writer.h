@@ -21,11 +21,6 @@ typedef struct {
     int uSampleRate;
     int uBitsPerSample;
     int bLittleEndian;
-    unsigned int FrameRate;
-    unsigned int FrameScale;
-    unsigned int Width;
-    unsigned int Height;
-    unsigned char Version;
     /* context from ffmpeg */
     AVFormatContext *avfc;
     /* stream from ffmpeg */

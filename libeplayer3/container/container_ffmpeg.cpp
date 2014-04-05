@@ -148,26 +148,6 @@ static const char *Codec2Encoding(AVCodecContext * codec)
 	return "A_EAC3";
     case AV_CODEC_ID_DTS:
 	return "A_DTS";
-#if 0
-    case AV_CODEC_ID_AAC:
-	return "A_AAC";
-    case AV_CODEC_ID_WMAV1:
-    case AV_CODEC_ID_WMAV2:
-    case AV_CODEC_ID_WMAPRO:
-	return "A_WMA";
-    case AV_CODEC_ID_MLP:
-	return "A_MLP";
-    case AV_CODEC_ID_RA_144:
-	return "A_RMA";
-    case AV_CODEC_ID_RA_288:
-	return "A_RMA";
-    case AV_CODEC_ID_VORBIS:
-	return "A_VORBIS";
-    case AV_CODEC_ID_FLAC:
-	return return "A_FLAC";
-    case AV_CODEC_ID_PCM_S16LE:
-	return "A_PCM";
-#endif
 /* subtitle */
     case AV_CODEC_ID_SSA:
 	return "S_TEXT/ASS";	/* Hellmaster1024: seems to be ASS instead of SSA */

@@ -191,7 +191,7 @@ static int writeData(WriterAVCallData_t *call)
     }
 
     if (call->packet->size > 0 && call->packet->data) {
-	unsigned int Position = 0;
+	int Position = 0;
 	unsigned char insertSampleHeader = 1;
 	while (Position < call->packet->size) {
 

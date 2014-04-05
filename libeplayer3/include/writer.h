@@ -20,10 +20,6 @@ typedef struct Context_s Context_t;
 typedef struct {
     int fd;
     int64_t Pts;
-    int uNoOfChannels;
-    int uSampleRate;
-    int uBitsPerSample;
-    int bLittleEndian;
     int restart_audio_resampling;
     AVFormatContext *avfc;
     AVStream *stream;

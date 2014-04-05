@@ -60,7 +60,7 @@ if (debug_level >= level) printf(x); } while (0)
 
 static Writer_t *AvailableWriter[] = {
     &WriterAudioIPCM,
-    &WriterAudioPCM,
+//    &WriterAudioPCM,
     &WriterAudioMP3,
     &WriterAudioMPEGL3,
     &WriterAudioAC3,

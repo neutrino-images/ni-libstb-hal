@@ -37,10 +37,6 @@ typedef enum {
 } OutputCmd_t;
 
 typedef struct {
-    int uNoOfChannels;
-    int uSampleRate;
-    int uBitsPerSample;
-    int bLittleEndian;
     int restart_audio_resampling;
 
     int64_t pts;

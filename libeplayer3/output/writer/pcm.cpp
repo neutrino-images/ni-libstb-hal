@@ -107,9 +107,11 @@ static unsigned int breakBufferFillSize = 0;
 /* MISC Functions                */
 /* ***************************** */
 
-static int prepareClipPlay(int uNoOfChannels, int uSampleRate,
-			   int uBitsPerSample, int bLittleEndian
-			   __attribute__ ((unused)))
+static int uNoOfChannels;
+static int uSampleRate;
+static int uBitsPerSample;
+
+static int prepareClipPlay()
 {
     printf("rate: %d ch: %d bits: %d (%d bps)\n",
 	   uSampleRate /*Format->dwSamplesPerSec */ ,
@@ -177,33 +179,22 @@ static int prepareClipPlay(int uNoOfChannels, int uSampleRate,
     return 0;
 }
 
-static int reset()
-{
-    initialHeader = 1;
-    return 0;
-}
 
-static int writeData(WriterAVCallData_t *call)
+static int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 {
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    pcm_printf(10, "AudioPts %lld\n", call->Pts);
+    pcm_printf(10, "AudioPts %lld\n", Pts);
 
-    if (call->fd < 0) {
+    if (fd < 0) {
 	pcm_err("file pointer < 0. ignoring ...\n");
 	return 0;
     }
 
     if (initialHeader) {
 	initialHeader = 0;
-	prepareClipPlay(call->uNoOfChannels,
-			call->uSampleRate,
-			call->uBitsPerSample,
-			call->bLittleEndian);
+	prepareClipPlay();
     }
-
-    unsigned char *buffer = call->packet->data;
-    unsigned int size = call->packet->size;
 
     unsigned int n;
     unsigned char *injectBuffer = (unsigned char *) malloc(SubFrameLen);
@@ -213,7 +204,7 @@ static int writeData(WriterAVCallData_t *call)
 	//printf("PCM %s - Position=%d\n", __FUNCTION__, pos);
 	if ((size - pos) < SubFrameLen) {
 	    breakBufferFillSize = size - pos;
-	    memcpy(breakBuffer, &buffer[pos],
+	    memcpy(breakBuffer, &data[pos],
 		   sizeof(unsigned char) * breakBufferFillSize);
 	    //printf("PCM %s - Unplayed=%d\n", __FUNCTION__, breakBufferFillSize);
 	    break;
@@ -221,11 +212,11 @@ static int writeData(WriterAVCallData_t *call)
 	//get first PES's worth
 	if (breakBufferFillSize > 0) {
 	    memcpy(injectBuffer, breakBuffer, sizeof(unsigned char) * breakBufferFillSize);
-	    memcpy(&injectBuffer[breakBufferFillSize], &buffer[pos], sizeof(unsigned char) * (SubFrameLen - breakBufferFillSize));
+	    memcpy(&injectBuffer[breakBufferFillSize], &data[pos], sizeof(unsigned char) * (SubFrameLen - breakBufferFillSize));
 	    pos += (SubFrameLen - breakBufferFillSize);
 	    breakBufferFillSize = 0;
 	} else {
-	    memcpy(injectBuffer, &buffer[pos], sizeof(unsigned char) * SubFrameLen);
+	    memcpy(injectBuffer, &data[pos], sizeof(unsigned char) * SubFrameLen);
 	    pos += SubFrameLen;
 	}
 
@@ -238,7 +229,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[2].iov_len = SubFrameLen;
 
 	//write the PCM data
-	if (call->uBitsPerSample == 16) {
+	if (uBitsPerSample == 16) {
 	    for (n = 0; n < SubFrameLen; n += 2) {
 		unsigned char tmp;
 		tmp = injectBuffer[n];
@@ -267,8 +258,8 @@ static int writeData(WriterAVCallData_t *call)
 	//increment err... subframe count?
 	lpcm_prv[1] = ((lpcm_prv[1] + SubFramesPerPES) & 0x1F);
 
-	iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, call->Pts, 0);
-	int len = writev(call->fd, iov, 3);
+	iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, Pts, 0);
+	int len = writev(fd, iov, 3);
 	if (len < 0)
 	    break;
     }
@@ -285,8 +276,10 @@ int out_channels = 2;
 uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
 int restart_audio_resampling = 0;
 
-static int resetIpcm()
+static int reset()
 {
+    initialHeader = 1;
+
     if (swr) {
 	swr_free(&swr);
 	swr = NULL; //FIXME: Needed?
@@ -301,7 +294,7 @@ static int resetIpcm()
 
 int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
 
-static int writeDataIpcm(WriterAVCallData_t *call)
+static int writeData(WriterAVCallData_t *call)
 {
 	AVCodecContext *c = call->stream->codec;
 	AVPacket *packet = call->packet;
@@ -309,18 +302,12 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 	unsigned int packet_size = packet->size;
 
 	if (call->restart_audio_resampling)
-		call->restart_audio_resampling = 1;	
+		restart_audio_resampling = 1;	
 
 	if (restart_audio_resampling) {
 		restart_audio_resampling = 0;
-		if (swr) {
-			swr_free(&swr);
-			swr = NULL;
-		}
-		if (decoded_frame) {
-			av_frame_free(&decoded_frame);
-			decoded_frame = NULL;
-		}
+		reset();
+
 		call->context->output->Command(call->context, OUTPUT_CLEAR, NULL);
 		call->context->output->Command(call->context, OUTPUT_PLAY, NULL);
 
@@ -328,17 +315,17 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 
 		if (!codec || avcodec_open2(c, codec, NULL))
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
-		}
+	}
 
-		while (packet_size > 0) {
-			int got_frame = 0;
-			if (!decoded_frame) {
+	while (packet_size > 0) {
+		int got_frame = 0;
+		if (!decoded_frame) {
 			if (!(decoded_frame = av_frame_alloc())) {
-			fprintf(stderr, "out of memory\n");
-			exit(1);
-		}
-	} else
-		av_frame_unref(decoded_frame);
+				fprintf(stderr, "out of memory\n");
+				exit(1);
+			}
+		} else
+			av_frame_unref(decoded_frame);
 
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {
@@ -403,32 +390,19 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 		// FIXME. PTS calculation is probably broken.
 		int64_t pts;
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-			call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
-			call->stream->time_base.den);
+						call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
+						call->stream->time_base.den);
 		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
-			call->stream->time_base.den,
-			call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
-			*(call->context->currentAudioPtsP) = /* audioTrack->pts = */ pts = calcPts(call->avfc, call->stream, next_out_pts);
-			out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **)
-			&decoded_frame->data[0], in_samples);
+						call->stream->time_base.den,
+						call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
+		*(call->context->currentAudioPtsP) = /* audioTrack->pts = */ pts = calcPts(call->avfc, call->stream, next_out_pts);
+		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-		WriterAVCallData_t pcmOut;
-		pcmOut.fd = call->fd;
-		pcmOut.uSampleRate = out_sample_rate;
-		pcmOut.uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
-		pcmOut.uBitsPerSample = 16;
-		pcmOut.bLittleEndian = 1;
+		uSampleRate = out_sample_rate;
+		uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
+		uBitsPerSample = 16;
 
-		AVPacket pcmPacket;
-		pcmPacket.data = output;
-		pcmPacket.size = out_samples * sizeof(short) * out_channels;
-		pcmOut.packet = &pcmPacket;
-
-		pcmOut.Pts = pts; // FIXME  videoTrack ? pts : 0;
-		//pcmOut.stream = call->stream;
-		//pcmOut.avfc = call->avfc;
-
-		writeData(&pcmOut);
+		writePCM(call->fd, pts, output, out_samples * sizeof(short) * out_channels);
 
 		av_freep(&output);
 	}
@@ -439,20 +413,6 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 /* Writer  Definition            */
 /* ***************************** */
 
-static WriterCaps_t caps_pcm = {
-	"pcm",
-	eAudio,
-	"A_PCM",
-	AUDIO_ENCODING_LPCMA
-};
-
-struct Writer_s WriterAudioPCM = {
-	&reset,
-	&writeData,
-	NULL,
-	&caps_pcm
-};
-
 static WriterCaps_t caps_ipcm = {
 	"ipcm",
 	eAudio,
@@ -461,8 +421,8 @@ static WriterCaps_t caps_ipcm = {
 };
 
 struct Writer_s WriterAudioIPCM = {
-	&resetIpcm,
-	&writeDataIpcm,
+	&reset,
+	&writeData,
 	NULL,
 	&caps_ipcm
 };

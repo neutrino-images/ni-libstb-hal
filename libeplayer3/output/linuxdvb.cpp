@@ -976,10 +976,6 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
 	    call.Pts = out->pts;
 	    call.packet = out->packet;
 
-	    call.uNoOfChannels = out->uNoOfChannels;
-	    call.uSampleRate = out->uSampleRate;
-	    call.uBitsPerSample = out->uBitsPerSample;
-	    call.bLittleEndian = out->bLittleEndian;
 	    call.restart_audio_resampling = out->restart_audio_resampling;
 	    call.context = context;
 

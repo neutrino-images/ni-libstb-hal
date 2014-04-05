@@ -388,6 +388,8 @@ static void FFMPEGThread(Context_t * context)
 	    avOut.width = videoTrack->width;
 	    avOut.height = videoTrack->height;
 	    avOut.type = "video";
+	    avOut.stream = videoTrack->stream;
+	    avOut.avfc = avContext;
 
 	    if (context->output->video->Write(context, &avOut) < 0) {
 		ffmpeg_err("writing data to video device failed\n");
@@ -416,6 +418,8 @@ static void FFMPEGThread(Context_t * context)
 		    avOut.width = 0;
 		    avOut.height = 0;
 		    avOut.type = "audio";
+		    avOut.stream = audioTrack->stream;
+		    avOut.avfc = avContext;
 
 		    if (context->output->audio->Write(context, &avOut) < 0)
 			ffmpeg_err("(raw pcm) writing data to audio device failed\n");
@@ -541,6 +545,8 @@ static void FFMPEGThread(Context_t * context)
 			avOut.width = 0;
 			avOut.height = 0;
 			avOut.type = "audio";
+		        avOut.stream = audioTrack->stream;
+		        avOut.avfc = avContext;
 
 			if (context->output->audio->Write(context, &avOut) < 0)
 			    ffmpeg_err("writing data to audio device failed\n");
@@ -560,6 +566,8 @@ static void FFMPEGThread(Context_t * context)
 		    avOut.width = 0;
 		    avOut.height = 0;
 		    avOut.type = "audio";
+		    avOut.stream = audioTrack->stream;
+		    avOut.avfc = avContext;
 
 		    if (context->output->audio->Write(context, &avOut) < 0)
 			ffmpeg_err("(aac) writing data to audio device failed\n");
@@ -575,6 +583,8 @@ static void FFMPEGThread(Context_t * context)
 		    avOut.width = 0;
 		    avOut.height = 0;
 		    avOut.type = "audio";
+		    avOut.stream = audioTrack->stream;
+		    avOut.avfc = avContext;
 
 		    if (context->output->audio->Write(context, &avOut) < 0)
 			ffmpeg_err("writing data to audio device failed\n");
@@ -890,6 +900,9 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 	 */
 	memset(&track, 0, sizeof(track));
 
+	track.avfc = avContext;
+	track.stream = stream;
+
 	switch (stream->codec->codec_type) {
 	case AVMEDIA_TYPE_VIDEO:
 	    ffmpeg_printf(10, "CODEC_TYPE_VIDEO %d\n", stream->codec->codec_type);
@@ -937,7 +950,7 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 
 		track.Name = "und";
 		track.Encoding = encoding;
-		track.stream = stream;
+		track.avfc = avContext;
 		track.Id = stream->id;
 
 		if (stream->duration == AV_NOPTS_VALUE) {
@@ -971,7 +984,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		ffmpeg_printf(10, "Language %s\n", track.Name);
 
 		track.Encoding = encoding;
-		track.stream = stream;
 		track.Id = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 #if 0
@@ -1160,7 +1172,6 @@ int container_ffmpeg_update_tracks(Context_t * context, char *filename)
 		ffmpeg_printf(10, "Language %s\n", track.Name);
 
 		track.Encoding = encoding;
-		track.stream = stream;
 		track.Id = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 

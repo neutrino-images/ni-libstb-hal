@@ -902,6 +902,8 @@ static int Write(Context_t *context, AudioVideoOut_t *out)
     unsigned char audio = 0;
     Writer_t *writer;
     WriterAVCallData_t call;
+    call.stream = out->stream;
+    call.avfc = out->avfc;
 
     if (out == NULL) {
 	linuxdvb_err("null pointer passed\n");

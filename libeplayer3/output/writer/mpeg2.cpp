@@ -147,7 +147,6 @@ static WriterCaps_t caps = {
 struct Writer_s WriterVideoMPEG2 = {
     &reset,
     &writeData,
-    NULL,
     &caps
 };
 
@@ -161,6 +160,5 @@ static WriterCaps_t h264_caps = {
 struct Writer_s WriterVideoMPEGH264 = {
     &reset,
     &writeData,
-    NULL,
     &h264_caps
 };

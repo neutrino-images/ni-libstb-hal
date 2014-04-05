@@ -172,7 +172,6 @@ static WriterCaps_t mpeg4p2_caps = {
 struct Writer_s WriterVideoMSCOMP = {
     &reset,
     &writeData,
-    NULL,
     &mpeg4p2_caps
 };
 
@@ -186,7 +185,6 @@ static WriterCaps_t fourcc_caps = {
 struct Writer_s WriterVideoFOURCC = {
     &reset,
     &writeData,
-    NULL,
     &fourcc_caps
 };
 
@@ -200,6 +198,5 @@ static WriterCaps_t divx_caps = {
 struct Writer_s WriterVideoDIVX = {
     &reset,
     &writeData,
-    NULL,
     &divx_caps
 };

@@ -38,7 +38,6 @@ typedef struct WriterCaps_s {
 typedef struct Writer_s {
     int (*reset) ();
     int (*writeData) (WriterAVCallData_t *);
-    int (*writeReverseData) (WriterAVCallData_t *);
     WriterCaps_t *caps;
 } Writer_t;
 

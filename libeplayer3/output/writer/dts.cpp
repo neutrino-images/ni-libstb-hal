@@ -155,6 +155,5 @@ static WriterCaps_t caps = {
 struct Writer_s WriterAudioDTS = {
     &reset,
     &writeData,
-    NULL,
     &caps
 };

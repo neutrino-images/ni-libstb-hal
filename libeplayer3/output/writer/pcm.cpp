@@ -423,6 +423,5 @@ static WriterCaps_t caps_ipcm = {
 struct Writer_s WriterAudioIPCM = {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_ipcm
 };

@@ -299,10 +299,14 @@ int restart_audio_resampling = 0;
 
 static int resetIpcm()
 {
-    if (swr)
+    if (swr) {
 	swr_free(&swr);
-    if (decoded_frame)
+	swr = NULL; //FIXME: Needed?
+    }
+    if (decoded_frame) {
 	av_frame_free(&decoded_frame);
+	decoded_frame = NULL; //FIXME: Needed?
+    }
 
     return 0;
 }
@@ -427,15 +431,14 @@ static int writeDataIpcm(WriterAVCallData_t *call)
 		pcmOut.uBitsPerSample = 16;
 		pcmOut.bLittleEndian = 1;
 
-		AVPacket packet;
-		packet.data = output;
-		packet.size = out_samples * sizeof(short) * out_channels;
-		pcmOut.packet = &packet;
+		AVPacket pcmPacket;
+		pcmPacket.data = output;
+		pcmPacket.size = out_samples * sizeof(short) * out_channels;
+		pcmOut.packet = &pcmPacket;
 
 		pcmOut.Pts = pts; // FIXME  videoTrack ? pts : 0;
-		pcmOut.stream = call->stream;
-		pcmOut.avfc = call->avfc;
-		pcmOut.packet = NULL;
+		//pcmOut.stream = call->stream;
+		//pcmOut.avfc = call->avfc;
 
 		writeData(&pcmOut);
 

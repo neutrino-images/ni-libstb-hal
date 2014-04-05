@@ -125,18 +125,6 @@ static int writeData(WriterAVCallData_t *call)
 {
     int len = 0;
 
-    vc1_printf(10, "\n");
-
-    if (call == NULL) {
-	vc1_err("call data is NULL...\n");
-	return 0;
-    }
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	vc1_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
-
     if (call->fd < 0) {
 	vc1_err("file pointer < 0. ignoring ...\n");
 	return 0;

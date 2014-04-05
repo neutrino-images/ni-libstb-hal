@@ -117,25 +117,13 @@ static int writeData(WriterAVCallData_t *call)
     int len = 0;
     int ic = 0;
     struct iovec iov[128];
-    h264_printf(10, "\n");
-
-    if (call == NULL) {
-	h264_err("call data is NULL...\n");
-	return 0;
-    }
 
     TimeDelta = 1000.0 * av_q2d(call->stream->r_frame_rate);      /* rational to double */
     TimeScale = (TimeDelta < 23970) ? 1001 : 1000; /* fixme: revise this */
 
     VideoPts = call->Pts;
 
-    h264_printf(10, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta,
-		TimeScale);
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	h264_err("NULL Data. ignoring...\n");
-	return 0;
-    }
+    h264_printf(10, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta, TimeScale);
 
     if (call->fd < 0) {
 	h264_err("file pointer < 0. ignoring ...\n");

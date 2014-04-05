@@ -187,19 +187,7 @@ static int writeData(WriterAVCallData_t *call)
 {
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    pcm_printf(10, "\n");
-
-    if (!call) {
-	pcm_err("call data is NULL...\n");
-	return 0;
-    }
-
     pcm_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if (!call->packet->data || (call->packet->size <= 0)) {
-	pcm_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
 
     if (call->fd < 0) {
 	pcm_err("file pointer < 0. ignoring ...\n");

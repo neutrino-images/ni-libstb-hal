@@ -93,13 +93,6 @@ static int writeData(WriterAVCallData_t *call)
 {
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    mp3_printf(10, "\n");
-
-    if (call == NULL) {
-	mp3_err("call data is NULL...\n");
-	return 0;
-    }
-
     mp3_printf(10, "AudioPts %lld\n", call->Pts);
 
     if ((call->packet->data == NULL) || (call->packet->size <= 0)) {

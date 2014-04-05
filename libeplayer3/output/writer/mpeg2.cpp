@@ -94,21 +94,9 @@ static int writeData(WriterAVCallData_t *call)
 {
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
     int len = 0;
-    unsigned int Position = 0;
-
-    mpeg2_printf(10, "\n");
-
-    if (call == NULL) {
-	mpeg2_err("call data is NULL...\n");
-	return 0;
-    }
+    int Position = 0;
 
     mpeg2_printf(10, "VideoPts %lld\n", call->Pts);
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	mpeg2_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
 
     if (call->fd < 0) {
 	mpeg2_err("file pointer < 0. ignoring ...\n");

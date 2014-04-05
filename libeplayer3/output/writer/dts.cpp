@@ -97,19 +97,7 @@ static int writeData(WriterAVCallData_t *call)
 {
     unsigned char PesHeader[PES_AUDIO_HEADER_SIZE];
 
-    dts_printf(10, "\n");
-
-    if (call == NULL) {
-	dts_err("call data is NULL...\n");
-	return 0;
-    }
-
     dts_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	dts_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
 
     if (call->fd < 0) {
 	dts_err("file pointer < 0. ignoring ...\n");

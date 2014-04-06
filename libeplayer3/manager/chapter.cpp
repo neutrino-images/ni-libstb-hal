@@ -92,7 +92,8 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
 		char tmp[len];
 		snprintf(tmp, len, "%d %s\n", it->second.Id, it->second.Name.c_str());
 		tracklist[j] = strdup(tmp);
-		tracklist[j + 1] = strdup(it->second.Encoding);
+		tracklist[j + 1] = strdup("");
+		j += 2;
 	}
 	tracklist[j] = NULL;
 

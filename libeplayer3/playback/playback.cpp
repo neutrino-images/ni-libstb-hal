@@ -627,23 +627,25 @@ static int PlaybackSwitchAudio(Context_t * context, int *track)
 
     if (context->playback->isPlaying) {
 	if (context->manager && context->manager->audio) {
-	    context->manager->audio->Command(context, MANAGER_GET,
-					     &curtrackid);
+	    context->manager->audio->Command(context, MANAGER_GET, &curtrackid);
 	    context->manager->audio->Command(context, MANAGER_SET, track);
-	    context->manager->audio->Command(context, MANAGER_GET,
-					     &nextrackid);
+	    context->manager->audio->Command(context, MANAGER_GET, &nextrackid);
 	}
 
 	if (nextrackid != curtrackid) {
 
 	    //PlaybackPause(context);
 
-	    if (context->output && context->output->audio)
-		context->output->audio->Command(context, OUTPUT_SWITCH, "audio");
-
-	    if (context->container
-		&& context->container->selectedContainer)
+	    if (context->container && context->container->selectedContainer)
 		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_AUDIO, (const char *)&nextrackid);
+
+		//FIXME
+		Track_t *t=NULL;
+		context->manager->audio->Command(context, MANAGER_GET_TRACK, &t);
+extern bool output_switch_audio(AVStream*);
+		if(t)
+			output_switch_audio(t->stream);
+		//FIXME
 
 	    //PlaybackContinue(context);
 	}

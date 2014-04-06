@@ -19,7 +19,6 @@ typedef enum {
     MANAGER_GET,
     MANAGER_GETNAME,
     MANAGER_SET,
-    MANAGER_GETENCODING,
     MANAGER_DEL,
     MANAGER_GET_TRACK,
     MANAGER_INIT_UPDATE
@@ -32,7 +31,6 @@ typedef enum {
 
 typedef struct Track_s {
     std::string Name;
-    const char *Encoding;
     int Id;
 
     /* new field for ffmpeg - add at the end so no problem
@@ -52,7 +50,10 @@ typedef struct Track_s {
     int is_static;
     long long int chapter_start;
     long long int chapter_end;
-    Track_s() : Encoding(NULL), Id(0), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0) {}
+
+    int ac3flags;
+
+    Track_s() : Id(-1), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0), ac3flags(-1) {}
 } Track_t;
 
 struct Context_s;

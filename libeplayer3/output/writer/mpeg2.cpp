@@ -19,146 +19,58 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
+#include <algorithm>
+
 #include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-
-#define MPEG2_DEBUG
-
-#ifdef MPEG2_DEBUG
-
-static short debug_level = 0;
-
-#define mpeg2_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define mpeg2_printf(level, fmt, x...)
-#endif
-
-#ifndef MPEG2_SILENT
-#define mpeg2_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define mpeg2_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int reset()
+class WriterMPEG2 : public Writer
 {
-    return 0;
-}
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterMPEG2();
+};
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterMPEG2::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
 {
-    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-    int len = 0;
-    int Position = 0;
+	if (fd < 0 || !packet)
+		return false;
 
-    mpeg2_printf(10, "VideoPts %lld\n", call->Pts);
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    if (call->fd < 0) {
-	mpeg2_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
+	int64_t _pts = pts;
 
-    while (Position < call->packet->size) {
-	int PacketLength = (call->packet->size - Position) <= MAX_PES_PACKET_SIZE ?
-	    (call->packet->size - Position) : MAX_PES_PACKET_SIZE;
+	for (int Position = 0; Position < packet->size; ) {
+		int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
+		struct iovec iov[2];
+		iov[0].iov_base = PesHeader;
+		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, 0xe0, _pts, 0);
+		iov[1].iov_base = packet->data + Position;
+		iov[1].iov_len = PacketLength;
 
-	int Remaining = call->packet->size - Position - PacketLength;
-
-	mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n",
-		     PacketLength, Remaining, Position);
-
-	struct iovec iov[2];
-	iov[0].iov_base = PesHeader;
-	iov[0].iov_len =
-	    InsertPesHeader(PesHeader, PacketLength, 0xe0, call->Pts, 0);
-	iov[1].iov_base = call->packet->data + Position;
-	iov[1].iov_len = PacketLength;
-
-	ssize_t l = writev(call->fd, iov, 2);
-	if (l < 0) {
-	    len = l;
-	    break;
+		ssize_t l = writev(fd, iov, 2);
+		if (l < 0) {
+			return false;
+			break;
+		}
+		Position += PacketLength;
+		_pts = INVALID_PTS_VALUE;
 	}
-	len += l;
-
-	Position += PacketLength;
-	call->Pts = INVALID_PTS_VALUE;
-    }
-
-    mpeg2_printf(10, "< len %d\n", len);
-    return len;
+	return true;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
-static WriterCaps_t caps = {
-    "mpeg2",
-    eVideo,
-    "V_MPEG2",
-    VIDEO_ENCODING_AUTO
-};
+WriterMPEG2::WriterMPEG2()
+{
+	Register(this, AV_CODEC_ID_MPEG2TS, VIDEO_ENCODING_AUTO);
+}
 
-struct Writer_s WriterVideoMPEG2 = {
-    &reset,
-    &writeData,
-    &caps
-};
-
-static WriterCaps_t h264_caps = {
-    "mpges_h264",
-    eVideo,
-    "V_MPEG2/H264",
-    VIDEO_ENCODING_H264
-};
-
-struct Writer_s WriterVideoMPEGH264 = {
-    &reset,
-    &writeData,
-    &h264_caps
-};
+static WriterMPEG2 writer_mpeg2 __attribute__ ((init_priority (300)));

@@ -271,16 +271,6 @@ static int Command(Context_t *context, OutputCmd_t command, const char *argument
 		ret = cERR_OUTPUT_INTERNAL_ERROR;
 	    break;
 	}
-    case OUTPUT_SWITCH:{
-	    if (context && context->playback) {
-		if (context->playback->isAudio)
-		    return context->output->audio->Command(context, OUTPUT_SWITCH, "audio");
-		if (context->playback->isVideo)
-		    return context->output->video->Command(context, OUTPUT_SWITCH, "video");
-	    } else
-		ret = cERR_OUTPUT_INTERNAL_ERROR;
-	    break;
-	}
     case OUTPUT_SLOWMOTION:{
 	    if (context && context->playback) {
 		if (context->playback->isVideo)

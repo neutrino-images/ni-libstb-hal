@@ -19,128 +19,97 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
 
+#include <string>
+#include <map>
+
+#include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
+// This does suck ... the original idea was to just link the object files and let them register themselves.
+// Alas, that didn't work as expected.
 
-#define WRITER_DEBUG
+#include "divx.cpp"
+#include "h263.cpp"
+#include "h264.cpp"
+#include "mp3.cpp"
+#include "vc1.cpp"
+#include "wmv.cpp"
+#include "ac3.cpp"
+#include "dts.cpp"
+#include "flac.cpp"
+#include "mpeg2.cpp"
+#include "pcm.cpp"
 
-#ifdef WRITER_DEBUG
+static std::map<enum AVCodecID,Writer *>writers __attribute__ ((init_priority (200)));
+static std::map<enum AVCodecID,video_encoding_t>vencoding __attribute__ ((init_priority (200)));
+static std::map<enum AVCodecID,audio_encoding_t>aencoding __attribute__ ((init_priority (200)));
 
-static short debug_level = 0;
-
-#define writer_printf(level, x...) do { \
-if (debug_level >= level) printf(x); } while (0)
-#else
-#define writer_printf(level, x...)
-#endif
-
-#ifndef WRITER_SILENT
-#define writer_err(x...) do { printf(x); } while (0)
-#else
-#define writer_err(x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-static Writer_t *AvailableWriter[] = {
-    &WriterAudioIPCM,
-//    &WriterAudioPCM,
-    &WriterAudioMP3,
-    &WriterAudioMPEGL3,
-    &WriterAudioAC3,
-    &WriterAudioEAC3,
-//    &WriterAudioAAC,
-    &WriterAudioDTS,
-//    &WriterAudioWMA,
-    &WriterAudioFLAC,
-    &WriterAudioVORBIS,
-
-    &WriterVideoMPEG2,
-    &WriterVideoMPEGH264,
-    &WriterVideoH264,
-    &WriterVideoDIVX,
-    &WriterVideoFOURCC,
-    &WriterVideoMSCOMP,
-    &WriterVideoWMV,
-    &WriterVideoH263,
-    &WriterVideoFLV,
-    &WriterVideoVC1,
-    NULL
-};
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/*  Functions                    */
-/* ***************************** */
-
-Writer_t *getWriter(char *encoding)
+void Writer::Register(Writer *w, enum AVCodecID id, video_encoding_t encoding)
 {
-    int i;
-
-    for (i = 0; AvailableWriter[i] != NULL; i++) {
-	if (strcmp(AvailableWriter[i]->caps->textEncoding, encoding) == 0) {
-	    writer_printf(50, "%s: found writer \"%s\" for \"%s\"\n",
-			  __func__, AvailableWriter[i]->caps->name,
-			  encoding);
-	    return AvailableWriter[i];
-	}
-    }
-
-    writer_printf(1, "%s: no writer found for \"%s\"\n", __func__,
-		  encoding);
-
-    return NULL;
+	writers[id] = w;
+	vencoding[id] = encoding;
 }
 
-Writer_t *getDefaultVideoWriter()
+void Writer::Register(Writer *w, enum AVCodecID id, audio_encoding_t encoding)
 {
-    int i;
-
-    for (i = 0; AvailableWriter[i] != NULL; i++) {
-	if (strcmp(AvailableWriter[i]->caps->textEncoding, "V_MPEG2") == 0) {
-	    writer_printf(50, "%s: found writer \"%s\"\n", __func__,
-			  AvailableWriter[i]->caps->name);
-	    return AvailableWriter[i];
-	}
-    }
-
-    writer_printf(1, "%s: no writer found\n", __func__);
-
-    return NULL;
+	writers[id] = w;
+	aencoding[id] = encoding;
 }
 
-Writer_t *getDefaultAudioWriter()
+bool Writer::Write(int /* fd */, AVFormatContext * /* avfc */, AVStream * /*stream*/, AVPacket * /* packet */, int64_t & /* pts */)
 {
-    int i;
+	return false;
+}
 
-    for (i = 0; AvailableWriter[i] != NULL; i++) {
-	if (strcmp(AvailableWriter[i]->caps->textEncoding, "A_MP3") == 0) {
-	    writer_printf(50, "%s: found writer \"%s\"\n", __func__,
-			  AvailableWriter[i]->caps->name);
-	    return AvailableWriter[i];
+static Writer writer __attribute__ ((init_priority (300)));
+
+Writer *Writer::GetWriter(enum AVCodecID id, enum AVMediaType codec_type)
+{
+fprintf(stderr, "%s %s %d\n", __FILE__,__func__,__LINE__);
+	std::map<enum AVCodecID,Writer*>::iterator it = writers.find(id);
+	if (it != writers.end())
+		return it->second;
+fprintf(stderr, "%s %s %d: no writer found\n", __FILE__,__func__,__LINE__);
+	switch (codec_type) {
+		case AVMEDIA_TYPE_AUDIO:
+			if (id == AV_CODEC_ID_INJECTPCM) // should not happen
+				break;
+fprintf(stderr, "%s %s %d: returning injectpcm\n", __FILE__,__func__,__LINE__);
+			return GetWriter(AV_CODEC_ID_INJECTPCM, codec_type);
+		case AVMEDIA_TYPE_VIDEO:
+			if (id == AV_CODEC_ID_MPEG2TS) // should not happen
+				break;
+fprintf(stderr, "%s %s %d: returning mpeg2video\n", __FILE__,__func__,__LINE__);
+			return GetWriter(AV_CODEC_ID_MPEG2TS, codec_type);
+		default:
+			break;
 	}
-    }
+fprintf(stderr, "%s %s %d: returning dummy writer\n", __FILE__,__func__,__LINE__);
+	return &writer;
+}
 
-    writer_printf(1, "%s: no writer found\n", __func__);
+video_encoding_t Writer::GetVideoEncoding(enum AVCodecID id)
+{
+	std::map<enum AVCodecID,video_encoding_t>::iterator it = vencoding.find(id);
+	if (it != vencoding.end())
+		return it->second;
+	return VIDEO_ENCODING_AUTO;
+}
 
-    return NULL;
+audio_encoding_t Writer::GetAudioEncoding(enum AVCodecID id)
+{
+	std::map<enum AVCodecID,audio_encoding_t>::iterator it = aencoding.find(id);
+	if (it != aencoding.end())
+		return it->second;
+	return AUDIO_ENCODING_LPCMA;
 }

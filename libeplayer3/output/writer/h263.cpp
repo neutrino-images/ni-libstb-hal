@@ -19,98 +19,33 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 #include <sys/uio.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-#define H263_DEBUG
-
-#ifdef H263_DEBUG
-
-static short debug_level = 0;
-static const char *FILENAME = "h263.c";
-
-#define h263_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
-#else
-#define h263_printf(level, fmt, x...)
-#endif
-
-#ifndef H263_SILENT
-#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
-#else
-#define h263_err(fmt, x...)
-#endif
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int reset()
+class WriterH263 : public Writer
 {
-    return 0;
-}
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterH263();
+};
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterH263::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
 {
+	if (fd < 0 || !packet)
+		return false;
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-    int len = 0;
 
-    h263_printf(10, "VideoPts %lld\n", call->Pts);
+    int HeaderLength = InsertPesHeader(PesHeader, packet->size, H263_VIDEO_PES_START_CODE, pts, 0);
 
-    if (call->fd < 0) {
-	h263_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
+    int PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], packet->size);
 
-    int HeaderLength =
-	InsertPesHeader(PesHeader, call->packet->size, H263_VIDEO_PES_START_CODE,
-			call->Pts, 0);
-
-    int PrivateHeaderLength =
-	InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->packet->size);
-
-    int PesLength =
-	PesHeader[PES_LENGTH_BYTE_0] +
-	(PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
+    int PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
 
     PesHeader[PES_LENGTH_BYTE_0] = PesLength & 0xff;
     PesHeader[PES_LENGTH_BYTE_1] = (PesLength >> 8) & 0xff;
@@ -122,40 +57,17 @@ static int writeData(WriterAVCallData_t *call)
     struct iovec iov[2];
     iov[0].iov_base = PesHeader;
     iov[0].iov_len = HeaderLength;
-    iov[1].iov_base = call->packet->data;
-    iov[1].iov_len = call->packet->size;
-    len = writev(call->fd, iov, 2);
-
-    h263_printf(10, "< len %d\n", len);
-    return len;
+    iov[1].iov_base = packet->data;
+    iov[1].iov_len = packet->size;
+    return writev(fd, iov, 2) > -1;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterH263::WriterH263()
+{
+	Register(this, AV_CODEC_ID_H263, VIDEO_ENCODING_H263);
+	Register(this, AV_CODEC_ID_H263P, VIDEO_ENCODING_H263);
+	Register(this, AV_CODEC_ID_H263I, VIDEO_ENCODING_H263);
+	Register(this, AV_CODEC_ID_FLV1, VIDEO_ENCODING_FLV1);
+}
 
-static WriterCaps_t caps_h263 = {
-    "h263",
-    eVideo,
-    "V_H263",
-    VIDEO_ENCODING_H263
-};
-
-struct Writer_s WriterVideoH263 = {
-    &reset,
-    &writeData,
-    &caps_h263
-};
-
-static WriterCaps_t caps_flv = {
-    "FLV",
-    eVideo,
-    "V_FLV",
-    VIDEO_ENCODING_FLV1
-};
-
-struct Writer_s WriterVideoFLV = {
-    &reset,
-    &writeData,
-    &caps_flv
-};
+static WriterH263 writer_h263 __attribute__ ((init_priority (300)));

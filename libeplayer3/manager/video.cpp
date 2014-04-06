@@ -97,7 +97,8 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
 		char tmp[len];
 		snprintf(tmp, len, "%d %s\n", it->second.Id, it->second.Name.c_str());
 		tracklist[j] = strdup(tmp);
-		tracklist[j + 1] = strdup(it->second.Encoding);
+		tracklist[j + 1] = strdup("");
+		j += 2;
 	}
 	tracklist[j] = NULL;
 
@@ -138,13 +139,6 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			*((Track_t **) argument) = &Tracks[CurrentPid];
 	    else
 		*((Track_t **) argument) = NULL;
-	    break;
-	}
-    case MANAGER_GETENCODING:{
-		if (CurrentPid > -1)
-			*((char **) argument) = strdup(Tracks[CurrentPid].Encoding);
-	    else
-			*((char **) argument) = strdup("");
 	    break;
 	}
     case MANAGER_GETNAME:{

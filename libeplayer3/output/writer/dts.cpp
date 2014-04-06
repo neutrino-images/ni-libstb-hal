@@ -19,97 +19,41 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
 #define PES_AUDIO_PRIVATE_HEADER_SIZE   16	// consider maximum private header size.
 #define PES_AUDIO_HEADER_SIZE           (32 + PES_AUDIO_PRIVATE_HEADER_SIZE)
-#define PES_AUDIO_PACKET_SIZE           2028
-#define SPDIF_AUDIO_PACKET_SIZE         (1024 * sizeof(unsigned int) * 2)	// stereo 32bit samples.
 
-#define DTS_DEBUG
-
-#ifdef DTS_DEBUG
-
-static short debug_level = 0;
-
-#define dts_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define dts_printf(level, fmt, x...)
-#endif
-
-#ifndef DTS_SILENT
-#define dts_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define dts_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-static int reset()
+class WriterDTS : public Writer
 {
-    return 0;
-}
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterDTS();
+};
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterDTS::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
 {
+	if (fd < 0 || !packet)
+		return false;
+
     unsigned char PesHeader[PES_AUDIO_HEADER_SIZE];
 
-    dts_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if (call->fd < 0) {
-	dts_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
-    unsigned char *Data = (unsigned char *) malloc(call->packet->size);
-    memcpy(Data, call->packet->data, call->packet->size);
+    unsigned char Data[packet->size];
+    memcpy(Data, packet->data, packet->size);
 
     /* 16-bit byte swap all data before injecting it */
-    for (i = 0; i < call->packet->size; i += 2) {
+    for (i = 0; i < packet->size; i += 2) {
 	unsigned char Tmp = Data[i];
 	Data[i] = Data[i + 1];
 	Data[i + 1] = Tmp;
@@ -119,41 +63,20 @@ static int writeData(WriterAVCallData_t *call)
     struct iovec iov[2];
 
     iov[0].iov_base = PesHeader;
-    iov[0].iov_len =
-	InsertPesHeader(PesHeader, call->packet->size,
-			MPEG_AUDIO_PES_START_CODE
-			/*PRIVATE_STREAM_1_PES_START_CODE */ , call->Pts,
-			0);
+    iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE /*PRIVATE_STREAM_1_PES_START_CODE */ , pts, 0);
 #ifdef DO_BYTESPWAP
     iov[1].iov_base = Data;
 #else
-    iov[1].iov_base = call->packet->data;
+    iov[1].iov_base = packet->data;
 #endif
-    iov[1].iov_len = call->packet->size;
+    iov[1].iov_len = packet->size;
 
-    int len = writev(call->fd, iov, 2);
-
-#ifdef DO_BYTESWAP
-    free(Data);
-#endif
-
-    dts_printf(10, "< len %d\n", len);
-    return len;
+    return writev(fd, iov, 2) > -1;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterDTS::WriterDTS()
+{
+	Register(this, AV_CODEC_ID_DTS, AUDIO_ENCODING_DTS);
+}
 
-static WriterCaps_t caps = {
-    "dts",
-    eAudio,
-    "A_DTS",
-    AUDIO_ENCODING_DTS
-};
-
-struct Writer_s WriterAudioDTS = {
-    &reset,
-    &writeData,
-    &caps
-};
+static WriterDTS writer_dts __attribute__ ((init_priority (300)));

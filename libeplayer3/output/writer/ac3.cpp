@@ -19,129 +19,44 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-#define AC3_HEADER_LENGTH       7
-
-#define AC3_DEBUG
-
-#ifdef AC3_DEBUG
-
-static short debug_level = 0;
-
-#define ac3_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define ac3_printf(level, fmt, x...)
-#endif
-
-#ifndef AC3_SILENT
-#define ac3_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define ac3_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int reset()
+class WriterAC3 : public Writer
 {
-    return 0;
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterAC3();
+};
+
+bool WriterAC3::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
+{
+	if (fd < 0 || !packet)
+		return false;
+
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	struct iovec iov[2];
+
+	iov[0].iov_base = PesHeader;
+	iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, PRIVATE_STREAM_1_PES_START_CODE, pts, 0);
+	iov[1].iov_base = packet->data;
+	iov[1].iov_len = packet->size;
+
+	return writev(fd, iov, 2) > -1;
 }
 
-static int writeData(WriterAVCallData_t *call)
+WriterAC3::WriterAC3()
 {
-    ac3_printf(10, "\n");
-
-    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-
-    ac3_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if (call->fd < 0) {
-	ac3_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
-    struct iovec iov[2];
-
-    iov[0].iov_base = PesHeader;
-    iov[0].iov_len =
-	InsertPesHeader(PesHeader, call->packet->size,
-			PRIVATE_STREAM_1_PES_START_CODE, call->Pts, 0);
-    iov[1].iov_base = call->packet->data;
-    iov[1].iov_len = call->packet->size;
-
-    return writev(call->fd, iov, 2);
+	Register(this, AV_CODEC_ID_AC3, AUDIO_ENCODING_AC3);
+	Register(this, AV_CODEC_ID_EAC3, AUDIO_ENCODING_AC3);
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
-
-static WriterCaps_t caps_ac3 = {
-    "ac3",
-    eAudio,
-    "A_AC3",
-    AUDIO_ENCODING_AC3
-};
-
-struct Writer_s WriterAudioAC3 = {
-    &reset,
-    &writeData,
-    &caps_ac3
-};
-
-static WriterCaps_t caps_eac3 = {
-    "ac3",
-    eAudio,
-    "A_AC3",
-    AUDIO_ENCODING_AC3
-};
-
-struct Writer_s WriterAudioEAC3 = {
-    &reset,
-    &writeData,
-    &caps_eac3
-};
+static WriterAC3 writer_ac3 __attribute__ ((init_priority (300)));

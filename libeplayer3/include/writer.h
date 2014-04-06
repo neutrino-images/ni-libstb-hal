@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -12,61 +13,23 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
-typedef enum { eNone, eAudio, eVideo, eGfx } eWriterType_t;
+#include <linux/dvb/stm_ioctls.h>
 
-struct Context_s;
-typedef struct Context_s Context_t;
+#define AV_CODEC_ID_INJECTPCM AV_CODEC_ID_PCM_S16LE
 
-typedef struct {
-    int fd;
-    int64_t Pts;
-    int restart_audio_resampling;
-    AVFormatContext *avfc;
-    AVStream *stream;
-    AVPacket *packet;
-    Context_t *context;
-} WriterAVCallData_t;
+class Writer
+{
+	public:
+		static void Register(Writer *w, enum AVCodecID id, video_encoding_t encoding);
+		static void Register(Writer *w, enum AVCodecID id, audio_encoding_t encoding);
+		static video_encoding_t GetVideoEncoding(enum AVCodecID id);
+		static audio_encoding_t GetAudioEncoding(enum AVCodecID id);
+		static Writer *GetWriter(enum AVCodecID id, enum AVMediaType codec_type);
 
-typedef struct WriterCaps_s {
-    const char *name;
-    eWriterType_t type;
-    const char *textEncoding;
-    /* fixme: revise if this is an enum! */
-    int dvbEncoding;
-} WriterCaps_t;
+		virtual void Init(void) { }
+		virtual bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
 
-typedef struct Writer_s {
-    int (*reset) ();
-    int (*writeData) (WriterAVCallData_t *);
-    WriterCaps_t *caps;
-} Writer_t;
-
-extern Writer_t WriterAudioIPCM;
-extern Writer_t WriterAudioPCM;
-extern Writer_t WriterAudioMP3;
-extern Writer_t WriterAudioMPEGL3;
-extern Writer_t WriterAudioAC3;
-extern Writer_t WriterAudioEAC3;
-//extern Writer_t WriterAudioAAC;
-extern Writer_t WriterAudioDTS;
-//extern Writer_t WriterAudioWMA;
-extern Writer_t WriterAudioFLAC;
-extern Writer_t WriterAudioVORBIS;
-
-extern Writer_t WriterVideoMPEG2;
-extern Writer_t WriterVideoMPEGH264;
-extern Writer_t WriterVideoH264;
-extern Writer_t WriterVideoWMV;
-extern Writer_t WriterVideoDIVX;
-extern Writer_t WriterVideoFOURCC;
-extern Writer_t WriterVideoMSCOMP;
-extern Writer_t WriterVideoH263;
-extern Writer_t WriterVideoFLV;
-extern Writer_t WriterVideoVC1;
-
-Writer_t *getWriter(char *encoding);
-
-Writer_t *getDefaultVideoWriter();
-Writer_t *getDefaultAudioWriter();
-
+		Writer() { Init (); }
+		~Writer() {}
+};
 #endif

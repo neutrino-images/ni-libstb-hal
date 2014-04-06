@@ -39,6 +39,8 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 
+#include <linux/dvb/stm_ioctls.h>
+
 #include "common.h"
 #include "misc.h"
 #include "debug.h"
@@ -103,72 +105,6 @@ static float seek_sec_abs = -1.0, seek_sec_rel = 0.0;
 /* MISC Functions                */
 /* ***************************** */
 
-static const char *Codec2Encoding(AVCodecContext * codec)
-{
-    fprintf(stderr, "Codec ID: %ld (%.8lx)\n", (long) codec->codec_id, (long) codec->codec_id);
-    switch (codec->codec_id) {
-    case AV_CODEC_ID_MPEG1VIDEO:
-    case AV_CODEC_ID_MPEG2VIDEO:
-	return "V_MPEG1";
-    case AV_CODEC_ID_H263:
-    case AV_CODEC_ID_H263P:
-    case AV_CODEC_ID_H263I:
-	return "V_H263";
-    case AV_CODEC_ID_FLV1:
-	return "V_FLV";
-    case AV_CODEC_ID_VP5:
-    case AV_CODEC_ID_VP6:
-    case AV_CODEC_ID_VP6F:
-	return "V_VP6";
-    case AV_CODEC_ID_RV10:
-    case AV_CODEC_ID_RV20:
-	return "V_RMV";
-    case AV_CODEC_ID_MPEG4:
-    case AV_CODEC_ID_MSMPEG4V1:
-    case AV_CODEC_ID_MSMPEG4V2:
-    case AV_CODEC_ID_MSMPEG4V3:
-	return "V_MSCOMP";
-    case AV_CODEC_ID_WMV1:
-    case AV_CODEC_ID_WMV2:
-    case AV_CODEC_ID_WMV3:
-	return "V_WMV";
-    case AV_CODEC_ID_VC1:
-	return "V_VC1";
-    case AV_CODEC_ID_H264:
-	return "V_MPEG4/ISO/AVC";
-    case AV_CODEC_ID_AVS:
-	return "V_AVS";
-    case AV_CODEC_ID_MP2:
-	return "A_MPEG/L3";
-    case AV_CODEC_ID_MP3:
-	return "A_MP3";
-    case AV_CODEC_ID_AC3:
-	return "A_AC3";
-    case AV_CODEC_ID_EAC3:
-	return "A_EAC3";
-    case AV_CODEC_ID_DTS:
-	return "A_DTS";
-/* subtitle */
-    case AV_CODEC_ID_SSA:
-	return "S_TEXT/ASS";	/* Hellmaster1024: seems to be ASS instead of SSA */
-    case AV_CODEC_ID_TEXT:	/* Hellmaster1024: i dont have most of this, but lets hope it is normal text :-) */
-    case AV_CODEC_ID_DVD_SUBTITLE:
-    case AV_CODEC_ID_DVB_SUBTITLE:
-    case AV_CODEC_ID_XSUB:
-    case AV_CODEC_ID_MOV_TEXT:
-    case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
-    case AV_CODEC_ID_DVB_TELETEXT:
-    case AV_CODEC_ID_SRT:
-	return "S_TEXT/SRT";	/* fixme */
-    default:
-	// Default to injected-pcm for unhandled audio types.
-	if (codec->codec_type == AVMEDIA_TYPE_AUDIO)
-	    return "A_IPCM";
-	ffmpeg_err("Codec ID %ld (%.8lx) not found\n", (long) codec->codec_id, (long) codec->codec_id);
-    }
-    return NULL;
-}
-
 int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 {
     if (!avfc || !stream) {
@@ -219,10 +155,9 @@ static void *FFMPEGThread(void *arg)
     }
     ffmpeg_printf(10, "Running!\n");
 
-    while (context && context->playback && context->playback->isPlaying && !context->playback->abortRequested) {
-    	AudioVideoOut_t avOut;
-	avOut.restart_audio_resampling = 0;
+    bool restart_audio_resampling = false;
 
+    while (context && context->playback && context->playback->isPlaying && !context->playback->abortRequested) {
 
 	//IF MOVIE IS PAUSED, WAIT
 	if (context->playback->isPaused) {
@@ -291,7 +226,7 @@ static void *FFMPEGThread(void *arg)
 	    if (res < 0 && context->playback->BackWard)
 		bofcount = 1;
 	    seek_target = INT64_MIN;
-	    avOut.restart_audio_resampling = 1;
+	    restart_audio_resampling = true;
 
 	    // flush streams
 	    unsigned int i;
@@ -321,8 +256,6 @@ static void *FFMPEGThread(void *arg)
 
 	context->playback->readCount += packet.size;
 
-	avOut.packet = &packet;
-
 	int pid = avContext->streams[packet.stream_index]->id;
 
 	if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)
@@ -343,28 +276,16 @@ static void *FFMPEGThread(void *arg)
 	    currentVideoPts = pts = calcPts(avContext, videoTrack->stream, packet.pts);
 
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
-
-	    avOut.pts = pts;
-
-	    avOut.type = "video";
-	    avOut.stream = videoTrack->stream;
-	    avOut.avfc = avContext;
-
-	    if (context->output->video->Write(context, &avOut) < 0) {
+	    if (!context->output->video->Write(avContext, videoTrack->stream, &packet, currentVideoPts))
 		ffmpeg_err("writing data to video device failed\n");
-	    }
 	} else if (audioTrack && (audioTrack->Id == pid)) {
-	    context->currentAudioPtsP = &currentAudioPts; //FIXME, temporary workaround only
+	    if (restart_audio_resampling) {
+	    	restart_audio_resampling = false;
+		context->output->audio->Write(avContext, audioTrack->stream, NULL, currentAudioPts);
+	    }
 	    if (!context->playback->BackWard) {
 		currentAudioPts = pts = calcPts(avContext, audioTrack->stream, packet.pts);
-
-		ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
-		avOut.pts = pts;
-		avOut.type = "audio";
-		avOut.stream = audioTrack->stream;
-		avOut.avfc = avContext;
-
-		if (context->output->audio->Write(context, &avOut) < 0)
+		if (!context->output->audio->Write(avContext, audioTrack->stream, &packet, currentAudioPts))
 			ffmpeg_err("writing data to audio device failed\n");
 	    }
 	} else if (subtitleTrack && (subtitleTrack->Id == pid)) {
@@ -492,7 +413,6 @@ static void container_ffmpeg_read_subtitle(Context_t * context, const char *file
 	track.Name = format;
 	track.is_static = 1;
 	track.Id = pid;
-	track.Encoding = strcmp(format, "srt") ? "S_TEXT/ASS" : "S_TEXT/SRT";
 	context->manager->subtitle->Command(context, MANAGER_ADD, &track);
 }
 
@@ -504,6 +424,10 @@ static void container_ffmpeg_read_subtitles(Context_t * context, const char *fil
 	container_ffmpeg_read_subtitle(context, filename, "ass", 0xFFFE);
 	container_ffmpeg_read_subtitle(context, filename, "ssa", 0xFFFD);
 }
+
+// from output/linuxdvb.cpp ... FIXME!
+extern AVStream *audioStream;
+extern AVStream *videoStream;
 
 int container_ffmpeg_init(Context_t * context, const char *filename)
 {
@@ -582,13 +506,23 @@ int container_ffmpeg_init(Context_t * context, const char *filename)
     terminating = 0;
     int res = container_ffmpeg_update_tracks(context, filename);
 
+audioStream = NULL;
+videoStream = NULL;
+
     unsigned int n, found_av = 0;
     for (n = 0; n < avContext->nb_streams; n++) {
 	AVStream *stream = avContext->streams[n];
 	switch (stream->codec->codec_type) {
 	case AVMEDIA_TYPE_AUDIO:
-	case AVMEDIA_TYPE_VIDEO:
+		if (!audioStream)
+			audioStream = stream;
 		found_av = 1;
+		break;
+	case AVMEDIA_TYPE_VIDEO:
+		if (!videoStream)
+			videoStream = stream;
+		found_av = 1;
+		break;
 	default:
 		break;
     	}
@@ -645,11 +579,6 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 	Track_t track;
 	AVStream *stream = avContext->streams[n];
 
-	const char *encoding = Codec2Encoding(stream->codec);
-
-	if (encoding != NULL)
-	    ffmpeg_printf(1, "%d. encoding = %s\n", n, encoding);
-
 	if (!stream->id)
 	    stream->id = n + 1;
 
@@ -660,9 +589,7 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 	case AVMEDIA_TYPE_VIDEO:
 	    ffmpeg_printf(10, "CODEC_TYPE_VIDEO %d\n", stream->codec->codec_type);
 
-	    if (encoding != NULL) {
 		track.Name = "und";
-		track.Encoding = encoding;
 		track.avfc = avContext;
 		track.Id = stream->id;
 
@@ -679,14 +606,10 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 			ffmpeg_err("failed to add track %d\n", n);
 		    }
 
-	    } else {
-		ffmpeg_err("codec type video but codec unknown %d\n", stream->codec->codec_id);
-	    }
 	    break;
 	case AVMEDIA_TYPE_AUDIO:
 	    ffmpeg_printf(10, "CODEC_TYPE_AUDIO %d\n", stream->codec->codec_type);
 
-	    if (encoding != NULL) {
 		AVDictionaryEntry *lang;
 
 		lang = av_dict_get(stream->metadata, "language", NULL, 0);
@@ -695,7 +618,6 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 
 		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
-		track.Encoding = encoding;
 		track.Id = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 
@@ -706,6 +628,28 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 		}
 
+		switch(stream->codec->codec_id) {
+			case AUDIO_ENCODING_MPEG2:
+				track.ac3flags = 9;
+				break;
+			case AV_CODEC_ID_MP3:
+				track.ac3flags = 4;
+				break;
+			case AV_CODEC_ID_AC3:
+				track.ac3flags = 1;
+				break;
+			case AV_CODEC_ID_EAC3:
+				track.ac3flags = 7;
+				break;
+			case AV_CODEC_ID_DTS:
+				track.ac3flags = 6;
+				break;
+			case AV_CODEC_ID_AAC:
+				track.ac3flags = 5;
+				break;
+			default:
+				track.ac3flags = 0;
+		}
 		if (context->manager->audio) {
 		    if (context->manager->audio->Command(context, MANAGER_ADD, &track) < 0) {
 			/* konfetti: fixme: is this a reason to return with error? */
@@ -713,9 +657,6 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 		    }
 		}
 
-	    } else {
-		ffmpeg_err("codec type audio but codec unknown %d\n", stream->codec->codec_id);
-	    }
 	    break;
 	case AVMEDIA_TYPE_SUBTITLE:
 	    {
@@ -729,7 +670,6 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
 
 		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
-		track.Encoding = encoding;
 		track.Id = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 
@@ -908,11 +848,16 @@ static int container_ffmpeg_get_length(Context_t * context, double *length)
 
 static int container_ffmpeg_switch_audio(Context_t * context, int *arg)
 {
-    ffmpeg_printf(10, "track %d\n", *arg);
-    /* Hellmaster1024: nothing to do here! */
-    float sec = -5.0;
-    context->playback->Command(context, PLAYBACK_SEEK, (void *) &sec);
-    return cERR_CONTAINER_FFMPEG_NO_ERROR;
+	Track_t *audioTrack = NULL;
+	context->manager->audio->Command(context, MANAGER_GET_TRACK, &arg);
+	if (audioTrack) {
+		audioStream = audioTrack->stream;
+		ffmpeg_printf(10, "track %d\n", *arg);
+		/* Hellmaster1024: nothing to do here! */
+		float sec = -5.0;
+		context->playback->Command(context, PLAYBACK_SEEK, (void *) &sec);
+	}
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
 static int container_ffmpeg_switch_subtitle(Context_t * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))

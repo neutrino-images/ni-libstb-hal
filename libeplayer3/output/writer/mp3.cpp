@@ -19,145 +19,45 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-#define MP3_DEBUG
-
-#ifdef MP3_DEBUG
-
-static short debug_level = 0;
-
-#define mp3_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define mp3_printf(level, fmt, x...)
-#endif
-
-#ifndef MP3_SILENT
-#define mp3_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define mp3_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int reset()
+class WriterMP3 : public Writer
 {
-    return 0;
-}
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterMP3();
+};
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterMP3::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
 {
+	if (fd < 0 || !packet)
+		return false;
+
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-
-    mp3_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	mp3_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
-
-    if (call->fd < 0) {
-	mp3_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
     struct iovec iov[2];
+
     iov[0].iov_base = PesHeader;
-    iov[0].iov_len =
-	InsertPesHeader(PesHeader, call->packet->size, MPEG_AUDIO_PES_START_CODE,
-			call->Pts, 0);
-    iov[1].iov_base = call->packet->data;
-    iov[1].iov_len = call->packet->size;
+    iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE, pts, 0);
+    iov[1].iov_base = packet->data;
+    iov[1].iov_len = packet->size;
 
-    int len = writev(call->fd, iov, 2);
-
-    mp3_printf(10, "mp3_Write-< len=%d\n", len);
-    return len;
+    return writev(fd, iov, 2) > -1;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterMP3::WriterMP3()
+{
+	Register(this, AV_CODEC_ID_MP3, AUDIO_ENCODING_MP3);
+	Register(this, AV_CODEC_ID_MP2, AUDIO_ENCODING_MPEG2);
+//	Register(this, AV_CODEC_ID_VORBIS, AUDIO_ENCODING_VORBIS);
+}
 
-static WriterCaps_t caps_mp3 = {
-    "mp3",
-    eAudio,
-    "A_MP3",
-    AUDIO_ENCODING_MP3
-};
-
-struct Writer_s WriterAudioMP3 = {
-    &reset,
-    &writeData,
-    &caps_mp3
-};
-
-static WriterCaps_t caps_mpegl3 = {
-    "mpeg/l3",
-    eAudio,
-    "A_MPEG/L3",
-    AUDIO_ENCODING_MPEG2
-};
-
-struct Writer_s WriterAudioMPEGL3 = {
-    &reset,
-    &writeData,
-    &caps_mpegl3
-};
-
-static WriterCaps_t caps_vorbis = {
-    "vorbis",
-    eAudio,
-    "A_VORBIS",
-    AUDIO_ENCODING_VORBIS
-};
-
-struct Writer_s WriterAudioVORBIS = {
-    &reset,
-    &writeData,
-    &caps_vorbis
-};
+static WriterMP3 writer_mp3 __attribute__ ((init_priority (300)));

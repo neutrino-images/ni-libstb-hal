@@ -28,7 +28,6 @@ typedef enum {
     OUTPUT_AVSYNC,
     OUTPUT_CLEAR,
     OUTPUT_PTS,
-    OUTPUT_SWITCH,
     OUTPUT_SLOWMOTION,
     OUTPUT_AUDIOMUTE,
     OUTPUT_REVERSE,
@@ -54,7 +53,7 @@ typedef struct Context_s Context_t;
 typedef struct Output_s {
     const char *Name;
     int (*Command) (Context_t *, OutputCmd_t, const char *);
-    int (*Write) (Context_t *, AudioVideoOut_t *privateData);
+    bool (*Write) (AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts);
     const char **Capabilities;
 
 } Output_t;

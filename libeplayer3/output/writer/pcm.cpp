@@ -19,107 +19,70 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-#define PCM_DEBUG
-
-#ifdef PCM_DEBUG
-
-static short debug_level = 0;
-
-#define pcm_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define pcm_printf(level, fmt, x...)
-#endif
-
-#ifndef PCM_SILENT
-#define pcm_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define pcm_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-static int initialHeader = 1;
-
-static unsigned int SubFrameLen = 0;
-static unsigned int SubFramesPerPES = 0;
+extern "C" {
+#include <libavutil/avutil.h>
+#include <libavutil/time.h>
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libavutil/opt.h>
+}
 
 // reference: search for TypeLpcmDVDAudio in player/frame_parser/frame_parser_audio_lpcm.cpp
-static const unsigned char clpcm_prv[14] = { 0xA0,	//sub_stream_id
-    0, 0,			//resvd and UPC_EAN_ISRC stuff, unused
-    0x0A,			//private header length
-    0, 9,			//first_access_unit_pointer
-    0x00,			//emph,rsvd,stereo,downmix
-    0x0F,			//quantisation word length 1,2
-    0x0F,			//audio sampling freqency 1,2
-    0,				//resvd, multi channel type
-    0,				//bit shift on channel GR2, assignment
-    0x80,			//dynamic range control
-    0, 0			//resvd for copyright management
+static const unsigned char clpcm_prv[14] = {
+	0xA0,	//sub_stream_id
+	0, 0,	//resvd and UPC_EAN_ISRC stuff, unused
+	0x0A,	//private header length
+	0, 9,	//first_access_unit_pointer
+	0x00,	//emph,rsvd,stereo,downmix
+	0x0F,	//quantisation word length 1,2
+	0x0F,	//audio sampling freqency 1,2
+	0,	//resvd, multi channel type
+	0,	//bit shift on channel GR2, assignment
+	0x80,	//dynamic range control
+	0, 0	//resvd for copyright management
 };
 
-static unsigned char lpcm_prv[14];
-static unsigned char breakBuffer[8192];
-static unsigned int breakBufferFillSize = 0;
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int uNoOfChannels;
-static int uSampleRate;
-static int uBitsPerSample;
-
-static int prepareClipPlay()
+class WriterPCM : public Writer
 {
-    printf("rate: %d ch: %d bits: %d (%d bps)\n",
-	   uSampleRate /*Format->dwSamplesPerSec */ ,
-	   uNoOfChannels /*Format->wChannels */ ,
-	   uBitsPerSample /*Format->wBitsPerSample */ ,
-	   (uBitsPerSample /*Format->wBitsPerSample */  / 8)
-	);
+	private:
+		unsigned int SubFrameLen;
+		unsigned int SubFramesPerPES;
+		unsigned char lpcm_prv[14];
+		unsigned char breakBuffer[8192];
+		unsigned int breakBufferFillSize;
+		int uNoOfChannels;
+		int uSampleRate;
+		int uBitsPerSample;
 
+		SwrContext *swr;
+		AVFrame *decoded_frame;
+		int out_sample_rate;
+		int out_channels;
+		uint64_t out_channel_layout;
+		bool initialHeader;
+		bool restart_audio_resampling;
+
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		bool prepareClipPlay();
+		int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
+		void Init();
+		WriterPCM();
+};
+
+bool WriterPCM::prepareClipPlay()
+{
     SubFrameLen = 0;
     SubFramesPerPES = 0;
     breakBufferFillSize = 0;
@@ -159,7 +122,7 @@ static int prepareClipPlay()
     SubFrameLen *= (uBitsPerSample / 8);
 
     //rewrite PES size to have as many complete subframes per PES as we can
-    // FIXME: PES header size was hardcoded to 18 in previous code. Actual size returned by InsertPesHeader is 14.
+    // FIXME: PES header size was hardcoded to 18 in earlier code. Actual size returned by InsertPesHeader is 14.
     SubFramesPerPES = ((2048 - 18) - sizeof(lpcm_prv)) / SubFrameLen;
     SubFrameLen *= SubFramesPerPES;
 
@@ -173,26 +136,18 @@ static int prepareClipPlay()
 	break;
     default:
 	printf("inappropriate bits per sample (%d) - must be 16 or 24\n", uBitsPerSample);
-	return 1;
+	return false;
     }
 
-    return 0;
+    return true;
 }
 
-
-static int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
+int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 {
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    pcm_printf(10, "AudioPts %lld\n", Pts);
-
-    if (fd < 0) {
-	pcm_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
     if (initialHeader) {
-	initialHeader = 0;
+	initialHeader = false;
 	prepareClipPlay();
     }
 
@@ -268,36 +223,32 @@ static int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
     return size;
 }
 
-
-SwrContext *swr = NULL;
-AVFrame *decoded_frame = NULL;
-int out_sample_rate = 44100;
-int out_channels = 2;
-uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
-int restart_audio_resampling = 1;
-
-static int reset()
+void WriterPCM::Init()
 {
-    initialHeader = 1;
-    restart_audio_resampling = 1;
-    return 0;
+    initialHeader = true;
+    restart_audio_resampling = true;
 }
 
-int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
+extern int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts)
 {
-	AVCodecContext *c = call->stream->codec;
-	AVPacket *packet = call->packet;
-	uint8_t *packet_data = packet->data;
+	if (fd < 0)
+		return false;
+
+	if (!packet) {
+fprintf(stderr, "%s %s %d\n", __FILE__, __func__, __LINE__);
+		restart_audio_resampling = true;
+		return true;
+	}
+
+	AVCodecContext *c = stream->codec;
 	unsigned int packet_size = packet->size;
 
-	if (call->restart_audio_resampling)
-		restart_audio_resampling = 1;	
-
 	if (restart_audio_resampling) {
-		restart_audio_resampling = 0;
-		initialHeader = 1;
+fprintf(stderr, "%s %s %d\n", __FILE__, __func__, __LINE__);
+		restart_audio_resampling = false;
+		initialHeader = true;
 
 		if (swr) {
 			swr_free(&swr);
@@ -316,21 +267,20 @@ static int writeData(WriterAVCallData_t *call)
 
 	while (packet_size > 0) {
 		int got_frame = 0;
-		if (!decoded_frame) {
-			if (!(decoded_frame = av_frame_alloc())) {
+		if (decoded_frame)
+			av_frame_unref(decoded_frame);
+		else if (!(decoded_frame = av_frame_alloc())) {
 				fprintf(stderr, "out of memory\n");
 				exit(1);
-			}
-		} else
-			av_frame_unref(decoded_frame);
+		}
 
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {
-			restart_audio_resampling = 1;
+fprintf(stderr, "%s %s %d\n", __FILE__, __func__, __LINE__);
+			restart_audio_resampling = true;
 			break;
 		}
 
-		packet_data += len;
 		packet_size -= len;
 
 		if (!got_frame)
@@ -387,38 +337,35 @@ static int writeData(WriterAVCallData_t *call)
 		// FIXME. PTS calculation is probably broken.
 		int64_t pts;
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-						call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
-						call->stream->time_base.den);
+						stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
+						stream->time_base.den);
 		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
-						call->stream->time_base.den,
-						call->stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
-		*(call->context->currentAudioPtsP) = pts = calcPts(call->avfc, call->stream, next_out_pts);
+						stream->time_base.den,
+						stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
+		pts = calcPts(avfc, stream, next_out_pts);
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
 		uSampleRate = out_sample_rate;
 		uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
 		uBitsPerSample = 16;
 
-		writePCM(call->fd, pts, output, out_samples * sizeof(short) * out_channels);
+		writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels);
 
 		av_freep(&output);
 	}
-	return packet->size;
+	return true;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterPCM::WriterPCM()
+{
+	swr = NULL;
+	decoded_frame = NULL;
+	out_sample_rate = 44100;
+	out_channels = 2;
+	out_channel_layout = AV_CH_LAYOUT_STEREO;
+	restart_audio_resampling = true;
 
-static WriterCaps_t caps_ipcm = {
-	"ipcm",
-	eAudio,
-	"A_IPCM",
-	AUDIO_ENCODING_LPCMA
-};
+	Register(this, AV_CODEC_ID_PCM_S16LE/*FIXME*/, AUDIO_ENCODING_LPCMA);
+}
 
-struct Writer_s WriterAudioIPCM = {
-	&reset,
-	&writeData,
-	&caps_ipcm
-};
+static WriterPCM writer_pcm __attribute__ ((init_priority (300)));

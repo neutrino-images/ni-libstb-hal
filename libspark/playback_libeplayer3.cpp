@@ -491,26 +491,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
 						apids[j]=_pid;
 						// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-						if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
-							ac3flags[j] = 3;
-						if(     !strncmp("A_MP3",       TrackList[i+1], 5))
-							ac3flags[j] = 4;
-						else if(!strncmp("A_AC3",       TrackList[i+1], 5))
-							ac3flags[j] = 1;
-						else if(!strncmp("A_EAC3",      TrackList[i+1], 6))
-							ac3flags[j] = 7;
-						else if(!strncmp("A_DTS",       TrackList[i+1], 5))
-							ac3flags[j] = 6;
-						else if(!strncmp("A_AAC",       TrackList[i+1], 5))
-							ac3flags[j] = 5;
-						else if(!strncmp("A_PCM",       TrackList[i+1], 5))
-							ac3flags[j] = 0; 	//todo
-						else if(!strncmp("A_VORBIS",    TrackList[i+1], 8))
-							ac3flags[j] = 0;	//todo
-						else if(!strncmp("A_FLAC",      TrackList[i+1], 6))
-							ac3flags[j] = 0;	//todo
-						else
-							ac3flags[j] = 0;	//todo
+						ac3flags[j] = atoi(TrackList[i+1]);
 						language[j]=std::string(_lang);
 					}
 				}

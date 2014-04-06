@@ -19,241 +19,151 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
+#include <algorithm>
 
 #define WMV3_PRIVATE_DATA_LENGTH        4
-
-#define METADATA_STRUCT_A_START             12
-#define METADATA_STRUCT_B_START             24
-#define METADATA_STRUCT_B_FRAMERATE_START   32
-#define METADATA_STRUCT_C_START             8
-
-#define WMV_DEBUG
-
-#ifdef WMV_DEBUG
-
-static short debug_level = 0;
-
-#define wmv_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_printf(level, fmt, x...)
-#endif
-
-#ifndef WMV_SILENT
-#define wmv_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_err(fmt, x...)
-#endif
-
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-typedef struct {
-    unsigned char privateData[WMV3_PRIVATE_DATA_LENGTH];
-    unsigned int width;
-    unsigned int height;
-    unsigned int framerate;
-} awmv_t;
 
 static const unsigned char Metadata[] = {
     0x00, 0x00, 0x00, 0xc5,
     0x04, 0x00, 0x00, 0x00,
+#define METADATA_STRUCT_C_START			8
     0xc0, 0x00, 0x00, 0x00,	/* Struct C set for for advanced profile */
+#define METADATA_STRUCT_A_START			12
     0x00, 0x00, 0x00, 0x00,	/* Struct A */
     0x00, 0x00, 0x00, 0x00,
     0x0c, 0x00, 0x00, 0x00,
+#define METADATA_STRUCT_B_START			24
     0x60, 0x00, 0x00, 0x00,	/* Struct B */
     0x00, 0x00, 0x00, 0x00,
+#define METADATA_STRUCT_B_FRAMERATE_START	32
     0x00, 0x00, 0x00, 0x00
 };
 
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-static int initialHeader = 1;
+class WriterWMV : public Writer
+{
+	private:
+		bool initialHeader;
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		void Init();
+		WriterWMV();
+};
 
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-static int reset()
+void WriterWMV::Init()
 {
     initialHeader = 1;
-    return 0;
 }
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t &pts)
 {
-    awmv_t private_data;
-    int len = 0;
+	if (fd < 0 || !packet)
+		return false;
 
-    wmv_printf(10, "\n");
-
-    if (call->fd < 0) {
-	wmv_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
-    wmv_printf(10, "VideoPts %lld\n", call->Pts);
-    wmv_printf(10, "Got Private Size %d\n", call->stream->codec->extradata_size);
-
-    memcpy(private_data.privateData, call->stream->codec->extradata, call->stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->stream->codec->extradata_size);
-
-    private_data.width = call->stream->codec->width;
-    private_data.height = call->stream->codec->height;
-    private_data.framerate = 1000.0 * av_q2d(call->stream->r_frame_rate);      /* rational to double */
-
-
-#define PES_MIN_HEADER_SIZE 9
     if (initialHeader) {
+#define PES_MIN_HEADER_SIZE 9
 	unsigned char PesPacket[PES_MIN_HEADER_SIZE + 128];
 	unsigned char *PesPtr;
 	unsigned int MetadataLength;
-	unsigned int crazyFramerate = 0;
-
-	wmv_printf(10, "biWidth: %d\n", private_data.width);
-	wmv_printf(10, "biHeight: %d\n", private_data.height);
-
-	crazyFramerate = ((10000000.0 / private_data.framerate) * 1000.0);
-	wmv_printf(10, "crazyFramerate: %u\n", crazyFramerate);
+	unsigned int usecPerFrame = ((10000000.0 / av_q2d(stream->r_frame_rate)));
 
 	PesPtr = &PesPacket[PES_MIN_HEADER_SIZE];
 
 	memcpy(PesPtr, Metadata, sizeof(Metadata));
 	PesPtr += METADATA_STRUCT_C_START;
 
-	memcpy(PesPtr, private_data.privateData, WMV3_PRIVATE_DATA_LENGTH);
+	unsigned char privateData[WMV3_PRIVATE_DATA_LENGTH] = { 0 };
+	memcpy(privateData, stream->codec->extradata, stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : stream->codec->extradata_size);
+
+	memcpy(PesPtr, privateData, WMV3_PRIVATE_DATA_LENGTH);
 	PesPtr += WMV3_PRIVATE_DATA_LENGTH;
 
 	/* Metadata Header Struct A */
-	*PesPtr++ = (private_data.height >> 0) & 0xff;
-	*PesPtr++ = (private_data.height >> 8) & 0xff;
-	*PesPtr++ = (private_data.height >> 16) & 0xff;
-	*PesPtr++ = private_data.height >> 24;
-	*PesPtr++ = (private_data.width >> 0) & 0xff;
-	*PesPtr++ = (private_data.width >> 8) & 0xff;
-	*PesPtr++ = (private_data.width >> 16) & 0xff;
-	*PesPtr++ = private_data.width >> 24;
+	*PesPtr++ = (stream->codec->height >> 0) & 0xff;
+	*PesPtr++ = (stream->codec->height >> 8) & 0xff;
+	*PesPtr++ = (stream->codec->height >> 16) & 0xff;
+	*PesPtr++ = stream->codec->height >> 24;
+	*PesPtr++ = (stream->codec->width >> 0) & 0xff;
+	*PesPtr++ = (stream->codec->width >> 8) & 0xff;
+	*PesPtr++ = (stream->codec->width >> 16) & 0xff;
+	*PesPtr++ = stream->codec->width >> 24;
 
 	PesPtr += 12;		/* Skip flag word and Struct B first 8 bytes */
 
-	*PesPtr++ = (crazyFramerate >> 0) & 0xff;
-	*PesPtr++ = (crazyFramerate >> 8) & 0xff;
-	*PesPtr++ = (crazyFramerate >> 16) & 0xff;
-	*PesPtr++ = crazyFramerate >> 24;
+	*PesPtr++ = (usecPerFrame >> 0) & 0xff;
+	*PesPtr++ = (usecPerFrame >> 8) & 0xff;
+	*PesPtr++ = (usecPerFrame >> 16) & 0xff;
+	*PesPtr++ = usecPerFrame >> 24;
 
 	MetadataLength = PesPtr - &PesPacket[PES_MIN_HEADER_SIZE];
 
-	int HeaderLength =
-	    InsertPesHeader(PesPacket, MetadataLength,
-			    VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE,
-			    0);
+	int HeaderLength = InsertPesHeader(PesPacket, MetadataLength, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
 
-	len = write(call->fd, PesPacket, HeaderLength + MetadataLength);
+	if (write(fd, PesPacket, HeaderLength + MetadataLength) < 0)
+		return false;
 
-	initialHeader = 0;
+	initialHeader = false;
     }
 
-    if (call->packet->size > 0 && call->packet->data) {
+    if (packet->size > 0 && packet->data) {
 	int Position = 0;
-	unsigned char insertSampleHeader = 1;
-	while (Position < call->packet->size) {
+	bool insertSampleHeader = true;
 
-	    int PacketLength = (call->packet->size - Position) <= MAX_PES_PACKET_SIZE ? (call->packet->size - Position) : MAX_PES_PACKET_SIZE;
+	uint64_t _pts = pts;
 
-	    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-	    memset(PesHeader, '0', PES_MAX_HEADER_SIZE);
-	    int HeaderLength =
-		InsertPesHeader(PesHeader, PacketLength,
-				VC1_VIDEO_PES_START_CODE, call->Pts, 0);
-	    unsigned char *PacketStart;
+	while (Position < packet->size) {
+
+	    int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
+
+	    unsigned char PesHeader[PES_MAX_HEADER_SIZE] = { 0 };
+	    int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, _pts, 0);
 
 	    if (insertSampleHeader) {
 		unsigned int PesLength;
 		unsigned int PrivateHeaderLength;
 
-		PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->packet->size);
+		PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], packet->size);
 		/* Update PesLength */
-		PesLength = PesHeader[PES_LENGTH_BYTE_0] +
-		    (PesHeader[PES_LENGTH_BYTE_1] << 8) +
-		    PrivateHeaderLength;
+		PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
 		PesHeader[PES_LENGTH_BYTE_0] = PesLength & 0xff;
 		PesHeader[PES_LENGTH_BYTE_1] = (PesLength >> 8) & 0xff;
-		PesHeader[PES_HEADER_DATA_LENGTH_BYTE] +=
-		    PrivateHeaderLength;
+		PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
 		PesHeader[PES_FLAGS_BYTE] |= PES_EXTENSION_DATA_PRESENT;
 
 		HeaderLength += PrivateHeaderLength;
-		insertSampleHeader = 0;
+		insertSampleHeader = false;
 	    }
 
-	    PacketStart = (unsigned char *) malloc(call->packet->size + HeaderLength);
+	    uint8_t PacketStart[packet->size + HeaderLength];
 	    memcpy(PacketStart, PesHeader, HeaderLength);
-	    memcpy(PacketStart + HeaderLength, call->packet->data + Position,
-		   PacketLength);
-
-	    len =
-		write(call->fd, PacketStart, PacketLength + HeaderLength);
-	    free(PacketStart);
+	    memcpy(PacketStart + HeaderLength, packet->data + Position, PacketLength);
+	    if (write(fd, PacketStart, PacketLength + HeaderLength) < 0)
+		return false;
 
 	    Position += PacketLength;
-	    call->Pts = INVALID_PTS_VALUE;
+	    _pts = INVALID_PTS_VALUE;
 	}
     }
 
-    wmv_printf(10, "< %d\n", len);
-    return len;
+    return true;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterWMV::WriterWMV()
+{
+	Register(this, AV_CODEC_ID_WMV1, VIDEO_ENCODING_WMV);
+	Register(this, AV_CODEC_ID_WMV2, VIDEO_ENCODING_WMV);
+	Register(this, AV_CODEC_ID_WMV3, VIDEO_ENCODING_WMV);
+}
 
-static WriterCaps_t caps = {
-    "wmv",
-    eVideo,
-    "V_WMV",
-    VIDEO_ENCODING_WMV
-};
-
-struct Writer_s WriterVideoWMV = {
-    &reset,
-    &writeData,
-    &caps
-};
+static WriterWMV writer_wmv __attribute__ ((init_priority (300)));

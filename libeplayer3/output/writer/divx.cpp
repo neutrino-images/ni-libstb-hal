@@ -40,80 +40,39 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-
-#define DIVX_DEBUG
-
-#ifdef DIVX_DEBUG
-
-static short debug_level = 0;
-
-#define divx_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define divx_printf(level, fmt, x...)
-#endif
-
-#ifndef DIVX_SILENT
-#define divx_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define divx_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-static int initialHeader = 1;
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-static int reset()
+class WriterDIVX : public Writer
 {
-    initialHeader = 1;
-    return 0;
+	private:
+		bool initialHeader;
+	public:
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		void Init();
+		WriterDIVX();
+};
+
+void WriterDIVX::Init()
+{
+	initialHeader = true;
 }
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t &pts)
 {
+	if (fd < 0 || !packet)
+		return false;
+
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
     unsigned char FakeHeaders[64];	// 64bytes should be enough to make the fake headers
     unsigned int FakeHeaderLength;
     unsigned char Version = 5;
-    unsigned int FakeStartCode =
-	(Version << 8) | PES_VERSION_FAKE_START_CODE;
+    unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
     unsigned int usecPerFrame = 41708;	/* Hellmaster1024: default value */
     BitPacker_t ld = { FakeHeaders, 0, 32 };
 
-    divx_printf(10, "\n");
-
-    if (call->fd < 0) {
-	divx_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
-    divx_printf(10, "AudioPts %lld\n", call->Pts);
-
-    usecPerFrame = 1000000 / av_q2d(call->stream->r_frame_rate);
-
-    divx_printf(10, "Microsecends per frame = %d\n", usecPerFrame);
+    usecPerFrame = 1000000 / av_q2d(stream->r_frame_rate);
 
     memset(FakeHeaders, 0, sizeof(FakeHeaders));
 
@@ -136,67 +95,28 @@ static int writeData(WriterAVCallData_t *call)
     struct iovec iov[4];
     int ic = 0;
     iov[ic].iov_base = PesHeader;
-    iov[ic++].iov_len =
-	InsertPesHeader(PesHeader, call->packet->size, MPEG_VIDEO_PES_START_CODE,
-			call->Pts, FakeStartCode);
+    iov[ic++].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_VIDEO_PES_START_CODE, pts, FakeStartCode);
     iov[ic].iov_base = FakeHeaders;
     iov[ic++].iov_len = FakeHeaderLength;
 
     if (initialHeader) {
-	iov[ic].iov_base = call->stream->codec->extradata;
-	iov[ic++].iov_len = call->stream->codec->extradata_size;
+	iov[ic].iov_base = stream->codec->extradata;
+	iov[ic++].iov_len = stream->codec->extradata_size;
 
-	initialHeader = 0;
+	initialHeader = false;
     }
-    iov[ic].iov_base = call->packet->data;
-    iov[ic++].iov_len = call->packet->size;
+    iov[ic].iov_base = packet->data;
+    iov[ic++].iov_len = packet->size;
 
-    int len = writev(call->fd, iov, ic);
-
-    divx_printf(10, "xvid_Write < len=%d\n", len);
-
-    return len;
+    return writev(fd, iov, ic) > -1;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterDIVX::WriterDIVX()
+{
+	Register(this, AV_CODEC_ID_MPEG4, VIDEO_ENCODING_MPEG4P2);
+	Register(this, AV_CODEC_ID_MSMPEG4V1, VIDEO_ENCODING_MPEG4P2);
+	Register(this, AV_CODEC_ID_MSMPEG4V2, VIDEO_ENCODING_MPEG4P2);
+	Register(this, AV_CODEC_ID_MSMPEG4V3, VIDEO_ENCODING_MPEG4P2);
+}
 
-static WriterCaps_t mpeg4p2_caps = {
-    "mscomp",
-    eVideo,
-    "V_MSCOMP",
-    VIDEO_ENCODING_MPEG4P2
-};
-
-struct Writer_s WriterVideoMSCOMP = {
-    &reset,
-    &writeData,
-    &mpeg4p2_caps
-};
-
-static WriterCaps_t fourcc_caps = {
-    "fourcc",
-    eVideo,
-    "V_MS/VFW/FOURCC",
-    VIDEO_ENCODING_MPEG4P2
-};
-
-struct Writer_s WriterVideoFOURCC = {
-    &reset,
-    &writeData,
-    &fourcc_caps
-};
-
-static WriterCaps_t divx_caps = {
-    "divx",
-    eVideo,
-    "V_MKV/XVID",
-    VIDEO_ENCODING_MPEG4P2
-};
-
-struct Writer_s WriterVideoDIVX = {
-    &reset,
-    &writeData,
-    &divx_caps
-};
+static WriterDIVX writer_divx __attribute__ ((init_priority (300)));

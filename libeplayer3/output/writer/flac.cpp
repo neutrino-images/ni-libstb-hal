@@ -19,117 +19,43 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
-#include "output.h"
-#include "debug.h"
-#include "misc.h"
 #include "pes.h"
+#include "misc.h"
 #include "writer.h"
 
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-#define FLAC_DEBUG
-
-#ifdef FLAC_DEBUG
-
-static short debug_level = 0;
-
-#define flac_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define flac_printf(level, fmt, x...)
-#endif
-
-#ifndef FLAC_SILENT
-#define flac_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define flac_err(fmt, x...)
-#endif
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* MISC Functions                */
-/* ***************************** */
-
-static int reset()
+class WriterFLAC : public Writer
 {
-    return 0;
-}
+	public:
+		bool Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t &pts);
+		WriterFLAC();
+};
 
-static int writeData(WriterAVCallData_t *call)
+bool WriterFLAC::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t &pts)
 {
+	if (fd < 0 || !packet)
+		return -1;
+
     unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-
-    flac_printf(10, "AudioPts %lld\n", call->Pts);
-
-    if ((call->packet->data == NULL) || (call->packet->size <= 0)) {
-	flac_err("parsing NULL Data. ignoring...\n");
-	return 0;
-    }
-
-    if (call->fd < 0) {
-	flac_err("file pointer < 0. ignoring ...\n");
-	return 0;
-    }
-
     struct iovec iov[2];
+
     iov[0].iov_base = PesHeader;
-    iov[0].iov_len = InsertPesHeader(PesHeader, call->packet->size, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
-    iov[1].iov_base = call->packet->data;
-    iov[1].iov_len = call->packet->size;
+    iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE, pts, 0);
+    iov[1].iov_base = packet->data;
+    iov[1].iov_len = packet->size;
 
-    int len = writev(call->fd, iov, 2);
-
-    flac_printf(10, "flac_Write-< len=%d\n", len);
-    return len;
+    return writev(fd, iov, 2) > -1;
 }
 
-/* ***************************** */
-/* Writer  Definition            */
-/* ***************************** */
+WriterFLAC::WriterFLAC()
+{
+	Register(this, AV_CODEC_ID_FLAC, AUDIO_ENCODING_LPCM);
+}
 
-static WriterCaps_t caps_flac = {
-    "flac",
-    eAudio,
-    "A_FLAC",
-    AUDIO_ENCODING_LPCM		//AUDIO_ENCODING_FLAC
-};
-
-struct Writer_s WriterAudioFLAC = {
-    &reset,
-    &writeData,
-    &caps_flac
-};
+static WriterFLAC writer_flac __attribute__ ((init_priority (300)));

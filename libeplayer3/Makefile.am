@@ -9,9 +9,7 @@ AM_CPPFLAGS += -ggdb
 
 libeplayer3_la_SOURCES = \
 	container/container.cpp container/container_ffmpeg.cpp \
-	manager/audio.cpp manager/manager.cpp manager/subtitle.cpp manager/video.cpp \
-	manager/teletext.cpp manager/chapter.cpp \
-	output/linuxdvb.cpp player.cpp \
+	manager/manager.cpp output/output.cpp player.cpp \
 	playback/playback.cpp output/writer/writer.cpp output/writer/wmv.cpp \
 	output/writer/ac3.cpp output/writer/divx.cpp output/writer/pes.cpp \
 	output/writer/dts.cpp output/writer/mpeg2.cpp output/writer/mp3.cpp output/writer/misc.cpp \

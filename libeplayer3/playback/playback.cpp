@@ -132,6 +132,7 @@ static int PlaybackOpen(Player * context, char *uri)
 	playback_err("Unknown stream (%s)\n", uri);
 	return cERR_PLAYBACK_ERROR;
     }
+    context->manager.clearTracks();
 
     if ((context->container->Command(context, CONTAINER_ADD, NULL) < 0)
 	|| (!context->container->selectedContainer)
@@ -153,11 +154,6 @@ static int PlaybackClose(Player * context)
 	playback_err("container delete failed\n");
     }
 
-    context->manager->audio->Command(context, MANAGER_DEL, NULL);
-    context->manager->video->Command(context, MANAGER_DEL, NULL);
-    context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
-    context->manager->teletext->Command(context, MANAGER_DEL, NULL);
-    context->manager->chapter->Command(context, MANAGER_DEL, NULL);
 
     context->playback->isPaused = 0;
     context->playback->isPlaying = 0;
@@ -610,97 +606,28 @@ static int PlaybackLength(Player * context, double *length)
     return ret;
 }
 
-static int PlaybackSwitchAudio(Player * context, int *track)
+static int PlaybackSwitchAudio(Player * context, int *pid)
 {
-    int ret = cERR_PLAYBACK_NO_ERROR;
-    int curtrackid = 0;
-    int nextrackid = 0;
-
-    playback_printf(10, "\n");
-
-    if (context->playback->isPlaying) {
-	if (context->manager && context->manager->audio) {
-	    context->manager->audio->Command(context, MANAGER_GET, &curtrackid);
-	    context->manager->audio->Command(context, MANAGER_SET, track);
-	    context->manager->audio->Command(context, MANAGER_GET, &nextrackid);
-	}
-
-	if (nextrackid != curtrackid) {
-
-	    //PlaybackPause(context);
-
-	    if (context->container && context->container->selectedContainer)
-		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_AUDIO, (const char *)&nextrackid);
-
-		Track_t *t=NULL;
-		context->manager->audio->Command(context, MANAGER_GET_TRACK, &t);
-		if(t)
-			context->output.SwitchAudio(t->stream);
-
-	    //PlaybackContinue(context);
-	}
-    } else {
-	playback_err("switch audio not possible\n");
-	ret = cERR_PLAYBACK_ERROR;
-    }
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
+	Track *track = context->manager.getAudioTrack(*pid);
+	if (track)
+		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_AUDIO, (const char*) track);
+	return 0;
 }
 
-static int PlaybackSwitchSubtitle(Player * context, int *track)
+static int PlaybackSwitchSubtitle(Player * context, int *pid)
 {
-    int ret = cERR_PLAYBACK_NO_ERROR;
-
-    playback_printf(10, "Track: %d\n", *track);
-
-    if (context && context->playback && context->playback->isPlaying) {
-	if (context->manager && context->manager->subtitle) {
-	    int trackid;
-
-	    if (context->manager->
-		subtitle->Command(context, MANAGER_SET, track) < 0) {
-		playback_err("manager set track failed\n");
-	    }
-
-	    context->manager->subtitle->Command(context, MANAGER_GET, &trackid);
-	} else {
-	    ret = cERR_PLAYBACK_ERROR;
-	    playback_err("no subtitle\n");
-	}
-    } else {
-	playback_err("not possible\n");
-	ret = cERR_PLAYBACK_ERROR;
-    }
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
+	Track *track = context->manager.getSubtitleTrack(*pid);
+	if (track)
+		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_SUBTITLE, (const char*) track);
+	return 0;
 }
 
 static int PlaybackSwitchTeletext(Player * context, int *pid)
 {
-    int ret = cERR_PLAYBACK_NO_ERROR;
-
-    playback_printf(10, "Track: %d\n", *pid);
-
-    if (context && context->manager && context->manager->teletext) {
-	if (context->manager->
-	    teletext->Command(context,
-			      *pid < 0 ? MANAGER_DEL : MANAGER_SET, pid)) {
-	    playback_err("ttxsub manager set track failed\n");
-	    ret = cERR_PLAYBACK_ERROR;
-	}
-    } else
-	playback_err("no ttxsubtitle\n");
-
-    if (*pid < 0)
-	container_ffmpeg_update_tracks(context, context->playback->uri.c_str());
-
-    playback_printf(10, "exiting with value %d\n", ret);
-
-    return ret;
+	Track *track = context->manager.getTeletextTrack(*pid);
+	if (track)
+		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_TELETEXT, (const char*) track);
+	return 0;
 }
 
 static int PlaybackMetadata(Player * context, char ***metadata)

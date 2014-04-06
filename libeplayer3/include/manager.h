@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string>
+#include <map>
+#include <vector>
+
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
+#include <OpenThreads/Condition>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -24,57 +30,52 @@ typedef enum {
     MANAGER_INIT_UPDATE
 } ManagerCmd_t;
 
-typedef enum {
-    eTypeES,
-    eTypePES
-} eTrackTypeEplayer;
+struct Track
+{
+	std::string Name;
+	int pid;
 
-typedef struct Track_s {
-    std::string Name;
-    int pid;
+	/* length of track */
+	int64_t duration;
 
-    /* new field for ffmpeg - add at the end so no problem
-     * can occur with not changed srt saa container
-     */
-    char *language;
+	/* context from ffmpeg */
+	AVFormatContext *avfc;
+	/* stream from ffmpeg */
+	AVStream *stream;
 
-    /* length of track */
-    int64_t duration;
+	bool inactive;
+	bool is_static;
 
-    /* context from ffmpeg */
-    AVFormatContext *avfc;
-    /* stream from ffmpeg */
-    AVStream *stream;
+	int ac3flags;
+	int type, mag, page; // for teletext
 
-    int pending;
-    int is_static;
-    long long int chapter_start;
-    long long int chapter_end;
+	Track() : pid(-1), duration(-1), avfc(NULL), stream(NULL), inactive(0), is_static(0), ac3flags(-1) {}
+};
 
-    int ac3flags;
+class Manager
+{
+	private:
+		OpenThreads::Mutex mutex;
+		std::map<int,Track *> videoTracks, audioTracks, subtitleTracks, teletextTracks;
+	public:
+		void addVideoTrack(Track &track);
+		void addAudioTrack(Track &track);
+		void addSubtitleTrack(Track &track);
+		void addTeletextTrack(Track &track);
 
-    Track_s() : pid(-1), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0), ac3flags(-1) {}
-} Track_t;
+		std::vector<Track> getVideoTracks();
+		std::vector<Track> getAudioTracks();
+		std::vector<Track> getSubtitleTracks();
+		std::vector<Track> getTeletextTracks();
 
-struct Player;
+		Track *getVideoTrack(int pid);
+		Track *getAudioTrack(int pid);
+		Track *getSubtitleTrack(int pid);
+		Track *getTeletextTrack(int pid);
 
-typedef struct Manager_s {
-    const char *Name;
-    int (*Command) (Player *, ManagerCmd_t, void *);
-    const char **Capabilities;
+		bool initTrackUpdate();
+		void clearTracks();
 
-} Manager_t;
-
-typedef struct ManagerHandler_s {
-    const char *Name;
-    Manager_t *audio;
-    Manager_t *video;
-    Manager_t *subtitle;
-    Manager_t *teletext;
-    Manager_t *chapter;
-} ManagerHandler_t;
-
-void freeTrack(Track_t * track);
-void copyTrack(Track_t * to, Track_t * from);
-
+		~Manager();
+};
 #endif

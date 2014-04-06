@@ -16,7 +16,6 @@ typedef enum {
     OUTPUT_INIT,
     OUTPUT_ADD,
     OUTPUT_DEL,
-    OUTPUT_CAPABILITIES,
     OUTPUT_PLAY,
     OUTPUT_STOP,
     OUTPUT_PAUSE,
@@ -34,18 +33,6 @@ typedef enum {
     OUTPUT_DISCONTINUITY_REVERSE,
     OUTPUT_GET_FRAME_COUNT,
 } OutputCmd_t;
-
-typedef struct {
-    int restart_audio_resampling;
-
-    int64_t pts;
-
-    const char *type;
-
-    AVFormatContext *avfc;
-    AVStream *stream;
-    AVPacket *packet;
-} AudioVideoOut_t;
 
 struct Context_s;
 typedef struct Context_s Context_t;

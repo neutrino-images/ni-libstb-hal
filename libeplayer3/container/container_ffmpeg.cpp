@@ -276,16 +276,16 @@ static void *FFMPEGThread(void *arg)
 	    currentVideoPts = pts = calcPts(avContext, videoTrack->stream, packet.pts);
 
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
-	    if (!context->output->video->Write(avContext, videoTrack->stream, &packet, currentVideoPts))
+	    if (!context->output->Write(avContext, videoTrack->stream, &packet, currentVideoPts))
 		ffmpeg_err("writing data to video device failed\n");
 	} else if (audioTrack && (audioTrack->Id == pid)) {
 	    if (restart_audio_resampling) {
 	    	restart_audio_resampling = false;
-		context->output->audio->Write(avContext, audioTrack->stream, NULL, currentAudioPts);
+		context->output->Write(avContext, audioTrack->stream, NULL, currentAudioPts);
 	    }
 	    if (!context->playback->BackWard) {
 		currentAudioPts = pts = calcPts(avContext, audioTrack->stream, packet.pts);
-		if (!context->output->audio->Write(avContext, audioTrack->stream, &packet, currentAudioPts))
+		if (!context->output->Write(avContext, audioTrack->stream, &packet, currentAudioPts))
 			ffmpeg_err("writing data to audio device failed\n");
 	    }
 	} else if (subtitleTrack && (subtitleTrack->Id == pid)) {

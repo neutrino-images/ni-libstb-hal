@@ -8,12 +8,16 @@
 #include <pthread.h>
 #include <stdint.h>
 
-struct Player {
-    PlaybackHandler_t *playback;
-    ContainerHandler_t *container;
-    OutputHandler_t *output;
-    ManagerHandler_t *manager;
-    int64_t *currentAudioPtsP;
+class Player {
+	public: //FIXME
+	    PlaybackHandler_t *playback;
+	    ContainerHandler_t *container;
+	    Output_t *output;
+	    ManagerHandler_t *manager;
+	    int64_t *currentAudioPtsP;
+	public:
+	    Player();
+	    ~Player();
 };
 
 int container_ffmpeg_update_tracks(Player * context, const char *filename);

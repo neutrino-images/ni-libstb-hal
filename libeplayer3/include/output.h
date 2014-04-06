@@ -47,11 +47,4 @@ typedef struct Output_s {
 extern Output_t LinuxDvbOutput;
 extern Output_t SubtitleOutput;
 
-typedef struct OutputHandler_s {
-    const char *Name;
-    Output_t *audio;
-    Output_t *video;
-    int (*Command) (Player *, OutputCmd_t, const char *);
-} OutputHandler_t;
-
 #endif

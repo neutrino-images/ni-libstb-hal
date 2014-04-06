@@ -8,7 +8,6 @@
 #include <video_lib.h>
 
 #include <player.h>
-extern OutputHandler_t		OutputHandler;
 extern PlaybackHandler_t	PlaybackHandler;
 extern ContainerHandler_t	ContainerHandler;
 extern ManagerHandler_t		ManagerHandler;
@@ -55,17 +54,8 @@ bool cPlayback::Open(playmode_t PlayMode)
 
 	if(player) {
 		player->playback	= &PlaybackHandler;
-		player->output		= &OutputHandler;
 		player->container	= &ContainerHandler;
 		player->manager		= &ManagerHandler;
-
-		fprintf(stderr, "player output name: %s\n", player->output->Name);
-	}
-
-	//Registration of output devices
-	if(player && player->output) {
-		player->output->Command(player,OUTPUT_ADD, "audio");
-		player->output->Command(player,OUTPUT_ADD, "video");
 	}
 
 	return 0;
@@ -180,8 +170,8 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 			}
 		}
 
-		if (pm != PLAYMODE_TS && player && player->output && player->playback) {
-			player->output->Command(player, OUTPUT_OPEN, NULL);
+		if (pm != PLAYMODE_TS && player && player->playback) {
+			player->output.Open();
 			
 			SetAPid(apid, 0);
 			if ( player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0 ) // playback.c uses "int = 0" for "true"
@@ -223,7 +213,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 		struct stat s;
 		if (!stat(filename, &s))
 			last_size = s.st_size;
-		if (player && player->output && player->playback)
+		if (player && player->playback)
 		{
 			ret = true;
 			videoDecoder->Stop(false);
@@ -242,13 +232,8 @@ bool cPlayback::Stop(void)
 	if(player && player->playback)
 		player->playback->Command(player, PLAYBACK_STOP, NULL);
 
-	if(player && player->output)
-		player->output->Command(player, OUTPUT_CLOSE, NULL);
-
-	if(player && player->output) {
-		player->output->Command(player,OUTPUT_DEL, "audio");
-		player->output->Command(player,OUTPUT_DEL, "video");
-	}
+	if(player)
+		player->output.Close();
 
 	if(player && player->playback)
 		player->playback->Command(player,PLAYBACK_CLOSE, NULL);
@@ -307,8 +292,8 @@ bool cPlayback::SetSpeed(int speed)
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 		usleep(500000);
-		if (player && player->output && player->playback) {
-			player->output->Command(player, OUTPUT_OPEN, NULL);
+		if (player && player->playback) {
+			player->output.Open();
 			if (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0) // playback.c uses "int = 0" for "true"
 				playing = true;
 		}

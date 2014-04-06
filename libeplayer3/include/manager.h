@@ -31,7 +31,7 @@ typedef enum {
 
 typedef struct Track_s {
     std::string Name;
-    int Id;
+    int pid;
 
     /* new field for ffmpeg - add at the end so no problem
      * can occur with not changed srt saa container
@@ -53,7 +53,7 @@ typedef struct Track_s {
 
     int ac3flags;
 
-    Track_s() : Id(-1), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0), ac3flags(-1) {}
+    Track_s() : pid(-1), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0), ac3flags(-1) {}
 } Track_t;
 
 struct Player;

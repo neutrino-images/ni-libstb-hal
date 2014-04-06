@@ -29,7 +29,7 @@
 
 #define PLAYBACK_DEBUG
 
-static short debug_level = 0;
+static short debug_level = 20;
 
 static const char *FILENAME = "playback.c";
 #ifdef PLAYBACK_DEBUG
@@ -181,15 +181,12 @@ static int PlaybackPlay(Player * context)
 
     if (!context->playback->isPlaying) {
 	context->playback->AVSync = 1;
-	context->output->Command(context, OUTPUT_AVSYNC, NULL);
+	context->output.AVSync(true);
 
 	context->playback->isCreationPhase = 1;	// allows the created thread to go into wait mode
-	ret = context->output->Command(context, OUTPUT_PLAY, NULL);
+	ret = context->output.Play();
 
-	if (ret != 0) {
-	    playback_err("OUTPUT_PLAY failed!\n");
-	    playback_err("clearing isCreationPhase!\n");
-
+	if (!ret) {
 	    context->playback->isCreationPhase = 0;	// allow thread to go into next state
 	} else {
 	    context->playback->isPlaying = 1;
@@ -197,7 +194,7 @@ static int PlaybackPlay(Player * context)
 	    context->playback->isForwarding = 0;
 	    if (context->playback->BackWard) {
 		context->playback->BackWard = 0;
-		context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+		context->output.Mute(false);
 	    }
 	    context->playback->SlowMotion = 0;
 	    context->playback->Speed = 1;
@@ -253,16 +250,16 @@ static int PlaybackPause(Player * context)
     if (context->playback->isPlaying && !context->playback->isPaused) {
 
 	if (context->playback->SlowMotion)
-	    context->output->Command(context, OUTPUT_CLEAR, NULL);
+	    context->output.Clear();
 
-	context->output->Command(context, OUTPUT_PAUSE, NULL);
+	context->output.Pause();
 
 	context->playback->isPaused = 1;
 	//context->playback->isPlaying  = 1;
 	context->playback->isForwarding = 0;
 	if (context->playback->BackWard) {
 	    context->playback->BackWard = 0;
-	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	    context->output.Mute(false);
 	}
 	context->playback->SlowMotion = 0;
 	context->playback->Speed = 1;
@@ -288,16 +285,16 @@ static int PlaybackContinue(Player * context)
 	 || context->playback->SlowMotion)) {
 
 	if (context->playback->SlowMotion)
-	    context->output->Command(context, OUTPUT_CLEAR, NULL);
+	    context->output.Clear();
 
-	context->output->Command(context, OUTPUT_CONTINUE, NULL);
+	context->output.Continue();
 
 	context->playback->isPaused = 0;
 	//context->playback->isPlaying  = 1;
 	context->playback->isForwarding = 0;
 	if (context->playback->BackWard) {
 	    context->playback->BackWard = 0;
-	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	    context->output.Mute(false);
 	}
 	context->playback->SlowMotion = 0;
 	context->playback->Speed = 1;
@@ -325,15 +322,13 @@ static int PlaybackStop(Player * context)
 	context->playback->isForwarding = 0;
 	if (context->playback->BackWard) {
 	    context->playback->BackWard = 0;
-	    context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
+	    context->output.Mute(false);
 	}
 	context->playback->SlowMotion = 0;
 	context->playback->Speed = 0;
 
-	context->output->Command(context, OUTPUT_STOP, NULL);
-	context->container->selectedContainer->Command(context,
-						       CONTAINER_STOP,
-						       NULL);
+	context->output.Stop();
+	context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
 
     } else {
 	playback_err("stop not possible\n");
@@ -369,7 +364,7 @@ static int PlaybackTerminate(Player * context)
     if (context && context->playback && context->playback->isPlaying) {
 	//First Flush and than delete container, else e2 cant read length of file anymore
 
-	if (!context->playback->abortRequested && context->output->Command(context, OUTPUT_FLUSH, NULL) < 0) {
+	if (!context->playback->abortRequested && !context->output.Flush()) {
 	    playback_err("failed to flush output.\n");
 	}
 
@@ -437,7 +432,7 @@ static int PlaybackFastForward(Player * context, int *speed)
 	playback_printf(20, "Speed: %d x {%d}\n", *speed,
 			context->playback->Speed);
 
-	context->output->Command(context, OUTPUT_FASTFORWARD, NULL);
+	context->output.FastForward(*speed);
     } else {
 	playback_err("fast forward not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -472,24 +467,25 @@ static int PlaybackFastBackward(Player * context, int *speed)
 	    context->playback->Speed = *speed;
 	    context->playback->BackWard = 1;
 
-	    playback_printf(1, "S %d B %d\n", context->playback->Speed,
-			    context->playback->BackWard);
+	    playback_printf(1, "S %d B %d\n", context->playback->Speed, context->playback->BackWard);
 	}
 
-	context->output->Command(context, OUTPUT_CLEAR, NULL);
+	context->output.Clear();
+#if 0
 	if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0) {
 	    playback_err("OUTPUT_REVERSE failed\n");
 	    context->playback->BackWard = 0;
 	    context->playback->Speed = 1;
 	    ret = cERR_PLAYBACK_ERROR;
 	}
+#endif
     } else {
 	playback_err("fast backward not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
     }
 
     if (context->playback->BackWard)
-	context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
+	context->output.Mute(true);
     playback_printf(10, "exiting with value %d\n", ret);
 
     return ret;
@@ -522,7 +518,7 @@ static int PlaybackSlowMotion(Player * context, int *speed)
 	playback_printf(20, "SlowMotion: %d x {%d}\n", *speed,
 			context->playback->SlowMotion);
 
-	context->output->Command(context, OUTPUT_SLOWMOTION, NULL);
+	context->output.SlowMotion(*speed);
     } else {
 	playback_err("slowmotion not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -539,7 +535,7 @@ static int PlaybackSeek(Player * context, float *pos, int absolute)
 
     playback_printf(10, "pos: %f\n", *pos);
 
-    context->output->Command(context, OUTPUT_CLEAR, NULL);
+    context->output.Clear();
 
     if (absolute)
 	context->container->selectedContainer->Command(context, CONTAINER_SEEK_ABS, (const char *)pos);
@@ -551,16 +547,16 @@ static int PlaybackSeek(Player * context, float *pos, int absolute)
     return ret;
 }
 
-static int PlaybackPts(Player * context, unsigned long long int *pts)
+static int PlaybackPts(Player * context, int64_t &pts)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(20, "\n");
 
-    *pts = 0;
+    pts = 0;
 
     if (context->playback->isPlaying) {
-	ret = context->output->Command(context, OUTPUT_PTS, (const char *)pts);
+	ret = !context->output.GetPts(pts);
     } else {
 	playback_err("not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -571,19 +567,16 @@ static int PlaybackPts(Player * context, unsigned long long int *pts)
     return ret;
 }
 
-static int PlaybackGetFrameCount(Player * context,
-				 unsigned long long int *frameCount)
+static int PlaybackGetFrameCount(Player * context, int64_t &frameCount)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(20, "\n");
 
-    *frameCount = 0;
+    frameCount = 0;
 
     if (context->playback->isPlaying) {
-	ret =
-	    context->output->Command(context, OUTPUT_GET_FRAME_COUNT,
-				     (const char *)frameCount);
+	ret = !context->output.GetFrameCount(frameCount);
     } else {
 	playback_err("not possible\n");
 	ret = cERR_PLAYBACK_ERROR;
@@ -639,13 +632,10 @@ static int PlaybackSwitchAudio(Player * context, int *track)
 	    if (context->container && context->container->selectedContainer)
 		context->container->selectedContainer->Command(context, CONTAINER_SWITCH_AUDIO, (const char *)&nextrackid);
 
-		//FIXME
 		Track_t *t=NULL;
 		context->manager->audio->Command(context, MANAGER_GET_TRACK, &t);
-extern bool output_switch_audio(AVStream*);
 		if(t)
-			output_switch_audio(t->stream);
-		//FIXME
+			context->output.SwitchAudio(t->stream);
 
 	    //PlaybackContinue(context);
 	}
@@ -773,8 +763,7 @@ static int Command(Player *context, PlaybackCmd_t command, void *argument)
 	    break;
 	}
     case PLAYBACK_PTS:{	// 10
-	    ret =
-		PlaybackPts(context, (unsigned long long int *) argument);
+	    ret = PlaybackPts(context, *((int64_t *) argument));
 	    break;
 	}
     case PLAYBACK_LENGTH:{	// 11
@@ -803,9 +792,7 @@ static int Command(Player *context, PlaybackCmd_t command, void *argument)
 	}
     case PLAYBACK_GET_FRAME_COUNT:{
 	    // 10
-	    ret =
-		PlaybackGetFrameCount(context,
-				      (unsigned long long int *) argument);
+	    ret = PlaybackGetFrameCount(context, *((int64_t *) argument));
 	    break;
 	}
     case PLAYBACK_SWITCH_TELETEXT:{

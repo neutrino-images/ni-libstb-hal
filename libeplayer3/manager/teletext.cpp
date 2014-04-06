@@ -77,7 +77,7 @@ static int CurrentPid = -1;
 
 static int ManagerAdd(Player * context __attribute__((unused)), Track_t track)
 {
-	Tracks[track.Id] = track;
+	Tracks[track.pid] = track;
 	context->playback->isAudio = 1;
 
 	return cERR_TELETEXT_MGR_NO_ERROR;
@@ -92,7 +92,7 @@ static char **ManagerList(Player * context __attribute__ ((unused)))
 	{
 		size_t len = it->second.Name.length() + 20;
 		char tmp[len];
-		snprintf(tmp, len, "%d %s\n", it->second.Id, it->second.Name.c_str());
+		snprintf(tmp, len, "%d %s\n", it->second.pid, it->second.Name.c_str());
 		tracklist[j] = strdup(tmp);
 		tracklist[j + 1] = strdup("");
 		j += 2;

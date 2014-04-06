@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
+
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
+#include <OpenThreads/Condition>
+
 extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
@@ -12,39 +17,38 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
-typedef enum {
-    OUTPUT_INIT,
-    OUTPUT_ADD,
-    OUTPUT_DEL,
-    OUTPUT_PLAY,
-    OUTPUT_STOP,
-    OUTPUT_PAUSE,
-    OUTPUT_OPEN,
-    OUTPUT_CLOSE,
-    OUTPUT_FLUSH,
-    OUTPUT_CONTINUE,
-    OUTPUT_FASTFORWARD,
-    OUTPUT_AVSYNC,
-    OUTPUT_CLEAR,
-    OUTPUT_PTS,
-    OUTPUT_SLOWMOTION,
-    OUTPUT_AUDIOMUTE,
-    OUTPUT_REVERSE,
-    OUTPUT_DISCONTINUITY_REVERSE,
-    OUTPUT_GET_FRAME_COUNT,
-} OutputCmd_t;
+#include "writer.h"
 
-struct Player;
-
-typedef struct Output_s {
-    const char *Name;
-    int (*Command) (Player *, OutputCmd_t, const char *);
-    bool (*Write) (AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts);
-    const char **Capabilities;
-
-} Output_t;
-
-extern Output_t LinuxDvbOutput;
-extern Output_t SubtitleOutput;
+class Output
+{
+	private:
+		int videofd;
+		int audiofd;
+		Writer *videoWriter, *audioWriter;
+		OpenThreads::Mutex audioMutex, videoMutex;
+		AVStream *audioStream, *videoStream;
+	public:
+		Output();
+		~Output();
+		bool Open();
+		bool Close();
+		bool Play();
+		bool Stop();
+		bool Pause();
+		bool Continue();
+		bool Mute(bool);
+		bool Flush();
+		bool FastForward(int speed);
+		bool SlowMotion(int speed);
+		bool AVSync(bool);
+		bool Clear();
+		bool ClearAudio();
+		bool ClearVideo();
+		bool GetPts(int64_t &pts);
+		bool GetFrameCount(int64_t &framecount);
+		bool SwitchAudio(AVStream *stream);
+		bool SwitchVideo(AVStream *stream);
+		bool Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts);
+};
 
 #endif

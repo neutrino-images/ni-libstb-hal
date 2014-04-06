@@ -12,12 +12,13 @@ class Player {
 	public: //FIXME
 	    PlaybackHandler_t *playback;
 	    ContainerHandler_t *container;
-	    Output_t *output;
 	    ManagerHandler_t *manager;
 	    int64_t *currentAudioPtsP;
 	public:
 	    Player();
 	    ~Player();
+
+	    Output output;
 };
 
 int container_ffmpeg_update_tracks(Player * context, const char *filename);

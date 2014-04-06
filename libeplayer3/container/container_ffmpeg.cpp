@@ -189,7 +189,7 @@ static void *FFMPEGThread(void *arg)
 	    }
 	    seek_sec_abs = -1.0;
 	} else if (context->playback->BackWard && av_gettime() >= showtime) {
-	    context->output->Command(context, OUTPUT_CLEAR, "video");
+	    context->output.ClearVideo();
 
 	    if (bofcount == 1) {
 		showtime = av_gettime();
@@ -272,23 +272,23 @@ static void *FFMPEGThread(void *arg)
 
 	ffmpeg_printf(200, "packet_size %d - index %d\n", packet.size, pid);
 
-	if (videoTrack && (videoTrack->Id == pid)) {
+	if (videoTrack && (videoTrack->pid == pid)) {
 	    currentVideoPts = pts = calcPts(avContext, videoTrack->stream, packet.pts);
 
 	    ffmpeg_printf(200, "VideoTrack index = %d %lld\n", pid, currentVideoPts);
-	    if (!context->output->Write(avContext, videoTrack->stream, &packet, currentVideoPts))
-		ffmpeg_err("writing data to video device failed\n");
-	} else if (audioTrack && (audioTrack->Id == pid)) {
+	    if (!context->output.Write(avContext, videoTrack->stream, &packet, currentVideoPts))
+		;//ffmpeg_err("writing data to video device failed\n");
+	} else if (audioTrack && (audioTrack->pid == pid)) {
 	    if (restart_audio_resampling) {
 	    	restart_audio_resampling = false;
-		context->output->Write(avContext, audioTrack->stream, NULL, currentAudioPts);
+		context->output.Write(avContext, audioTrack->stream, NULL, currentAudioPts);
 	    }
 	    if (!context->playback->BackWard) {
 		currentAudioPts = pts = calcPts(avContext, audioTrack->stream, packet.pts);
-		if (!context->output->Write(avContext, audioTrack->stream, &packet, currentAudioPts))
-			ffmpeg_err("writing data to audio device failed\n");
+		if (!context->output.Write(avContext, audioTrack->stream, &packet, currentAudioPts))
+			;//ffmpeg_err("writing data to audio device failed\n");
 	    }
-	} else if (subtitleTrack && (subtitleTrack->Id == pid)) {
+	} else if (subtitleTrack && (subtitleTrack->pid == pid)) {
 	    float duration = 3.0;
 	    ffmpeg_printf(100, "subtitleTrack->stream %p \n", subtitleTrack->stream);
 
@@ -322,15 +322,15 @@ static void *FFMPEGThread(void *arg)
 		    }
 		}
 	    }			/* duration */
-	} else if (teletextTrack && (teletextTrack->Id == pid)) {
+	} else if (teletextTrack && (teletextTrack->pid == pid)) {
 		teletext_write(pid, packet.data, packet.size);
 	}
 
 	av_free_packet(&packet);
     }				/* while */
 
-    if (context && context->playback && context->output && context->playback->abortRequested)
-	context->output->Command(context, OUTPUT_CLEAR, NULL);
+    if (context && context->playback && context->playback->abortRequested)
+	context->output.Clear();
 
     dvbsub_ass_clear();
 
@@ -412,7 +412,7 @@ static void container_ffmpeg_read_subtitle(Player * context, const char *filenam
 	Track_t track;
 	track.Name = format;
 	track.is_static = 1;
-	track.Id = pid;
+	track.pid = pid;
 	context->manager->subtitle->Command(context, MANAGER_ADD, &track);
 }
 
@@ -424,10 +424,6 @@ static void container_ffmpeg_read_subtitles(Player * context, const char *filena
 	container_ffmpeg_read_subtitle(context, filename, "ass", 0xFFFE);
 	container_ffmpeg_read_subtitle(context, filename, "ssa", 0xFFFD);
 }
-
-// from output/linuxdvb.cpp ... FIXME!
-extern AVStream *audioStream;
-extern AVStream *videoStream;
 
 int container_ffmpeg_init(Player * context, const char *filename)
 {
@@ -506,8 +502,8 @@ int container_ffmpeg_init(Player * context, const char *filename)
     terminating = 0;
     int res = container_ffmpeg_update_tracks(context, filename);
 
-audioStream = NULL;
-videoStream = NULL;
+AVStream *audioStream = NULL;
+AVStream *videoStream = NULL;
 
     unsigned int n, found_av = 0;
     for (n = 0; n < avContext->nb_streams; n++) {
@@ -527,6 +523,8 @@ videoStream = NULL;
 		break;
     	}
     }
+	context->output.SwitchAudio(audioStream);
+	context->output.SwitchVideo(videoStream);
     if (!found_av) {
 	avformat_close_input(&avContext);
 	isContainerRunning = 0;
@@ -547,7 +545,7 @@ int container_ffmpeg_update_tracks(Player * context, const char *filename)
 	context->manager->video->Command(context, MANAGER_INIT_UPDATE, NULL);
 	for (i = 0; i < avContext->nb_chapters; i++) {
 	    Track_t track;
-	    track.Id = i;
+	    track.pid = i;
 	    AVDictionaryEntry *title;
 	    AVChapter *ch = avContext->chapters[i];
 	    title = av_dict_get(ch->metadata, "title", NULL, 0);
@@ -591,7 +589,7 @@ int container_ffmpeg_update_tracks(Player * context, const char *filename)
 
 		track.Name = "und";
 		track.avfc = avContext;
-		track.Id = stream->id;
+		track.pid = stream->id;
 
 		if (stream->duration == AV_NOPTS_VALUE) {
 		    ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
@@ -618,7 +616,7 @@ int container_ffmpeg_update_tracks(Player * context, const char *filename)
 
 		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
-		track.Id = stream->id;
+		track.pid = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 
 		if (stream->duration == AV_NOPTS_VALUE) {
@@ -670,7 +668,7 @@ int container_ffmpeg_update_tracks(Player * context, const char *filename)
 
 		ffmpeg_printf(10, "Language %s\n", track.Name.c_str());
 
-		track.Id = stream->id;
+		track.pid = stream->id;
 		track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 
 #if 0
@@ -851,7 +849,7 @@ static int container_ffmpeg_switch_audio(Player * context, int *arg)
 	Track_t *audioTrack = NULL;
 	context->manager->audio->Command(context, MANAGER_GET_TRACK, &arg);
 	if (audioTrack) {
-		audioStream = audioTrack->stream;
+		context->output.SwitchAudio(audioTrack->stream);
 		ffmpeg_printf(10, "track %d\n", *arg);
 		/* Hellmaster1024: nothing to do here! */
 		float sec = -5.0;

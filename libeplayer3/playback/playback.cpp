@@ -61,7 +61,7 @@ static int hasThreadStarted = 0;
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
-static int PlaybackTerminate(Context_t * context);
+static int PlaybackTerminate(Player * context);
 
 /* ***************************** */
 /* MISC Functions                */
@@ -73,7 +73,7 @@ static int PlaybackTerminate(Context_t * context);
 
 static void *SupervisorThread(void *arg)
 {
-    Context_t *context = (Context_t *) arg;
+    Player *context = (Player *) arg;
     hasThreadStarted = 1;
 
     playback_printf(10, ">\n");
@@ -96,9 +96,9 @@ static void *SupervisorThread(void *arg)
 /* Functions                     */
 /* ***************************** */
 
-static int PlaybackStop(Context_t * context);
+static int PlaybackStop(Player * context);
 
-static int PlaybackOpen(Context_t * context, char *uri)
+static int PlaybackOpen(Player * context, char *uri)
 {
     if (context->playback->isPlaying)
 	PlaybackStop(context);
@@ -143,7 +143,7 @@ static int PlaybackOpen(Context_t * context, char *uri)
     return cERR_PLAYBACK_NO_ERROR;
 }
 
-static int PlaybackClose(Context_t * context)
+static int PlaybackClose(Player * context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -172,7 +172,7 @@ static int PlaybackClose(Context_t * context)
     return ret;
 }
 
-static int PlaybackPlay(Context_t * context)
+static int PlaybackPlay(Player * context)
 {
     pthread_attr_t attr;
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -244,7 +244,7 @@ static int PlaybackPlay(Context_t * context)
     return ret;
 }
 
-static int PlaybackPause(Context_t * context)
+static int PlaybackPause(Player * context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -276,7 +276,7 @@ static int PlaybackPause(Context_t * context)
     return ret;
 }
 
-static int PlaybackContinue(Context_t * context)
+static int PlaybackContinue(Player * context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -311,7 +311,7 @@ static int PlaybackContinue(Context_t * context)
     return ret;
 }
 
-static int PlaybackStop(Context_t * context)
+static int PlaybackStop(Player * context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
     int wait_time = 20;
@@ -359,7 +359,7 @@ static int PlaybackStop(Context_t * context)
     return ret;
 }
 
-static int PlaybackTerminate(Context_t * context)
+static int PlaybackTerminate(Player * context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
     int wait_time = 20;
@@ -413,7 +413,7 @@ static int PlaybackTerminate(Context_t * context)
     return ret;
 }
 
-static int PlaybackFastForward(Context_t * context, int *speed)
+static int PlaybackFastForward(Player * context, int *speed)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -448,7 +448,7 @@ static int PlaybackFastForward(Context_t * context, int *speed)
     return ret;
 }
 
-static int PlaybackFastBackward(Context_t * context, int *speed)
+static int PlaybackFastBackward(Player * context, int *speed)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -495,7 +495,7 @@ static int PlaybackFastBackward(Context_t * context, int *speed)
     return ret;
 }
 
-static int PlaybackSlowMotion(Context_t * context, int *speed)
+static int PlaybackSlowMotion(Player * context, int *speed)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -533,7 +533,7 @@ static int PlaybackSlowMotion(Context_t * context, int *speed)
     return ret;
 }
 
-static int PlaybackSeek(Context_t * context, float *pos, int absolute)
+static int PlaybackSeek(Player * context, float *pos, int absolute)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -551,7 +551,7 @@ static int PlaybackSeek(Context_t * context, float *pos, int absolute)
     return ret;
 }
 
-static int PlaybackPts(Context_t * context, unsigned long long int *pts)
+static int PlaybackPts(Player * context, unsigned long long int *pts)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -571,7 +571,7 @@ static int PlaybackPts(Context_t * context, unsigned long long int *pts)
     return ret;
 }
 
-static int PlaybackGetFrameCount(Context_t * context,
+static int PlaybackGetFrameCount(Player * context,
 				 unsigned long long int *frameCount)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
@@ -594,7 +594,7 @@ static int PlaybackGetFrameCount(Context_t * context,
     return ret;
 }
 
-static int PlaybackLength(Context_t * context, double *length)
+static int PlaybackLength(Player * context, double *length)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -617,7 +617,7 @@ static int PlaybackLength(Context_t * context, double *length)
     return ret;
 }
 
-static int PlaybackSwitchAudio(Context_t * context, int *track)
+static int PlaybackSwitchAudio(Player * context, int *track)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
     int curtrackid = 0;
@@ -659,7 +659,7 @@ extern bool output_switch_audio(AVStream*);
     return ret;
 }
 
-static int PlaybackSwitchSubtitle(Context_t * context, int *track)
+static int PlaybackSwitchSubtitle(Player * context, int *track)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -689,7 +689,7 @@ static int PlaybackSwitchSubtitle(Context_t * context, int *track)
     return ret;
 }
 
-static int PlaybackSwitchTeletext(Context_t * context, int *pid)
+static int PlaybackSwitchTeletext(Player * context, int *pid)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -713,7 +713,7 @@ static int PlaybackSwitchTeletext(Context_t * context, int *pid)
     return ret;
 }
 
-static int PlaybackMetadata(Context_t * context, char ***metadata)
+static int PlaybackMetadata(Player * context, char ***metadata)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -724,7 +724,7 @@ static int PlaybackMetadata(Context_t * context, char ***metadata)
     return ret;
 }
 
-static int Command(Context_t *context, PlaybackCmd_t command, void *argument)
+static int Command(Player *context, PlaybackCmd_t command, void *argument)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 

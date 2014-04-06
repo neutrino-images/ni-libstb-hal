@@ -41,7 +41,7 @@ if (debug_level >= level) printf(x); } while (0)
 #define container_err(x...)
 #endif
 
-static int Command(Context_t *context, ContainerCmd_t command, const char *argument __attribute__((unused)))
+static int Command(Player *context, ContainerCmd_t command, const char *argument __attribute__((unused)))
 {
     int ret = 0;
 

@@ -8,13 +8,13 @@
 #include <pthread.h>
 #include <stdint.h>
 
-typedef struct Context_s {
+struct Player {
     PlaybackHandler_t *playback;
     ContainerHandler_t *container;
     OutputHandler_t *output;
     ManagerHandler_t *manager;
     int64_t *currentAudioPtsP;
-} Context_t;
+};
 
-int container_ffmpeg_update_tracks(Context_t * context, const char *filename);
+int container_ffmpeg_update_tracks(Player * context, const char *filename);
 #endif

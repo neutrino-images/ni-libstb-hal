@@ -34,12 +34,11 @@ typedef enum {
     OUTPUT_GET_FRAME_COUNT,
 } OutputCmd_t;
 
-struct Context_s;
-typedef struct Context_s Context_t;
+struct Player;
 
 typedef struct Output_s {
     const char *Name;
-    int (*Command) (Context_t *, OutputCmd_t, const char *);
+    int (*Command) (Player *, OutputCmd_t, const char *);
     bool (*Write) (AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts);
     const char **Capabilities;
 
@@ -52,7 +51,7 @@ typedef struct OutputHandler_s {
     const char *Name;
     Output_t *audio;
     Output_t *video;
-    int (*Command) (Context_t *, OutputCmd_t, const char *);
+    int (*Command) (Player *, OutputCmd_t, const char *);
 } OutputHandler_t;
 
 #endif

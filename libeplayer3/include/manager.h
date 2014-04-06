@@ -56,12 +56,11 @@ typedef struct Track_s {
     Track_s() : Id(-1), language(NULL), duration(-1), avfc(NULL), stream(NULL), pending(0), is_static(0), chapter_start(0), chapter_end(0), ac3flags(-1) {}
 } Track_t;
 
-struct Context_s;
-typedef struct Context_s Context_t;
+struct Player;
 
 typedef struct Manager_s {
     const char *Name;
-    int (*Command) ( Context_t *, ManagerCmd_t, void *);
+    int (*Command) (Player *, ManagerCmd_t, void *);
     const char **Capabilities;
 
 } Manager_t;

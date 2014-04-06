@@ -138,7 +138,7 @@ extern "C" void teletext_write(int pid, uint8_t *data, int size);
 
 static void *FFMPEGThread(void *arg)
 {
-    Context_t *context = (Context_t *) arg;
+    Player *context = (Player *) arg;
     char threadname[17];
     strncpy(threadname, __func__, sizeof(threadname));
     threadname[16] = 0;
@@ -359,7 +359,7 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 	vfprintf(stderr, format, ap);
 }
 
-static void container_ffmpeg_read_subtitle(Context_t * context, const char *filename, const char *format, int pid) {
+static void container_ffmpeg_read_subtitle(Player * context, const char *filename, const char *format, int pid) {
 	const char *lastDot = strrchr(filename, '.');
 	if (!lastDot)
 		return;
@@ -416,7 +416,7 @@ static void container_ffmpeg_read_subtitle(Context_t * context, const char *file
 	context->manager->subtitle->Command(context, MANAGER_ADD, &track);
 }
 
-static void container_ffmpeg_read_subtitles(Context_t * context, const char *filename) {
+static void container_ffmpeg_read_subtitles(Player * context, const char *filename) {
 	if (strncmp(filename, "file://", 7))
 		return;
 	filename += 7;
@@ -429,7 +429,7 @@ static void container_ffmpeg_read_subtitles(Context_t * context, const char *fil
 extern AVStream *audioStream;
 extern AVStream *videoStream;
 
-int container_ffmpeg_init(Context_t * context, const char *filename)
+int container_ffmpeg_init(Player * context, const char *filename)
 {
     int err;
 
@@ -537,7 +537,7 @@ videoStream = NULL;
     return res;
 }
 
-int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
+int container_ffmpeg_update_tracks(Player * context, const char *filename)
 {
     if (terminating)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
@@ -732,7 +732,7 @@ int container_ffmpeg_update_tracks(Context_t * context, const char *filename)
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_play(Context_t * context)
+static int container_ffmpeg_play(Player * context)
 {
     int error;
     int ret = 0;
@@ -766,7 +766,7 @@ static int container_ffmpeg_play(Context_t * context)
     return ret;
 }
 
-static int container_ffmpeg_stop(Context_t * context)
+static int container_ffmpeg_stop(Player * context)
 {
     int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 
@@ -794,7 +794,7 @@ static int container_ffmpeg_stop(Context_t * context)
     return ret;
 }
 
-static int container_ffmpeg_seek(Context_t * context __attribute__ ((unused)), float sec, int absolute)
+static int container_ffmpeg_seek(Player * context __attribute__ ((unused)), float sec, int absolute)
 {
     if (absolute)
 	seek_sec_abs = sec, seek_sec_rel = 0.0;
@@ -803,7 +803,7 @@ static int container_ffmpeg_seek(Context_t * context __attribute__ ((unused)), f
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_get_length(Context_t * context, double *length)
+static int container_ffmpeg_get_length(Player * context, double *length)
 {
     ffmpeg_printf(50, "\n");
     Track_t *videoTrack = NULL;
@@ -846,7 +846,7 @@ static int container_ffmpeg_get_length(Context_t * context, double *length)
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_switch_audio(Context_t * context, int *arg)
+static int container_ffmpeg_switch_audio(Player * context, int *arg)
 {
 	Track_t *audioTrack = NULL;
 	context->manager->audio->Command(context, MANAGER_GET_TRACK, &arg);
@@ -860,18 +860,18 @@ static int container_ffmpeg_switch_audio(Context_t * context, int *arg)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_switch_subtitle(Context_t * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
+static int container_ffmpeg_switch_subtitle(Player * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
 {
     /* Hellmaster1024: nothing to do here! */
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_switch_teletext(Context_t * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
+static int container_ffmpeg_switch_teletext(Player * context __attribute__ ((unused)), int *arg __attribute__ ((unused)))
 {
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
+static int container_ffmpeg_get_metadata(Player * context, char ***p)
 {
 	Track_t *videoTrack = NULL;
 	Track_t *audioTrack = NULL;
@@ -932,7 +932,7 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int Command(Context_t *context, ContainerCmd_t command, const char *argument)
+static int Command(Player *context, ContainerCmd_t command, const char *argument)
 {
     int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 

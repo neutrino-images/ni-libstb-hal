@@ -15,7 +15,7 @@ extern ManagerHandler_t		ManagerHandler;
 
 #include "playback_libeplayer3.h"
 
-static Context_t *player = NULL;
+static Player *player = NULL;
 
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
@@ -51,7 +51,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 	nPlaybackSpeed = 0;
 	init_jump = -1;
 	
-	player = (Context_t*) malloc(sizeof(Context_t));
+	player = new Player();
 
 	if(player) {
 		player->playback	= &PlaybackHandler;
@@ -252,9 +252,10 @@ bool cPlayback::Stop(void)
 
 	if(player && player->playback)
 		player->playback->Command(player,PLAYBACK_CLOSE, NULL);
-	if(player)
-		free(player);
-	player = NULL;
+	if(player) {
+		delete player;
+		player = NULL;
+	}
 
 	playing=false;
 	return true;

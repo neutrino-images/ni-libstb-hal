@@ -75,7 +75,7 @@ static int CurrentPid = -1;
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t * context, Track_t track)
+static int ManagerAdd(Player * context, Track_t track)
 {
 	Tracks[track.Id] = track;
 	context->playback->isVideo = 1;
@@ -86,7 +86,7 @@ static int ManagerAdd(Context_t * context, Track_t track)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static char **ManagerList(Context_t * context __attribute__ ((unused)))
+static char **ManagerList(Player * context __attribute__ ((unused)))
 {
 	int j = 0;
 	char **tracklist = (char **) malloc(sizeof(char *) * ((Tracks.size() * 2) + 1));
@@ -105,7 +105,7 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
     return tracklist;
 }
 
-static int ManagerDel(Context_t * context)
+static int ManagerDel(Player * context)
 {
 	Tracks.clear();
 	CurrentPid = -1;
@@ -113,7 +113,7 @@ static int ManagerDel(Context_t * context)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static int Command(Context_t *context, ManagerCmd_t command, void *argument)
+static int Command(Player *context, ManagerCmd_t command, void *argument)
 {
     int ret = cERR_VIDEO_MGR_NO_ERROR;
 

@@ -72,7 +72,7 @@ static Output_t *AvailableOutput[] = {
 /* Output Functions              */
 /* ***************************** */
 
-static void OutputAdd(Context_t * context, char *port)
+static void OutputAdd(Player * context, char *port)
 {
     int i, j;
 
@@ -92,7 +92,7 @@ static void OutputAdd(Context_t * context, char *port)
 	    }
 }
 
-static void OutputDel(Context_t * context, char *port)
+static void OutputDel(Player * context, char *port)
 {
     output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
@@ -103,7 +103,7 @@ static void OutputDel(Context_t * context, char *port)
 
 }
 
-static int Command(Context_t *context, OutputCmd_t command, const char *argument)
+static int Command(Player *context, OutputCmd_t command, const char *argument)
 {
     int ret = cERR_OUTPUT_NO_ERROR;
 

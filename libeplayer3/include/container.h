@@ -18,12 +18,11 @@ typedef enum {
     CONTAINER_METADATA,
 } ContainerCmd_t;
 
-struct Context_s;
-typedef struct Context_s Context_t;
+struct Player;
 
 typedef struct Container_s {
     const char *Name;
-    int (*Command) (Context_t *, ContainerCmd_t, const char *);
+    int (*Command) (Player *, ContainerCmd_t, const char *);
     const char **Capabilities;
 } Container_t;
 
@@ -33,7 +32,7 @@ extern Container_t FFMPEGContainer;
 typedef struct ContainerHandler_s {
     const char *Name;
     Container_t *selectedContainer;
-    int (*Command) (Context_t *, ContainerCmd_t, const char *);
+    int (*Command) (Player *, ContainerCmd_t, const char *);
 } ContainerHandler_t;
 
 #endif

@@ -74,14 +74,14 @@ static std::map<int,Track_t> Tracks;
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track)
+static int ManagerAdd(Player * context __attribute__((unused)), Track_t track)
 {
 	Tracks[track.Id] = track;
 
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }
 
-static char **ManagerList(Context_t * context __attribute__ ((unused)))
+static char **ManagerList(Player * context __attribute__ ((unused)))
 {
 	int j = 0;
 	char **tracklist = (char **) malloc(sizeof(char *) * ((Tracks.size() * 2) + 1));
@@ -100,13 +100,13 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
     return tracklist;
 }
 
-static int ManagerDel(Context_t * context __attribute__((unused)))
+static int ManagerDel(Player * context __attribute__((unused)))
 {
 	Tracks.clear();
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }
 
-static int Command(Context_t *context, ManagerCmd_t command, void *argument)
+static int Command(Player *context, ManagerCmd_t command, void *argument)
 {
     int ret = cERR_CHAPTER_MGR_NO_ERROR;
 

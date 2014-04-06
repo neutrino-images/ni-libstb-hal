@@ -20,7 +20,7 @@
 #include <poll.h>
 
 #include "playback.h"
-#include "common.h"
+#include "player.h"
 #include "misc.h"
 
 /* ***************************** */

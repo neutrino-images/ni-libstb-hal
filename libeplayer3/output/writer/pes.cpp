@@ -39,7 +39,7 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include "common.h"
+#include "player.h"
 #include "output.h"
 #include "debug.h"
 #include "misc.h"

@@ -41,7 +41,7 @@
 #include <OpenThreads/Thread>
 #include <OpenThreads/Condition>
 
-#include "common.h"
+#include "player.h"
 #include "output.h"
 #include "writer.h"
 #include "misc.h"

@@ -41,7 +41,7 @@
 
 #include <linux/dvb/stm_ioctls.h>
 
-#include "common.h"
+#include "player.h"
 #include "misc.h"
 #include "debug.h"
 

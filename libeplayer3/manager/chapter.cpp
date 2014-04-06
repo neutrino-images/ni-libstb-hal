@@ -26,7 +26,7 @@
 #include <map>
 
 #include "manager.h"
-#include "common.h"
+#include "player.h"
 
 /* ***************************** */
 /* Makros/Constants              */

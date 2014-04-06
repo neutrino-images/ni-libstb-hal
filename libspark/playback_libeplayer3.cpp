@@ -7,7 +7,7 @@
 #include <audio_lib.h>
 #include <video_lib.h>
 
-#include <common.h>
+#include <player.h>
 extern OutputHandler_t		OutputHandler;
 extern PlaybackHandler_t	PlaybackHandler;
 extern ContainerHandler_t	ContainerHandler;

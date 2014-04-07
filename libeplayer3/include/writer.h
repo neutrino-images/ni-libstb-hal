@@ -1,5 +1,5 @@
-#ifndef WRITER_H_
-#define WRITER_H_
+#ifndef __WRITER_H__
+#define __WRITER_H__
 
 #include <stdio.h>
 #include <stdint.h>

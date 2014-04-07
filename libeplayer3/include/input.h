@@ -58,7 +58,6 @@ class Input
 		bool SwitchVideo(Track *track);
 		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		bool GetReadCount(uint64_t &readcount);
-
 };
 
 #endif

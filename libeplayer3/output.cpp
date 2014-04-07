@@ -17,10 +17,6 @@
  *
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -59,7 +55,6 @@
 
 Output::Output()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	videofd = audiofd = -1;
 	videoWriter = audioWriter = NULL;
 	videoStream = audioStream = NULL;
@@ -67,13 +62,11 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 Output::~Output()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	Close();
 }
 
 bool Output::Open()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 	
@@ -106,7 +99,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Close()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	Stop();
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -126,7 +118,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Play()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool ret = true;
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -151,7 +142,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Stop()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool ret = true;
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -171,14 +161,13 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 		dioctl(audiofd, AUDIO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
 		if (dioctl(audiofd, AUDIO_STOP, NULL))
 			ret = false;
-    	}
+	}
 
 	return ret;
 }
 
 bool Output::Pause()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool ret = true;
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -192,14 +181,13 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	if (audiofd > -1) {
 		if (dioctl(audiofd, AUDIO_PAUSE, NULL))
 			ret = false;
-    	}
+	}
 
 	return ret;
 }
 
 bool Output::Continue()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool ret = true;
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -213,14 +201,13 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	if (audiofd > -1) {
 		if (dioctl(audiofd, AUDIO_CONTINUE, NULL))
 			ret = false;
-    	}
+	}
 
 	return ret;
 }
 
 bool Output::Mute(bool b)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
 	//AUDIO_SET_MUTE has no effect with new player
@@ -233,7 +220,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Flush()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool ret = true;
 
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
@@ -250,7 +236,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::FastForward(int speed)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 
 	if (videofd > -1 && dioctl(videofd, VIDEO_FAST_FORWARD, speed))
@@ -261,7 +246,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::SlowMotion(int speed)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 
 	if (videofd > -1 && dioctl(videofd, VIDEO_SLOWMOTION, speed))
@@ -272,7 +256,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::AVSync(bool b)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 	if (audiofd > -1 && dioctl(audiofd, AUDIO_SET_AV_SYNC, b))
 		return false;
@@ -282,7 +265,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::ClearAudio()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 	if (audiofd > -1 && dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL))
 		return false;
@@ -292,7 +274,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::ClearVideo()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	if (videofd > -1 && dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL))
 		return false;
@@ -302,7 +283,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Clear()
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	bool aret = ClearAudio();
 	bool vret = ClearVideo();
 	return aret && vret;
@@ -310,7 +290,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::GetPts(int64_t &pts)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	pts = 0;
 	return ((videofd > -1 && !dioctl(videofd, VIDEO_GET_PTS, (void *) &pts)) ||
 		(audiofd > -1 && !dioctl(audiofd, AUDIO_GET_PTS, (void *) &pts)));
@@ -318,7 +297,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::GetFrameCount(int64_t &framecount)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	dvb_play_info_t playInfo;
 
 	if ((videofd > -1 && dioctl(videofd, VIDEO_GET_PLAY_INFO, (void *) &playInfo)) ||
@@ -331,7 +309,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::SwitchAudio(AVStream *stream)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 	if (stream == audioStream)
 		return true;
@@ -353,7 +330,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::SwitchVideo(AVStream *stream)
 {
-fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	if (stream == videoStream)
 		return true;
@@ -375,7 +351,6 @@ fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 
 bool Output::Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts)
 {
-//fprintf(stderr, "%s %d %s\n", __FILE__,__LINE__,__func__);
 	switch (stream->codec->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);

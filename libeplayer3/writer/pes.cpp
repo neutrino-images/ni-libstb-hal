@@ -27,44 +27,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
 #include <memory.h>
 #include <asm/types.h>
-#include <pthread.h>
-#include <errno.h>
-
-#include "player.h"
-#include "output.h"
 #include "misc.h"
 #include "pes.h"
-#include "writer.h"
-
-/* ***************************** */
-/* Makros/Constants              */
-/* ***************************** */
-
-/* ***************************** */
-/* Types                         */
-/* ***************************** */
-
-
-/* ***************************** */
-/* Varaibles                     */
-/* ***************************** */
-
-/* ***************************** */
-/* Prototypes                    */
-/* ***************************** */
-
-/* ***************************** */
-/* Functions                     */
-/* ***************************** */
 
 int InsertVideoPrivateDataHeader(unsigned char *data, int payload_size)
 {

@@ -39,27 +39,27 @@ bool WriterH263::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* strea
 {
 	if (fd < 0 || !packet)
 		return false;
-    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 
-    int HeaderLength = InsertPesHeader(PesHeader, packet->size, H263_VIDEO_PES_START_CODE, pts, 0);
+	int HeaderLength = InsertPesHeader(PesHeader, packet->size, H263_VIDEO_PES_START_CODE, pts, 0);
 
-    int PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], packet->size);
+	int PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], packet->size);
 
-    int PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
+	int PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
 
-    PesHeader[PES_LENGTH_BYTE_0] = PesLength & 0xff;
-    PesHeader[PES_LENGTH_BYTE_1] = (PesLength >> 8) & 0xff;
-    PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
-    PesHeader[PES_FLAGS_BYTE] |= PES_EXTENSION_DATA_PRESENT;
+	PesHeader[PES_LENGTH_BYTE_0] = PesLength & 0xff;
+	PesHeader[PES_LENGTH_BYTE_1] = (PesLength >> 8) & 0xff;
+	PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
+	PesHeader[PES_FLAGS_BYTE] |= PES_EXTENSION_DATA_PRESENT;
 
-    HeaderLength += PrivateHeaderLength;
+	HeaderLength += PrivateHeaderLength;
 
-    struct iovec iov[2];
-    iov[0].iov_base = PesHeader;
-    iov[0].iov_len = HeaderLength;
-    iov[1].iov_base = packet->data;
-    iov[1].iov_len = packet->size;
-    return writev(fd, iov, 2) > -1;
+	struct iovec iov[2];
+	iov[0].iov_base = PesHeader;
+	iov[0].iov_len = HeaderLength;
+	iov[1].iov_base = packet->data;
+	iov[1].iov_len = packet->size;
+	return writev(fd, iov, 2) > -1;
 }
 
 WriterH263::WriterH263()

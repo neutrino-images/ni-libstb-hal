@@ -3,10 +3,6 @@
  * duckbox 2010
  */
 
-/* ***************************** */
-/* Includes                      */
-/* ***************************** */
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,9 +25,9 @@ static pthread_t supervisorThread;
 
 Player::Player()
 {
-	input.player = this;                                                              
-	output.player = this;                                                             
-	manager.player = this;                                                            
+	input.player = this;
+	output.player = this;
+	manager.player = this;
 	hasThreadStarted = 0;
 }
 
@@ -51,69 +47,69 @@ void *Player::SupervisorThread(void *arg)
 
 bool Player::Open(const char *Url)
 {
-    if (isPlaying)
+	if (isPlaying)
 	Stop(); // shouldn't happen. Most definitely a bug
 
-    fprintf(stderr, "URL=%s\n", Url);
+	fprintf(stderr, "URL=%s\n", Url);
 
-    if (isPlaying) {	// shouldn't happen
-	fprintf(stderr, "playback already running\n");
+	if (isPlaying) {	// shouldn't happen
+		fprintf(stderr, "playback already running\n");
 	return false;
-    }
-
-    isHttp = 0;
-
-    if (!strncmp("file://", Url, 7) || !strncmp("myts://", Url, 7)) {
-	if (!strncmp("myts://", Url, 7)) {
-	    url = "file";
-	    url += (Url + 4);
-	    noprobe = 1;
-	} else {
-	    noprobe = 0;
-	    url = Url;
 	}
-    } else if (strstr(Url, "://")) {
+
+	isHttp = 0;
+
+	if (!strncmp("file://", Url, 7) || !strncmp("myts://", Url, 7)) {
+	if (!strncmp("myts://", Url, 7)) {
+		url = "file";
+		url += (Url + 4);
+		noprobe = 1;
+	} else {
+		noprobe = 0;
+		url = Url;
+	}
+	} else if (strstr(Url, "://")) {
 	isHttp = 1;
 	if (!strncmp("mms://", Url, 6)) {
-	    url = "mmst";
-	    url += (Url + 3);
+		url = "mmst";
+		url += (Url + 3);
 	} else
-	    url = Url;
-    } else {
-	fprintf(stderr, "Unknown stream (%s)\n", Url);
+		url = Url;
+	} else {
+		fprintf(stderr, "Unknown stream (%s)\n", Url);
 	return false;
-    }
-    manager.clearTracks();
+	}
+	manager.clearTracks();
 
-    if (!input.Init(url.c_str()))
-	return false;
+	if (!input.Init(url.c_str()))
+		return false;
 
-    fprintf(stderr, "exiting with value 0\n");
+	fprintf(stderr, "exiting with value 0\n");
 
-    return true;
+	return true;
 }
 
 bool Player::Close()
 {
-    bool ret = true;
+	bool ret = true;
 
-    isPaused = 0;
-    isPlaying = 0;
-    isForwarding = 0;
-    isBackWard = 0;
-    isSlowMotion = 0;
-    Speed = 0;
-    url.clear();
+	isPaused = 0;
+	isPlaying = 0;
+	isForwarding = 0;
+	isBackWard = 0;
+	isSlowMotion = 0;
+	Speed = 0;
+	url.clear();
 
-    return ret;
+	return ret;
 }
 
 bool Player::Play()
 {
-    pthread_attr_t attr;
-    bool ret = true;
+	pthread_attr_t attr;
+	bool ret = true;
 
-    if (!isPlaying) {
+	if (!isPlaying) {
 	AVSync = 1;
 	output.AVSync(true);
 
@@ -121,55 +117,55 @@ bool Player::Play()
 	ret = output.Play();
 
 	if (!ret) {
-	    isCreationPhase = 0;	// allow thread to go into next state
+		isCreationPhase = 0;	// allow thread to go into next state
 	} else {
-	    isPlaying = 1;
-	    isPaused = 0;
-	    isForwarding = 0;
-	    if (isBackWard) {
+		isPlaying = 1;
+		isPaused = 0;
+		isForwarding = 0;
+		if (isBackWard) {
 		isBackWard = 0;
 		output.Mute(false);
-	    }
-	    isSlowMotion = 0;
-	    Speed = 1;
-
-	    if (hasThreadStarted == 0) {
-		int error;
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-		if ((error = pthread_create(&supervisorThread, &attr, SupervisorThread, this))) {
-		    fprintf(stderr, "Error creating thread, error:%d:%s\n", error, strerror(error));
-
-		    ret = false;
-		} else {
-		    fprintf(stderr, "Created thread\n");
 		}
-	    }
+		isSlowMotion = 0;
+		Speed = 1;
 
-	    fprintf(stderr, "clearing isCreationPhase!\n");
+		if (hasThreadStarted == 0) {
+			int error;
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	    isCreationPhase = 0;	// allow thread to go into next state
+			if ((error = pthread_create(&supervisorThread, &attr, SupervisorThread, this))) {
+				fprintf(stderr, "Error creating thread, error:%d:%s\n", error, strerror(error));
+
+				ret = false;
+			} else {
+				fprintf(stderr, "Created thread\n");
+			}
+		}
+
+		fprintf(stderr, "clearing isCreationPhase!\n");
+
+		isCreationPhase = 0;	// allow thread to go into next state
 	}
 
-    } else {
-	fprintf(stderr,"playback already running\n");
-	ret = false;
-    }
+	} else {
+		fprintf(stderr,"playback already running\n");
+		ret = false;
+	}
 
-    fprintf(stderr, "exiting with value %d\n", ret);
+	fprintf(stderr, "exiting with value %d\n", ret);
 
-    return ret;
+	return ret;
 }
 
 bool Player::Pause()
 {
-    bool ret = true;
+	bool ret = true;
 
-    if (isPlaying && !isPaused) {
+	if (isPlaying && !isPaused) {
 
 	if (isSlowMotion)
-	    output.Clear();
+		output.Clear();
 
 	output.Pause();
 
@@ -177,63 +173,62 @@ bool Player::Pause()
 	//isPlaying  = 1;
 	isForwarding = 0;
 	if (isBackWard) {
-	    isBackWard = 0;
-	    output.Mute(false);
+		isBackWard = 0;
+		output.Mute(false);
 	}
-	isSlowMotion = 0;
-	Speed = 1;
-    } else {
-	fprintf(stderr,"playback not playing or already in pause mode\n");
-	ret = false;
-    }
+		isSlowMotion = 0;
+		Speed = 1;
+	} else {
+		fprintf(stderr,"playback not playing or already in pause mode\n");
+		ret = false;
+	}
 
-    fprintf(stderr, "exiting with value %d\n", ret);
+	fprintf(stderr, "exiting with value %d\n", ret);
 
-    return ret;
+	return ret;
 }
 
 bool Player::Continue()
 {
-    int ret = true;
+	int ret = true;
 
-    if (isPlaying && (isPaused || isForwarding
-	 || isBackWard || isSlowMotion)) {
+	if (isPlaying && (isPaused || isForwarding || isBackWard || isSlowMotion)) {
 
-	if (isSlowMotion)
-	    output.Clear();
+		if (isSlowMotion)
+			output.Clear();
 
-	output.Continue();
+		output.Continue();
 
-	isPaused = 0;
-	//isPlaying  = 1;
-	isForwarding = 0;
-	if (isBackWard) {
-	    isBackWard = 0;
-	    output.Mute(false);
+		isPaused = 0;
+		//isPlaying  = 1;
+		isForwarding = 0;
+		if (isBackWard) {
+			isBackWard = 0;
+			output.Mute(false);
+		}
+		isSlowMotion = 0;
+		Speed = 1;
+	} else {
+		fprintf(stderr,"continue not possible\n");
+		ret = false;
 	}
-	isSlowMotion = 0;
-	Speed = 1;
-    } else {
-	fprintf(stderr,"continue not possible\n");
-	ret = false;
-    }
 
-    return ret;
+	return ret;
 }
 
 bool Player::Stop()
 {
-    bool ret = true;
-    int wait_time = 20;
+	bool ret = true;
+	int wait_time = 20;
 
-    if (isPlaying) {
+	if (isPlaying) {
 
 	isPaused = 0;
 	isPlaying = 0;
 	isForwarding = 0;
 	if (isBackWard) {
-	    isBackWard = 0;
-	    output.Mute(false);
+		isBackWard = 0;
+		output.Mute(false);
 	}
 	isSlowMotion = 0;
 	Speed = 0;
@@ -241,40 +236,40 @@ bool Player::Stop()
 	output.Stop();
 	input.Stop();
 
-    } else {
-	fprintf(stderr,"stop not possible\n");
-	ret = false;
-    }
+	} else {
+		fprintf(stderr,"stop not possible\n");
+		ret = false;
+	}
 
-    while ((hasThreadStarted == 1) && (--wait_time) > 0) {
-	fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
+	while ((hasThreadStarted == 1) && (--wait_time) > 0) {
+		fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
 
-	usleep(100000);
-    }
+		usleep(100000);
+	}
 
-    if (wait_time == 0) {
-	fprintf(stderr,"Timeout waiting for thread!\n");
+	if (wait_time == 0) {
+		fprintf(stderr,"Timeout waiting for thread!\n");
 
-	ret = false;
-    }
+		ret = false;
+	}
 
-    fprintf(stderr, "exiting with value %d\n", ret);
+	fprintf(stderr, "exiting with value %d\n", ret);
 
-    return ret;
+	return ret;
 }
 
 // FIXME
 bool Player::Terminate()
 {
-    bool ret = true;
-    int wait_time = 20;
+	bool ret = true;
+	int wait_time = 20;
 
-    fprintf(stderr, "\n");
+	fprintf(stderr, "\n");
 
-    if (isPlaying) {
+	if (isPlaying) {
 
 	if (!abortRequested && !output.Flush()) {
-	    fprintf(stderr,"failed to flush output.\n");
+		fprintf(stderr,"failed to flush output.\n");
 	}
 
 	ret = input.Stop();
@@ -285,93 +280,91 @@ bool Player::Terminate()
 	isSlowMotion = 0;
 	Speed = 0;
 
-    } else {
+	} else {
 	/* fixme: konfetti: we should return an error here but this seems to be a condition which
 	 * can happen and is not a real error, which leads to a dead neutrino. should investigate
 	 * here later.
 	 */
-    }
+	}
 
-    while ((hasThreadStarted == 1) && (--wait_time) > 0) {
-	fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
+	while ((hasThreadStarted == 1) && (--wait_time) > 0) {
+		fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
 
-	usleep(100000);
-    }
+		usleep(100000);
+	}
 
-    if (wait_time == 0) {
-	fprintf(stderr,"Timeout waiting for thread!\n");
+	if (wait_time == 0) {
+		fprintf(stderr,"Timeout waiting for thread!\n");
 
-	ret = false;
-    }
+		ret = false;
+	}
 
-    fprintf(stderr, "exiting with value %d\n", ret);
+	fprintf(stderr, "exiting with value %d\n", ret);
 
-    return ret;
+	return ret;
 }
 
 bool Player::FastForward(int speed)
 {
-    int ret = true;
+	int ret = true;
 
-    /* Audio only forwarding not supported */
-    if (isVideo && !isHttp && !isBackWard
-	&& (!isPaused ||  isPlaying)) {
+	/* Audio only forwarding not supported */
+	if (isVideo && !isHttp && !isBackWard && (!isPaused ||  isPlaying)) {
 
-	if ((speed <= 0) || (speed > cMaxSpeed_ff)) {
-	    fprintf(stderr, "speed %d out of range (1 - %d) \n", speed, cMaxSpeed_ff);
-	    return false;
+		if ((speed <= 0) || (speed > cMaxSpeed_ff)) {
+			fprintf(stderr, "speed %d out of range (1 - %d) \n", speed, cMaxSpeed_ff);
+			return false;
+		}
+
+		isForwarding = 1;
+		Speed = speed;
+		output.FastForward(speed);
+		} else {
+		fprintf(stderr,"fast forward not possible\n");
+		ret = false;
 	}
 
-	isForwarding = 1;
-	Speed = speed;
-	output.FastForward(speed);
-    } else {
-	fprintf(stderr,"fast forward not possible\n");
-	ret = false;
-    }
-
-    return ret;
+	return ret;
 }
 
 bool Player::FastBackward(int speed)
 {
-    bool ret = true;
+	bool ret = true;
 
-    /* Audio only reverse play not supported */
-    if (isVideo && !isForwarding
-	&& (!isPaused || isPlaying)) {
+	/* Audio only reverse play not supported */
+	if (isVideo && !isForwarding && (!isPaused || isPlaying)) {
 
 	if ((speed > 0) || (speed < cMaxSpeed_fr)) {
-	    fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
-	    return false;
+		fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
+		return false;
 	}
 
 	if (speed == 0) {
-	    isBackWard = false;
-	    Speed = false;	/* reverse end */
+		isBackWard = false;
+		Speed = false;	/* reverse end */
 	} else {
-	    Speed = speed;
-	    isBackWard = true;
+		Speed = speed;
+		isBackWard = true;
 	}
 
 	output.Clear();
 #if 0
 	if (output->Command(player, OUTPUT_REVERSE, NULL) < 0) {
-	    fprintf(stderr,"OUTPUT_REVERSE failed\n");
-	    isBackWard = 0;
-	    Speed = 1;
-	    ret = false;
+		fprintf(stderr,"OUTPUT_REVERSE failed\n");
+		isBackWard = 0;
+		Speed = 1;
+		ret = false;
 	}
 #endif
-    } else {
-	fprintf(stderr,"fast backward not possible\n");
-	ret = false;
-    }
+	} else {
+		fprintf(stderr,"fast backward not possible\n");
+		ret = false;
+	}
 
-    if (isBackWard)
-	output.Mute(true);
+	if (isBackWard)
+		output.Mute(true);
 
-    return ret;
+	return ret;
 }
 
 bool Player::SlowMotion(int repeats)
@@ -381,13 +374,13 @@ bool Player::SlowMotion(int repeats)
 			Continue();
 
 		switch (repeats) {
-		case 2:
-		case 4:
-		case 8:
-			isSlowMotion = true;
-			break;
-		default:
-			repeats = 0;
+			case 2:
+			case 4:
+			case 8:
+				isSlowMotion = true;
+				break;
+			default:
+				repeats = 0;
 		}
 
 		output.SlowMotion(repeats);
@@ -399,8 +392,8 @@ bool Player::SlowMotion(int repeats)
 
 bool Player::Seek(float pos, bool absolute)
 {
-    output.Clear();
-    return input.Seek(pos, absolute);
+	output.Clear();
+	return input.Seek(pos, absolute);
 }
 
 bool Player::GetPts(int64_t &pts)
@@ -419,10 +412,10 @@ bool Player::GetFrameCount(int64_t &frameCount)
 
 bool Player::GetDuration(double &duration)
 {
-    duration = -1;
-    if (isPlaying)
-	    return input.GetDuration(duration);
-    return false;
+	duration = -1;
+	if (isPlaying)
+		return input.GetDuration(duration);
+	return false;
 }
 
 bool Player::SwitchVideo(int pid)

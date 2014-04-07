@@ -65,7 +65,7 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 	if (fd < 0 || !packet)
 		return false;
 
-    if (initialHeader) {
+	if (initialHeader) {
 		initialHeader = false;
 		FrameHeaderSeen = false;
 
@@ -74,15 +74,15 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 
 
 		const unsigned char Metadata[] = {
-			    0x00, 0x00, 0x00, 0xc5,
-			    0x04, 0x00, 0x00, 0x00,
-			    0xc0, 0x00, 0x00, 0x00,	/* Struct C set for for advanced profile */
-			    0x00, 0x00, 0x00, 0x00,	/* Struct A */
-			    0x00, 0x00, 0x00, 0x00,
-			    0x0c, 0x00, 0x00, 0x00,
-			    0x60, 0x00, 0x00, 0x00,	/* Struct B */
-			    0x00, 0x00, 0x00, 0x00,
-			    0x00, 0x00, 0x00, 0x00
+			0x00, 0x00, 0x00, 0xc5,
+			0x04, 0x00, 0x00, 0x00,
+			0xc0, 0x00, 0x00, 0x00,	/* Struct C set for for advanced profile */
+			0x00, 0x00, 0x00, 0x00,	/* Struct A */
+			0x00, 0x00, 0x00, 0x00,
+			0x0c, 0x00, 0x00, 0x00,
+			0x60, 0x00, 0x00, 0x00,	/* Struct B */
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00
 		};
 
 		unsigned char PesHeader[PES_MAX_HEADER_SIZE];
@@ -158,7 +158,7 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 					memcpy(&PesHeader[HeaderLength], Vc1FrameStartCode, sizeof(Vc1FrameStartCode));
 					HeaderLength += sizeof(Vc1FrameStartCode);
 				}
-			insertSampleHeader = 0;
+				insertSampleHeader = 0;
 			}
 
 			struct iovec iov[2];

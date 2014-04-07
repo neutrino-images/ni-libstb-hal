@@ -42,15 +42,15 @@ bool WriterMP3::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream
 	if (fd < 0 || !packet)
 		return false;
 
-    unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-    struct iovec iov[2];
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	struct iovec iov[2];
 
-    iov[0].iov_base = PesHeader;
-    iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE, pts, 0);
-    iov[1].iov_base = packet->data;
-    iov[1].iov_len = packet->size;
+	iov[0].iov_base = PesHeader;
+	iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE, pts, 0);
+	iov[1].iov_base = packet->data;
+	iov[1].iov_len = packet->size;
 
-    return writev(fd, iov, 2) > -1;
+	return writev(fd, iov, 2) > -1;
 }
 
 WriterMP3::WriterMP3()

@@ -8,13 +8,10 @@ AM_CPPFLAGS += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 AM_CPPFLAGS += -ggdb
 
 libeplayer3_la_SOURCES = \
-	container/container_ffmpeg.cpp \
-	manager/manager.cpp output/output.cpp \
-	playback/playback.cpp output/writer/writer.cpp output/writer/wmv.cpp \
-	output/writer/ac3.cpp output/writer/divx.cpp output/writer/pes.cpp \
-	output/writer/dts.cpp output/writer/mpeg2.cpp output/writer/mp3.cpp output/writer/misc.cpp \
-	output/writer/h264.cpp output/writer/h263.cpp output/writer/vc1.cpp \
-	output/writer/flac.cpp output/writer/pcm.cpp
+	input.cpp output.cpp manager.cpp player.cpp \
+	writer/writer.cpp writer/wmv.cpp writer/ac3.cpp writer/divx.cpp writer/pes.cpp \
+	writer/dts.cpp writer/mpeg2.cpp writer/mp3.cpp writer/misc.cpp writer/h264.cpp \
+	writer/h263.cpp writer/vc1.cpp writer/flac.cpp writer/pcm.cpp
 
 LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lswresample -lm
 

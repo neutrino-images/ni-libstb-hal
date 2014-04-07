@@ -26,9 +26,9 @@ extern "C" {
 
 struct Chapter
 {
-        std::string title;
-        double start;
-        double end;
+	std::string title;
+	double start;
+	double end;
 };
 
 class Player {

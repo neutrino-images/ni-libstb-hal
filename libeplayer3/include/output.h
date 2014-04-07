@@ -32,7 +32,7 @@ class Output
 		Writer *videoWriter, *audioWriter;
 		OpenThreads::Mutex audioMutex, videoMutex;
 		AVStream *audioStream, *videoStream;
-		Player *context;
+		Player *player;
 	public:
 		Output();
 		~Output();

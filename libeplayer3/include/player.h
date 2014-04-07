@@ -23,8 +23,6 @@ extern "C" {
 #include "input.h"
 #include "output.h"
 #include "manager.h"
-#include "playback.h"
-#include "player.h"
 
 struct Chapter
 {
@@ -37,27 +35,61 @@ class Player {
 	friend class Input;
 	friend class Output;
 	friend class Manager;
-	friend class Playback;
 	friend class cPlayback;
+	friend int interrupt_cb(void *arg);
+
 	private:
 		Input input;
 		Output output;
 		Manager manager;
-		Playback playback;
 		OpenThreads::Mutex chapterMutex;
 		std::vector<Chapter> chapters;
-	public: //FIXME
-		int64_t *currentAudioPtsP;
-	public:
-		Player()
-		{
-			input.context = this;
-			output.context = this;
-			playback.context = this;
-			manager.context = this;
-		}
+		bool abortPlayback;
+		bool abortRequested;
+		bool isHttp;
+		bool isPaused;
+		bool isCreationPhase;
+		bool isSlowMotion;
+		int Speed;
+		int AVSync;
 
+		bool isVideo;
+		bool isAudio;
+
+		std::string url;
+		bool noprobe;	/* hack: only minimal probing in av_find_stream_info */
+
+		int hasThreadStarted;
+
+		static void* SupervisorThread(void*);
+	public:
+		bool isForwarding;
+		bool isBackWard;
+		bool isPlaying;
+		uint64_t readCount;
+
+		bool SwitchAudio(int pid);
+		bool SwitchVideo(int pid);
+		bool SwitchTeletext(int pid);
+		bool SwitchSubtitle(int pid);
+		bool GetPts(int64_t &pts);
+		bool GetFrameCount(int64_t &framecount);
+		bool GetDuration(double &duration);
+		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+		bool SlowMotion(int repeats);
+		bool FastBackward(int speed);
+		bool FastForward(int speed);
+		bool Open(const char *Url);
+		bool Close();
+		bool Play();
+		bool Pause();
+		bool Continue();
+		bool Stop();
+		bool Seek(float pos, bool absolute);
+		bool Terminate();
 		bool GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void SetChapters(std::vector<Chapter> &Chapters);
+		Player();
+
 };
 #endif

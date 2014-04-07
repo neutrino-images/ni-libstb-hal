@@ -47,7 +47,7 @@ class Manager
 	friend class Player;
 
 	private:
-		Player *context;
+		Player *player;
 		OpenThreads::Mutex mutex;
 		std::map<int,Track *> videoTracks, audioTracks, subtitleTracks, teletextTracks;
 	public:

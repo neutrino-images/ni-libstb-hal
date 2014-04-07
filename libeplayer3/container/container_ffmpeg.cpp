@@ -67,7 +67,7 @@ Input::~Input()
 int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 {
     if (!avfc || !stream) {
-	fprintf(stderr, "context / stream null\n");
+	fprintf(stderr, "player / stream null\n");
 	return INVALID_PTS_VALUE;
     }
 
@@ -102,7 +102,7 @@ bool Input::Play()
 
     int64_t currentVideoPts = 0, currentAudioPts = 0, showtime = 0, bofcount = 0;
 
-    while (context->playback.isCreationPhase) {
+    while (player->isCreationPhase) {
 	fprintf(stderr, "Thread waiting for end of init phase...\n");
 	usleep(1000);
     }
@@ -110,10 +110,10 @@ bool Input::Play()
 
     bool restart_audio_resampling = false;
 
-    while (context->playback.isPlaying && !context->playback.abortRequested) {
+    while (player->isPlaying && !player->abortRequested) {
 
 	//IF MOVIE IS PAUSED, WAIT
-	if (context->playback.isPaused) {
+	if (player->isPaused) {
 	    fprintf(stderr, "paused\n");
 
 	    usleep(100000);
@@ -141,8 +141,8 @@ bool Input::Play()
 		seek_target = seek_sec_abs * AV_TIME_BASE;
 	    }
 	    seek_sec_abs = -1.0;
-	} else if (context->playback.isBackWard && av_gettime() >= showtime) {
-	    context->output.ClearVideo();
+	} else if (player->isBackWard && av_gettime() >= showtime) {
+	    player->output.ClearVideo();
 
 	    if (bofcount == 1) {
 		showtime = av_gettime();
@@ -159,11 +159,11 @@ bool Input::Play()
 			br = avfc->bit_rate / 8.0;
 		    else
 			br = 180000.0;
-		    seek_target = pos + context->playback.Speed * 8 * br;
+		    seek_target = pos + player->Speed * 8 * br;
 		    seek_target_flag = AVSEEK_FLAG_BYTE;
 		}
 	    } else {
-		seek_target = ((((currentVideoPts > 0) ? currentVideoPts : currentAudioPts) / 90000.0) + context->playback.Speed * 8) * AV_TIME_BASE;;
+		seek_target = ((((currentVideoPts > 0) ? currentVideoPts : currentAudioPts) / 90000.0) + player->Speed * 8) * AV_TIME_BASE;;
 	    }
 	    showtime = av_gettime() + 300000;	//jump back every 300ms
 	} else {
@@ -176,7 +176,7 @@ bool Input::Play()
 		seek_target = 0;
 	    res = avformat_seek_file(avfc, -1, INT64_MIN, seek_target, INT64_MAX, seek_target_flag);
 
-	    if (res < 0 && context->playback.isBackWard)
+	    if (res < 0 && player->isBackWard)
 		bofcount = 1;
 	    seek_target = INT64_MIN;
 	    restart_audio_resampling = true;
@@ -203,7 +203,7 @@ bool Input::Play()
 	}
 	long long int pts;
 
-	context->playback.readCount += packet.size;
+	player->readCount += packet.size;
 
 	int pid = avfc->streams[packet.stream_index]->id;
 
@@ -217,16 +217,16 @@ Track *_teletextTrack = teletextTrack;
 	if (_videoTrack && (_videoTrack->pid == pid)) {
 	    currentVideoPts = pts = calcPts(avfc, _videoTrack->stream, packet.pts);
 
-	    if (!context->output.Write(avfc, _videoTrack->stream, &packet, currentVideoPts))
+	    if (!player->output.Write(avfc, _videoTrack->stream, &packet, currentVideoPts))
 		;//fprintf(stderr, "writing data to video device failed\n");
 	} else if (_audioTrack && (_audioTrack->pid == pid)) {
 	    if (restart_audio_resampling) {
 	    	restart_audio_resampling = false;
-		context->output.Write(avfc, _audioTrack->stream, NULL, currentAudioPts);
+		player->output.Write(avfc, _audioTrack->stream, NULL, currentAudioPts);
 	    }
-	    if (!context->playback.isBackWard) {
+	    if (!player->isBackWard) {
 		currentAudioPts = pts = calcPts(avfc, _audioTrack->stream, packet.pts);
-		if (!context->output.Write(avfc, _audioTrack->stream, &packet, currentAudioPts))
+		if (!player->output.Write(avfc, _audioTrack->stream, &packet, currentAudioPts))
 			;//fprintf(stderr, "writing data to audio device failed\n");
 	    }
 	} else if (_subtitleTrack && (_subtitleTrack->pid == pid)) {
@@ -268,12 +268,12 @@ Track *_teletextTrack = teletextTrack;
 	av_free_packet(&packet);
     }				/* while */
 
-    if (context && context->playback.abortRequested)
-	context->output.Clear();
+    if (player && player->abortRequested)
+	player->output.Clear();
 
     dvbsub_ass_clear();
 
-	context->playback.abortPlayback = 1;
+	player->abortPlayback = 1;
     hasPlayThreadStarted = 0;
 
 	return true;
@@ -283,10 +283,10 @@ Track *_teletextTrack = teletextTrack;
 /* Container part for ffmpeg    */
 /* **************************** */
 
-static int interrupt_cb(void *arg)
+/*static*/ int interrupt_cb(void *arg)
 {
-    Playback *playback = (Playback *) arg;
-    return playback->abortPlayback | playback->abortRequested;
+    Player *player = (Player *) arg;
+    return player->abortPlayback | player->abortRequested;
 }
 
 static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
@@ -350,7 +350,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	track.Name = format;
 	track.is_static = 1;
 	track.pid = pid;
-	context->manager.addSubtitleTrack(track);
+	player->manager.addSubtitleTrack(track);
 	return true;
 }
 
@@ -389,15 +389,15 @@ bool Input::Init(const char *filename)
 
     avformat_network_init();
 
-    context->playback.abortRequested = 0;
-    context->playback.abortPlayback = 0;
+    player->abortRequested = 0;
+    player->abortPlayback = 0;
     videoTrack = NULL;
     audioTrack = NULL;
     subtitleTrack = NULL;
     teletextTrack = NULL;
     avfc = avformat_alloc_context();
     avfc->interrupt_callback.callback = interrupt_cb;
-    avfc->interrupt_callback.opaque = (void *) &context->playback;
+    avfc->interrupt_callback.opaque = (void *) &player;
 
     if ((err = avformat_open_input(&avfc, filename, NULL, 0)) != 0) {
 	char error[512];
@@ -412,7 +412,7 @@ bool Input::Init(const char *filename)
 
     avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
     avfc->flags = AVFMT_FLAG_GENPTS;
-    if (context->playback.noprobe) {
+    if (player->noprobe) {
 	avfc->max_analyze_duration = 1;
 	avfc->probesize = 8192;
     }
@@ -440,9 +440,9 @@ bool Input::Init(const char *filename)
     }
 
     if (videoTrack)
-	context->output.SwitchVideo(videoTrack->stream);
+	player->output.SwitchVideo(videoTrack->stream);
     if (audioTrack)
-	context->output.SwitchAudio(audioTrack->stream);
+	player->output.SwitchAudio(audioTrack->stream);
 	
     ReadSubtitles(filename);
 
@@ -468,11 +468,11 @@ bool Input::UpdateTracks()
 		chapter.end = (double) ch->end * av_q2d(ch->time_base) * 1000.0;
 		chapters.push_back(chapter);
 	}
-	context->SetChapters(chapters);
+	player->SetChapters(chapters);
 
-    context->manager.initTrackUpdate();
+    player->manager.initTrackUpdate();
 
-    av_dump_format(avfc, 0, context->playback.url.c_str(), 0);
+    av_dump_format(avfc, 0, player->url.c_str(), 0);
 
     unsigned int n;
 
@@ -498,9 +498,9 @@ bool Input::UpdateTracks()
 		    track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
 		}
 
-		context->manager.addVideoTrack(track);
+		player->manager.addVideoTrack(track);
 		if (!videoTrack)
-			videoTrack = context->manager.getVideoTrack(track.pid);
+			videoTrack = player->manager.getVideoTrack(track.pid);
 	    break;
 	case AVMEDIA_TYPE_AUDIO:
 		AVDictionaryEntry *lang;
@@ -540,9 +540,9 @@ bool Input::UpdateTracks()
 			default:
 				track.ac3flags = 0;
 		}
-		context->manager.addAudioTrack(track);
+		player->manager.addAudioTrack(track);
 		if (!audioTrack)
-			audioTrack = context->manager.getAudioTrack(track.pid);
+			audioTrack = player->manager.getAudioTrack(track.pid);
 
 	    break;
 	case AVMEDIA_TYPE_SUBTITLE:
@@ -567,7 +567,7 @@ bool Input::UpdateTracks()
 			    char lang[strlen(t->value)];
 			    if (5 == sscanf(t->value, "%d %s %d %d %d", &track.pid, lang, &track.type, &track.mag, &track.page)) {
 				    track.Name = lang;
-				    context->manager.addTeletextTrack(track);
+				    player->manager.addTeletextTrack(track);
 			    }
 			}
 			i++;
@@ -583,7 +583,7 @@ bool Input::UpdateTracks()
 			}
 		    }
 		    if (stream->codec->codec)
-			context->manager.addSubtitleTrack(track);
+			player->manager.addSubtitleTrack(track);
 	    	}
 
 		break;
@@ -604,7 +604,7 @@ bool Input::Stop()
 		fprintf(stderr, "Container not running\n");
 		return false;
 	}
-	context->playback.abortRequested = 1;
+	player->abortRequested = 1;
 
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
@@ -656,9 +656,9 @@ bool Input::GetDuration(double &duration)
 bool Input::SwitchAudio(Track *track)
 {
 	audioTrack = track;
-	context->output.SwitchAudio(track ? track->stream : NULL);
+	player->output.SwitchAudio(track ? track->stream : NULL);
 	float sec = -5.0;
-	context->playback.Seek(sec, false);
+	player->Seek(sec, false);
 	return true;
 }
 

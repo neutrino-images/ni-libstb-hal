@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <poll.h>
 
-#include "playback.h"
 #include "player.h"
 #include "misc.h"
 
@@ -28,62 +27,65 @@
 
 static pthread_t supervisorThread;
 
-Playback::Playback()
+Player::Player()
 {
+	input.player = this;                                                              
+	output.player = this;                                                             
+	manager.player = this;                                                            
 	hasThreadStarted = 0;
 }
 
-void *Playback::SupervisorThread(void *arg)
+void *Player::SupervisorThread(void *arg)
 {
-	Playback *me = (Playback *) arg;
-	me->hasThreadStarted = 1;
+	Player *player = (Player *) arg;
+	player->hasThreadStarted = 1;
 
-	me->context->input.Play();
-	me->hasThreadStarted = 2;
-	me->Terminate();
+	player->input.Play();
+	player->hasThreadStarted = 2;
+	player->Terminate();
 
 	fprintf(stderr, "terminating\n");
-	me->hasThreadStarted = 0;
+	player->hasThreadStarted = 0;
 	pthread_exit(NULL);
 }
 
-bool Playback::Open(const char *Url)
+bool Player::Open(const char *Url)
 {
-    if (context->playback.isPlaying)
+    if (isPlaying)
 	Stop(); // shouldn't happen. Most definitely a bug
 
     fprintf(stderr, "URL=%s\n", Url);
 
-    if (context->playback.isPlaying) {	// shouldn't happen
+    if (isPlaying) {	// shouldn't happen
 	fprintf(stderr, "playback already running\n");
 	return false;
     }
 
-    context->playback.isHttp = 0;
+    isHttp = 0;
 
     if (!strncmp("file://", Url, 7) || !strncmp("myts://", Url, 7)) {
 	if (!strncmp("myts://", Url, 7)) {
-	    context->playback.url = "file";
-	    context->playback.url += (Url + 4);
-	    context->playback.noprobe = 1;
+	    url = "file";
+	    url += (Url + 4);
+	    noprobe = 1;
 	} else {
-	    context->playback.noprobe = 0;
-	    context->playback.url = Url;
+	    noprobe = 0;
+	    url = Url;
 	}
     } else if (strstr(Url, "://")) {
-	context->playback.isHttp = 1;
+	isHttp = 1;
 	if (!strncmp("mms://", Url, 6)) {
-	    context->playback.url = "mmst";
-	    context->playback.url += (Url + 3);
+	    url = "mmst";
+	    url += (Url + 3);
 	} else
-	    context->playback.url = Url;
+	    url = Url;
     } else {
 	fprintf(stderr, "Unknown stream (%s)\n", Url);
 	return false;
     }
-    context->manager.clearTracks();
+    manager.clearTracks();
 
-    if (!context->input.Init(context->playback.url.c_str()))
+    if (!input.Init(url.c_str()))
 	return false;
 
     fprintf(stderr, "exiting with value 0\n");
@@ -91,52 +93,52 @@ bool Playback::Open(const char *Url)
     return true;
 }
 
-bool Playback::Close()
+bool Player::Close()
 {
     bool ret = true;
 
-    context->playback.isPaused = 0;
-    context->playback.isPlaying = 0;
-    context->playback.isForwarding = 0;
-    context->playback.isBackWard = 0;
-    context->playback.isSlowMotion = 0;
-    context->playback.Speed = 0;
-    context->playback.url.clear();
+    isPaused = 0;
+    isPlaying = 0;
+    isForwarding = 0;
+    isBackWard = 0;
+    isSlowMotion = 0;
+    Speed = 0;
+    url.clear();
 
     return ret;
 }
 
-bool Playback::Play()
+bool Player::Play()
 {
     pthread_attr_t attr;
     bool ret = true;
 
-    if (!context->playback.isPlaying) {
-	context->playback.AVSync = 1;
-	context->output.AVSync(true);
+    if (!isPlaying) {
+	AVSync = 1;
+	output.AVSync(true);
 
-	context->playback.isCreationPhase = 1;	// allows the created thread to go into wait mode
-	ret = context->output.Play();
+	isCreationPhase = 1;	// allows the created thread to go into wait mode
+	ret = output.Play();
 
 	if (!ret) {
-	    context->playback.isCreationPhase = 0;	// allow thread to go into next state
+	    isCreationPhase = 0;	// allow thread to go into next state
 	} else {
-	    context->playback.isPlaying = 1;
-	    context->playback.isPaused = 0;
-	    context->playback.isForwarding = 0;
-	    if (context->playback.isBackWard) {
-		context->playback.isBackWard = 0;
-		context->output.Mute(false);
+	    isPlaying = 1;
+	    isPaused = 0;
+	    isForwarding = 0;
+	    if (isBackWard) {
+		isBackWard = 0;
+		output.Mute(false);
 	    }
-	    context->playback.isSlowMotion = 0;
-	    context->playback.Speed = 1;
+	    isSlowMotion = 0;
+	    Speed = 1;
 
 	    if (hasThreadStarted == 0) {
 		int error;
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-		if ((error = pthread_create(&supervisorThread, &attr, SupervisorThread, &context->playback))) {
+		if ((error = pthread_create(&supervisorThread, &attr, SupervisorThread, this))) {
 		    fprintf(stderr, "Error creating thread, error:%d:%s\n", error, strerror(error));
 
 		    ret = false;
@@ -147,7 +149,7 @@ bool Playback::Play()
 
 	    fprintf(stderr, "clearing isCreationPhase!\n");
 
-	    context->playback.isCreationPhase = 0;	// allow thread to go into next state
+	    isCreationPhase = 0;	// allow thread to go into next state
 	}
 
     } else {
@@ -160,26 +162,26 @@ bool Playback::Play()
     return ret;
 }
 
-bool Playback::Pause()
+bool Player::Pause()
 {
     bool ret = true;
 
-    if (context->playback.isPlaying && !context->playback.isPaused) {
+    if (isPlaying && !isPaused) {
 
-	if (context->playback.isSlowMotion)
-	    context->output.Clear();
+	if (isSlowMotion)
+	    output.Clear();
 
-	context->output.Pause();
+	output.Pause();
 
-	context->playback.isPaused = 1;
-	//context->playback.isPlaying  = 1;
-	context->playback.isForwarding = 0;
-	if (context->playback.isBackWard) {
-	    context->playback.isBackWard = 0;
-	    context->output.Mute(false);
+	isPaused = 1;
+	//isPlaying  = 1;
+	isForwarding = 0;
+	if (isBackWard) {
+	    isBackWard = 0;
+	    output.Mute(false);
 	}
-	context->playback.isSlowMotion = 0;
-	context->playback.Speed = 1;
+	isSlowMotion = 0;
+	Speed = 1;
     } else {
 	fprintf(stderr,"playback not playing or already in pause mode\n");
 	ret = false;
@@ -190,27 +192,27 @@ bool Playback::Pause()
     return ret;
 }
 
-bool Playback::Continue()
+bool Player::Continue()
 {
     int ret = true;
 
-    if (context->playback.isPlaying && (context->playback.isPaused || context->playback.isForwarding
-	 || context->playback.isBackWard || context->playback.isSlowMotion)) {
+    if (isPlaying && (isPaused || isForwarding
+	 || isBackWard || isSlowMotion)) {
 
-	if (context->playback.isSlowMotion)
-	    context->output.Clear();
+	if (isSlowMotion)
+	    output.Clear();
 
-	context->output.Continue();
+	output.Continue();
 
-	context->playback.isPaused = 0;
-	//context->playback.isPlaying  = 1;
-	context->playback.isForwarding = 0;
-	if (context->playback.isBackWard) {
-	    context->playback.isBackWard = 0;
-	    context->output.Mute(false);
+	isPaused = 0;
+	//isPlaying  = 1;
+	isForwarding = 0;
+	if (isBackWard) {
+	    isBackWard = 0;
+	    output.Mute(false);
 	}
-	context->playback.isSlowMotion = 0;
-	context->playback.Speed = 1;
+	isSlowMotion = 0;
+	Speed = 1;
     } else {
 	fprintf(stderr,"continue not possible\n");
 	ret = false;
@@ -219,25 +221,25 @@ bool Playback::Continue()
     return ret;
 }
 
-bool Playback::Stop()
+bool Player::Stop()
 {
     bool ret = true;
     int wait_time = 20;
 
-    if (context->playback.isPlaying) {
+    if (isPlaying) {
 
-	context->playback.isPaused = 0;
-	context->playback.isPlaying = 0;
-	context->playback.isForwarding = 0;
-	if (context->playback.isBackWard) {
-	    context->playback.isBackWard = 0;
-	    context->output.Mute(false);
+	isPaused = 0;
+	isPlaying = 0;
+	isForwarding = 0;
+	if (isBackWard) {
+	    isBackWard = 0;
+	    output.Mute(false);
 	}
-	context->playback.isSlowMotion = 0;
-	context->playback.Speed = 0;
+	isSlowMotion = 0;
+	Speed = 0;
 
-	context->output.Stop();
-	context->input.Stop();
+	output.Stop();
+	input.Stop();
 
     } else {
 	fprintf(stderr,"stop not possible\n");
@@ -262,30 +264,28 @@ bool Playback::Stop()
 }
 
 // FIXME
-bool Playback::Terminate()
+bool Player::Terminate()
 {
     bool ret = true;
     int wait_time = 20;
 
     fprintf(stderr, "\n");
 
-    if (context->playback.isPlaying) {
+    if (isPlaying) {
 
-	if (!context->playback.abortRequested && !context->output.Flush()) {
+	if (!abortRequested && !output.Flush()) {
 	    fprintf(stderr,"failed to flush output.\n");
 	}
 
-	ret = context->input.Stop();
-	context->playback.isPaused = 0;
-	context->playback.isPlaying = 0;
-	context->playback.isForwarding = 0;
-	context->playback.isBackWard = 0;
-	context->playback.isSlowMotion = 0;
-	context->playback.Speed = 0;
+	ret = input.Stop();
+	isPaused = 0;
+	isPlaying = 0;
+	isForwarding = 0;
+	isBackWard = 0;
+	isSlowMotion = 0;
+	Speed = 0;
 
     } else {
-	fprintf(stderr,"%p %d\n", context, context->playback.isPlaying);
-
 	/* fixme: konfetti: we should return an error here but this seems to be a condition which
 	 * can happen and is not a real error, which leads to a dead neutrino. should investigate
 	 * here later.
@@ -309,22 +309,22 @@ bool Playback::Terminate()
     return ret;
 }
 
-bool Playback::FastForward(int speed)
+bool Player::FastForward(int speed)
 {
     int ret = true;
 
     /* Audio only forwarding not supported */
-    if (context->playback.isVideo && !context->playback.isHttp && !context->playback.isBackWard
-	&& (!context->playback.isPaused || context-> playback.isPlaying)) {
+    if (isVideo && !isHttp && !isBackWard
+	&& (!isPaused ||  isPlaying)) {
 
 	if ((speed <= 0) || (speed > cMaxSpeed_ff)) {
 	    fprintf(stderr, "speed %d out of range (1 - %d) \n", speed, cMaxSpeed_ff);
 	    return false;
 	}
 
-	context->playback.isForwarding = 1;
-	context->playback.Speed = speed;
-	context->output.FastForward(speed);
+	isForwarding = 1;
+	Speed = speed;
+	output.FastForward(speed);
     } else {
 	fprintf(stderr,"fast forward not possible\n");
 	ret = false;
@@ -333,13 +333,13 @@ bool Playback::FastForward(int speed)
     return ret;
 }
 
-bool Playback::FastBackward(int speed)
+bool Player::FastBackward(int speed)
 {
     bool ret = true;
 
     /* Audio only reverse play not supported */
-    if (context->playback.isVideo && !context->playback.isForwarding
-	&& (!context->playback.isPaused || context->playback.isPlaying)) {
+    if (isVideo && !isForwarding
+	&& (!isPaused || isPlaying)) {
 
 	if ((speed > 0) || (speed < cMaxSpeed_fr)) {
 	    fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
@@ -347,19 +347,19 @@ bool Playback::FastBackward(int speed)
 	}
 
 	if (speed == 0) {
-	    context->playback.isBackWard = false;
-	    context->playback.Speed = false;	/* reverse end */
+	    isBackWard = false;
+	    Speed = false;	/* reverse end */
 	} else {
-	    context->playback.Speed = speed;
-	    context->playback.isBackWard = true;
+	    Speed = speed;
+	    isBackWard = true;
 	}
 
-	context->output.Clear();
+	output.Clear();
 #if 0
-	if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0) {
+	if (output->Command(player, OUTPUT_REVERSE, NULL) < 0) {
 	    fprintf(stderr,"OUTPUT_REVERSE failed\n");
-	    context->playback.isBackWard = 0;
-	    context->playback.Speed = 1;
+	    isBackWard = 0;
+	    Speed = 1;
 	    ret = false;
 	}
 #endif
@@ -368,98 +368,98 @@ bool Playback::FastBackward(int speed)
 	ret = false;
     }
 
-    if (context->playback.isBackWard)
-	context->output.Mute(true);
+    if (isBackWard)
+	output.Mute(true);
 
     return ret;
 }
 
-bool Playback::SlowMotion(int repeats)
+bool Player::SlowMotion(int repeats)
 {
-	if (context->playback.isVideo && !context->playback.isHttp && context->playback.isPlaying) {
-		if (context->playback.isPaused)
+	if (isVideo && !isHttp && isPlaying) {
+		if (isPaused)
 			Continue();
 
 		switch (repeats) {
 		case 2:
 		case 4:
 		case 8:
-			context->playback.isSlowMotion = true;
+			isSlowMotion = true;
 			break;
 		default:
 			repeats = 0;
 		}
 
-		context->output.SlowMotion(repeats);
+		output.SlowMotion(repeats);
 		return true;
 	}
 	fprintf(stderr, "slowmotion not possible\n");
 	return false;
 }
 
-bool Playback::Seek(float pos, bool absolute)
+bool Player::Seek(float pos, bool absolute)
 {
-    context->output.Clear();
-    return context->input.Seek(pos, absolute);
+    output.Clear();
+    return input.Seek(pos, absolute);
 }
 
-bool Playback::GetPts(int64_t &pts)
+bool Player::GetPts(int64_t &pts)
 {
-	if (context->playback.isPlaying)
-		return context->output.GetPts(pts);
+	if (isPlaying)
+		return output.GetPts(pts);
 	return false;
 }
 
-bool Playback::GetFrameCount(int64_t &frameCount)
+bool Player::GetFrameCount(int64_t &frameCount)
 {
-	if (context->playback.isPlaying)
-		return context->output.GetFrameCount(frameCount);
+	if (isPlaying)
+		return output.GetFrameCount(frameCount);
 	return false;
 }
 
-bool Playback::GetDuration(double &duration)
+bool Player::GetDuration(double &duration)
 {
     duration = -1;
-    if (context->playback.isPlaying)
-	    return context->input.GetDuration(duration);
+    if (isPlaying)
+	    return input.GetDuration(duration);
     return false;
 }
 
-bool Playback::SwitchVideo(int pid)
+bool Player::SwitchVideo(int pid)
 {
-	Track *track = context->manager.getVideoTrack(pid);
+	Track *track = manager.getVideoTrack(pid);
 	if (track)
-		context->input.SwitchVideo(track);
+		input.SwitchVideo(track);
 	return !!track;
 }
 
-bool Playback::SwitchAudio(int pid)
+bool Player::SwitchAudio(int pid)
 {
-	Track *track = context->manager.getAudioTrack(pid);
+	Track *track = manager.getAudioTrack(pid);
 	if (track)
-		context->input.SwitchAudio(track);
+		input.SwitchAudio(track);
 	return !!track;
 }
 
-bool Playback::SwitchSubtitle(int pid)
+bool Player::SwitchSubtitle(int pid)
 {
-	Track *track = context->manager.getSubtitleTrack(pid);
+	Track *track = manager.getSubtitleTrack(pid);
 	if (track)
-		context->input.SwitchSubtitle(track);
+		input.SwitchSubtitle(track);
 	return !!track;
 }
 
-bool Playback::SwitchTeletext(int pid)
+bool Player::SwitchTeletext(int pid)
 {
-	Track *track = context->manager.getTeletextTrack(pid);
+	Track *track = manager.getTeletextTrack(pid);
 	if (track)
-		context->input.SwitchTeletext(track);
+		input.SwitchTeletext(track);
 	return !!track;
 }
 
-bool Playback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
+bool Player::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
 {
-	return context->input.GetMetadata(keys, values);
+	return input.GetMetadata(keys, values);
 }
 
 bool Player::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)

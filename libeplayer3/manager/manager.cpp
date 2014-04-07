@@ -76,7 +76,7 @@ void Manager::addTeletextTrack(Track &track)
 
 std::vector<Track> Manager::getVideoTracks()
 {
-	context->input.UpdateTracks();
+	player->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = videoTracks.begin(); it != videoTracks.end(); ++it)
@@ -87,7 +87,7 @@ std::vector<Track> Manager::getVideoTracks()
 
 std::vector<Track> Manager::getAudioTracks()
 {
-	context->input.UpdateTracks();
+	player->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
@@ -98,7 +98,7 @@ std::vector<Track> Manager::getAudioTracks()
 
 std::vector<Track> Manager::getSubtitleTracks()
 {
-	context->input.UpdateTracks();
+	player->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = subtitleTracks.begin(); it != subtitleTracks.end(); ++it)
@@ -109,7 +109,7 @@ std::vector<Track> Manager::getSubtitleTracks()
 
 std::vector<Track> Manager::getTeletextTracks()
 {
-	context->input.UpdateTracks();
+	player->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)

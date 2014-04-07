@@ -37,7 +37,7 @@ class Input
 		bool isContainerRunning;
 		bool terminating;
 
-		Player *context;
+		Player *player;
 		AVFormatContext *avfc;
 		uint64_t readCount;
 	public:

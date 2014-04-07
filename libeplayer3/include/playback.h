@@ -1,45 +1,82 @@
-#ifndef PLAYBACK_H_
-#define PLAYBACK_H_
-#include <sys/types.h>
+#ifndef __PLAYBACK_H__
+#define __PLAYBACK_H__
+
+#include <stdint.h>
 #include <string>
+#include <vector>
+#include <map>
 
-typedef enum { PLAYBACK_OPEN, PLAYBACK_CLOSE, PLAYBACK_PLAY, PLAYBACK_STOP,
-    PLAYBACK_PAUSE, PLAYBACK_CONTINUE, PLAYBACK_FLUSH, PLAYBACK_TERM,
-    PLAYBACK_FASTFORWARD, PLAYBACK_SEEK, PLAYBACK_SEEK_ABS,
-    PLAYBACK_PTS, PLAYBACK_LENGTH, PLAYBACK_SWITCH_AUDIO,
-    PLAYBACK_SWITCH_SUBTITLE, PLAYBACK_METADATA, PLAYBACK_SLOWMOTION,
-    PLAYBACK_FASTBACKWARD, PLAYBACK_GET_FRAME_COUNT,
-    PLAYBACK_SWITCH_TELETEXT
-} PlaybackCmd_t;
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
+#include <OpenThreads/Condition>
 
-struct Player;
+extern "C" {
+#include <libavutil/avutil.h>
+#include <libavutil/time.h>
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libavutil/opt.h>
+}
 
-typedef struct PlaybackHandler_s {
-    const char *Name;
+class Player;
+class Input;
 
-    int fd;
+class Playback {
+	friend class Player;
+	friend class Input;
 
-    unsigned char isHttp;
+	private:
+		Player *context;
 
-    unsigned char isPlaying;
-    unsigned char isPaused;
-    unsigned char isForwarding;
-    unsigned char isCreationPhase;
+		bool isHttp;
+		bool isPaused;
+		bool isCreationPhase;
 
-    int BackWard;
-    int SlowMotion;
-    int Speed;
-    int AVSync;
+		bool isSlowMotion;
+		int Speed;
+		int AVSync;
 
-    unsigned char isVideo;
-    unsigned char isAudio;
-    unsigned char abortRequested;
-    unsigned char abortPlayback;
+		bool isVideo;
+		bool isAudio;
 
-    int (*Command) ( Player *, PlaybackCmd_t, void *);
-    std::string uri;
-    unsigned char noprobe;	/* hack: only minimal probing in av_find_stream_info */
-    unsigned long long readCount;
-} PlaybackHandler_t;
+		std::string url;
+		bool noprobe;	/* hack: only minimal probing in av_find_stream_info */
+
+		int hasThreadStarted;
+
+	public:
+		bool isForwarding;
+		bool isBackWard;
+		bool isPlaying;
+		bool abortPlayback;
+		bool abortRequested;
+		uint64_t readCount;
+
+		bool SwitchAudio(int pid);
+		bool SwitchVideo(int pid);
+		bool SwitchTeletext(int pid);
+		bool SwitchSubtitle(int pid);
+		bool GetPts(int64_t &pts);
+		bool GetFrameCount(int64_t &framecount);
+		bool GetDuration(double &duration);
+		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+		bool SlowMotion(int repeats);
+		bool FastBackward(int speed);
+		bool FastForward(int speed);
+		bool Open(const char *Url);
+		bool Close();
+		bool Play();
+		bool Pause();
+		bool Continue();
+		bool Stop();
+		bool Seek(float pos, bool absolute);
+		bool Terminate();
+
+		static void* SupervisorThread(void*);
+
+		Playback();
+};
+
+
 
 #endif

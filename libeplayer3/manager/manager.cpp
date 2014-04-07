@@ -24,42 +24,59 @@
 #include <stdlib.h>
 #include <string.h>
 #include "manager.h"
+#include "player.h"
 
 void Manager::addVideoTrack(Track &track)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	Track *t = new Track;
-	*t = track;
-	videoTracks[track.pid] = t;
+	std::map<int,Track*>::iterator it = videoTracks.find(track.pid);
+	if (it == videoTracks.end()) {
+		Track *t = new Track;
+		*t = track;
+		videoTracks[track.pid] = t;
+	} else
+		*it->second = track;
 }
 
 void Manager::addAudioTrack(Track &track)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	Track *t = new Track;
-	*t = track;
-	audioTracks[track.pid] = t;
+	std::map<int,Track*>::iterator it = audioTracks.find(track.pid);
+	if (it == audioTracks.end()) {
+		Track *t = new Track;
+		*t = track;
+		audioTracks[track.pid] = t;
+	} else
+		*it->second = track;
 }
 
 void Manager::addSubtitleTrack(Track &track)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	Track *t = new Track;
-	*t = track;
-	subtitleTracks[track.pid] = t;
+	std::map<int,Track*>::iterator it = subtitleTracks.find(track.pid);
+	if (it == subtitleTracks.end()) {
+		Track *t = new Track;
+		*t = track;
+		subtitleTracks[track.pid] = t;
+	} else
+		*it->second = track;
 }
 
 void Manager::addTeletextTrack(Track &track)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	Track *t = new Track;
-	*t = track;
-	teletextTracks[track.pid] = t;
+	std::map<int,Track*>::iterator it = teletextTracks.find(track.pid);
+	if (it == teletextTracks.end()) {
+		Track *t = new Track;
+		*t = track;
+		teletextTracks[track.pid] = t;
+	} else
+		*it->second = track;
 }
 
 std::vector<Track> Manager::getVideoTracks()
 {
-//	input.UpdateTracks();
+	context->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = videoTracks.begin(); it != videoTracks.end(); ++it)
@@ -70,7 +87,7 @@ std::vector<Track> Manager::getVideoTracks()
 
 std::vector<Track> Manager::getAudioTracks()
 {
-//	input.UpdateTracks();
+	context->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
@@ -81,7 +98,7 @@ std::vector<Track> Manager::getAudioTracks()
 
 std::vector<Track> Manager::getSubtitleTracks()
 {
-//	input.UpdateTracks();
+	context->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = subtitleTracks.begin(); it != subtitleTracks.end(); ++it)
@@ -92,7 +109,7 @@ std::vector<Track> Manager::getSubtitleTracks()
 
 std::vector<Track> Manager::getTeletextTracks()
 {
-//	input.UpdateTracks();
+	context->input.UpdateTracks();
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)

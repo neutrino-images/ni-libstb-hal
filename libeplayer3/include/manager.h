@@ -1,11 +1,10 @@
-#ifndef MANAGER_H_
-#define MANAGER_H_
+#ifndef __MANAGER_H__
+#define __MANAGER_H__
 
-#include <stdio.h>
 #include <stdint.h>
 #include <string>
-#include <map>
 #include <vector>
+#include <map>
 
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
@@ -19,16 +18,7 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
-typedef enum {
-    MANAGER_ADD,
-    MANAGER_LIST,
-    MANAGER_GET,
-    MANAGER_GETNAME,
-    MANAGER_SET,
-    MANAGER_DEL,
-    MANAGER_GET_TRACK,
-    MANAGER_INIT_UPDATE
-} ManagerCmd_t;
+class Player;
 
 struct Track
 {
@@ -49,12 +39,15 @@ struct Track
 	int ac3flags;
 	int type, mag, page; // for teletext
 
-	Track() : pid(-1), duration(-1), avfc(NULL), stream(NULL), inactive(0), is_static(0), ac3flags(-1) {}
+	Track() : pid(-1), duration(-1), avfc(NULL), stream(NULL), inactive(0), is_static(0), ac3flags(0) {}
 };
 
 class Manager
 {
+	friend class Player;
+
 	private:
+		Player *context;
 		OpenThreads::Mutex mutex;
 		std::map<int,Track *> videoTracks, audioTracks, subtitleTracks, teletextTracks;
 	public:

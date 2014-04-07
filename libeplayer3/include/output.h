@@ -1,9 +1,10 @@
-#ifndef OUTPUT_H_
-#define OUTPUT_H_
+#ifndef __OUTPUT_H__
+#define __OUTPUT_H__
 
-#include <stdio.h>
 #include <stdint.h>
-
+#include <string>
+#include <vector>
+#include <map>
 
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Thread>
@@ -19,14 +20,19 @@ extern "C" {
 
 #include "writer.h"
 
+class Player;
+
 class Output
 {
+	friend class Player;
+
 	private:
 		int videofd;
 		int audiofd;
 		Writer *videoWriter, *audioWriter;
 		OpenThreads::Mutex audioMutex, videoMutex;
 		AVStream *audioStream, *videoStream;
+		Player *context;
 	public:
 		Output();
 		~Output();

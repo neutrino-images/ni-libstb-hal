@@ -43,7 +43,6 @@
 
 #include "player.h"
 #include "misc.h"
-#include "debug.h"
 
 Input::Input()
 {

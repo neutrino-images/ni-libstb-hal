@@ -7,9 +7,7 @@
 #include <audio_lib.h>
 #include <video_lib.h>
 
-#include <player.h>
-extern PlaybackHandler_t	PlaybackHandler;
-extern ContainerHandler_t	ContainerHandler;
+#include "player.h"
 
 #include "playback_libeplayer3.h"
 
@@ -50,11 +48,6 @@ bool cPlayback::Open(playmode_t PlayMode)
 	init_jump = -1;
 	
 	player = new Player();
-
-	if(player) {
-		player->playback	= &PlaybackHandler;
-		player->container	= &ContainerHandler;
-	}
 
 	return 0;
 }
@@ -104,13 +97,12 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 	strcat(file, filename);
 
 	//try to open file
-	if(player && player->playback && player->playback->Command(player, PLAYBACK_OPEN, file) >= 0) {
-		if (pm != PLAYMODE_TS && player && player->playback) {
+	if(player && player->playback.Open(file)) {
+		if (pm != PLAYMODE_TS) {
 			player->output.Open();
 			
 			SetAPid(apid, 0);
-			if ( player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0 ) // playback.c uses "int = 0" for "true"
-				ret = true;
+			ret = player->playback.Play();
 		}
 	}
 
@@ -127,7 +119,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 	{
 	   //pause playback in case of timeshift
 	   //FIXME: no picture on tv
-	   if (!player || !player->playback || player->playback->Command(player, PLAYBACK_PAUSE, NULL) < 0)
+	   if (!player || !player->playback.Pause())
 	   {
 	      ret = false;
 	      printf("failed to pause playback\n");
@@ -148,7 +140,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 		struct stat s;
 		if (!stat(filename, &s))
 			last_size = s.st_size;
-		if (player && player->playback)
+		if (player)
 		{
 			ret = true;
 			videoDecoder->Stop(false);
@@ -164,14 +156,14 @@ bool cPlayback::Stop(void)
 	printf("%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 	//if(playing==false) return false;
 
-	if(player && player->playback)
-		player->playback->Command(player, PLAYBACK_STOP, NULL);
+	if(player)
+		player->playback.Stop();
 
 	if(player)
 		player->output.Close();
 
-	if(player && player->playback)
-		player->playback->Command(player,PLAYBACK_CLOSE, NULL);
+	if(player)
+		player->playback.Close();
 	if(player) {
 		delete player;
 		player = NULL;
@@ -184,10 +176,9 @@ bool cPlayback::Stop(void)
 bool cPlayback::SetAPid(int pid, bool ac3 __attribute__((unused)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	int i=pid;
 	if(pid!=mAudioStream){
-		if(player && player->playback)
-				player->playback->Command(player, PLAYBACK_SWITCH_AUDIO, (void*)&i);
+		if(player)
+			player->playback.SwitchAudio(pid);
 		mAudioStream=pid;
 	}
 	return true;
@@ -196,10 +187,9 @@ bool cPlayback::SetAPid(int pid, bool ac3 __attribute__((unused)))
 bool cPlayback::SetSubtitlePid(int pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	int i=pid;
 	if(pid!=mSubtitleStream){
-		if(player && player->playback)
-				player->playback->Command(player, PLAYBACK_SWITCH_SUBTITLE, (void*)&i);
+		if(player)
+			player->playback.SwitchSubtitle(pid);
 		mSubtitleStream = pid;
 	}
 	return true;
@@ -208,10 +198,9 @@ bool cPlayback::SetSubtitlePid(int pid)
 bool cPlayback::SetTeletextPid(int pid)
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	int i=pid;
 	if(pid!=mTeletextStream){
-		if(player && player->playback)
-				player->playback->Command(player, PLAYBACK_SWITCH_TELETEXT, (void*)&i);
+		if(player)
+			player->playback.SwitchTeletext(pid);
 		mTeletextStream=pid;
 	}
 	return true;
@@ -227,17 +216,16 @@ bool cPlayback::SetSpeed(int speed)
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 		usleep(500000);
-		if (player && player->playback) {
+		if (player) {
 			player->output.Open();
-			if (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0) // playback.c uses "int = 0" for "true"
-				playing = true;
+			playing = player->playback.Play();
 		}
 	}
 
 	if(playing==false) 
 	   return false;
 	
-	if(player && player->playback) 
+	if(player)
 	{
 		int result = 0;
 		
@@ -246,41 +234,39 @@ bool cPlayback::SetSpeed(int speed)
 		if (speed > 1)
 		{
                     /* direction switch ? */
-		    if (player->playback->BackWard)
+		    if (player->playback.isBackWard)
 		    {
-		        int r = 0;
-                        result = player->playback->Command(player, PLAYBACK_FASTBACKWARD, (void*)&r);
+                        result = player->playback.FastBackward(0);
 		    
 		        printf("result = %d\n", result);
 		    }
-                    result = player->playback->Command(player, PLAYBACK_FASTFORWARD, (void*)&speed);
+                    result = player->playback.FastForward(speed);
 		} else
 		if (speed < 0)
 		{
                     /* direction switch ? */
-		    if (player->playback->isForwarding)
+		    if (player->playback.isForwarding)
 		    {
-                        result = player->playback->Command(player, PLAYBACK_CONTINUE, NULL);
+                        result = player->playback.Continue();
 		    
 		        printf("result = %d\n", result);
 		    }
 		    
-		    result = player->playback->Command(player, PLAYBACK_FASTBACKWARD, (void*)&speed);
+		    result = player->playback.FastBackward(speed);
 		} 
 		else
 		if (speed == 0)
 		{
 		     /* konfetti: hmmm accessing the member isn't very proper */
-		     if ((player->playback->isForwarding) || (!player->playback->BackWard))
-                        player->playback->Command(player, PLAYBACK_PAUSE, NULL);
+		     if ((player->playback.isForwarding) || (!player->playback.isBackWard))
+                        player->playback.Pause();
                      else
                      {
-		            int _speed = 0; /* means end of reverse playback */
-			    player->playback->Command(player, PLAYBACK_FASTBACKWARD, (void*)&_speed);
+			    player->playback.FastForward(0);
 		     }
 		} else
 		{
-			result = player->playback->Command(player, PLAYBACK_CONTINUE, NULL);
+			result = player->playback.Continue();
 		}
 		
 		if (init_jump > -1)
@@ -306,8 +292,8 @@ bool cPlayback::GetSpeed(int &speed) const
 
 void cPlayback::GetPts(uint64_t &pts)
 {
-	if (player && player->playback)
-		player->playback->Command(player, PLAYBACK_PTS, (void*)&pts);
+	if (player)
+		player->playback.GetPts((int64_t &) pts);
 }
 
 // in milliseconds
@@ -339,15 +325,15 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	if(playing==false) return false;
 
-	if (player && player->playback && !player->playback->isPlaying) {
+	if (player && !player->playback.isPlaying) {
 		printf("cPlayback::%s !!!!EOF!!!! < -1\n", __func__);
 		position = duration + 1000;
 		return false;
 	}
 
-	unsigned long long int vpts = 0;
-	if(player && player->playback)
-		player->playback->Command(player, PLAYBACK_PTS, &vpts);
+	int64_t vpts = 0;
+	if(player)
+		player->playback.GetPts(vpts);
 
 	if(vpts <= 0) {
 		//printf("ERROR: vpts==0");
@@ -361,8 +347,8 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	double length = 0;
 
-	if(player && player->playback)
-		player->playback->Command(player, PLAYBACK_LENGTH, &length);
+	if(player)
+		player->playback.GetDuration(length);
 
 	if(length <= 0) {
 		duration = duration+1000;
@@ -388,8 +374,8 @@ bool cPlayback::SetPosition(int position, bool absolute)
 		return false;
 	}
 	float pos = (position/1000.0);
-	if(player && player->playback)
-		player->playback->Command(player, absolute ? PLAYBACK_SEEK_ABS : PLAYBACK_SEEK, (void*)&pos);
+	if(player)
+		player->playback.Seek(pos, absolute);
 	return true;
 }
 
@@ -475,53 +461,17 @@ bool cPlayback::SelectSubtitles(int pid)
 
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
 {
-	positions.clear();
-	titles.clear();
-
-#if 0 // FIXME ... later
-	if(player && player->manager && player->manager->chapter) {
-		char ** TrackList = NULL;
-		player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
-		if (TrackList != NULL) {
-			printf("%s: Chapter List\n", __func__);
-			int i = 0;
-			for (i = 0; TrackList[i] != NULL; i+=2) {
-				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-				int pos = atoi(TrackList[i]);
-				std::string title(TrackList[i + 1]);
-				positions.push_back(pos);
-				titles.push_back(title);
-				free(TrackList[i]);
-				free(TrackList[i+1]);
-			}
-			free(TrackList);
-		}
-	}
-#endif
+	player->GetChapters(positions, titles);
 }
 
 void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
 {
-#if 0 // FIXME ... later
-	keys.clear();
-	values.clear();
-	char **metadata = NULL;
-	if (player && player->playback) {
-		player->playback->Command(player, PLAYBACK_METADATA, &metadata);
-		if (metadata) {
-			for (char **m = metadata; *m;) {
-				keys.push_back(*m);
-				free(*m++);
-				values.push_back(*m);
-				free(*m++);
-			}
-			free(metadata);
-		}
-	}
-#endif
+	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	if (!player)
+		return;
+	player->input.GetMetadata(keys, values);
 }
 
-//
 cPlayback::cPlayback(int num __attribute__((unused)))
 {
 	printf("%s:%s\n", FILENAME, __FUNCTION__);
@@ -534,23 +484,22 @@ cPlayback::~cPlayback()
 }
 
 void cPlayback::RequestAbort() {
-	if (player && player->playback) {
-		player->playback->abortRequested = 1;
-		while (player->playback->isPlaying)
+	if (player) {
+		player->playback.abortRequested = 1;
+		while (player->playback.isPlaying)
 			usleep(100000);
 	}
 }
 
 bool cPlayback::IsPlaying() {
-	if (player && player->playback)
-		return player->playback->isPlaying;
+	if (player)
+		return player->playback.isPlaying;
 	return false;
 }
 
 unsigned long long cPlayback::GetReadCount() {
-	if (player && player->playback) {
-		return player->playback->readCount;
-	}
+	if (player)
+		return player->playback.readCount;
 	return 0;
 }
 

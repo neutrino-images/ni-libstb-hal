@@ -484,7 +484,7 @@ bool Input::UpdateTracks()
 						t = av_dict_get(stream->metadata, tmp, NULL, 0);
 						if (t) {
 							char language[strlen(t->value)];
-							if (5 == sscanf(t->value, "%d %s %d %d %d", &track.pid, language, &track.type, &track.mag, &track.page)) {
+							if (4 == sscanf(t->value, "%*d %s %d %d %d", language, &track.type, &track.mag, &track.page)) {
 								track.Name = language;
 								player->manager.addTeletextTrack(track);
 							}

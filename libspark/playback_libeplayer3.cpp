@@ -362,7 +362,7 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 		if (it->type != 2 && it->type != 5) // return subtitles only
 			continue;
 		char tmp[80];
-		snprintf(tmp, sizeof(tmp), "%d %d %s %d %d %d", it->pid, it->pid, it->Name.c_str(), it->type, it->mag, it->page); //FIXME
+		snprintf(tmp, sizeof(tmp), "%s %d %d %d", it->Name.c_str(), it->type, it->mag, it->page);
 		language[i] = std::string(tmp);
 		i++;
 	}

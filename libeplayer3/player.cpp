@@ -1,19 +1,30 @@
 /*
- * GPL
- * duckbox 2010
+ * linuxdvb output/writer handling
+ *
+ * Copyright (C) 2010  duckbox
+ * Copyright (C) 2014  martii   (based on code from libeplayer3)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <sys/types.h>
-#include <dirent.h>
-#include <errno.h>
-#include <poll.h>
+#include <pthread.h>
+#include <sys/prctl.h>
 
 #include "player.h"
 #include "misc.h"
@@ -21,70 +32,55 @@
 #define cMaxSpeed_ff   128	/* fixme: revise */
 #define cMaxSpeed_fr   -320	/* fixme: revise */
 
-static pthread_t supervisorThread;
-
 Player::Player()
 {
 	input.player = this;
 	output.player = this;
 	manager.player = this;
-	hasThreadStarted = 0;
+	hasThreadStarted = false;
 }
 
 void *Player::SupervisorThread(void *arg)
 {
+	char threadname[17];
+	strncpy(threadname, __func__, sizeof(threadname));
+	threadname[16] = 0;
+	prctl(PR_SET_NAME, (unsigned long) &threadname);
+
 	Player *player = (Player *) arg;
-	player->hasThreadStarted = 1;
-
+	player->hasThreadStarted = true;
 	player->input.Play();
-	player->hasThreadStarted = 2;
-	player->Terminate();
-
-	fprintf(stderr, "terminating\n");
-	player->hasThreadStarted = 0;
+	player->hasThreadStarted = false;
+	player->Stop();
 	pthread_exit(NULL);
 }
 
-bool Player::Open(const char *Url)
+bool Player::Open(const char *Url, bool _noprobe)
 {
-	if (isPlaying)
-	Stop(); // shouldn't happen. Most definitely a bug
-
 	fprintf(stderr, "URL=%s\n", Url);
 
-	if (isPlaying) {	// shouldn't happen
-		fprintf(stderr, "playback already running\n");
-	return false;
-	}
+	isHttp = false;
+	noprobe = _noprobe;
+	abortRequested = false;
 
-	isHttp = 0;
-
-	if (!strncmp("file://", Url, 7) || !strncmp("myts://", Url, 7)) {
-	if (!strncmp("myts://", Url, 7)) {
-		url = "file";
-		url += (Url + 4);
-		noprobe = 1;
-	} else {
-		noprobe = 0;
-		url = Url;
-	}
-	} else if (strstr(Url, "://")) {
-	isHttp = 1;
-	if (!strncmp("mms://", Url, 6)) {
-		url = "mmst";
-		url += (Url + 3);
-	} else
-		url = Url;
-	} else {
-		fprintf(stderr, "Unknown stream (%s)\n", Url);
-	return false;
-	}
 	manager.clearTracks();
+
+	if (*Url == '/') {
+		url = "file://";
+		url += Url;
+	} else if (!strncmp("mms://", Url, 6)) {
+		url = "mmst";
+		url += Url + 3;
+		isHttp = true;
+	} else if (strstr(Url, "://")) {
+		url = Url;
+	} else {
+		fprintf(stderr, "%s %s %d: Unknown stream (%s)\n", __FILE__, __func__, __LINE__, Url);
+		return false;
+	}
 
 	if (!input.Init(url.c_str()))
 		return false;
-
-	fprintf(stderr, "exiting with value 0\n");
 
 	return true;
 }
@@ -93,11 +89,11 @@ bool Player::Close()
 {
 	bool ret = true;
 
-	isPaused = 0;
-	isPlaying = 0;
-	isForwarding = 0;
-	isBackWard = 0;
-	isSlowMotion = 0;
+	isPaused = false;
+	isPlaying = false;
+	isForwarding = false;
+	isBackWard = false;
+	isSlowMotion = false;
 	Speed = 0;
 	url.clear();
 
@@ -106,55 +102,41 @@ bool Player::Close()
 
 bool Player::Play()
 {
-	pthread_attr_t attr;
 	bool ret = true;
 
 	if (!isPlaying) {
-	AVSync = 1;
-	output.AVSync(true);
+		output.AVSync(true);
 
-	isCreationPhase = 1;	// allows the created thread to go into wait mode
-	ret = output.Play();
+		ret = output.Play();
 
-	if (!ret) {
-		isCreationPhase = 0;	// allow thread to go into next state
-	} else {
-		isPlaying = 1;
-		isPaused = 0;
-		isForwarding = 0;
-		if (isBackWard) {
-		isBackWard = 0;
-		output.Mute(false);
-		}
-		isSlowMotion = 0;
-		Speed = 1;
+		if (ret) {
+			isPlaying = true;
+			isPaused = false;
+			isForwarding = false;
+			if (isBackWard) {
+				isBackWard = false;
+				output.Mute(false);
+			}
+			isSlowMotion = false;
+			Speed = 1;
 
-		if (hasThreadStarted == 0) {
-			int error;
-			pthread_attr_init(&attr);
-			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			if (!hasThreadStarted) {
+				int err = pthread_create(&supervisorThread, NULL, SupervisorThread, this);
 
-			if ((error = pthread_create(&supervisorThread, &attr, SupervisorThread, this))) {
-				fprintf(stderr, "Error creating thread, error:%d:%s\n", error, strerror(error));
-
-				ret = false;
-			} else {
-				fprintf(stderr, "Created thread\n");
+				if (err) {
+					fprintf(stderr, "%s %s %d: pthread_create: %d (%s)\n", __FILE__, __func__, __LINE__, err, strerror(err));
+					ret = false;
+					isPlaying = false;
+				} else {
+					pthread_detach(supervisorThread);
+				}
 			}
 		}
-
-		fprintf(stderr, "clearing isCreationPhase!\n");
-
-		isCreationPhase = 0;	// allow thread to go into next state
-	}
 
 	} else {
 		fprintf(stderr,"playback already running\n");
 		ret = false;
 	}
-
-	fprintf(stderr, "exiting with value %d\n", ret);
-
 	return ret;
 }
 
@@ -164,27 +146,24 @@ bool Player::Pause()
 
 	if (isPlaying && !isPaused) {
 
-	if (isSlowMotion)
-		output.Clear();
+		if (isSlowMotion)
+			output.Clear();
 
-	output.Pause();
+		output.Pause();
 
-	isPaused = 1;
-	//isPlaying  = 1;
-	isForwarding = 0;
-	if (isBackWard) {
-		isBackWard = 0;
-		output.Mute(false);
-	}
-		isSlowMotion = 0;
+		isPaused = true;
+		//isPlaying  = 1;
+		isForwarding = false;
+		if (isBackWard) {
+			isBackWard = false;
+			output.Mute(false);
+		}
+		isSlowMotion = false;
 		Speed = 1;
 	} else {
 		fprintf(stderr,"playback not playing or already in pause mode\n");
 		ret = false;
 	}
-
-	fprintf(stderr, "exiting with value %d\n", ret);
-
 	return ret;
 }
 
@@ -199,14 +178,14 @@ bool Player::Continue()
 
 		output.Continue();
 
-		isPaused = 0;
+		isPaused = false;
 		//isPlaying  = 1;
-		isForwarding = 0;
+		isForwarding = false;
 		if (isBackWard) {
-			isBackWard = 0;
+			isBackWard = false;
 			output.Mute(false);
 		}
-		isSlowMotion = 0;
+		isSlowMotion = false;
 		Speed = 1;
 	} else {
 		fprintf(stderr,"continue not possible\n");
@@ -219,87 +198,29 @@ bool Player::Continue()
 bool Player::Stop()
 {
 	bool ret = true;
-	int wait_time = 20;
 
 	if (isPlaying) {
 
-	isPaused = 0;
-	isPlaying = 0;
-	isForwarding = 0;
-	if (isBackWard) {
-		isBackWard = 0;
-		output.Mute(false);
-	}
-	isSlowMotion = 0;
-	Speed = 0;
+		isPaused = false;
+		isPlaying = false;
+		isForwarding = false;
+		if (isBackWard) {
+			isBackWard = false;
+			output.Mute(false);
+		}
+		isSlowMotion = false;
+		Speed = 0;
 
-	output.Stop();
-	input.Stop();
+		output.Stop();
+		input.Stop();
 
 	} else {
 		fprintf(stderr,"stop not possible\n");
 		ret = false;
 	}
 
-	while ((hasThreadStarted == 1) && (--wait_time) > 0) {
-		fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
-
+	while (hasThreadStarted)
 		usleep(100000);
-	}
-
-	if (wait_time == 0) {
-		fprintf(stderr,"Timeout waiting for thread!\n");
-
-		ret = false;
-	}
-
-	fprintf(stderr, "exiting with value %d\n", ret);
-
-	return ret;
-}
-
-// FIXME
-bool Player::Terminate()
-{
-	bool ret = true;
-	int wait_time = 20;
-
-	fprintf(stderr, "\n");
-
-	if (isPlaying) {
-
-	if (!abortRequested && !output.Flush()) {
-		fprintf(stderr,"failed to flush output.\n");
-	}
-
-	ret = input.Stop();
-	isPaused = 0;
-	isPlaying = 0;
-	isForwarding = 0;
-	isBackWard = 0;
-	isSlowMotion = 0;
-	Speed = 0;
-
-	} else {
-	/* fixme: konfetti: we should return an error here but this seems to be a condition which
-	 * can happen and is not a real error, which leads to a dead neutrino. should investigate
-	 * here later.
-	 */
-	}
-
-	while ((hasThreadStarted == 1) && (--wait_time) > 0) {
-		fprintf(stderr, "Waiting for supervisor thread to terminate itself, will try another %d times\n", wait_time);
-
-		usleep(100000);
-	}
-
-	if (wait_time == 0) {
-		fprintf(stderr,"Timeout waiting for thread!\n");
-
-		ret = false;
-	}
-
-	fprintf(stderr, "exiting with value %d\n", ret);
 
 	return ret;
 }
@@ -309,7 +230,7 @@ bool Player::FastForward(int speed)
 	int ret = true;
 
 	/* Audio only forwarding not supported */
-	if (isVideo && !isHttp && !isBackWard && (!isPaused ||  isPlaying)) {
+	if (input.videoTrack && !isHttp && !isBackWard && (!isPaused ||  isPlaying)) {
 
 		if ((speed <= 0) || (speed > cMaxSpeed_ff)) {
 			fprintf(stderr, "speed %d out of range (1 - %d) \n", speed, cMaxSpeed_ff);
@@ -332,7 +253,7 @@ bool Player::FastBackward(int speed)
 	bool ret = true;
 
 	/* Audio only reverse play not supported */
-	if (isVideo && !isForwarding && (!isPaused || isPlaying)) {
+	if (input.videoTrack && !isForwarding && (!isPaused || isPlaying)) {
 
 	if ((speed > 0) || (speed < cMaxSpeed_fr)) {
 		fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
@@ -341,7 +262,7 @@ bool Player::FastBackward(int speed)
 
 	if (speed == 0) {
 		isBackWard = false;
-		Speed = false;	/* reverse end */
+		Speed = 0;	/* reverse end */
 	} else {
 		Speed = speed;
 		isBackWard = true;
@@ -351,7 +272,7 @@ bool Player::FastBackward(int speed)
 #if 0
 	if (output->Command(player, OUTPUT_REVERSE, NULL) < 0) {
 		fprintf(stderr,"OUTPUT_REVERSE failed\n");
-		isBackWard = 0;
+		isBackWard = false;
 		Speed = 1;
 		ret = false;
 	}
@@ -369,7 +290,7 @@ bool Player::FastBackward(int speed)
 
 bool Player::SlowMotion(int repeats)
 {
-	if (isVideo && !isHttp && isPlaying) {
+	if (input.videoTrack && !isHttp && isPlaying) {
 		if (isPaused)
 			Continue();
 
@@ -398,56 +319,43 @@ bool Player::Seek(float pos, bool absolute)
 
 bool Player::GetPts(int64_t &pts)
 {
-	if (isPlaying)
-		return output.GetPts(pts);
-	return false;
+	pts = INVALID_PTS_VALUE;
+	return isPlaying && output.GetPts(pts);
 }
 
 bool Player::GetFrameCount(int64_t &frameCount)
 {
-	if (isPlaying)
-		return output.GetFrameCount(frameCount);
-	return false;
+	return isPlaying && output.GetFrameCount(frameCount);
 }
 
 bool Player::GetDuration(double &duration)
 {
 	duration = -1;
-	if (isPlaying)
-		return input.GetDuration(duration);
-	return false;
+	return isPlaying && input.GetDuration(duration);
 }
 
 bool Player::SwitchVideo(int pid)
 {
 	Track *track = manager.getVideoTrack(pid);
-	if (track)
-		input.SwitchVideo(track);
-	return !!track;
+	return track && input.SwitchVideo(track);
 }
 
 bool Player::SwitchAudio(int pid)
 {
 	Track *track = manager.getAudioTrack(pid);
-	if (track)
-		input.SwitchAudio(track);
-	return !!track;
+	return track && input.SwitchAudio(track);
 }
 
 bool Player::SwitchSubtitle(int pid)
 {
 	Track *track = manager.getSubtitleTrack(pid);
-	if (track)
-		input.SwitchSubtitle(track);
-	return !!track;
+	return track && input.SwitchSubtitle(track);
 }
 
 bool Player::SwitchTeletext(int pid)
 {
 	Track *track = manager.getTeletextTrack(pid);
-	if (track)
-		input.SwitchTeletext(track);
-	return !!track;
+	return track && input.SwitchTeletext(track);
 }
 
 bool Player::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
@@ -472,4 +380,9 @@ void Player::SetChapters(std::vector<Chapter> &Chapters)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(chapterMutex);
 	chapters = Chapters;
+}
+
+void Player::RequestAbort()
+{
+	abortRequested = true;
 }

@@ -1,12 +1,13 @@
 /*
- * linuxdvb output/writer handling.
+ * linuxdvb output/writer handling
  *
- * konfetti 2010 based on linuxdvb.c code from libeplayer2
+ * Copyright (C) 2010  konfetti (based on code from libeplayer2)
+ * Copyright (C) 2014  martii   (based on code from libeplayer3)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdio.h>
@@ -26,14 +26,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <sys/uio.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
-#include <linux/dvb/stm_ioctls.h>
-#include <memory.h>
-#include <asm/types.h>
-#include <pthread.h>
 #include <errno.h>
 
 #include "misc.h"
@@ -45,7 +38,7 @@ class WriterDIVX : public Writer
 	private:
 		bool initialHeader;
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();
 		WriterDIVX();
 };
@@ -55,7 +48,7 @@ void WriterDIVX::Init()
 	initialHeader = true;
 }
 
-bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t &pts)
+bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet)
 		return false;

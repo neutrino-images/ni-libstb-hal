@@ -1,12 +1,15 @@
 /*
- * linuxdvb output/writer handling.
+ * linuxdvb output/writer handling
  *
- * konfetti 2010 based on linuxdvb.c code from libeplayer2
+ * Copyright (C) 2010  konfetti (based on code from libeplayer2)
+ * Copyright (C) 2014  martii   (based on code from libeplayer3)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2014  martii
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdio.h>
@@ -56,7 +58,7 @@ class WriterWMV : public Writer
 	private:
 		bool initialHeader;
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();
 		WriterWMV();
 };
@@ -66,7 +68,7 @@ void WriterWMV::Init()
 	initialHeader = 1;
 }
 
-bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t &pts)
+bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet)
 		return false;
@@ -120,14 +122,12 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		int Position = 0;
 		bool insertSampleHeader = true;
 
-		uint64_t _pts = pts;
-
 		while (Position < packet->size) {
 
 			int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
 
 			unsigned char PesHeader[PES_MAX_HEADER_SIZE] = { 0 };
-			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, _pts, 0);
+			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, pts, 0);
 
 			if (insertSampleHeader) {
 				unsigned int PesLength;
@@ -152,7 +152,7 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 				return false;
 
 			Position += PacketLength;
-			_pts = INVALID_PTS_VALUE;
+			pts = INVALID_PTS_VALUE;
 		}
 	}
 

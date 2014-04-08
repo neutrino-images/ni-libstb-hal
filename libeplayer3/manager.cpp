@@ -1,10 +1,12 @@
 /*
- * manager handling.
+ * manager class
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2014  martii
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,8 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdlib.h>
@@ -22,132 +23,95 @@
 #include "manager.h"
 #include "player.h"
 
-void Manager::addVideoTrack(Track &track)
+void Manager::addTrack(std::map<int,Track*> &tracks, Track &track)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = videoTracks.find(track.pid);
-	if (it == videoTracks.end()) {
+	std::map<int,Track*>::iterator it = tracks.find(track.pid);
+	if (it == tracks.end()) {
 		Track *t = new Track;
 		*t = track;
-		videoTracks[track.pid] = t;
+		tracks[track.pid] = t;
 	} else
 		*it->second = track;
+}
+
+void Manager::addVideoTrack(Track &track)
+{
+	addTrack(videoTracks, track);
 }
 
 void Manager::addAudioTrack(Track &track)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = audioTracks.find(track.pid);
-	if (it == audioTracks.end()) {
-		Track *t = new Track;
-		*t = track;
-		audioTracks[track.pid] = t;
-	} else
-		*it->second = track;
+	addTrack(audioTracks, track);
 }
 
 void Manager::addSubtitleTrack(Track &track)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = subtitleTracks.find(track.pid);
-	if (it == subtitleTracks.end()) {
-		Track *t = new Track;
-		*t = track;
-		subtitleTracks[track.pid] = t;
-	} else
-		*it->second = track;
+	addTrack(subtitleTracks, track);
 }
 
 void Manager::addTeletextTrack(Track &track)
 {
+	addTrack(teletextTracks, track);
+}
+
+std::vector<Track> Manager::getTracks(std::map<int,Track*> &tracks)
+{
+	player->input.UpdateTracks();
+	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = teletextTracks.find(track.pid);
-	if (it == teletextTracks.end()) {
-		Track *t = new Track;
-		*t = track;
-		teletextTracks[track.pid] = t;
-	} else
-		*it->second = track;
+	for(std::map<int,Track*>::iterator it = tracks.begin(); it != tracks.end(); ++it)
+		if (!it->second->inactive)
+			res.push_back(*it->second);
+	return res;
 }
 
 std::vector<Track> Manager::getVideoTracks()
 {
-	player->input.UpdateTracks();
-	std::vector<Track> res;
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	for(std::map<int,Track*>::iterator it = videoTracks.begin(); it != videoTracks.end(); ++it)
-		if (!it->second->inactive)
-			res.push_back(*it->second);
-	return res;
+	return getTracks(videoTracks);
 }
 
 std::vector<Track> Manager::getAudioTracks()
 {
-	player->input.UpdateTracks();
-	std::vector<Track> res;
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	for(std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
-		if (!it->second->inactive)
-			res.push_back(*it->second);
-	return res;
+	return getTracks(audioTracks);
 }
 
 std::vector<Track> Manager::getSubtitleTracks()
 {
-	player->input.UpdateTracks();
-	std::vector<Track> res;
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	for(std::map<int,Track*>::iterator it = subtitleTracks.begin(); it != subtitleTracks.end(); ++it)
-		if (!it->second->inactive)
-			res.push_back(*it->second);
-	return res;
+	return getTracks(subtitleTracks);
 }
 
 std::vector<Track> Manager::getTeletextTracks()
 {
-	player->input.UpdateTracks();
-	std::vector<Track> res;
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	for(std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)
-		if (!it->second->inactive)
-			res.push_back(*it->second);
-	return res;
+	return getTracks(teletextTracks);
 }
 
-Track *Manager::getVideoTrack(int pid)
+Track *Manager::getTrack(std::map<int,Track*> &tracks, int pid)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = videoTracks.find(pid);
-	if (it != videoTracks.end() && !it->second->inactive)
+	std::map<int,Track*>::iterator it = tracks.find(pid);
+	if (it != tracks.end() && !it->second->inactive)
 		return it->second;
 	return NULL;
+}
+Track *Manager::getVideoTrack(int pid)
+{
+	return getTrack(videoTracks, pid);
 }
 
 Track *Manager::getAudioTrack(int pid)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = audioTracks.find(pid);
-	if (it != audioTracks.end() && !it->second->inactive)
-		return it->second;
-	return NULL;
+	return getTrack(audioTracks, pid);
 }
 
 Track *Manager::getSubtitleTrack(int pid)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = subtitleTracks.find(pid);
-	if (it != subtitleTracks.end() && !it->second->inactive)
-		return it->second;
-	return NULL;
+	return getTrack(subtitleTracks, pid);
 }
 
 Track *Manager::getTeletextTrack(int pid)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
-	std::map<int,Track*>::iterator it = teletextTracks.find(pid);
-	if (it != teletextTracks.end() && !it->second->inactive)
-		return it->second;
-	return NULL;
+	return getTrack(teletextTracks, pid);
 }
 
 bool Manager::initTrackUpdate()

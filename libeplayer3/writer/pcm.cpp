@@ -1,7 +1,8 @@
 /*
  * linuxdvb output/writer handling.
  *
- * konfetti 2010 based on linuxdvb.c code from libeplayer2
+ * Copyright (C) 2010  konfetti (based on code from libeplayer2)
+ * Copyright (C) 2014  martii   (based on code from libeplayer3)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +75,7 @@ class WriterPCM : public Writer
 		bool restart_audio_resampling;
 
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		bool prepareClipPlay();
 		int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
 		void Init();
@@ -230,7 +231,7 @@ void WriterPCM::Init()
 
 extern int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
 
-bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts)
+bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0)
 		return false;
@@ -325,7 +326,6 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 			continue;
 		}
 		// FIXME. PTS calculation is probably broken.
-		int64_t pts;
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
 						stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
 						stream->time_base.den);

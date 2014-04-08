@@ -1,12 +1,14 @@
 /*
- * Container handling for all stream's handled by ffmpeg
- * konfetti 2010; based on code from crow
+ * input class
  *
+ * based on libeplayer3 container_ffmpeg.c, konfetti 2010; based on code from crow
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2014  martii
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,30 +17,27 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <memory.h>
 #include <string.h>
-
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/poll.h>
-#include <pthread.h>
-#include <sys/prctl.h>
-
-#include <linux/dvb/stm_ioctls.h>
 
 #include "player.h"
 #include "misc.h"
+
+#define averror(_err,_fun) ({										\
+	if (_err < 0) {											\
+		char _error[512];									\
+		av_strerror(_err, _error, sizeof(_error));						\
+		fprintf(stderr, "%s %d: %s: %d (%s)\n", __FILE__, __LINE__, #_fun, _err, _error);	\
+	}												\
+	_err;												\
+})
 
 Input::Input()
 {
@@ -48,7 +47,6 @@ Input::Input()
 	teletextTrack = NULL;
 
 	hasPlayThreadStarted = 0;
-	isContainerRunning = 0;
 	seek_sec_abs = -1.0;
 	seek_sec_rel = 0.0;
 	terminating = false;
@@ -67,14 +65,14 @@ int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 	}
 
 	if (pts == AV_NOPTS_VALUE)
-		pts = INVALID_PTS_VALUE;
-	else if (avfc->start_time == AV_NOPTS_VALUE)
-		pts = 90000.0 * (double) pts * av_q2d(stream->time_base);
-	else
-		pts = 90000.0 * (double) pts * av_q2d(stream->time_base) - 90000.0 * avfc->start_time / AV_TIME_BASE;
+		return INVALID_PTS_VALUE;
 
-	if (pts & 0x8000000000000000ull)
-		pts = INVALID_PTS_VALUE;
+	pts = 90000.0 * (double) pts * av_q2d(stream->time_base);
+	if (avfc->start_time != AV_NOPTS_VALUE)
+		pts -= 90000.0 * avfc->start_time / AV_TIME_BASE;
+
+	if (pts & 0x8000000000000000ll)
+		return INVALID_PTS_VALUE;
 
 	return pts;
 }
@@ -88,22 +86,10 @@ extern "C" void teletext_write(int pid, uint8_t *data, int size);
 
 bool Input::Play()
 {
-	char threadname[17];
-	strncpy(threadname, __func__, sizeof(threadname));
-	threadname[16] = 0;
-	prctl(PR_SET_NAME, (unsigned long) &threadname);
-
 	hasPlayThreadStarted = 1;
 
-	int64_t currentVideoPts = 0, currentAudioPts = 0, showtime = 0, bofcount = 0;
+	int64_t showtime = 0, bofcount = 0;
 	bool restart_audio_resampling = false;
-
-	while (player->isCreationPhase) {
-		fprintf(stderr, "Thread waiting for end of init phase...\n");
-		usleep(1000);
-	}
-	fprintf(stderr, "Running!\n");
-
 
 	while (player->isPlaying && !player->abortRequested) {
 
@@ -123,7 +109,9 @@ bool Input::Play()
 				seek_target_flag = AVSEEK_FLAG_BYTE;
 				seek_target = avio_tell(avfc->pb) + seek_sec_rel * br;
 			} else {
-				seek_target = ((((currentVideoPts > 0) ? currentVideoPts : currentAudioPts) / 90000.0) + seek_sec_rel) * AV_TIME_BASE;
+				int64_t pts;
+				if(player->output.GetPts(pts))
+					seek_target = (pts * AV_TIME_BASE)/ 90000.0 + seek_sec_rel * AV_TIME_BASE;
 			}
 			seek_sec_rel = 0.0;
 		} else if (seek_sec_abs >= 0.0) {
@@ -147,17 +135,15 @@ bool Input::Play()
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
 				off_t pos = avio_tell(avfc->pb);
 
-			if (pos > 0) {
-				float br;
-				if (avfc->bit_rate)
-					br = avfc->bit_rate / 8.0;
-				else
-					br = 180000.0;
-				seek_target = pos + player->Speed * 8 * br;
-				seek_target_flag = AVSEEK_FLAG_BYTE;
-			}
+				if (pos > 0) {
+					float br = avfc->bit_rate ? avfc->bit_rate / 8.0 : 180000.0;
+					seek_target_flag = AVSEEK_FLAG_BYTE;
+					seek_target = pos + player->Speed * 8 * br;
+				}
 			} else {
-				seek_target = ((((currentVideoPts > 0) ? currentVideoPts : currentAudioPts) / 90000.0) + player->Speed * 8) * AV_TIME_BASE;;
+				int64_t pts;
+				if(player->output.GetPts(pts))
+					seek_target = (pts * AV_TIME_BASE)/ 90000.0 + seek_sec_rel * AV_TIME_BASE;
 			}
 			showtime = av_gettime() + 300000;	//jump back every 300ms
 		} else {
@@ -185,76 +171,63 @@ bool Input::Play()
 		AVPacket packet;
 		av_init_packet(&packet);
 
-		int av_res = av_read_frame(avfc, &packet);
-		if (av_res == AVERROR(EAGAIN)) {
+		int err = av_read_frame(avfc, &packet);
+		if (err == AVERROR(EAGAIN)) {
 			av_free_packet(&packet);
 			continue;
 		}
-		if (av_res) {		// av_read_frame failed
-			fprintf(stderr, "no data ->end of file reached ?\n");
-			av_free_packet(&packet);
+		if (averror(err, av_read_frame)) // EOF?
 			break;		// while
-		}
-		int64_t pts;
 
 		player->readCount += packet.size;
 
 		int pid = avfc->streams[packet.stream_index]->id;
-
 
 		Track *_videoTrack = videoTrack;
 		Track *_audioTrack = audioTrack;
 		Track *_subtitleTrack = subtitleTrack;
 		Track *_teletextTrack = teletextTrack;
 
-
 		if (_videoTrack && (_videoTrack->pid == pid)) {
-			currentVideoPts = pts = calcPts(avfc, _videoTrack->stream, packet.pts);
-
-			if (!player->output.Write(avfc, _videoTrack->stream, &packet, currentVideoPts))
+			int64_t pts = calcPts(avfc, _videoTrack->stream, packet.pts);
+			if (!player->output.Write(avfc, _videoTrack->stream, &packet, pts))
 				fprintf(stderr, "writing data to video device failed\n");
 		} else if (_audioTrack && (_audioTrack->pid == pid)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
-				player->output.Write(avfc, _audioTrack->stream, NULL, currentAudioPts);
+				player->output.Write(avfc, _audioTrack->stream, NULL, 0);
 			}
 			if (!player->isBackWard) {
-				currentAudioPts = pts = calcPts(avfc, _audioTrack->stream, packet.pts);
-				if (!player->output.Write(avfc, _audioTrack->stream, &packet, currentAudioPts))
+				int64_t pts = calcPts(avfc, _audioTrack->stream, packet.pts);
+				if (!player->output.Write(avfc, _audioTrack->stream, &packet, pts))
 					fprintf(stderr, "writing data to audio device failed\n");
 			}
 		} else if (_subtitleTrack && (_subtitleTrack->pid == pid)) {
-			float duration = 3.0;
+			if (((AVStream *) _subtitleTrack->stream)->codec->codec) {
+				AVSubtitle sub;
+				memset(&sub, 0, sizeof(sub));
+				int got_sub_ptr = 0;
 
-			pts = calcPts(avfc, _subtitleTrack->stream, packet.pts);
+				err = avcodec_decode_subtitle2(((AVStream *) _subtitleTrack->stream)->codec, &sub, &got_sub_ptr, &packet);
+				averror(err, avcodec_decode_subtitle2);
 
-			if (duration > 0.0) {
-			/* is there a decoder ? */
-				if (((AVStream *) _subtitleTrack->stream)->codec->codec) {
-					AVSubtitle sub;
-					memset(&sub, 0, sizeof(sub));
-					int got_sub_ptr;
-
-					if (avcodec_decode_subtitle2(((AVStream *) _subtitleTrack->stream)->codec, &sub, &got_sub_ptr, &packet) < 0) {
-						fprintf(stderr, "error decoding subtitle\n");
-					}
-
-					if (got_sub_ptr && sub.num_rects > 0) {
-						switch (sub.rects[0]->type) {
-							case SUBTITLE_TEXT: // FIXME?
-							case SUBTITLE_ASS:
-								dvbsub_ass_write(((AVStream *) _subtitleTrack->stream)->codec, &sub, pid);
-								break;
-							case SUBTITLE_BITMAP:
-								dvbsub_write(&sub, pts);
-								// avsubtitle_free() will be called by handler
-								break;
-							default:
-								break;
+				if (got_sub_ptr && sub.num_rects > 0) {
+					switch (sub.rects[0]->type) {
+						case SUBTITLE_TEXT: // FIXME?
+						case SUBTITLE_ASS:
+							dvbsub_ass_write(((AVStream *) _subtitleTrack->stream)->codec, &sub, pid);
+							break;
+						case SUBTITLE_BITMAP: {
+							int64_t pts = calcPts(avfc, _subtitleTrack->stream, packet.pts);
+							dvbsub_write(&sub, calcPts(avfc, _subtitleTrack->stream, pts));
+							// avsubtitle_free() will be called by handler
+							break;
 						}
+						default:
+							break;
 					}
 				}
-			}			/* duration */
+			}
 		} else if (_teletextTrack && (_teletextTrack->pid == pid)) {
 			teletext_write(pid, packet.data, packet.size);
 		}
@@ -262,12 +235,14 @@ bool Input::Play()
 		av_free_packet(&packet);
 	}				/* while */
 
-	if (player && player->abortRequested)
+	if (player->abortRequested)
 		player->output.Clear();
+	else
+		player->output.Flush();
 
 	dvbsub_ass_clear();
-	player->abortPlayback = 1;
-	hasPlayThreadStarted = 0;
+	abortPlayback = true;
+	hasPlayThreadStarted = false;
 
 	return true;
 }
@@ -275,7 +250,10 @@ bool Input::Play()
 /*static*/ int interrupt_cb(void *arg)
 {
 	Player *player = (Player *) arg;
-	return player->abortPlayback | player->abortRequested;
+	bool res = player->input.abortPlayback || player->abortRequested;
+	if (res)
+		fprintf(stderr, "%s %s %d: abort requested (%d/%d)\n", __FILE__, __func__, __LINE__, player->input.abortPlayback, player->abortRequested);
+	return res;
 }
 
 static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
@@ -293,11 +271,16 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	strcpy(subfile, filename);
 	strcpy(subfile + (lastDot + 1 - filename), format);
 
+	if (access(subfile, R_OK))
+		return false;
+
 	AVFormatContext *subavfc = avformat_alloc_context();
-	if (avformat_open_input(&subavfc, subfile, av_find_input_format(format), 0)) {
+	int err = avformat_open_input(&subavfc, subfile, av_find_input_format(format), 0);
+	if (averror(err, avformat_open_input)) {
 		avformat_free_context(subavfc);
 		return false;
 	}
+
 	avformat_find_stream_info(subavfc, NULL);
 	if (subavfc->nb_streams != 1) {
 		avformat_free_context(subavfc);
@@ -311,12 +294,12 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 		return false;
 	}
 
-	// fprintf(stderr, "codec=%s\n", avcodec_get_name(c->codec_id));
-	if (avcodec_open2(c, codec, NULL) < 0) {
-		fprintf(stderr, "%s %d: avcodec_open\n", __FILE__, __LINE__);
+	err = avcodec_open2(c, codec, NULL);
+	if (averror(err, avcodec_open2)) {
 		avformat_free_context(subavfc);
 		return false;
 	}
+
 	AVPacket avpkt;
 	av_init_packet(&avpkt);
 
@@ -356,47 +339,30 @@ bool Input::ReadSubtitles(const char *filename) {
 
 bool Input::Init(const char *filename)
 {
-	int err;
-
+	abortPlayback = false;
 	av_log_set_callback(log_callback);
 
-	if (filename == NULL) {
+	if (!filename) {
 		fprintf(stderr, "filename NULL\n");
 		return false;
 	}
+	fprintf(stderr, "%s %s %d: %s\n", __FILE__, __func__, __LINE__, filename);
 
-	if (isContainerRunning) {
-		fprintf(stderr, "ups already running?\n");
-		return false;
-	}
-	isContainerRunning = true;
-
-	/* initialize ffmpeg */
 	avcodec_register_all();
 	av_register_all();
-
 	avformat_network_init();
 
-	player->abortRequested = 0;
-	player->abortPlayback = 0;
 	videoTrack = NULL;
 	audioTrack = NULL;
 	subtitleTrack = NULL;
 	teletextTrack = NULL;
 	avfc = avformat_alloc_context();
 	avfc->interrupt_callback.callback = interrupt_cb;
-	avfc->interrupt_callback.opaque = (void *) &player;
+	avfc->interrupt_callback.opaque = (void *) player;
 
-	if ((err = avformat_open_input(&avfc, filename, NULL, 0)) != 0) {
-		char error[512];
-
-		fprintf(stderr, "avformat_open_input failed %d (%s)\n", err, filename);
-		av_strerror(err, error, 512);
-		fprintf(stderr, "Cause: %s\n", error);
-
-		isContainerRunning = false;
+	int err = avformat_open_input(&avfc, filename, NULL, 0);
+	if (averror(err, avformat_open_input))
 		return false;
-		}
 
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
@@ -405,17 +371,10 @@ bool Input::Init(const char *filename)
 		avfc->probesize = 8192;
 	}
 
-	if (avformat_find_stream_info(avfc, NULL) < 0) {
-		fprintf(stderr, "Error avformat_find_stream_info\n");
-#ifdef this_is_ok
-		/* crow reports that sometimes this returns an error
-		 * but the file is played back well. so remove this
-		 * until other works are done and we can prove this.
-		 */
+	err = avformat_find_stream_info(avfc, NULL);
+	if (averror(err, avformat_open_input)) {
 		avformat_close_input(&avfc);
-		isContainerRunning = false;
 		return false;
-#endif
 	}
 
 	terminating = false;
@@ -424,7 +383,6 @@ bool Input::Init(const char *filename)
 
 	if (!videoTrack && !audioTrack) {
 		avformat_close_input(&avfc);
-		isContainerRunning = false;
 		return false;
 	}
 
@@ -525,9 +483,9 @@ bool Input::UpdateTracks()
 						snprintf(tmp, sizeof(tmp), "teletext_%d", i);
 						t = av_dict_get(stream->metadata, tmp, NULL, 0);
 						if (t) {
-							char lang[strlen(t->value)];
-							if (5 == sscanf(t->value, "%d %s %d %d %d", &track.pid, lang, &track.type, &track.mag, &track.page)) {
-								track.Name = lang;
+							char language[strlen(t->value)];
+							if (5 == sscanf(t->value, "%d %s %d %d %d", &track.pid, language, &track.type, &track.mag, &track.page)) {
+								track.Name = language;
 								player->manager.addTeletextTrack(track);
 							}
 						}
@@ -552,7 +510,6 @@ bool Input::UpdateTracks()
 			fprintf(stderr, "not handled or unknown codec_type %d\n", stream->codec->codec_type);
 			break;
 		}
-
 	}
 
 	return true;
@@ -560,11 +517,7 @@ bool Input::UpdateTracks()
 
 bool Input::Stop()
 {
-	if (!isContainerRunning) {
-		fprintf(stderr, "Container not running\n");
-		return false;
-	}
-	player->abortRequested = 1;
+	abortPlayback = true;
 
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
@@ -573,8 +526,6 @@ bool Input::Stop()
 
 	if (avfc)
 		avformat_close_input(&avfc);
-
-	isContainerRunning = false;
 
 	avformat_network_deinit();
 
@@ -594,16 +545,19 @@ bool Input::GetDuration(double &duration)
 {
 	duration = 0.0;
 
-	if (videoTrack && videoTrack->duration != 0.0) {
-		duration = videoTrack->duration / 1000.0;
+	Track *track = videoTrack;
+	if (track && track->duration != 0.0) {
+		duration = track->duration / 1000.0;
 		return true;
 	}
-	if (audioTrack && audioTrack->duration != 0.0) {
-		duration = audioTrack->duration / 1000.0;
+	track = audioTrack;
+	if (track && track->duration != 0.0) {
+		duration = track->duration / 1000.0;
 		return true;
 	}
-	if (subtitleTrack && subtitleTrack->duration != 0.0) {
-		duration = subtitleTrack->duration / 1000.0;
+	track = subtitleTrack;
+	if (track && track->duration != 0.0) {
+		duration = track->duration / 1000.0;
 		return true;
 	}
 	if (avfc && avfc->duration != 0.0) {
@@ -665,11 +619,8 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 				keys.push_back(tag->key);
 				values.push_back(tag->value);
 			}
-
-		return true;
 	}
-
-	return false;
+	return true;
 }
 
 bool Input::GetReadCount(uint64_t &readcount)

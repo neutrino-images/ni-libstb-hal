@@ -1,3 +1,9 @@
+This is a revised libeplayer3 version for Neutrino, rewritten in C++, with
+various code parts (e.g. subtitle processing, non-working decoders) removed.
+--martii
+
+The original libeplayer3 README follows:
+
 /*
  * SCOPE:
  * -------

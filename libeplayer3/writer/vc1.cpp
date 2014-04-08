@@ -1,12 +1,15 @@
 /*
- * linuxdvb output/writer handling.
+ * linuxdvb output/writer handling
  *
- * konfetti 2010 based on linuxdvb.c code from libeplayer2
+ * Copyright (C) 2010  konfetti (based on code from libeplayer2)
+ * Copyright (C) 2014  martii   (based on code from libeplayer3)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2014  martii
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdio.h>
@@ -50,7 +52,7 @@ class WriterVC1 : public Writer
 		unsigned char FrameHeaderSeen;
 		double frameRate;
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts);
+		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();
 		WriterVC1();
 };
@@ -60,7 +62,7 @@ void WriterVC1::Init()
 	initialHeader = true;
 }
 
-bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &pts)
+bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet)
 		return false;
@@ -138,8 +140,6 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 		initialHeader = false;
 	}
 
-	int64_t _pts = pts;
-
 	if (packet->size > 0) {
 		int Position = 0;
 		unsigned char insertSampleHeader = 1;
@@ -147,7 +147,7 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 		while (Position < packet->size) {
 			int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
 			unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, _pts, 0);
+			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, pts, 0);
 
 			if (insertSampleHeader) {
 				const unsigned char Vc1FrameStartCode[] = { 0, 0, 1, VC1_FRAME_START_CODE };
@@ -172,7 +172,7 @@ bool WriterVC1::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 				return false;
 
 			Position += PacketLength;
-			_pts = INVALID_PTS_VALUE;
+			pts = INVALID_PTS_VALUE;
 		}
 	}
 

@@ -1,10 +1,14 @@
 /*
- * LinuxDVB Output handling.
+ * output class
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * based on libeplayer3 LinuxDVB Output handling.
+ *
+ * Copyright (C) 2014  martii
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,8 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <stdio.h>
@@ -209,12 +212,8 @@ bool Output::Continue()
 bool Output::Mute(bool b)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-
 	//AUDIO_SET_MUTE has no effect with new player
-	if (audiofd > -1 && dioctl(audiofd, b ? AUDIO_STOP : AUDIO_PLAY, NULL))
-		return false;
-
-	return true;
+	return audiofd > -1 && !dioctl(audiofd, b ? AUDIO_STOP : AUDIO_PLAY, NULL);
 }
 
 
@@ -237,48 +236,31 @@ bool Output::Flush()
 bool Output::FastForward(int speed)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-
-	if (videofd > -1 && dioctl(videofd, VIDEO_FAST_FORWARD, speed))
-		return false;
-
-	return true;
+	return videofd > -1 && !dioctl(videofd, VIDEO_FAST_FORWARD, speed);
 }
 
 bool Output::SlowMotion(int speed)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-
-	if (videofd > -1 && dioctl(videofd, VIDEO_SLOWMOTION, speed))
-		return false;
-
-	return true;
+	return videofd > -1 && !dioctl(videofd, VIDEO_SLOWMOTION, speed);
 }
 
 bool Output::AVSync(bool b)
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-	if (audiofd > -1 && dioctl(audiofd, AUDIO_SET_AV_SYNC, b))
-		return false;
-
-	return true;
+	return audiofd > -1 && !dioctl(audiofd, AUDIO_SET_AV_SYNC, b);
 }
 
 bool Output::ClearAudio()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-	if (audiofd > -1 && dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL))
-		return false;
-
-	return true;
+	return audiofd > -1 && !dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 }
 
 bool Output::ClearVideo()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	if (videofd > -1 && dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL))
-		return false;
-
-	return true;
+	return videofd > -1 && !dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 }
 
 bool Output::Clear()
@@ -349,20 +331,16 @@ bool Output::SwitchVideo(AVStream *stream)
 	return true;
 }
 
-bool Output::Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t &Pts)
+bool Output::Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	switch (stream->codec->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-			if (videofd > -1 && videoWriter)
-				return videoWriter->Write(videofd, avfc, stream, packet, Pts);
-			return false;
+			return  videofd > -1 && videoWriter && videoWriter->Write(videofd, avfc, stream, packet, pts);
 		}
 		case AVMEDIA_TYPE_AUDIO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-			if (audiofd > -1 && audioWriter)
-				return audioWriter->Write(audiofd, avfc, stream, packet, Pts);
-			return false;
+			return audiofd > -1 && audioWriter && audioWriter->Write(audiofd, avfc, stream, packet, pts);
 		}
 		default:
 			return false;

@@ -78,11 +78,11 @@ int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 }
 
 // from neutrino-mp/lib/libdvbsubtitle/dvbsub.cpp
-extern "C" void dvbsub_write(AVSubtitle *, int64_t);
-extern "C" void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
-extern "C" void dvbsub_ass_clear(void);
+extern void dvbsub_write(AVSubtitle *, int64_t);
+extern void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
+extern void dvbsub_ass_clear(void);
 // from neutrino-mp/lib/lib/libtuxtxt/tuxtxt_common.h
-extern "C" void teletext_write(int pid, uint8_t *data, int size);
+extern void teletext_write(int pid, uint8_t *data, int size);
 
 bool Input::Play()
 {

@@ -64,7 +64,7 @@ class Player {
 		Manager manager;
 		OpenThreads::Mutex chapterMutex;
 		std::vector<Chapter> chapters;
-		pthread_t supervisorThread;
+		pthread_t playThread;
 
 		bool abortRequested;
 		bool isHttp;
@@ -83,7 +83,7 @@ class Player {
 		bool noprobe;	/* hack: only minimal probing in av_find_stream_info */
 
 		void SetChapters(std::vector<Chapter> &Chapters);
-		static void* SupervisorThread(void*);
+		static void* playthread(void*);
 	public:
 		bool SwitchAudio(int pid);
 		bool SwitchVideo(int pid);

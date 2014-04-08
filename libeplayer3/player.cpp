@@ -40,7 +40,7 @@ Player::Player()
 	hasThreadStarted = false;
 }
 
-void *Player::SupervisorThread(void *arg)
+void *Player::playthread(void *arg)
 {
 	char threadname[17];
 	strncpy(threadname, __func__, sizeof(threadname));
@@ -121,14 +121,14 @@ bool Player::Play()
 			Speed = 1;
 
 			if (!hasThreadStarted) {
-				int err = pthread_create(&supervisorThread, NULL, SupervisorThread, this);
+				int err = pthread_create(&playThread, NULL, playthread, this);
 
 				if (err) {
 					fprintf(stderr, "%s %s %d: pthread_create: %d (%s)\n", __FILE__, __func__, __LINE__, err, strerror(err));
 					ret = false;
 					isPlaying = false;
 				} else {
-					pthread_detach(supervisorThread);
+					pthread_detach(playThread);
 				}
 			}
 		}

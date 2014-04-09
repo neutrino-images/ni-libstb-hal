@@ -56,7 +56,6 @@ class Input
 		float seek_sec_abs;
 		float seek_sec_rel;
 		bool isContainerRunning;
-		bool terminating;
 		bool abortPlayback;
 
 		Player *player;

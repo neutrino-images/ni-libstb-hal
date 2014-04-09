@@ -49,7 +49,7 @@ Input::Input()
 	hasPlayThreadStarted = 0;
 	seek_sec_abs = -1.0;
 	seek_sec_rel = 0.0;
-	terminating = false;
+	abortPlayback = false;
 }
 
 Input::~Input()
@@ -377,8 +377,6 @@ bool Input::Init(const char *filename)
 		return false;
 	}
 
-	terminating = false;
-
 	bool res = UpdateTracks();
 
 	if (!videoTrack && !audioTrack) {
@@ -398,19 +396,15 @@ bool Input::Init(const char *filename)
 
 bool Input::UpdateTracks()
 {
-	if (terminating)
+	if (abortPlayback)
 		return true;
 
 	std::vector<Chapter> chapters;
 	for (unsigned int i = 0; i < avfc->nb_chapters; i++) {
-		AVDictionaryEntry *title = av_dict_get(avfc->metadata, "title", NULL, 0);
-		if (!title)
-			continue;
 		AVChapter *ch = avfc->chapters[i];
-		if (!ch)
-			continue;
+		AVDictionaryEntry* title = av_dict_get(ch->metadata, "title", NULL, 0);
 		Chapter chapter;
-		chapter.title = title ? title->value : "?";
+		chapter.title = title ? title->value : "";
 		chapter.start = (double) ch->start * av_q2d(ch->time_base) * 1000.0;
 		chapter.end = (double) ch->end * av_q2d(ch->time_base) * 1000.0;
 		chapters.push_back(chapter);
@@ -496,11 +490,12 @@ bool Input::UpdateTracks()
 						stream->codec->codec = avcodec_find_decoder(stream->codec->codec_id);
 						if (!stream->codec->codec)
 							fprintf(stderr, "avcodec_find_decoder failed for subtitle track %d\n", n);
-						else if (avcodec_open2(stream->codec, stream->codec->codec, NULL)) {
-							fprintf(stderr, "avcodec_open2 failed for subtitle track %d\n", n);
-						stream->codec->codec = NULL;
+						else {
+							int err = avcodec_open2(stream->codec, stream->codec->codec, NULL);
+							if (averror(err, avcodec_open2))
+								stream->codec->codec = NULL;
+						}
 					}
-				}
 				if (stream->codec->codec)
 					player->manager.addSubtitleTrack(track);
 			}
@@ -521,8 +516,6 @@ bool Input::Stop()
 
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
-
-	terminating = true;
 
 	if (avfc)
 		avformat_close_input(&avfc);

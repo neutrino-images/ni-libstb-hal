@@ -38,6 +38,13 @@ Player::Player()
 	output.player = this;
 	manager.player = this;
 	hasThreadStarted = false;
+
+	isPaused = false;
+	isPlaying = false;
+	isForwarding = false;
+	isBackWard = false;
+	isSlowMotion = false;
+	Speed = 0;
 }
 
 void *Player::playthread(void *arg)
@@ -337,25 +344,25 @@ bool Player::GetDuration(double &duration)
 bool Player::SwitchVideo(int pid)
 {
 	Track *track = manager.getVideoTrack(pid);
-	return track && input.SwitchVideo(track);
+	return input.SwitchVideo(track);
 }
 
 bool Player::SwitchAudio(int pid)
 {
 	Track *track = manager.getAudioTrack(pid);
-	return track && input.SwitchAudio(track);
+	return input.SwitchAudio(track);
 }
 
 bool Player::SwitchSubtitle(int pid)
 {
 	Track *track = manager.getSubtitleTrack(pid);
-	return track && input.SwitchSubtitle(track);
+	return input.SwitchSubtitle(track);
 }
 
 bool Player::SwitchTeletext(int pid)
 {
 	Track *track = manager.getTeletextTrack(pid);
-	return track && input.SwitchTeletext(track);
+	return input.SwitchTeletext(track);
 }
 
 bool Player::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
@@ -385,4 +392,36 @@ void Player::SetChapters(std::vector<Chapter> &Chapters)
 void Player::RequestAbort()
 {
 	abortRequested = true;
+}
+
+int Player::GetVideoPid()
+{
+	Track *track = input.videoTrack;
+	if (track)
+		return track->pid;
+	return -1;
+}
+
+int Player::GetAudioPid()
+{
+	Track *track = input.audioTrack;
+	if (track)
+		return track->pid;
+	return -1;
+}
+
+int Player::GetSubtitlePid()
+{
+	Track *track = input.subtitleTrack;
+	if (track)
+		return track->pid;
+	return -1;
+}
+
+int Player::GetTeletextPid()
+{
+	Track *track = input.teletextTrack;
+	if (track)
+		return track->pid;
+	return -1;
 }

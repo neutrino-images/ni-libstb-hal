@@ -156,5 +156,5 @@ void Manager::clearTracks()
 
 Manager::~Manager()
 {
-    clearTracks();
+	clearTracks();
 }

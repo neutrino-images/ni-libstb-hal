@@ -9,30 +9,38 @@ typedef enum {
 	PLAYMODE_FILE
 } playmode_t;
 
+class Player;
+
 class cPlayback
 {
 	private:
 		bool enabled;
 		bool playing;
+		bool no_probe;
 		int nPlaybackSpeed;
-		int mAudioStream;
-		int mSubtitleStream;
-		int mTeletextStream;
 		bool Stop(void);
+		bool decoders_closed;
+		playmode_t pm;
+		std::string fn_ts;
+		std::string fn_xml;
+		off_t last_size;
+		int init_jump;
+		Player *player;
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();
 
 		bool Open(playmode_t PlayMode);
 		void Close(void);
-		bool Start(char *filename, int vpid, int vtype, int apid,
-			   int ac3, unsigned int duration, bool no_probe = true);
+		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, unsigned int duration);
 		bool SetAPid(int pid, bool ac3);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
-		int GetAPid(void) { return mAudioStream; }
-		int GetSubtitlePid(void) { return mSubtitleStream; }
+		int GetAPid(void);
+		int GetVPid(void);
+		int GetSubtitlePid(void);
 		int GetTeletextPid(void);
+		int GetFirstTeletextPid(void);
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;
 		bool GetPosition(int &position, int &duration);
@@ -40,10 +48,10 @@ class cPlayback
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
 		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
-		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage);
+		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage, int *mags, int *pages);
 		void RequestAbort(void);
 		bool IsPlaying(void);
-		unsigned long long GetReadCount(void);
+		uint64_t GetReadCount(void);
 #if 0
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
 		bool SelectSubtitles(int pid);

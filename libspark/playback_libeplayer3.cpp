@@ -11,18 +11,8 @@
 
 #include "playback_libeplayer3.h"
 
-static Player *player = NULL;
-
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
-static bool decoders_closed = false;
-
-static const char * FILENAME = "playback_libeplayer3.cpp";
-static playmode_t pm;
-static std::string fn_ts;
-static std::string fn_xml;
-static off_t last_size;
-static int init_jump;
 
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
@@ -32,14 +22,13 @@ bool cPlayback::Open(playmode_t PlayMode)
 		"PLAYMODE_FILE"
 	};
 
-	if (PlayMode != PLAYMODE_TS)
-	{
+	if (PlayMode != PLAYMODE_TS) {
 		audioDecoder->closeDevice();
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 	}
 
-	printf("%s:%s - PlayMode=%s\n", FILENAME, __FUNCTION__, aPLAYMODE[PlayMode]);
+	printf("%s:%s - PlayMode=%s\n", __FILE__, __func__, aPLAYMODE[PlayMode]);
 	pm = PlayMode;
 	fn_ts = "";
 	fn_xml = "";
@@ -53,7 +42,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 //Used by Fileplay
 void cPlayback::Close(void)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
+	printf("%s:%s\n", __FILE__, __func__);
 
 //Dagobert: movieplayer does not call stop, it calls close ;)
 	Stop();
@@ -66,19 +55,16 @@ void cPlayback::Close(void)
 }
 
 //Used by Fileplay
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, unsigned int, bool no_probe)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, unsigned int)
 {
 	bool ret = false;
 	bool isHTTP = false;
-	
+	no_probe = false;
+
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d, no_probe=%d\n",
-		FILENAME, __FUNCTION__, filename, vpid, vtype, apid, ac3, no_probe);
+		__FILE__, __func__, filename, vpid, vtype, apid, ac3, no_probe);
 
 	init_jump = -1;
-	//create playback path
-	mAudioStream=0;
-	mSubtitleStream=-1;
-	mTeletextStream=-1;
 
 	//try to open file
 	if(player && player->Open(filename, no_probe)) {
@@ -110,11 +96,13 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 			playing = true;
 	}
 		
-	printf("%s:%s - return=%d\n", FILENAME, __FUNCTION__, ret);
+	printf("%s:%s - return=%d\n", __FILE__, __func__, ret);
 
 	fn_ts = std::string(filename);
-	if (fn_ts.rfind(".ts") == fn_ts.length() - 3)
+	if (fn_ts.length() > 3 && fn_ts.rfind(".ts") == fn_ts.length() - 3) {
 		fn_xml = fn_ts.substr(0, fn_ts.length() - 3) + ".xml";
+		no_probe = true;
+	}
 
 	if (pm == PLAYMODE_TS) {
 		struct stat s;
@@ -132,7 +120,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 //Used by Fileplay
 bool cPlayback::Stop(void)
 {
-	printf("%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	printf("%s:%s playing %d\n", __FILE__, __func__, playing);
 	//if(playing==false) return false;
 
 	player->Stop();
@@ -143,39 +131,24 @@ bool cPlayback::Stop(void)
 	return true;
 }
 
-bool cPlayback::SetAPid(int pid, bool ac3 __attribute__((unused)))
+bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	if(pid!=mAudioStream){
-		player->SwitchAudio(pid);
-		mAudioStream=pid;
-	}
-	return true;
+	return player->SwitchAudio(pid);
 }
 
 bool cPlayback::SetSubtitlePid(int pid)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	if(pid!=mSubtitleStream){
-		player->SwitchSubtitle(pid);
-		mSubtitleStream = pid;
-	}
-	return true;
+	return player->SwitchSubtitle(pid);
 }
 
 bool cPlayback::SetTeletextPid(int pid)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-	if(pid!=mTeletextStream){
-		player->SwitchTeletext(pid);
-		mTeletextStream=pid;
-	}
-	return true;
+	return player->SwitchTeletext(pid);
 }
 
 bool cPlayback::SetSpeed(int speed)
 {
-	printf("%s:%s playing %d speed %d\n", FILENAME, __FUNCTION__, playing, speed);
+	printf("%s:%s playing %d speed %d\n", __FILE__, __func__, playing, speed);
 
 	if (! decoders_closed)
 	{
@@ -230,7 +203,6 @@ bool cPlayback::SetSpeed(int speed)
 
 bool cPlayback::GetSpeed(int &speed) const
 {
-	//printf("%s:%s\n", FILENAME, __FUNCTION__);
         speed = nPlaybackSpeed;
 	return true;
 }
@@ -247,8 +219,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	/* hack: if the file is growing (timeshift), then determine its length
 	 * by comparing the mtime with the mtime of the xml file */
-	if (pm == PLAYMODE_TS)
-	{
+	if (pm == PLAYMODE_TS) {
 		struct stat s;
 		if (!stat(fn_ts.c_str(), &s))
 		{
@@ -303,7 +274,6 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 bool cPlayback::SetPosition(int position, bool absolute)
 {
-	printf("%s:%s %d\n", FILENAME, __FUNCTION__,position);
 	if (playing == false)
 	{
 		/* the calling sequence is:
@@ -322,7 +292,6 @@ bool cPlayback::SetPosition(int position, bool absolute)
 
 void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *numpids, std::string *language)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	unsigned int i = 0;
 
 	std::vector<Track> tracks = player->manager.getAudioTracks();
@@ -338,7 +307,6 @@ void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *num
 
 void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	unsigned int i = 0;
 
 	std::vector<Track> tracks = player->manager.getSubtitleTracks();
@@ -351,27 +319,26 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 	*numpids = i;
 }
 
-void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, std::string *language)
+void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, std::string *language, int *mags, int *pages)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	unsigned int i = 0;
 
 	std::vector<Track> tracks = player->manager.getTeletextTracks();
 	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
-		pids[i] = it->pid;
 		if (it->type != 2 && it->type != 5) // return subtitles only
 			continue;
-		char tmp[80];
-		snprintf(tmp, sizeof(tmp), "%s %d %d %d", it->Name.c_str(), it->type, it->mag, it->page);
-		language[i] = std::string(tmp);
+		pids[i] = it->pid;
+		language[i] = it->Name;
+		mags[i] = it->mag;
+		pages[i] = it->page;
 		i++;
 	}
+
 	*numpids = i;
 }
 
-int cPlayback::GetTeletextPid(void)
+int cPlayback::GetFirstTeletextPid(void)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	std::vector<Track> tracks = player->manager.getTeletextTracks();
 	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end(); ++it) {
 		if (it->type == 1)
@@ -387,21 +354,18 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 
 void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	player->input.GetMetadata(keys, values);
 }
 
 cPlayback::cPlayback(int num __attribute__((unused)))
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	playing=false;
-	
+	decoders_closed = false;
 	player = new Player();
 }
 
 cPlayback::~cPlayback()
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
 	if(player)
 		delete player;
 }
@@ -417,27 +381,28 @@ bool cPlayback::IsPlaying() {
 	return false;
 }
 
-unsigned long long cPlayback::GetReadCount() {
+uint64_t cPlayback::GetReadCount() {
 	if (player)
 		return player->readCount;
 	return 0;
 }
 
-#if 0
-bool cPlayback::IsPlaying(void) const
+int cPlayback::GetAPid(void)
 {
-	printf("%s:%s\n", FILENAME, __FUNCTION__);
-
-	/* konfetti: there is no event/callback mechanism in libeplayer2
-	 * so in case of ending playback we have no information on a 
-	 * terminated stream currently (or did I oversee it?).
-	 * So let's ask the player the state.
-	 */
-	if (playing)
-	{
-	   return player->isPlaying;
-	}
-
-	return playing;
+	return player->GetAudioPid();
 }
-#endif
+
+int cPlayback::GetVPid(void)
+{
+	return player->GetVideoPid();
+}
+
+int cPlayback::GetSubtitlePid(void)
+{
+	return player->GetSubtitlePid();
+}
+
+int cPlayback::GetTeletextPid(void)
+{
+	return player->GetTeletextPid();
+}

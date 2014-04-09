@@ -90,6 +90,11 @@ class Player {
 		bool SwitchTeletext(int pid);
 		bool SwitchSubtitle(int pid);
 
+		int GetAudioPid();
+		int GetVideoPid();
+		int GetSubtitlePid();
+		int GetTeletextPid();
+
 		bool GetPts(int64_t &pts);
 		bool GetFrameCount(int64_t &framecount);
 		bool GetDuration(double &duration);
@@ -98,6 +103,7 @@ class Player {
 		bool SlowMotion(int repeats);
 		bool FastBackward(int speed);
 		bool FastForward(int speed);
+
 		bool Open(const char *Url, bool noprobe = false);
 		bool Close();
 		bool Play();

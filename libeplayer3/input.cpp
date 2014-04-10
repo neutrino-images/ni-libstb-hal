@@ -60,7 +60,7 @@ Input::~Input()
 int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 {
 	if (!avfc || !stream) {
-		fprintf(stderr, "player / stream null\n");
+		fprintf(stderr, "context / stream null\n");
 		return INVALID_PTS_VALUE;
 	}
 
@@ -168,6 +168,7 @@ bool Input::Play()
 			for (i = 0; i < avfc->nb_streams; i++)
 				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
 					avcodec_flush_buffers(avfc->streams[i]->codec);
+			player->output.ClearVideo();
 		}
 
 		AVPacket packet;
@@ -183,14 +184,13 @@ bool Input::Play()
 
 		player->readCount += packet.size;
 
-		int pid = avfc->streams[packet.stream_index]->id;
-
+		AVStream *stream = avfc->streams[packet.stream_index];
 		Track *_videoTrack = videoTrack;
 		Track *_audioTrack = audioTrack;
 		Track *_subtitleTrack = subtitleTrack;
 		Track *_teletextTrack = teletextTrack;
 
-		if (_videoTrack && (_videoTrack->pid == pid)) {
+		if (_videoTrack && (_videoTrack->stream == stream)) {
 			int64_t pts = calcPts(avfc, _videoTrack->stream, packet.pts);
 			if (!player->output.Write(avfc, _videoTrack->stream, &packet, pts)) {
 				if (warnVideoWrite)
@@ -200,7 +200,7 @@ bool Input::Play()
 					warnVideoWrite = 100;
 				}
 			}
-		} else if (_audioTrack && (_audioTrack->pid == pid)) {
+		} else if (_audioTrack && (_audioTrack->stream == stream)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
 				player->output.Write(avfc, _audioTrack->stream, NULL, 0);
@@ -216,7 +216,7 @@ bool Input::Play()
 					}
 				}
 			}
-		} else if (_subtitleTrack && (_subtitleTrack->pid == pid)) {
+		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
 			if (((AVStream *) _subtitleTrack->stream)->codec->codec) {
 				AVSubtitle sub;
 				memset(&sub, 0, sizeof(sub));
@@ -229,7 +229,7 @@ bool Input::Play()
 					switch (sub.rects[0]->type) {
 						case SUBTITLE_TEXT: // FIXME?
 						case SUBTITLE_ASS:
-							dvbsub_ass_write(((AVStream *) _subtitleTrack->stream)->codec, &sub, pid);
+							dvbsub_ass_write(_subtitleTrack->stream->codec, &sub, _subtitleTrack->stream->id);
 							break;
 						case SUBTITLE_BITMAP: {
 							int64_t pts = calcPts(avfc, _subtitleTrack->stream, packet.pts);
@@ -242,8 +242,8 @@ bool Input::Play()
 					}
 				}
 			}
-		} else if (_teletextTrack && (_teletextTrack->pid == pid)) {
-			teletext_write(pid, packet.data, packet.size);
+		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
+			teletext_write(_teletextTrack->stream->id, packet.data, packet.size);
 		}
 
 		av_free_packet(&packet);

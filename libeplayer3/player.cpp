@@ -72,10 +72,7 @@ bool Player::Open(const char *Url, bool _noprobe)
 
 	manager.clearTracks();
 
-	if (*Url == '/') {
-		url = "file://";
-		url += Url;
-	} else if (!strncmp("mms://", Url, 6)) {
+	if (!strncmp("mms://", Url, 6)) {
 		url = "mmst";
 		url += Url + 3;
 		isHttp = true;
@@ -207,7 +204,6 @@ bool Player::Stop()
 	bool ret = true;
 
 	if (isPlaying) {
-
 		isPaused = false;
 		isPlaying = false;
 		isForwarding = false;

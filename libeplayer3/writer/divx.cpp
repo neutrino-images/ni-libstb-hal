@@ -54,16 +54,14 @@ bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	uint8_t FakeHeaders[64];	// 64bytes should be enough to make the fake headers
+	uint8_t FakeHeaders[64] = { 0 };	// 64bytes should be enough to make the fake headers
 	unsigned int FakeHeaderLength;
 	uint8_t Version = 5;
 	unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
 	unsigned int usecPerFrame = 41708;	/* Hellmaster1024: default value */
 	BitPacker_t ld = { FakeHeaders, 0, 32 };
 
-	usecPerFrame = 1000000 / av_q2d(stream->r_frame_rate);
-
-	memset(FakeHeaders, 0, sizeof(FakeHeaders));
+	usecPerFrame = 1000000.0 / av_q2d(stream->r_frame_rate);
 
 	/* Create info record for frame parser */
 	/* divx4 & 5
@@ -75,11 +73,10 @@ bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 	PutBits(&ld, 0, 8);		// profile = reserved
 	PutBits(&ld, 0x1b2, 32);	// startcode (user data)
 	PutBits(&ld, 0x53545443, 32);	// STTC - an embedded ST timecode from an avi file
-	PutBits(&ld, usecPerFrame, 32);
-	// microseconds per frame
+	PutBits(&ld, usecPerFrame, 32); // microseconds per frame
 	FlushBits(&ld);
 
-	FakeHeaderLength = (ld.Ptr - (FakeHeaders));
+	FakeHeaderLength = (ld.Ptr - FakeHeaders);
 
 	struct iovec iov[4];
 	int ic = 0;

@@ -17,18 +17,12 @@ extern cVideo *videoDecoder;
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
 {
-	const char *aPLAYMODE[] = {
-		"PLAYMODE_TS",
-		"PLAYMODE_FILE"
-	};
-
 	if (PlayMode != PLAYMODE_TS) {
 		audioDecoder->closeDevice();
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 	}
 
-	printf("%s:%s - PlayMode=%s\n", __FILE__, __func__, aPLAYMODE[PlayMode]);
 	pm = PlayMode;
 	fn_ts = "";
 	fn_xml = "";
@@ -39,95 +33,73 @@ bool cPlayback::Open(playmode_t PlayMode)
 	return 0;
 }
 
-//Used by Fileplay
 void cPlayback::Close(void)
 {
-	printf("%s:%s\n", __FILE__, __func__);
+	printf("%s %s %d\n", __FILE__, __func__, __LINE__);
 
-//Dagobert: movieplayer does not call stop, it calls close ;)
+	//Dagobert: movieplayer does not call stop, it calls close ;)
 	Stop();
-	if (decoders_closed)
-	{
+	if (decoders_closed) {
 		audioDecoder->openDevice();
 		videoDecoder->openDevice();
 		decoders_closed = false;
 	}
 }
 
-//Used by Fileplay
 bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, unsigned int)
 {
 	bool ret = false;
 	bool isHTTP = false;
 	no_probe = false;
 
-	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d, no_probe=%d\n",
-		__FILE__, __func__, filename, vpid, vtype, apid, ac3, no_probe);
+	fprintf(stderr, "%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n", __FILE__, __func__, filename, vpid, vtype, apid, ac3);
 
 	init_jump = -1;
 
-	//try to open file
-	if(player && player->Open(filename, no_probe)) {
-		if (pm != PLAYMODE_TS) {
-			player->output.Open();
-			
-			SetAPid(apid, 0);
-			ret = player->Play();
+	std::string file;
+	if (*filename == '/')
+		file = "file://";
+	file += filename;
+
+	if (file.substr(0, 7) == "file://") {
+		if (file.substr(file.length() - 3) ==  ".ts") {
+			fn_xml = file.substr(7, file.length() - 2);
+			fn_xml += "xml";
+			no_probe = true;
 		}
-	}
+	} else
+		isHTTP = true;
 
-/* konfetti: in case of upnp playing mp4 often leads to a 
- * paused playback but data is already injected which leads
- * to errors ... 
- * and I don't see any sense of pausing direct after starting
- * with the exception of timeshift. but this should be handled
- * outside this lib or with another function!
- */
-	if (pm != PLAYMODE_TS) {
-		if ((ret) && (!isHTTP)) {
-			//pause playback in case of timeshift
-			//FIXME: no picture on tv
-			if (!player->Pause()) {
-			      ret = false;
-			      printf("failed to pause playback\n");
-			} else
-				playing = true;
-		} else
-			playing = true;
-	}
-		
-	printf("%s:%s - return=%d\n", __FILE__, __func__, ret);
-
-	fn_ts = std::string(filename);
-	if (fn_ts.length() > 3 && fn_ts.rfind(".ts") == fn_ts.length() - 3) {
-		fn_xml = fn_ts.substr(0, fn_ts.length() - 3) + ".xml";
-		no_probe = true;
-	}
-
-	if (pm == PLAYMODE_TS) {
-		struct stat s;
-		if (!stat(filename, &s))
-			last_size = s.st_size;
-		if (player) {
+	if (player->Open(file.c_str(), no_probe)) {
+		if (pm == PLAYMODE_TS) {
+			struct stat s;
+			if (!stat(file.c_str(), &s))
+				last_size = s.st_size;
 			ret = true;
 			videoDecoder->Stop(false);
 			audioDecoder->Stop();
+		} else {
+			playing = true;
+			player->output.Open();
+			if (apid)
+				SetAPid(apid, 0);
+			ret = player->Play();
+			if (ret && !isHTTP)
+				playing = ret = player->Pause();
 		}
 	}
 	return ret;
 }
 
-//Used by Fileplay
 bool cPlayback::Stop(void)
 {
 	printf("%s:%s playing %d\n", __FILE__, __func__, playing);
-	//if(playing==false) return false;
 
 	player->Stop();
 	player->output.Close();
 	player->Close();
 
-	playing=false;
+	playing = false;
 	return true;
 }
 
@@ -150,8 +122,7 @@ bool cPlayback::SetSpeed(int speed)
 {
 	printf("%s:%s playing %d speed %d\n", __FILE__, __func__, playing, speed);
 
-	if (! decoders_closed)
-	{
+	if (!decoders_closed) {
 		audioDecoder->closeDevice();
 		videoDecoder->closeDevice();
 		decoders_closed = true;
@@ -160,45 +131,38 @@ bool cPlayback::SetSpeed(int speed)
 		playing = player->Play();
 	}
 
-	if(playing==false) 
+	if(!playing)
 	   return false;
-	
-	int result = 0;
+
+	bool res = true;
 		
 	nPlaybackSpeed = speed;
 
 	if (speed > 1) {
 		/* direction switch ? */
-		if (player->isBackWard) {
-			result = player->FastBackward(0);
-		}
-		result = player->FastForward(speed);
+		if (player->isBackWard)
+			player->FastBackward(0);
+		res = player->FastForward(speed);
 	} else if (speed < 0) {
-	/* direction switch ? */
-		if (player->isForwarding) {
-			result = player->Continue();
-		}
-		result = player->FastBackward(speed);
+		/* direction switch ? */
+		if (player->isForwarding)
+			player->Continue();
+		res = player->FastBackward(speed);
 	} else if (speed == 0) {
-	/* konfetti: hmmm accessing the member isn't very proper */
+		/* konfetti: hmmm accessing the member isn't very proper */
 		if ((player->isForwarding) || (!player->isBackWard))
-			player->Pause();
-		else {
-			player->FastForward(0);
-		}
-	} else {
-		result = player->Continue();
+			/* res = */ player->Pause();
+		else
+			/* res = */ player->FastForward(0);
+	} else /* speed == 1 */ {
+		res = player->Continue();
 	}
 
 	if (init_jump > -1) {
 		SetPosition(init_jump);
 		init_jump = -1;
 	}
-	if (!result) {
-		printf("returning false\n");
-		return false;
-	}
-	return true;
+	return res;
 }
 
 bool cPlayback::GetSpeed(int &speed) const
@@ -221,16 +185,13 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	 * by comparing the mtime with the mtime of the xml file */
 	if (pm == PLAYMODE_TS) {
 		struct stat s;
-		if (!stat(fn_ts.c_str(), &s))
-		{
-			if (! playing || last_size != s.st_size)
-			{
+		if (!stat(fn_ts.c_str(), &s)) {
+			if (!playing || last_size != s.st_size) {
 				last_size = s.st_size;
 				time_t curr_time = s.st_mtime;
-				if (!stat(fn_xml.c_str(), &s))
-				{
+				if (!stat(fn_xml.c_str(), &s)) {
 					duration = (curr_time - s.st_mtime) * 1000;
-					if (! playing)
+					if (!playing)
 						return true;
 					got_duration = true;
 				}
@@ -238,7 +199,8 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		}
 	}
 
-	if(playing==false) return false;
+	if (!playing)
+		return false;
 
 	if (!player->isPlaying) {
 		printf("cPlayback::%s !!!!EOF!!!! < -1\n", __func__);
@@ -263,19 +225,17 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	player->GetDuration(length);
 
-	if(length <= 0) {
+	if(length <= 0)
 		duration = duration+1000;
-	} else {
+	else
 		duration = length*1000.0;
-	}
 
 	return true;
 }
 
 bool cPlayback::SetPosition(int position, bool absolute)
 {
-	if (playing == false)
-	{
+	if (!playing) {
 		/* the calling sequence is:
 		 * Start()       - paused
 		 * SetPosition() - which fails if not running
@@ -359,7 +319,7 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 
 cPlayback::cPlayback(int num __attribute__((unused)))
 {
-	playing=false;
+	playing = false;
 	decoders_closed = false;
 	player = new Player();
 }

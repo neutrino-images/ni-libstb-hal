@@ -128,6 +128,7 @@ bool Output::Play()
 
 	if (videoStream && videofd > -1) {
 		videoWriter = Writer::GetWriter(videoStream->codec->codec_id, videoStream->codec->codec_type);
+		videoWriter->Init();
 		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(videoStream->codec->codec_id))
 		||  dioctl(videofd, VIDEO_PLAY, NULL))
 			ret = false;
@@ -135,6 +136,7 @@ bool Output::Play()
 
 	if (audioStream && audiofd > -1) {
 		audioWriter = Writer::GetWriter(audioStream->codec->codec_id, audioStream->codec->codec_type);
+		audioWriter->Init();
 		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioWriter->GetAudioEncoding(audioStream->codec->codec_id))
 		||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;

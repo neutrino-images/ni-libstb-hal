@@ -191,8 +191,8 @@ bool Input::Play()
 		Track *_teletextTrack = teletextTrack;
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
-			int64_t pts = calcPts(avfc, _videoTrack->stream, packet.pts);
-			if (!player->output.Write(avfc, _videoTrack->stream, &packet, pts)) {
+			int64_t pts = calcPts(avfc, stream, packet.pts);
+			if (!player->output.Write(avfc, stream, &packet, pts)) {
 				if (warnVideoWrite)
 					warnVideoWrite--;
 				else {
@@ -203,11 +203,11 @@ bool Input::Play()
 		} else if (_audioTrack && (_audioTrack->stream == stream)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
-				player->output.Write(avfc, _audioTrack->stream, NULL, 0);
+				player->output.Write(avfc, stream, NULL, 0);
 			}
 			if (!player->isBackWard) {
-				int64_t pts = calcPts(avfc, _audioTrack->stream, packet.pts);
-				if (!player->output.Write(avfc, _audioTrack->stream, &packet, pts)) {
+				int64_t pts = calcPts(avfc, stream, packet.pts);
+				if (!player->output.Write(avfc, stream, &packet, pts)) {
 					if (warnAudioWrite)
 						warnAudioWrite--;
 					else {
@@ -217,23 +217,23 @@ bool Input::Play()
 				}
 			}
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
-			if (((AVStream *) _subtitleTrack->stream)->codec->codec) {
+			if (stream->codec->codec) {
 				AVSubtitle sub;
 				memset(&sub, 0, sizeof(sub));
 				int got_sub_ptr = 0;
 
-				err = avcodec_decode_subtitle2(((AVStream *) _subtitleTrack->stream)->codec, &sub, &got_sub_ptr, &packet);
+				err = avcodec_decode_subtitle2(stream->codec, &sub, &got_sub_ptr, &packet);
 				averror(err, avcodec_decode_subtitle2);
 
 				if (got_sub_ptr && sub.num_rects > 0) {
 					switch (sub.rects[0]->type) {
 						case SUBTITLE_TEXT: // FIXME?
 						case SUBTITLE_ASS:
-							dvbsub_ass_write(_subtitleTrack->stream->codec, &sub, _subtitleTrack->stream->id);
+							dvbsub_ass_write(stream->codec, &sub, stream->id);
 							break;
 						case SUBTITLE_BITMAP: {
-							int64_t pts = calcPts(avfc, _subtitleTrack->stream, packet.pts);
-							dvbsub_write(&sub, calcPts(avfc, _subtitleTrack->stream, pts));
+							int64_t pts = calcPts(avfc, stream, packet.pts);
+							dvbsub_write(&sub, calcPts(avfc, stream, pts));
 							// avsubtitle_free() will be called by handler
 							break;
 						}
@@ -243,7 +243,7 @@ bool Input::Play()
 				}
 			}
 		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
-			teletext_write(_teletextTrack->stream->id, packet.data, packet.size);
+			teletext_write(stream->id, packet.data, packet.size);
 		}
 
 		av_free_packet(&packet);
@@ -439,7 +439,7 @@ bool Input::UpdateTracks()
 		track.avfc = avfc;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
-		track.Name = lang ? lang->value : "?";
+		track.Name = lang ? lang->value : "";
 		track.pid = stream->id;
 		if (stream->duration == AV_NOPTS_VALUE)
 			track.duration = (double) avfc->duration / 1000.0;
@@ -509,14 +509,14 @@ bool Input::UpdateTracks()
 								stream->codec->codec = NULL;
 						}
 					}
-				if (stream->codec->codec)
-					player->manager.addSubtitleTrack(track);
+					if (stream->codec->codec)
+						player->manager.addSubtitleTrack(track);
+				}
+				break;
 			}
-			break;
-		}
-		default:
-			fprintf(stderr, "not handled or unknown codec_type %d\n", stream->codec->codec_type);
-			break;
+			default:
+				fprintf(stderr, "not handled or unknown codec_type %d\n", stream->codec->codec_type);
+				break;
 		}
 	}
 

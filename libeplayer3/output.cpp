@@ -87,7 +87,7 @@ bool Output::Open()
 	if (audiofd < 0)
 		audiofd = open(AUDIODEV, O_RDWR);
 
-	if (audiofd < 0 && videofd > -1) {
+	if (audiofd < 0) {
 		close(videofd);
 		videofd = -1;
 		return false;

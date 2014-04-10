@@ -90,6 +90,8 @@ bool Input::Play()
 
 	int64_t showtime = 0, bofcount = 0;
 	bool restart_audio_resampling = false;
+	int warnAudioWrite = 0;
+	int warnVideoWrite = 0;
 
 	while (player->isPlaying && !player->abortRequested) {
 
@@ -190,8 +192,14 @@ bool Input::Play()
 
 		if (_videoTrack && (_videoTrack->pid == pid)) {
 			int64_t pts = calcPts(avfc, _videoTrack->stream, packet.pts);
-			if (!player->output.Write(avfc, _videoTrack->stream, &packet, pts))
-				fprintf(stderr, "writing data to video device failed\n");
+			if (!player->output.Write(avfc, _videoTrack->stream, &packet, pts)) {
+				if (warnVideoWrite)
+					warnVideoWrite--;
+				else {
+					fprintf(stderr, "writing data to %s device failed\n", "video");
+					warnVideoWrite = 100;
+				}
+			}
 		} else if (_audioTrack && (_audioTrack->pid == pid)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
@@ -199,8 +207,14 @@ bool Input::Play()
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(avfc, _audioTrack->stream, packet.pts);
-				if (!player->output.Write(avfc, _audioTrack->stream, &packet, pts))
-					fprintf(stderr, "writing data to audio device failed\n");
+				if (!player->output.Write(avfc, _audioTrack->stream, &packet, pts)) {
+					if (warnAudioWrite)
+						warnAudioWrite--;
+					else {
+						fprintf(stderr, "writing data to %s device failed\n", "audio");
+						warnAudioWrite = 100;
+					}
+				}
 			}
 		} else if (_subtitleTrack && (_subtitleTrack->pid == pid)) {
 			if (((AVStream *) _subtitleTrack->stream)->codec->codec) {
@@ -300,20 +314,20 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 		return false;
 	}
 
-	AVPacket avpkt;
-	av_init_packet(&avpkt);
+	AVPacket packet;
+	av_init_packet(&packet);
 
 	if (c->subtitle_header)
 		fprintf(stderr, "%s\n", c->subtitle_header);
 
-	while (av_read_frame(subavfc, &avpkt) > -1) {
+	while (av_read_frame(subavfc, &packet) > -1) {
 		AVSubtitle sub;
 		memset(&sub, 0, sizeof(sub));
 		int got_sub = 0;
-		avcodec_decode_subtitle2(c, &sub, &got_sub, &avpkt);
+		avcodec_decode_subtitle2(c, &sub, &got_sub, &packet);
 		if (got_sub)
 			dvbsub_ass_write(c, &sub, pid);
-		av_free_packet(&avpkt);
+		av_free_packet(&packet);
 	}
 	avformat_close_input(&subavfc);
 	avformat_free_context(subavfc);
@@ -431,7 +445,6 @@ bool Input::UpdateTracks()
 			track.duration = (double) avfc->duration / 1000.0;
 		else
 			track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
-
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {

@@ -37,7 +37,7 @@
 
 #define WMV3_PRIVATE_DATA_LENGTH	4
 
-static const unsigned char Metadata[] = {
+static const uint8_t Metadata[] = {
 	0x00, 0x00, 0x00, 0xc5,
 	0x04, 0x00, 0x00, 0x00,
 #define METADATA_STRUCT_C_START			8
@@ -75,8 +75,8 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 
 	if (initialHeader) {
 #define PES_MIN_HEADER_SIZE 9
-		unsigned char PesPacket[PES_MIN_HEADER_SIZE + 128];
-		unsigned char *PesPtr;
+		uint8_t PesPacket[PES_MIN_HEADER_SIZE + 128];
+		uint8_t *PesPtr;
 		unsigned int MetadataLength;
 		unsigned int usecPerFrame = ((10000000.0 / av_q2d(stream->r_frame_rate)));
 
@@ -85,7 +85,7 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		memcpy(PesPtr, Metadata, sizeof(Metadata));
 		PesPtr += METADATA_STRUCT_C_START;
 
-		unsigned char privateData[WMV3_PRIVATE_DATA_LENGTH] = { 0 };
+		uint8_t privateData[WMV3_PRIVATE_DATA_LENGTH] = { 0 };
 		memcpy(privateData, stream->codec->extradata, stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : stream->codec->extradata_size);
 
 		memcpy(PesPtr, privateData, WMV3_PRIVATE_DATA_LENGTH);
@@ -126,7 +126,7 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 
 			int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
 
-			unsigned char PesHeader[PES_MAX_HEADER_SIZE] = { 0 };
+			uint8_t PesHeader[PES_MAX_HEADER_SIZE] = { 0 };
 			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, pts, 0);
 
 			if (insertSampleHeader) {

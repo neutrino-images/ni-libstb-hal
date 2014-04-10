@@ -42,7 +42,7 @@ bool WriterAC3::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream
 	if (fd < 0 || !packet)
 		return false;
 
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	struct iovec iov[2];
 
 	iov[0].iov_base = PesHeader;

@@ -40,7 +40,7 @@ bool WriterH263::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* strea
 {
 	if (fd < 0 || !packet)
 		return false;
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
 	int HeaderLength = InsertPesHeader(PesHeader, packet->size, H263_VIDEO_PES_START_CODE, pts, 0);
 

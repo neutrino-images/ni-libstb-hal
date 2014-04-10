@@ -45,16 +45,16 @@ bool WriterDTS::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream
 	if (fd < 0 || !packet)
 		return false;
 
-	unsigned char PesHeader[PES_AUDIO_HEADER_SIZE];
+	uint8_t PesHeader[PES_AUDIO_HEADER_SIZE];
 
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
-	unsigned char Data[packet->size];
+	uint8_t Data[packet->size];
 	memcpy(Data, packet->data, packet->size);
 
 	/* 16-bit byte swap all data before injecting it */
 	for (i = 0; i < packet->size; i += 2) {
-		unsigned char Tmp = Data[i];
+		uint8_t Tmp = Data[i];
 		Data[i] = Data[i + 1];
 		Data[i + 1] = Tmp;
 	}

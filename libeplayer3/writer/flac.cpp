@@ -40,9 +40,9 @@ class WriterFLAC : public Writer
 bool WriterFLAC::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet)
-		return -1;
+		return false;
 
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	struct iovec iov[2];
 
 	iov[0].iov_base = PesHeader;

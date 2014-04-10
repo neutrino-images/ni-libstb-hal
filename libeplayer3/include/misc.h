@@ -3,11 +3,13 @@
 
 /* some useful things needed by many files ... */
 
+#include <stdint.h>
+
 #define INVALID_PTS_VALUE	0x200000000ll
 
 struct BitPacker_t
 {
-	unsigned char *Ptr;		/* write pointer */
+	uint8_t *Ptr;		/* write pointer */
 	unsigned int BitBuffer;	/* bitreader shifter */
 	int Remaining;		/* number of remaining in the shifter */
 };

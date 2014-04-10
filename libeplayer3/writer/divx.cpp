@@ -53,10 +53,10 @@ bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 	if (fd < 0 || !packet)
 		return false;
 
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-	unsigned char FakeHeaders[64];	// 64bytes should be enough to make the fake headers
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t FakeHeaders[64];	// 64bytes should be enough to make the fake headers
 	unsigned int FakeHeaderLength;
-	unsigned char Version = 5;
+	uint8_t Version = 5;
 	unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
 	unsigned int usecPerFrame = 41708;	/* Hellmaster1024: default value */
 	BitPacker_t ld = { FakeHeaders, 0, 32 };

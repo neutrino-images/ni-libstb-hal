@@ -40,7 +40,7 @@ extern "C" {
 }
 
 // reference: search for TypeLpcmDVDAudio in player/frame_parser/frame_parser_audio_lpcm.cpp
-static const unsigned char clpcm_prv[14] = {
+static const uint8_t clpcm_prv[14] = {
 	0xA0,	//sub_stream_id
 	0, 0,	//resvd and UPC_EAN_ISRC stuff, unused
 	0x0A,	//private header length
@@ -59,8 +59,8 @@ class WriterPCM : public Writer
 	private:
 		unsigned int SubFrameLen;
 		unsigned int SubFramesPerPES;
-		unsigned char lpcm_prv[14];
-		unsigned char breakBuffer[8192];
+		uint8_t lpcm_prv[14];
+		uint8_t breakBuffer[8192];
 		unsigned int breakBufferFillSize;
 		int uNoOfChannels;
 		int uSampleRate;
@@ -137,7 +137,7 @@ bool WriterPCM::prepareClipPlay()
 			break;
 		default:
 			printf("inappropriate bits per sample (%d) - must be 16 or 24\n", uBitsPerSample);
-		return false;
+			return false;
 	}
 
 	return true;
@@ -145,7 +145,7 @@ bool WriterPCM::prepareClipPlay()
 
 int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 {
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
 	if (initialHeader) {
 		initialHeader = false;
@@ -153,25 +153,25 @@ int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 	}
 
 	unsigned int n;
-	unsigned char *injectBuffer = (unsigned char *) malloc(SubFrameLen);
+	uint8_t *injectBuffer = (uint8_t *) malloc(SubFrameLen);
 	unsigned int pos;
 
 	for (pos = 0; pos < size;) {
 	//printf("PCM %s - Position=%d\n", __FUNCTION__, pos);
 	if ((size - pos) < SubFrameLen) {
 			breakBufferFillSize = size - pos;
-			memcpy(breakBuffer, &data[pos], sizeof(unsigned char) * breakBufferFillSize);
+			memcpy(breakBuffer, &data[pos], sizeof(uint8_t) * breakBufferFillSize);
 			//printf("PCM %s - Unplayed=%d\n", __FUNCTION__, breakBufferFillSize);
 			break;
 		}
 		//get first PES's worth
 		if (breakBufferFillSize > 0) {
-			memcpy(injectBuffer, breakBuffer, sizeof(unsigned char) * breakBufferFillSize);
-			memcpy(&injectBuffer[breakBufferFillSize], &data[pos], sizeof(unsigned char) * (SubFrameLen - breakBufferFillSize));
+			memcpy(injectBuffer, breakBuffer, sizeof(uint8_t) * breakBufferFillSize);
+			memcpy(&injectBuffer[breakBufferFillSize], &data[pos], sizeof(uint8_t) * (SubFrameLen - breakBufferFillSize));
 			pos += (SubFrameLen - breakBufferFillSize);
 			breakBufferFillSize = 0;
 		} else {
-			memcpy(injectBuffer, &data[pos], sizeof(unsigned char) * SubFrameLen);
+			memcpy(injectBuffer, &data[pos], sizeof(uint8_t) * SubFrameLen);
 			pos += SubFrameLen;
 		}
 
@@ -186,8 +186,7 @@ int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 		//write the PCM data
 		if (uBitsPerSample == 16) {
 			for (n = 0; n < SubFrameLen; n += 2) {
-				unsigned char tmp;
-				tmp = injectBuffer[n];
+				uint8_t tmp = injectBuffer[n];
 				injectBuffer[n] = injectBuffer[n + 1];
 				injectBuffer[n + 1] = tmp;
 			}
@@ -196,7 +195,7 @@ int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 			//	A1c A1b A1a-B1c B1b B1a-A2c A2b A2a-B2c B2b B2a
 			// to A1a A1b B1a B1b.A2a A2b B2a B2b-A1c B1c A2c B2c
 			for (n = 0; n < SubFrameLen; n += 12) {
-				unsigned char t, *p = &injectBuffer[n];
+				uint8_t t, *p = &injectBuffer[n];
 				t = p[0];
 				p[0] = p[2];
 				p[2] = p[5];

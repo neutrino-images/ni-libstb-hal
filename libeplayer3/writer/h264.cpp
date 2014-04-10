@@ -37,16 +37,16 @@
 #define CONTAINER_PARAMETERS_VERSION			0x00
 
 typedef struct avcC_s {
-	unsigned char Version;			// configurationVersion
-	unsigned char Profile;			// AVCProfileIndication
-	unsigned char Compatibility;		// profile_compatibility
-	unsigned char Level;			// AVCLevelIndication
-	unsigned char NalLengthMinusOne;	// held in bottom two bits
-	unsigned char NumParamSets;		// held in bottom 5 bits
-	unsigned char Params[1];		// {length,params}{length,params}...sequence then picture
+	uint8_t Version;			// configurationVersion
+	uint8_t Profile;			// AVCProfileIndication
+	uint8_t Compatibility;		// profile_compatibility
+	uint8_t Level;			// AVCLevelIndication
+	uint8_t NalLengthMinusOne;	// held in bottom two bits
+	uint8_t NumParamSets;		// held in bottom 5 bits
+	uint8_t Params[1];		// {length,params}{length,params}...sequence then picture
 } avcC_t;
 
-const unsigned char Head[] = { 0, 0, 0, 1 };
+const uint8_t Head[] = { 0, 0, 0, 1 };
 
 class WriterH264 : public Writer
 {
@@ -70,7 +70,7 @@ bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 {
 	if (fd < 0 || !packet)
 		return false;
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	unsigned int TimeDelta;
 	unsigned int TimeScale;
 	int len = 0;
@@ -122,7 +122,7 @@ bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 
 		ParametersLength = 0;
 
-		unsigned char HeaderData[19];
+		uint8_t HeaderData[19];
 		HeaderData[ParametersLength++] = 0x00;	// Start code
 		HeaderData[ParametersLength++] = 0x00;
 		HeaderData[ParametersLength++] = 0x01;
@@ -212,7 +212,7 @@ bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 
 	do {
 		unsigned int NalLength;
-		unsigned char NalData[4];
+		uint8_t NalData[4];
 		int NalPresent = 1;
 
 		memcpy(NalData, packet->data + VideoPosition, NalLengthBytes);

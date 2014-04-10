@@ -44,7 +44,7 @@ bool WriterMPEG2::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stre
 	if (fd < 0 || !packet)
 		return false;
 
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
 	for (int Position = 0; Position < packet->size; ) {
 		int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);

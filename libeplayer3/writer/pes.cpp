@@ -30,7 +30,7 @@
 #include "misc.h"
 #include "pes.h"
 
-int InsertVideoPrivateDataHeader(unsigned char *data, int payload_size)
+int InsertVideoPrivateDataHeader(uint8_t *data, int payload_size)
 {
 	BitPacker_t ld2 = { data, 0, 32 };
 	int i;
@@ -49,7 +49,7 @@ int InsertVideoPrivateDataHeader(unsigned char *data, int payload_size)
 
 }
 
-int InsertPesHeader(uint8_t *data, int size, unsigned char stream_id, int64_t pts, int pic_start_code)
+int InsertPesHeader(uint8_t *data, int size, uint8_t stream_id, int64_t pts, int pic_start_code)
 {
 	BitPacker_t ld2 = { data, 0, 32 };
 

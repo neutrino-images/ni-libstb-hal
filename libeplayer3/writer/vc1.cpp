@@ -49,7 +49,7 @@ class WriterVC1 : public Writer
 {
 	private:
 		bool initialHeader;
-		unsigned char FrameHeaderSeen;
+		uint8_t FrameHeaderSeen;
 		double frameRate;
 	public:
 		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
@@ -71,11 +71,11 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		initialHeader = false;
 		FrameHeaderSeen = false;
 
-		const unsigned char SequenceLayerStartCode[] =
+		const uint8_t SequenceLayerStartCode[] =
 			{ 0x00, 0x00, 0x01, VC1_SEQUENCE_LAYER_METADATA_START_CODE };
 
 
-		const unsigned char Metadata[] = {
+		const uint8_t Metadata[] = {
 			0x00, 0x00, 0x00, 0xc5,
 			0x04, 0x00, 0x00, 0x00,
 			0xc0, 0x00, 0x00, 0x00,	/* Struct C set for for advanced profile */
@@ -87,9 +87,9 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 			0x00, 0x00, 0x00, 0x00
 		};
 
-		unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-		unsigned char PesPayload[128];
-		unsigned char *PesPtr;
+		uint8_t PesHeader[PES_MAX_HEADER_SIZE];
+		uint8_t PesPayload[128];
+		uint8_t *PesPtr;
 		unsigned int usecPerFrame = ((10000000.0 / av_q2d(stream->r_frame_rate)));
 		struct iovec iov[2];
 
@@ -142,15 +142,15 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 
 	if (packet->size > 0) {
 		int Position = 0;
-		unsigned char insertSampleHeader = 1;
+		bool insertSampleHeader = true;
 
 		while (Position < packet->size) {
 			int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
-			unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+			uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, pts, 0);
 
 			if (insertSampleHeader) {
-				const unsigned char Vc1FrameStartCode[] = { 0, 0, 1, VC1_FRAME_START_CODE };
+				const uint8_t Vc1FrameStartCode[] = { 0, 0, 1, VC1_FRAME_START_CODE };
 
 				if (!FrameHeaderSeen && (packet->size > 3) && (memcmp(packet->data, Vc1FrameStartCode, 4) == 0))
 					FrameHeaderSeen = true;
@@ -158,7 +158,7 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 					memcpy(&PesHeader[HeaderLength], Vc1FrameStartCode, sizeof(Vc1FrameStartCode));
 					HeaderLength += sizeof(Vc1FrameStartCode);
 				}
-				insertSampleHeader = 0;
+				insertSampleHeader = false;
 			}
 
 			struct iovec iov[2];

@@ -483,21 +483,18 @@ bool Input::UpdateTracks()
 			}
 			case AVMEDIA_TYPE_SUBTITLE: {
 				if (stream->codec->codec_id == AV_CODEC_ID_DVB_TELETEXT) {
-					int i = 0;
-					AVDictionaryEntry *t = NULL;
-					do {
-						char tmp[30];
-						snprintf(tmp, sizeof(tmp), "teletext_%d", i);
-						t = av_dict_get(stream->metadata, tmp, NULL, 0);
-						if (t) {
-							char language[strlen(t->value)];
-							if (4 == sscanf(t->value, "%*d %s %d %d %d", language, &track.type, &track.mag, &track.page)) {
-								track.Name = language;
-								player->manager.addTeletextTrack(track);
-							}
+					std::string l = lang ? lang->value : "";
+					uint8_t *data = stream->codec->extradata;
+					int size = stream->codec->extradata_size;
+					if (size > 0 && 2 * size - 1 == l.length()) {
+						for (unsigned i = 0; i < size; i += 2) {
+							track.Name = l.substr(i * 2, 3);
+							track.type = data[i] >> 3;
+							track.mag = data[i] & 7;
+							track.page = data[i + 1];
+							player->manager.addTeletextTrack(track);
 						}
-						i++;
-					} while (t);
+					}
 				} else {
 					if (!stream->codec->codec) {
 						stream->codec->codec = avcodec_find_decoder(stream->codec->codec_id);

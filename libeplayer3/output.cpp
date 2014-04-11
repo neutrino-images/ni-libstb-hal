@@ -198,15 +198,11 @@ bool Output::Continue()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videofd > -1) {
-		if (dioctl(videofd, VIDEO_CONTINUE, NULL))
-			ret = false;
-	}
+	if (videofd > -1 && dioctl(videofd, VIDEO_CONTINUE, NULL))
+		ret = false;
 
-	if (audiofd > -1) {
-		if (dioctl(audiofd, AUDIO_CONTINUE, NULL))
-			ret = false;
-	}
+	if (audiofd > -1 && dioctl(audiofd, AUDIO_CONTINUE, NULL))
+		ret = false;
 
 	return ret;
 }

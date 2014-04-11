@@ -83,10 +83,7 @@ bool Player::Open(const char *Url, bool _noprobe)
 		return false;
 	}
 
-	if (!input.Init(url.c_str()))
-		return false;
-
-	return true;
+	return input.Init(url.c_str());
 }
 
 bool Player::Close()
@@ -243,7 +240,7 @@ bool Player::FastForward(int speed)
 		isForwarding = 1;
 		Speed = speed;
 		output.FastForward(speed);
-		} else {
+	} else {
 		fprintf(stderr,"fast forward not possible\n");
 		ret = false;
 	}
@@ -258,27 +255,27 @@ bool Player::FastBackward(int speed)
 	/* Audio only reverse play not supported */
 	if (input.videoTrack && !isForwarding && (!isPaused || isPlaying)) {
 
-	if ((speed > 0) || (speed < cMaxSpeed_fr)) {
-		fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
-		return false;
-	}
+		if ((speed > 0) || (speed < cMaxSpeed_fr)) {
+			fprintf(stderr, "speed %d out of range (0 - %d) \n", speed, cMaxSpeed_fr);
+			return false;
+		}
 
-	if (speed == 0) {
-		isBackWard = false;
-		Speed = 0;	/* reverse end */
-	} else {
-		Speed = speed;
-		isBackWard = true;
-	}
+		if (speed == 0) {
+			isBackWard = false;
+			Speed = 0;	/* reverse end */
+		} else {
+			Speed = speed;
+			isBackWard = true;
+		}
 
-	output.Clear();
+		output.Clear();
 #if 0
-	if (output->Command(player, OUTPUT_REVERSE, NULL) < 0) {
-		fprintf(stderr,"OUTPUT_REVERSE failed\n");
-		isBackWard = false;
-		Speed = 1;
-		ret = false;
-	}
+		if (output->Command(player, OUTPUT_REVERSE, NULL) < 0) {
+			fprintf(stderr,"OUTPUT_REVERSE failed\n");
+			isBackWard = false;
+			Speed = 1;
+			ret = false;
+		}
 #endif
 	} else {
 		fprintf(stderr,"fast backward not possible\n");
@@ -393,31 +390,23 @@ void Player::RequestAbort()
 int Player::GetVideoPid()
 {
 	Track *track = input.videoTrack;
-	if (track)
-		return track->pid;
-	return -1;
+	return track ? track->pid : 0;
 }
 
 int Player::GetAudioPid()
 {
 	Track *track = input.audioTrack;
-	if (track)
-		return track->pid;
-	return -1;
+	return track ? track->pid : 0;
 }
 
 int Player::GetSubtitlePid()
 {
 	Track *track = input.subtitleTrack;
-	if (track)
-		return track->pid;
-	return -1;
+	return track ? track->pid : 0;
 }
 
 int Player::GetTeletextPid()
 {
 	Track *track = input.teletextTrack;
-	if (track)
-		return track->pid;
-	return -1;
+	return track ? track->pid : 0;
 }

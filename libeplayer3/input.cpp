@@ -486,7 +486,7 @@ bool Input::UpdateTracks()
 					std::string l = lang ? lang->value : "";
 					uint8_t *data = stream->codec->extradata;
 					int size = stream->codec->extradata_size;
-					if (size > 0 && 2 * size - 1 == l.length())
+					if (size > 0 && 2 * size - 1 == (int) l.length())
 						for (int i = 0; i < size; i += 2) {
 							track.Name = l.substr(i * 2, 3);
 							track.type = data[i] >> 3;

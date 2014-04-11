@@ -63,7 +63,8 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, un
 
 	if (file.substr(0, 7) == "file://") {
 		if (file.substr(file.length() - 3) ==  ".ts") {
-			fn_xml = file.substr(7, file.length() - 2);
+			fn_ts = file.substr(7);
+			fn_xml = file.substr(7, file.length() - 9);
 			fn_xml += "xml";
 			no_probe = true;
 		}

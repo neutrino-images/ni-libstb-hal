@@ -327,8 +327,7 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 
 cPlayback::~cPlayback()
 {
-	if(player)
-		delete player;
+	delete player;
 }
 
 void cPlayback::RequestAbort() {
@@ -343,9 +342,7 @@ bool cPlayback::IsPlaying() {
 }
 
 uint64_t cPlayback::GetReadCount() {
-	if (player)
-		return player->readCount;
-	return 0;
+	return player->readCount;
 }
 
 int cPlayback::GetAPid(void)

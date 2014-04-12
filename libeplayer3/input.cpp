@@ -455,7 +455,7 @@ bool Input::UpdateTracks()
 			}
 			case AVMEDIA_TYPE_AUDIO: {
 				switch(stream->codec->codec_id) {
-					case AUDIO_ENCODING_MPEG2:
+					case AV_CODEC_ID_MP2:
 						track.ac3flags = 9;
 						break;
 					case AV_CODEC_ID_MP3:

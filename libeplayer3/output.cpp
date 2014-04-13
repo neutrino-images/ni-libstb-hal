@@ -116,6 +116,9 @@ bool Output::Close()
 		audiofd = -1;
 	}
 
+	videoStream = NULL;
+	audioStream = NULL;
+
 	return true;
 }
 

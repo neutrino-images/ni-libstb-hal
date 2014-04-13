@@ -382,7 +382,7 @@ bool Input::Init(const char *filename)
 	avfc->flags = AVFMT_FLAG_GENPTS;
 	if (player->noprobe) {
 		avfc->max_analyze_duration = 1;
-		avfc->probesize = 8192;
+		avfc->probesize = 131072;
 	}
 
 	err = avformat_find_stream_info(avfc, NULL);

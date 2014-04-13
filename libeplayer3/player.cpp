@@ -88,8 +88,6 @@ bool Player::Open(const char *Url, bool _noprobe)
 
 bool Player::Close()
 {
-	bool ret = true;
-
 	isPaused = false;
 	isPlaying = false;
 	isForwarding = false;
@@ -98,7 +96,7 @@ bool Player::Close()
 	Speed = 0;
 	url.clear();
 
-	return ret;
+	return true;
 }
 
 bool Player::Play()

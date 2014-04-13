@@ -46,7 +46,7 @@ void cPlayback::Close(void)
 	}
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, unsigned int)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int)
 {
 	bool ret = false;
 	bool isHTTP = false;

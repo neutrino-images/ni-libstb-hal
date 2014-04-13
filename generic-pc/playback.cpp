@@ -13,7 +13,7 @@ void cPlayback::Close(void)
 {
 }
 
-bool cPlayback::Start(char * filename, int vpid, int vtype, int apid, bool ac3, int duration, bool /*noprobe*/)
+bool cPlayback::Start(char * filename, int vpid, int vtype, int apid, int ac3, int duration)
 {
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d duration=%i\n",
 		FILENAME, __func__, filename, vpid, vtype, apid, ac3, duration);
@@ -82,7 +82,7 @@ bool cPlayback::SetTeletextPid(int /*pid*/)
 	return true;
 }
 
-void cPlayback::FindAllTeletextsubtitlePids(int * /*pids*/, unsigned int *numpids, std::string * /*language*/)
+void cPlayback::FindAllTeletextsubtitlePids(int *, unsigned int *numpids, std::string *, int *, int *)
 {
 	*numpids = 0;
 }

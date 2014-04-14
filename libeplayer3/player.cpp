@@ -309,7 +309,7 @@ bool Player::SlowMotion(int repeats)
 	return false;
 }
 
-bool Player::Seek(float pos, bool absolute)
+bool Player::Seek(int64_t pos, bool absolute)
 {
 	output.Clear();
 	return input.Seek(pos, absolute);
@@ -326,7 +326,7 @@ bool Player::GetFrameCount(int64_t &frameCount)
 	return isPlaying && output.GetFrameCount(frameCount);
 }
 
-bool Player::GetDuration(double &duration)
+bool Player::GetDuration(int64_t &duration)
 {
 	duration = -1;
 	return isPlaying && input.GetDuration(duration);

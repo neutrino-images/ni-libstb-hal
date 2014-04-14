@@ -53,8 +53,8 @@ class Input
 		Track *teletextTrack;
 
 		int hasPlayThreadStarted;
-		float seek_sec_abs;
-		float seek_sec_rel;
+		int64_t seek_avts_abs;
+		int64_t seek_avts_rel;
 		bool isContainerRunning;
 		bool abortPlayback;
 
@@ -71,8 +71,8 @@ class Input
 		bool UpdateTracks();
 		bool Play();
 		bool Stop();
-		bool Seek(float sec, bool absolute);
-		bool GetDuration(double &duration);
+		bool Seek(int64_t sec, bool absolute);
+		bool GetDuration(int64_t &duration);
 		bool SwitchAudio(Track *track);
 		bool SwitchSubtitle(Track *track);
 		bool SwitchTeletext(Track *track);

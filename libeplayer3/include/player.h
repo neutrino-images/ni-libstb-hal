@@ -47,8 +47,8 @@ extern "C" {
 struct Chapter
 {
 	std::string title;
-	double start;
-	double end;
+	int64_t start;
+	int64_t end;
 };
 
 class Player {
@@ -97,7 +97,7 @@ class Player {
 
 		bool GetPts(int64_t &pts);
 		bool GetFrameCount(int64_t &framecount);
-		bool GetDuration(double &duration);
+		bool GetDuration(int64_t &duration);
 
 		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		bool SlowMotion(int repeats);
@@ -110,7 +110,7 @@ class Player {
 		bool Pause();
 		bool Continue();
 		bool Stop();
-		bool Seek(float pos, bool absolute);
+		bool Seek(int64_t pos, bool absolute);
 		void RequestAbort();
 		bool GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 

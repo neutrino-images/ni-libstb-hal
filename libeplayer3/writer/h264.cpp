@@ -77,7 +77,7 @@ bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 	int ic = 0;
 	struct iovec iov[128];
 
-	TimeDelta = 1000.0 * av_q2d(stream->r_frame_rate);	  /* rational to double */
+	TimeDelta = 1000.0 * stream->r_frame_rate.num / stream->r_frame_rate.den;
 	TimeScale = (TimeDelta < 23970) ? 1001 : 1000; /* fixme: revise this */
 
 	if ((packet->size > 3)

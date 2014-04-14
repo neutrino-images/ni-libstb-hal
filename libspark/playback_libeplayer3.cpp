@@ -222,14 +222,14 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (got_duration)
 		return true;
 
-	double length = 0;
+	int64_t length = 0;
 
 	player->GetDuration(length);
 
 	if(length <= 0)
-		duration = duration+1000;
+		duration = position + AV_TIME_BASE / 1000;
 	else
-		duration = length*1000.0;
+		duration = length * 1000 / AV_TIME_BASE;
 
 	return true;
 }
@@ -246,8 +246,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 		init_jump = position;
 		return false;
 	}
-	float pos = (position/1000.0);
-	player->Seek(pos, absolute);
+	player->Seek((int64_t)position * (AV_TIME_BASE / 1000), absolute);
 	return true;
 }
 

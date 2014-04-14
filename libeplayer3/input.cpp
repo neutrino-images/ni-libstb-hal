@@ -47,8 +47,8 @@ Input::Input()
 	teletextTrack = NULL;
 
 	hasPlayThreadStarted = 0;
-	seek_sec_abs = -1.0;
-	seek_sec_rel = 0.0;
+	seek_avts_abs = INT64_MIN;
+	seek_avts_rel = 0;
 	abortPlayback = false;
 }
 
@@ -67,7 +67,7 @@ int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
 
-	pts = 90000.0 * (double) pts * av_q2d(stream->time_base);
+	pts = 90000 * pts * stream->time_base.num / stream->time_base.den;
 	if (avfc->start_time != AV_NOPTS_VALUE)
 		pts -= 90000.0 * avfc->start_time / AV_TIME_BASE;
 
@@ -103,28 +103,30 @@ bool Input::Play()
 		}
 
 		int seek_target_flag = 0;
-		int64_t seek_target = INT64_MIN;
+		int64_t seek_target = INT64_MIN; // in AV_TIME_BASE units
 
-		if (seek_sec_rel != 0.0) {
+		if (seek_avts_rel) {
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
-				float br = (avfc->bit_rate) ? avfc->bit_rate / 8.0 : 180000.0;
-				seek_target_flag = AVSEEK_FLAG_BYTE;
-				seek_target = avio_tell(avfc->pb) + seek_sec_rel * br;
+				if (avfc->bit_rate) {
+					seek_target_flag = AVSEEK_FLAG_BYTE;
+					seek_target = avio_tell(avfc->pb) + seek_avts_rel * avfc->bit_rate / ( 8 * AV_TIME_BASE);
+				}
 			} else {
 				int64_t pts;
 				if(player->output.GetPts(pts))
-					seek_target = (pts * AV_TIME_BASE)/ 90000.0 + seek_sec_rel * AV_TIME_BASE;
+					seek_target = (pts * AV_TIME_BASE) / 90000 + seek_avts_rel;
 			}
-			seek_sec_rel = 0.0;
-		} else if (seek_sec_abs >= 0.0) {
+			seek_avts_rel = 0;
+		} else if (seek_avts_abs != INT64_MIN) {
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
-				float br = (avfc->bit_rate) ? avfc->bit_rate / 8.0 : 180000.0;
-				seek_target_flag = AVSEEK_FLAG_BYTE;
-				seek_target = seek_sec_abs * br;
+				if (avfc->bit_rate) {
+					seek_target_flag = AVSEEK_FLAG_BYTE;
+					seek_target = seek_avts_abs * avfc->bit_rate / (8 * AV_TIME_BASE);
+				}
 			} else {
-				seek_target = seek_sec_abs * AV_TIME_BASE;
+				seek_target = seek_avts_abs;
 			}
-			seek_sec_abs = -1.0;
+			seek_avts_abs = INT64_MIN;
 		} else if (player->isBackWard && av_gettime() >= showtime) {
 			player->output.ClearVideo();
 
@@ -137,15 +139,14 @@ bool Input::Play()
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
 				off_t pos = avio_tell(avfc->pb);
 
-				if (pos > 0) {
-					float br = avfc->bit_rate ? avfc->bit_rate / 8.0 : 180000.0;
+				if (pos > 0 && avfc->bit_rate) {
 					seek_target_flag = AVSEEK_FLAG_BYTE;
-					seek_target = pos + player->Speed * 8 * br;
+					seek_target = pos + player->Speed * avfc->bit_rate * AV_TIME_BASE;
 				}
 			} else {
 				int64_t pts;
 				if(player->output.GetPts(pts))
-					seek_target = (pts * AV_TIME_BASE)/ 90000.0 + seek_sec_rel * AV_TIME_BASE;
+					seek_target = (pts * AV_TIME_BASE) / 90000 + seek_avts_rel;
 			}
 			showtime = av_gettime() + 300000;	//jump back every 300ms
 		} else {
@@ -419,8 +420,8 @@ bool Input::UpdateTracks()
 		AVDictionaryEntry* title = av_dict_get(ch->metadata, "title", NULL, 0);
 		Chapter chapter;
 		chapter.title = title ? title->value : "";
-		chapter.start = (double) ch->start * av_q2d(ch->time_base) * 1000.0;
-		chapter.end = (double) ch->end * av_q2d(ch->time_base) * 1000.0;
+		chapter.start = AV_TIME_BASE * ch->start * ch->time_base.num / ch->time_base.den;
+		chapter.end = AV_TIME_BASE * ch->end * ch->time_base.num / ch->time_base.den;
 		chapters.push_back(chapter);
 	}
 	player->SetChapters(chapters);
@@ -442,9 +443,9 @@ bool Input::UpdateTracks()
 		track.Name = lang ? lang->value : "";
 		track.pid = stream->id;
 		if (stream->duration == AV_NOPTS_VALUE)
-			track.duration = (double) avfc->duration / 1000.0;
+			track.duration = avfc->duration;
 		else
-			track.duration = (double) stream->duration * av_q2d(stream->time_base) * 1000.0;
+			track.duration = AV_TIME_BASE * stream->duration * stream->time_base.num / stream->time_base.den;
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {
@@ -534,36 +535,32 @@ bool Input::Stop()
 	return true;
 }
 
-bool Input::Seek(float sec, bool absolute)
+bool Input::Seek(int64_t avts, bool absolute)
 {
 	if (absolute)
-		seek_sec_abs = sec, seek_sec_rel = 0.0;
+		seek_avts_abs = avts, seek_avts_rel = 0;
 	else
-		seek_sec_abs = -1.0, seek_sec_rel = sec;
+		seek_avts_abs = INT64_MIN, seek_avts_rel = avts;
 	return true;
 }
 
-bool Input::GetDuration(double &duration)
+bool Input::GetDuration(int64_t &duration)
 {
-	duration = 0.0;
+	duration = 0;
 
 	Track *track = videoTrack;
-	if (track && track->duration != 0.0) {
-		duration = track->duration / 1000.0;
+	if (track && track->duration) {
+		duration = track->duration;
 		return true;
 	}
 	track = audioTrack;
-	if (track && track->duration != 0.0) {
-		duration = track->duration / 1000.0;
+	if (track && track->duration) {
+		duration = track->duration;
 		return true;
 	}
 	track = subtitleTrack;
-	if (track && track->duration != 0.0) {
-		duration = track->duration / 1000.0;
-		return true;
-	}
-	if (avfc && avfc->duration != 0.0) {
-		duration = avfc->duration /1000.0;
+	if (track && track->duration) {
+		duration = track->duration;
 		return true;
 	}
 	return false;
@@ -573,8 +570,7 @@ bool Input::SwitchAudio(Track *track)
 {
 	audioTrack = track;
 	player->output.SwitchAudio(track ? track->stream : NULL);
-	float sec = -5.0;
-	player->Seek(sec, false);
+	player->Seek(-5000, false);
 	return true;
 }
 

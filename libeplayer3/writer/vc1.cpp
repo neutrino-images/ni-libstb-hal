@@ -50,7 +50,6 @@ class WriterVC1 : public Writer
 	private:
 		bool initialHeader;
 		uint8_t FrameHeaderSeen;
-		double frameRate;
 	public:
 		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();

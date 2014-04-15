@@ -54,7 +54,6 @@ Input::Input()
 
 Input::~Input()
 {
-	Stop();
 }
 
 int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)

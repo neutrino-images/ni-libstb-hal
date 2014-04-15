@@ -328,11 +328,11 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 		}
 		// FIXME. PTS calculation is probably broken.
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-						stream->time_base.num * out_sample_rate * c->sample_rate,
+						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate,
 						stream->time_base.den);
 		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
 						stream->time_base.den,
-						stream->time_base.num * out_sample_rate * c->sample_rate);
+						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate);
 
 		pts = calcPts(avfc, stream, next_out_pts);
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);

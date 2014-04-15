@@ -158,7 +158,7 @@ int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 
 	for (pos = 0; pos < size;) {
 	//printf("PCM %s - Position=%d\n", __FUNCTION__, pos);
-	if ((size - pos) < SubFrameLen) {
+		if ((size - pos) < SubFrameLen) {
 			breakBufferFillSize = size - pos;
 			memcpy(breakBuffer, &data[pos], sizeof(uint8_t) * breakBufferFillSize);
 			//printf("PCM %s - Unplayed=%d\n", __FUNCTION__, breakBufferFillSize);
@@ -254,8 +254,10 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
 
-		if (!codec || avcodec_open2(c, codec, NULL))
+		if (!codec || avcodec_open2(c, codec, NULL)) {
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
+			return false;
+		}
 	}
 
 	while (packet_size > 0) {
@@ -326,11 +328,12 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 		}
 		// FIXME. PTS calculation is probably broken.
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-						stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate,
+						stream->time_base.num * out_sample_rate * c->sample_rate,
 						stream->time_base.den);
 		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
 						stream->time_base.den,
-						stream->time_base.num * (int64_t) out_sample_rate * c->sample_rate);
+						stream->time_base.num * out_sample_rate * c->sample_rate);
+
 		pts = calcPts(avfc, stream, next_out_pts);
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 

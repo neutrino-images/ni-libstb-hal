@@ -89,7 +89,7 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 		uint8_t PesPayload[128];
 		uint8_t *PesPtr;
-		unsigned int usecPerFrame = ((10000000.0 / av_q2d(stream->r_frame_rate)));
+		unsigned int usecPerFrame = AV_TIME_BASE * stream->r_frame_rate.den / stream->r_frame_rate.num;
 		struct iovec iov[2];
 
 

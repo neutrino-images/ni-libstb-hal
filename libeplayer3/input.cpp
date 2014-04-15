@@ -59,19 +59,14 @@ Input::~Input()
 
 int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 {
-	if (!avfc || !stream) {
-		fprintf(stderr, "context / stream null\n");
-		return INVALID_PTS_VALUE;
-	}
-
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
 
 	pts = 90000 * pts * stream->time_base.num / stream->time_base.den;
 	if (avfc->start_time != AV_NOPTS_VALUE)
-		pts -= 90000.0 * avfc->start_time / AV_TIME_BASE;
+		pts -= 90000 * avfc->start_time / AV_TIME_BASE;
 
-	if (pts & 0x8000000000000000ll)
+	if (pts < 0)
 		return INVALID_PTS_VALUE;
 
 	return pts;

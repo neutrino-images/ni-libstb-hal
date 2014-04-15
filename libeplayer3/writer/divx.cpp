@@ -58,10 +58,9 @@ bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 	unsigned int FakeHeaderLength;
 	uint8_t Version = 5;
 	unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
-	unsigned int usecPerFrame = 41708;	/* Hellmaster1024: default value */
 	BitPacker_t ld = { FakeHeaders, 0, 32 };
 
-	usecPerFrame = 1000000.0 / av_q2d(stream->r_frame_rate);
+	unsigned int usecPerFrame = AV_TIME_BASE * stream->r_frame_rate.den / stream->r_frame_rate.num;
 
 	/* Create info record for frame parser */
 	/* divx4 & 5

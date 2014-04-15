@@ -65,7 +65,7 @@ class WriterWMV : public Writer
 
 void WriterWMV::Init()
 {
-	initialHeader = 1;
+	initialHeader = true;
 }
 
 bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
@@ -78,7 +78,7 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		uint8_t PesPacket[PES_MIN_HEADER_SIZE + 128];
 		uint8_t *PesPtr;
 		unsigned int MetadataLength;
-		unsigned int usecPerFrame = ((10000000.0 / av_q2d(stream->r_frame_rate)));
+		unsigned int usecPerFrame = AV_TIME_BASE * stream->r_frame_rate.den / stream->r_frame_rate.num;
 
 		PesPtr = &PesPacket[PES_MIN_HEADER_SIZE];
 

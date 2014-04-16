@@ -42,7 +42,7 @@ class Player;
 
 struct Track
 {
-	std::string Name;
+	std::string title;
 	int pid;
 	int64_t duration;
 	AVFormatContext *avfc;

@@ -258,7 +258,7 @@ void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *num
 	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
 		pids[i] = it->pid;
 		ac3flags[i] = it->ac3flags;
-		language[i] = it->Name;
+		language[i] = it->title;
 		i++;
 	}
 
@@ -272,7 +272,7 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 	std::vector<Track> tracks = player->manager.getSubtitleTracks();
 	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
 		pids[i] = it->pid;
-		language[i] = it->Name;
+		language[i] = it->title;
 		i++;
 	}
 
@@ -288,7 +288,7 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 		if (it->type != 2 && it->type != 5) // return subtitles only
 			continue;
 		pids[i] = it->pid;
-		language[i] = it->Name;
+		language[i] = it->title;
 		mags[i] = it->mag;
 		pages[i] = it->page;
 		i++;
@@ -337,7 +337,6 @@ void cPlayback::RequestAbort() {
 
 bool cPlayback::IsPlaying() {
 	return player->isPlaying;
-	return false;
 }
 
 uint64_t cPlayback::GetReadCount() {

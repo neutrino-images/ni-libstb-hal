@@ -1,5 +1,5 @@
 /*
- * audio_mixer.c
+ * audio_mixer.cpp
  *
  * (C) 2012 martii
  *

@@ -52,7 +52,7 @@ void *Player::playthread(void *arg)
 	char threadname[17];
 	strncpy(threadname, __func__, sizeof(threadname));
 	threadname[16] = 0;
-	prctl(PR_SET_NAME, (unsigned long) &threadname);
+	prctl(PR_SET_NAME, (unsigned long) threadname);
 
 	Player *player = (Player *) arg;
 	player->hasThreadStarted = true;

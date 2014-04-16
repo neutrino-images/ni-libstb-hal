@@ -328,7 +328,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	avformat_free_context(subavfc);
 
 	Track track;
-	track.Name = format;
+	track.title = format;
 	track.is_static = 1;
 	track.pid = pid;
 	player->manager.addSubtitleTrack(track);
@@ -434,7 +434,7 @@ bool Input::UpdateTracks()
 		track.avfc = avfc;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
-		track.Name = lang ? lang->value : "";
+		track.title = lang ? lang->value : "";
 		track.pid = stream->id;
 		if (stream->duration == AV_NOPTS_VALUE)
 			track.duration = avfc->duration;
@@ -483,7 +483,7 @@ bool Input::UpdateTracks()
 					int size = stream->codec->extradata_size;
 					if (size > 0 && 2 * size - 1 == (int) l.length())
 						for (int i = 0; i < size; i += 2) {
-							track.Name = l.substr(i * 2, 3);
+							track.title = l.substr(i * 2, 3);
 							track.type = data[i] >> 3;
 							track.mag = data[i] & 7;
 							track.page = data[i + 1];

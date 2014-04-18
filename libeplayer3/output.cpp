@@ -156,7 +156,7 @@ bool Output::Stop()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
 	if (videofd > -1) {
-		dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
+		ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 		/* set back to normal speed (end trickmodes) */
 		dioctl(videofd, VIDEO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
 		if (dioctl(videofd, VIDEO_STOP, NULL))
@@ -164,7 +164,7 @@ bool Output::Stop()
 	}
 
 	if (audiofd > -1) {
-		dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
+		ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 		/* set back to normal speed (end trickmodes) */
 		dioctl(audiofd, AUDIO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
 		if (dioctl(audiofd, AUDIO_STOP, NULL))
@@ -297,7 +297,7 @@ bool Output::SwitchAudio(AVStream *stream)
 		return true;
 	if (audiofd > -1) {
 		dioctl(audiofd, AUDIO_STOP, NULL);
-		dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
+		ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 	}
 	audioStream = stream;
 	if (stream) {
@@ -318,7 +318,7 @@ bool Output::SwitchVideo(AVStream *stream)
 		return true;
 	if (videofd > -1) {
 		dioctl(videofd, VIDEO_STOP, NULL);
-		dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
+		ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 	}
 	videoStream = stream;
 	if (stream) {

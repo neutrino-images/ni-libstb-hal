@@ -79,7 +79,7 @@ bool Output::Open()
 	if (videofd < 0)
 		return false;
 
-	dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
+	ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 	dioctl(videofd, VIDEO_SELECT_SOURCE, (void *) VIDEO_SOURCE_MEMORY);
 	dioctl(videofd, VIDEO_SET_STREAMTYPE, (void *) STREAM_TYPE_PROGRAM);
 	dioctl(videofd, VIDEO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
@@ -93,7 +93,7 @@ bool Output::Open()
 		return false;
 	}
 
-	dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
+	ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 	dioctl(audiofd, AUDIO_SELECT_SOURCE, (void *) AUDIO_SOURCE_MEMORY);
 	dioctl(audiofd, AUDIO_SET_STREAMTYPE, (void *) STREAM_TYPE_PROGRAM);
 
@@ -225,10 +225,10 @@ bool Output::Flush()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videofd > -1 && dioctl(videofd, VIDEO_FLUSH, NULL))
+	if (videofd > -1 && ioctl(videofd, VIDEO_FLUSH, NULL))
 		ret = false;
 
-	if (audiofd > -1 && dioctl(audiofd, AUDIO_FLUSH, NULL))
+	if (audiofd > -1 && ioctl(audiofd, AUDIO_FLUSH, NULL))
 		ret = false;
 
 	return ret;
@@ -255,13 +255,13 @@ bool Output::AVSync(bool b)
 bool Output::ClearAudio()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-	return audiofd > -1 && !dioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
+	return audiofd > -1 && !ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 }
 
 bool Output::ClearVideo()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	return videofd > -1 && !dioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
+	return videofd > -1 && !ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 }
 
 bool Output::Clear()
@@ -274,8 +274,8 @@ bool Output::Clear()
 bool Output::GetPts(int64_t &pts)
 {
 	pts = 0;
-	return ((videofd > -1 && !dioctl(videofd, VIDEO_GET_PTS, (void *) &pts)) ||
-		(audiofd > -1 && !dioctl(audiofd, AUDIO_GET_PTS, (void *) &pts)));
+	return ((videofd > -1 && !ioctl(videofd, VIDEO_GET_PTS, (void *) &pts)) ||
+		(audiofd > -1 && !ioctl(audiofd, AUDIO_GET_PTS, (void *) &pts)));
 }
 
 bool Output::GetFrameCount(int64_t &framecount)

@@ -82,8 +82,9 @@ bool Input::Play()
 {
 	hasPlayThreadStarted = 1;
 
-	int64_t showtime = 0, bofcount = 0;
+	int64_t showtime = 0;
 	bool restart_audio_resampling = false;
+	bool bof = false;
 	int warnAudioWrite = 0;
 	int warnVideoWrite = 0;
 
@@ -103,19 +104,19 @@ bool Input::Play()
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
 				if (avfc->bit_rate) {
 					seek_target_flag = AVSEEK_FLAG_BYTE;
-					seek_target = avio_tell(avfc->pb) + seek_avts_rel * avfc->bit_rate / ( 8 * AV_TIME_BASE);
+					seek_target = avio_tell(avfc->pb) + av_rescale(seek_avts_rel, avfc->bit_rate, 8 * AV_TIME_BASE);
 				}
 			} else {
 				int64_t pts;
 				if(player->output.GetPts(pts))
-					seek_target = (pts * AV_TIME_BASE) / 90000 + seek_avts_rel;
+					seek_target = av_rescale(pts, AV_TIME_BASE, 90000ll) + seek_avts_rel;
 			}
 			seek_avts_rel = 0;
 		} else if (seek_avts_abs != INT64_MIN) {
 			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
 				if (avfc->bit_rate) {
 					seek_target_flag = AVSEEK_FLAG_BYTE;
-					seek_target = seek_avts_abs * avfc->bit_rate / (8 * AV_TIME_BASE);
+					seek_target = av_rescale(seek_avts_abs, avfc->bit_rate, 8 * AV_TIME_BASE);
 				}
 			} else {
 				seek_target = seek_avts_abs;
@@ -124,27 +125,16 @@ bool Input::Play()
 		} else if (player->isBackWard && av_gettime() >= showtime) {
 			player->output.ClearVideo();
 
-			if (bofcount == 1) {
+			if (bof) {
 				showtime = av_gettime();
 				usleep(100000);
 				continue;
 			}
-
-			if (avfc->iformat->flags & AVFMT_TS_DISCONT) {
-				off_t pos = avio_tell(avfc->pb);
-
-				if (pos > 0 && avfc->bit_rate) {
-					seek_target_flag = AVSEEK_FLAG_BYTE;
-					seek_target = pos + player->Speed * avfc->bit_rate * AV_TIME_BASE;
-				}
-			} else {
-				int64_t pts;
-				if(player->output.GetPts(pts))
-					seek_target = (pts * AV_TIME_BASE) / 90000 + seek_avts_rel;
-			}
+			seek_avts_rel = player->Speed * AV_TIME_BASE;
 			showtime = av_gettime() + 300000;	//jump back every 300ms
+			continue;
 		} else {
-			bofcount = 0;
+			bof = false;
 		}
 
 		if (seek_target > INT64_MIN) {
@@ -154,7 +144,8 @@ bool Input::Play()
 			res = avformat_seek_file(avfc, -1, INT64_MIN, seek_target, INT64_MAX, seek_target_flag);
 
 			if (res < 0 && player->isBackWard)
-				bofcount = 1;
+				bof = true;
+
 			seek_target = INT64_MIN;
 			restart_audio_resampling = true;
 

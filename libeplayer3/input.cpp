@@ -61,9 +61,9 @@ int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
 
-	pts = 90000 * pts * stream->time_base.num / stream->time_base.den;
+	pts = av_rescale(90000ll * stream->time_base.num, pts, stream->time_base.den);
 	if (avfc->start_time != AV_NOPTS_VALUE)
-		pts -= 90000 * avfc->start_time / AV_TIME_BASE;
+		pts -= av_rescale(90000ll, avfc->start_time, AV_TIME_BASE);
 
 	if (pts < 0)
 		return INVALID_PTS_VALUE;
@@ -422,8 +422,8 @@ bool Input::UpdateTracks()
 		AVDictionaryEntry* title = av_dict_get(ch->metadata, "title", NULL, 0);
 		Chapter chapter;
 		chapter.title = title ? title->value : "";
-		chapter.start = AV_TIME_BASE * ch->start * ch->time_base.num / ch->time_base.den;
-		chapter.end = AV_TIME_BASE * ch->end * ch->time_base.num / ch->time_base.den;
+		chapter.start = av_rescale(ch->time_base.num * AV_TIME_BASE, ch->start, ch->time_base.den);
+		chapter.end = av_rescale(ch->time_base.num * AV_TIME_BASE, ch->end, ch->time_base.den);
 		chapters.push_back(chapter);
 	}
 	player->SetChapters(chapters);
@@ -447,7 +447,7 @@ bool Input::UpdateTracks()
 		if (stream->duration == AV_NOPTS_VALUE)
 			track.duration = avfc->duration;
 		else
-			track.duration = AV_TIME_BASE * stream->duration * stream->time_base.num / stream->time_base.den;
+			track.duration = av_rescale(stream->time_base.num * AV_TIME_BASE, stream->duration, stream->time_base.den);
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {

@@ -60,7 +60,7 @@ bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 	unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
 	BitPacker_t ld = { FakeHeaders, 0, 32 };
 
-	unsigned int usecPerFrame = AV_TIME_BASE * stream->r_frame_rate.den / stream->r_frame_rate.num;
+	unsigned int usecPerFrame = av_rescale(AV_TIME_BASE, stream->r_frame_rate.den, stream->r_frame_rate.num);
 
 	/* Create info record for frame parser */
 	/* divx4 & 5

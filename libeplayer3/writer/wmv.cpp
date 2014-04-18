@@ -78,7 +78,7 @@ bool WriterWMV::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 		uint8_t PesPacket[PES_MIN_HEADER_SIZE + 128];
 		uint8_t *PesPtr;
 		unsigned int MetadataLength;
-		unsigned int usecPerFrame = AV_TIME_BASE * stream->r_frame_rate.den / stream->r_frame_rate.num;
+		unsigned int usecPerFrame = av_rescale(AV_TIME_BASE, stream->r_frame_rate.den, stream->r_frame_rate.num);
 
 		PesPtr = &PesPacket[PES_MIN_HEADER_SIZE];
 

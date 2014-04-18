@@ -326,7 +326,6 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 			fprintf(stderr, "av_samples_alloc: %d\n", -e);
 			continue;
 		}
-		// FIXME. PTS calculation is probably broken.
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
 						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate,
 						stream->time_base.den);

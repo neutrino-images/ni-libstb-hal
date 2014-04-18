@@ -365,13 +365,17 @@ bool Input::Init(const char *filename)
 	audioTrack = NULL;
 	subtitleTrack = NULL;
 	teletextTrack = NULL;
+
+again:
 	avfc = avformat_alloc_context();
 	avfc->interrupt_callback.callback = interrupt_cb;
 	avfc->interrupt_callback.opaque = (void *) player;
 
 	int err = avformat_open_input(&avfc, filename, NULL, 0);
-	if (averror(err, avformat_open_input))
+	if (averror(err, avformat_open_input)) {
+		avformat_free_context(avfc);
 		return false;
+	}
 
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
@@ -381,8 +385,12 @@ bool Input::Init(const char *filename)
 	}
 
 	err = avformat_find_stream_info(avfc, NULL);
-	if (averror(err, avformat_open_input)) {
+	if (averror(err, avformat_find_stream_info)) {
 		avformat_close_input(&avfc);
+		if (player->noprobe) {
+			player->noprobe = false;
+			goto again;
+		}
 		return false;
 	}
 

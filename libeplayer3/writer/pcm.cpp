@@ -230,7 +230,7 @@ void WriterPCM::Init()
 
 extern int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
 
-bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0)
 		return false;
@@ -322,15 +322,6 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 			}
 		}
 
-		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
-						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate,
-						stream->time_base.den);
-		int64_t next_out_pts = av_rescale(swr_next_pts(swr, next_in_pts),
-						stream->time_base.den,
-						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate);
-
-		pts = calcPts(avfc, stream, next_out_pts);
-
 		int in_samples = decoded_frame->nb_samples;
 		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
 
@@ -345,6 +336,7 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 		writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels);
 
 		av_free(output);
+		pts = 0;
 	}
 	return true;
 }

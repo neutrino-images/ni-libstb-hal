@@ -154,6 +154,7 @@ bool Input::Play()
 			for (i = 0; i < avfc->nb_streams; i++)
 				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
 					avcodec_flush_buffers(avfc->streams[i]->codec);
+			player->output.ClearAudio();
 			player->output.ClearVideo();
 		}
 
@@ -193,7 +194,7 @@ bool Input::Play()
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(avfc, stream, packet.pts);
-				if (!player->output.Write(avfc, stream, &packet, pts)) {
+				if (!player->output.Write(avfc, stream, &packet, _videoTrack ? pts : 0)) {
 					if (warnAudioWrite)
 						warnAudioWrite--;
 					else {

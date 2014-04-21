@@ -302,12 +302,16 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 				out_channels = 2;
 			}
 
+			uSampleRate = out_sample_rate;
+			uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
+			uBitsPerSample = 16;
+
 			av_opt_set_int(swr, "in_channel_layout", c->channel_layout, 0);
 			av_opt_set_int(swr, "out_channel_layout", out_channel_layout, 0);
 			av_opt_set_int(swr, "in_sample_rate", c->sample_rate, 0);
 			av_opt_set_int(swr, "out_sample_rate", out_sample_rate, 0);
-			av_opt_set_int(swr, "in_sample_fmt", c->sample_fmt, 0);
-			av_opt_set_int(swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+			av_opt_set_sample_fmt(swr, "in_sample_fmt", c->sample_fmt, 0);
+			av_opt_set_sample_fmt(swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
 			e = swr_init(swr);
 			if (e < 0) {
@@ -318,14 +322,6 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 			}
 		}
 
-		uint8_t *output = NULL;
-		int in_samples = decoded_frame->nb_samples;
-		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
-		e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
-		if (e < 0) {
-			fprintf(stderr, "av_samples_alloc: %d\n", -e);
-			continue;
-		}
 		int64_t next_in_pts =  av_rescale(av_frame_get_best_effort_timestamp(decoded_frame),
 						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate,
 						stream->time_base.den);
@@ -334,15 +330,21 @@ bool WriterPCM::Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket 
 						stream->time_base.num * (int64_t)out_sample_rate * c->sample_rate);
 
 		pts = calcPts(avfc, stream, next_out_pts);
-		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-		uSampleRate = out_sample_rate;
-		uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
-		uBitsPerSample = 16;
+		int in_samples = decoded_frame->nb_samples;
+		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
+
+		uint8_t *output = NULL;
+		e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+		if (e < 0) {
+			fprintf(stderr, "av_samples_alloc: %d\n", -e);
+			continue;
+		}
+		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
 		writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels);
 
-		av_freep(&output);
+		av_free(output);
 	}
 	return true;
 }

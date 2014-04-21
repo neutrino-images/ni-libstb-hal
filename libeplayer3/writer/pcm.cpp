@@ -228,8 +228,6 @@ void WriterPCM::Init()
 	restart_audio_resampling = true;
 }
 
-extern int64_t calcPts(AVFormatContext *, AVStream *, int64_t);
-
 bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0)

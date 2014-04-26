@@ -240,6 +240,7 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 		restart_audio_resampling = false;
 		initialHeader = true;
 
+fprintf(stderr, "swr=%p\n",swr);//FIXME
 		if (swr)
 			swr_free(&swr);
 		if (decoded_frame)
@@ -249,6 +250,53 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 
 		if (!codec || avcodec_open2(c, codec, NULL)) {
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
+			return false;
+		}
+	}
+
+	if (!swr) {
+		int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
+		int *rate = rates;
+		int in_rate = c->sample_rate;
+		while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
+			rate++;
+		out_sample_rate = *rate ? *rate : 44100;
+		out_channels = c->channels;
+		if (c->channel_layout == 0) {
+			// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
+			c->channel_layout = AV_CH_LAYOUT_STEREO;
+		}
+
+		out_channel_layout = c->channel_layout;
+		// player2 won't play mono
+		if (out_channel_layout == AV_CH_LAYOUT_MONO) {
+			out_channel_layout = AV_CH_LAYOUT_STEREO;
+			out_channels = 2;
+		}
+
+		uSampleRate = out_sample_rate;
+		uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
+		uBitsPerSample = 16;
+
+		swr = swr_alloc();
+		if (!swr) {
+			fprintf(stderr, "%s %d: swr_alloc failed\n", __func__, __LINE__);
+			return false;
+		}
+		av_opt_set_int(swr, "in_channel_layout", c->channel_layout, 0);
+		av_opt_set_int(swr, "out_channel_layout", out_channel_layout, 0);
+		av_opt_set_int(swr, "in_sample_rate", c->sample_rate, 0);
+		av_opt_set_int(swr, "out_sample_rate", out_sample_rate, 0);
+		av_opt_set_sample_fmt(swr, "in_sample_fmt", c->sample_fmt, 0);
+		av_opt_set_sample_fmt(swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+
+		int e = swr_init(swr);
+		if (e < 0) {
+			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+				-e, (int) c->channel_layout,
+				(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
+			swr_free(&swr);
+			restart_audio_resampling = true;
 			return false;
 		}
 	}
@@ -273,56 +321,14 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 		if (!got_frame)
 			continue;
 
-		int e;
-		if (!swr) {
-			int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
-			int *rate = rates;
-			int in_rate = c->sample_rate;
-			while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
-				rate++;
-			out_sample_rate = *rate ? *rate : 44100;
-			swr = swr_alloc();
-			out_channels = c->channels;
-			if (c->channel_layout == 0) {
-				// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
-				c->channel_layout = AV_CH_LAYOUT_STEREO;
-			}
-
-			out_channel_layout = c->channel_layout;
-			// player2 won't play mono
-			if (out_channel_layout == AV_CH_LAYOUT_MONO) {
-				out_channel_layout = AV_CH_LAYOUT_STEREO;
-				out_channels = 2;
-			}
-
-			uSampleRate = out_sample_rate;
-			uNoOfChannels = av_get_channel_layout_nb_channels(out_channel_layout);
-			uBitsPerSample = 16;
-
-			av_opt_set_int(swr, "in_channel_layout", c->channel_layout, 0);
-			av_opt_set_int(swr, "out_channel_layout", out_channel_layout, 0);
-			av_opt_set_int(swr, "in_sample_rate", c->sample_rate, 0);
-			av_opt_set_int(swr, "out_sample_rate", out_sample_rate, 0);
-			av_opt_set_sample_fmt(swr, "in_sample_fmt", c->sample_fmt, 0);
-			av_opt_set_sample_fmt(swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
-
-			e = swr_init(swr);
-			if (e < 0) {
-				fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
-					-e, (int) c->channel_layout,
-					(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
-				swr_free(&swr);
-			}
-		}
-
 		int in_samples = decoded_frame->nb_samples;
 		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
 
 		uint8_t *output = NULL;
-		e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+		int e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
 		if (e < 0) {
 			fprintf(stderr, "av_samples_alloc: %d\n", -e);
-			continue;
+			break;
 		}
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 

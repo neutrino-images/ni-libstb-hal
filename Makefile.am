@@ -40,3 +40,11 @@ libstb_hal_la_LIBADD += \
 	libspark/libspark.la \
 	libeplayer3/libeplayer3.la
 endif
+if BOXTYPE_DUCKBOX
+libstb_hal_test_LDADD += -lasound
+SUBDIRS += libduckbox libeplayer3 libdvbci
+libstb_hal_la_LIBADD += \
+	libduckbox/libduckbox.la \
+	libeplayer3/libeplayer3.la \
+	libdvbci/libdvbci.la
+endif

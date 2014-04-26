@@ -37,6 +37,8 @@ common/Makefile
 libeplayer3/Makefile
 azbox/Makefile
 generic-pc/Makefile
+libduckbox/Makefile
+libdvbci/Makefile
 libtriple/Makefile
 libspark/Makefile
 raspi/Makefile

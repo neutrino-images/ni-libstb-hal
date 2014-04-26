@@ -52,10 +52,10 @@ class cPlayback
 		void RequestAbort(void);
 		bool IsPlaying(void);
 		uint64_t GetReadCount(void);
-#if 0
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
 		bool SelectSubtitles(int pid);
-#endif
+		void GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current);
+		void SetTitle(int title);
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 #if 0

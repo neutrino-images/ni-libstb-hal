@@ -426,6 +426,8 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 void cVideo::ShowPicture(const char * fname, const char *_destname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
+	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 	char destname[512];
 	char cmd[512];
 	char *p;
@@ -444,7 +446,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 		if (_destname)
 			strncpy(destname, _destname, sizeof(destname));
 		else {
-			strcpy(destname, "/var/cache");
+			strcpy(destname, "/tmp/cache");
 			if (stat(fname, &st2))
 			{
 				lt_info("%s: could not stat %s (%m)\n", __func__, fname);
@@ -456,7 +458,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			   build that filename first...
 			   TODO: this could cause name clashes, use a hashing function instead... */
 			strcat(destname, fname);
-			p = &destname[strlen("/var/cache/")];
+			p = &destname[strlen("/tmp/cache/")];
 			while ((p = strchr(p, '/')) != NULL)
 				*p = '.';
 			strcat(destname, ".m2v");
@@ -468,7 +470,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			u.actime = time(NULL);
 			u.modtime = st2.st_mtime;
 			/* it does not exist or has a different date, so call ffmpeg... */
-			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 '%s' </dev/null",
+			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 -aspect 16:9 '%s' </dev/null",
 								fname, destname);
 			system(cmd); /* TODO: use libavcodec to directly convert it */
 			utime(destname, &u);
@@ -491,17 +493,30 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
 			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
-		char *iframe = (char *)malloc(st.st_size);
+		bool seq_end_avail = false;
+		size_t pos=0;
+		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
 		if (! iframe)
 		{
 			lt_info("%s: malloc failed (%m)\n", __func__);
 			goto out;
 		}
 		read(mfd, iframe, st.st_size);
-		fop(ioctl, VIDEO_PLAY);
-		fop(ioctl, VIDEO_CONTINUE);
-		video_still_picture sp = { iframe, st.st_size };
-		fop(ioctl, VIDEO_STILLPICTURE, &sp);
+		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
+		ioctl(fd, VIDEO_PLAY);
+		ioctl(fd, VIDEO_CONTINUE);
+		ioctl(fd, VIDEO_CLEAR_BUFFER);
+		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
+			++pos;
+
+		if ((iframe[3] >> 4) != 0xE) // no pes header
+			write(fd, pes_header, sizeof(pes_header));
+		write(fd, iframe, st.st_size);
+		if (!seq_end_avail)
+			write(fd, seq_end, sizeof(seq_end));
+		memset(iframe, 0, 8192);
+		write(fd, iframe, 8192);
+		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 		free(iframe);
 	}
  out:

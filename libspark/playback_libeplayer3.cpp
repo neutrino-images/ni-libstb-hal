@@ -168,7 +168,7 @@ bool cPlayback::SetSpeed(int speed)
 
 bool cPlayback::GetSpeed(int &speed) const
 {
-        speed = nPlaybackSpeed;
+	speed = nPlaybackSpeed;
 	return true;
 }
 
@@ -305,6 +305,28 @@ int cPlayback::GetFirstTeletextPid(void)
 			return it->pid;
 	}
 	return -1;
+}
+
+/* dummy functions for subtitles */
+void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
+{
+	*num = 0;
+}
+
+bool cPlayback::SelectSubtitles(int pid)
+{
+	return false;
+}
+
+void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
+{
+	playlists.clear();
+	titles.clear();
+	current = 0;
+}
+
+void cPlayback::SetTitle(int /*title*/)
+{
 }
 
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)

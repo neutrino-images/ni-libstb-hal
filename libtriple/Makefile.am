@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 AM_LDFLAGS = \
+	-lrt \
 	@DIRECTFB_LIBS@
 
 libtriple_la_SOURCES = \

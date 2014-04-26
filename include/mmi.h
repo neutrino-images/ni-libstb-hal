@@ -5,7 +5,30 @@
 #define MAX_MMI_TEXT_LEN		255
 #define MAX_MMI_CHOICE_TEXT_LEN		255
 
+typedef enum {
+	MMI_TOP_MENU_SUBS		= 1,
+	MMI_TOP_MENU_EVENTS,
+	MMI_TOP_MENU_TOKENS,
+	MMI_TOP_MENU_PIN,
+	MMI_TOP_MENU_MATURE,
+	MMI_TOP_MENU_ABOUT
+} MMI_MENU_CURRENT;
+
+typedef enum {
+	MMI_MENU_LEVEL_MAIN	= 0,
+	MMI_MENU_LEVEL_MATURE,
+	MMI_MENU_LEVEL_ASK_PIN_MATURE
+} MMI_MENU_LEVEL;
+
+typedef enum {
+	MMI_PIN_LEVEL_ASK_OLD	= 0,
+	MMI_PIN_LEVEL_CHECK_CURRENT,
+	MMI_PIN_LEVEL_ASK_REPEAT,
+	MMI_PIN_LEVEL_CHECK_AND_CHANGE
+} MMI_PIN_LEVEL;
+
 typedef struct {
+	int slot;
 	int choice_nb;
 	char title[MAX_MMI_TEXT_LEN];
 	char subtitle[MAX_MMI_TEXT_LEN];
@@ -14,6 +37,7 @@ typedef struct {
 } MMI_MENU_LIST_INFO;
 
 typedef struct {
+	int slot;
 	int blind;
 	int answerlen;
 	char enquiryText[MAX_MMI_TEXT_LEN];

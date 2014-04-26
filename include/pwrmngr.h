@@ -1,6 +1,8 @@
 #include <config.h>
 #if HAVE_TRIPLEDRAGON
 #include "../libtriple/pwrmngr.h"
+#elif HAVE_DUCKBOX_HARDWARE
+#include "../libduckbox/pwrmngr.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/pwrmngr.h"
 #elif HAVE_AZBOX_HARDWARE

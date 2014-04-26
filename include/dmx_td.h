@@ -1,6 +1,8 @@
 #include <config.h>
 #if HAVE_TRIPLEDRAGON
 #include "../libtriple/dmx_td.h"
+#elif HAVE_DUCKBOX_HARDWARE
+#include "../libduckbox/dmx_lib.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/dmx_lib.h"
 #elif HAVE_AZBOX_HARDWARE

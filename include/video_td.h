@@ -1,6 +1,8 @@
 #include <config.h>
 #if HAVE_TRIPLEDRAGON
 #include "../libtriple/video_td.h"
+#elif HAVE_DUCKBOX_HARDWARE
+#include "../libduckbox/video_lib.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/video_lib.h"
 #elif HAVE_AZBOX_HARDWARE

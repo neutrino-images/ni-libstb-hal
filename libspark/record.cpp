@@ -183,11 +183,13 @@ void cRecord::RecordThread()
 	prctl (PR_SET_NAME, (unsigned long)&threadname);
 	int readsize = bufsize/16;
 	int buf_pos = 0;
+	int count = 0;
 	int queued = 0;
 	uint8_t *buf;
 	struct aiocb a;
 
 	buf = (uint8_t *)malloc(bufsize);
+	lt_info("BUFSIZE=0x%x READSIZE=0x%x\n", bufsize, readsize);
 	if (!buf)
 	{
 		exit_flag = RECORD_FAILED_MEMORY;
@@ -237,6 +239,15 @@ void cRecord::RecordThread()
 			{
 				overflow = false;
 				buf_pos += s;
+				if (count > 100)
+				{
+					if (buf_pos < bufsize / 2)
+						continue;
+				}
+				else
+				{
+					count += 1;
+				}
 			}
 		}
 		else

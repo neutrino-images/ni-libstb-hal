@@ -63,7 +63,7 @@ typedef enum {
 	DISPLAY_AR_14_9,
 	DISPLAY_AR_16_9,
 	DISPLAY_AR_20_9,
-	DISPLAY_AR_RAW,
+	DISPLAY_AR_RAW
 } DISPLAY_AR;
 
 typedef enum {
@@ -138,11 +138,11 @@ class cVideo
 		int /*vidOutFmt_t*/ outputformat;
 		int scartvoltage;
 
-		VIDEO_FORMAT	    StreamType;
-		VIDEO_DEFINITION       VideoDefinition;
+		VIDEO_FORMAT StreamType;
+		VIDEO_DEFINITION VideoDefinition;
 		DISPLAY_AR DisplayAR;
 		VIDEO_PLAY_MODE SyncMode;
-		DISPLAY_AR_MODE                ARMode;
+		DISPLAY_AR_MODE ARMode;
 		VIDEO_DB_DR eDbDr;
 		DISPLAY_AR PictureAR;
 		VIDEO_FRAME_RATE FrameRate;

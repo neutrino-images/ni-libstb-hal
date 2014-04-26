@@ -24,8 +24,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/uio.h>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <linux/dvb/audio.h>
 
 #include "misc.h"
 #include "pes.h"
@@ -60,7 +62,8 @@ class WriterPCM : public Writer
 		unsigned int SubFrameLen;
 		unsigned int SubFramesPerPES;
 		uint8_t lpcm_prv[14];
-		uint8_t breakBuffer[8192];
+		uint8_t injectBuffer[2048];
+		uint8_t breakBuffer[sizeof(injectBuffer)];
 		unsigned int breakBufferFillSize;
 		int uNoOfChannels;
 		int uSampleRate;
@@ -77,7 +80,7 @@ class WriterPCM : public Writer
 	public:
 		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
 		bool prepareClipPlay();
-		int writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
+		bool writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
 		void Init();
 		WriterPCM();
 };
@@ -120,11 +123,11 @@ bool WriterPCM::prepareClipPlay()
 	}
 
 	SubFrameLen *= uNoOfChannels;
-	SubFrameLen *= (uBitsPerSample / 8);
+	SubFrameLen *= uBitsPerSample / 8;
 
 	//rewrite PES size to have as many complete subframes per PES as we can
 	// FIXME: PES header size was hardcoded to 18 in earlier code. Actual size returned by InsertPesHeader is 14.
-	SubFramesPerPES = ((2048 - 18) - sizeof(lpcm_prv)) / SubFrameLen;
+	SubFramesPerPES = ((sizeof(injectBuffer) - 18) - sizeof(lpcm_prv)) / SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
 
 	//set number of channels
@@ -143,59 +146,40 @@ bool WriterPCM::prepareClipPlay()
 	return true;
 }
 
-int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
+bool WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 {
+	bool res = true;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
 	if (initialHeader) {
 		initialHeader = false;
 		prepareClipPlay();
+		ioctl(fd, AUDIO_CLEAR_BUFFER, NULL);
 	}
 
-	unsigned int n;
-	uint8_t *injectBuffer = (uint8_t *) malloc(SubFrameLen);
-	unsigned int pos;
+	size += breakBufferFillSize;
 
-	for (pos = 0; pos < size;) {
-	//printf("PCM %s - Position=%d\n", __FUNCTION__, pos);
-		if ((size - pos) < SubFrameLen) {
-			breakBufferFillSize = size - pos;
-			memcpy(breakBuffer, &data[pos], sizeof(uint8_t) * breakBufferFillSize);
-			//printf("PCM %s - Unplayed=%d\n", __FUNCTION__, breakBufferFillSize);
-			break;
-		}
-		//get first PES's worth
-		if (breakBufferFillSize > 0) {
-			memcpy(injectBuffer, breakBuffer, sizeof(uint8_t) * breakBufferFillSize);
-			memcpy(&injectBuffer[breakBufferFillSize], &data[pos], sizeof(uint8_t) * (SubFrameLen - breakBufferFillSize));
-			pos += (SubFrameLen - breakBufferFillSize);
-			breakBufferFillSize = 0;
-		} else {
-			memcpy(injectBuffer, &data[pos], sizeof(uint8_t) * SubFrameLen);
-			pos += SubFrameLen;
-		}
-
-		struct iovec iov[3];
-		iov[0].iov_base = PesHeader;
-		iov[1].iov_base = lpcm_prv;
-		iov[1].iov_len = sizeof(lpcm_prv);
-
-		iov[2].iov_base = injectBuffer;
-		iov[2].iov_len = SubFrameLen;
+	while (size >= SubFrameLen) {
+		if (breakBufferFillSize)
+			memcpy(injectBuffer, breakBuffer, breakBufferFillSize);
+		memcpy(injectBuffer + breakBufferFillSize, data, SubFrameLen - breakBufferFillSize);
+		size -= SubFrameLen;
+		data += SubFrameLen - breakBufferFillSize;
+		breakBufferFillSize = 0;
 
 		//write the PCM data
 		if (uBitsPerSample == 16) {
-			for (n = 0; n < SubFrameLen; n += 2) {
+			for (unsigned int n = 0; n < SubFrameLen; n += 2) {
 				uint8_t tmp = injectBuffer[n];
 				injectBuffer[n] = injectBuffer[n + 1];
 				injectBuffer[n + 1] = tmp;
 			}
 		} else {
-			//	  0   1   2   3   4   5   6   7   8   9  10  11
-			//	A1c A1b A1a-B1c B1b B1a-A2c A2b A2a-B2c B2b B2a
-			// to A1a A1b B1a B1b.A2a A2b B2a B2b-A1c B1c A2c B2c
-			for (n = 0; n < SubFrameLen; n += 12) {
-				uint8_t t, *p = &injectBuffer[n];
+			//      0   1   2   3   4   5   6   7   8   9  10  11
+			//    A1c A1b A1a B1c B1b B1a A2c A2b A2a B2c B2b B2a
+			// to A1a A1b B1a B1b A2a A2b B2a B2b A1c B1c A2c B2c
+			for (unsigned int n = 0; n < SubFrameLen; n += 12) {
+				uint8_t t, *p = injectBuffer + n;
 				t = p[0];
 				p[0] = p[2];
 				p[2] = p[5];
@@ -212,14 +196,25 @@ int WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 		//increment err... subframe count?
 		lpcm_prv[1] = ((lpcm_prv[1] + SubFramesPerPES) & 0x1F);
 
+		struct iovec iov[3];
+		iov[0].iov_base = PesHeader;
+		iov[1].iov_base = lpcm_prv;
+		iov[1].iov_len = sizeof(lpcm_prv);
+		iov[2].iov_base = injectBuffer;
+		iov[2].iov_len = SubFrameLen;
 		iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, Pts, 0);
 		int len = writev(fd, iov, 3);
-		if (len < 0)
+		if (len < 0) {
+			res = false;
 			break;
+		}
 	}
-	free(injectBuffer);
+	if (size) {
+		breakBufferFillSize = size;
+		memcpy(breakBuffer, data, size);
+	}
 
-	return size;
+	return res;
 }
 
 void WriterPCM::Init()
@@ -331,7 +326,11 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 		}
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-		writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels);
+		if(!writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels)) {
+			restart_audio_resampling = true;
+			av_free(output);
+			break;
+		}
 
 		av_free(output);
 		pts = 0;
@@ -343,12 +342,9 @@ WriterPCM::WriterPCM()
 {
 	swr = NULL;
 	decoded_frame = NULL;
-	out_sample_rate = 44100;
-	out_channels = 2;
-	out_channel_layout = AV_CH_LAYOUT_STEREO;
-	restart_audio_resampling = true;
 
 	Register(this, AV_CODEC_ID_INJECTPCM, AUDIO_ENCODING_LPCMA);
+	Init();
 }
 
 static WriterPCM writer_pcm __attribute__ ((init_priority (300)));

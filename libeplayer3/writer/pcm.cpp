@@ -240,7 +240,6 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 		restart_audio_resampling = false;
 		initialHeader = true;
 
-fprintf(stderr, "swr=%p\n",swr);//FIXME
 		if (swr)
 			swr_free(&swr);
 		if (decoded_frame)

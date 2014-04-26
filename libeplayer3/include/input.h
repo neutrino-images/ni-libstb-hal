@@ -61,6 +61,8 @@ class Input
 		Player *player;
 		AVFormatContext *avfc;
 		uint64_t readCount;
+		int64_t calcPts(AVStream * stream, int64_t pts);
+
 	public:
 		Input();
 		~Input();

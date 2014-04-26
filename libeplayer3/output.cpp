@@ -144,7 +144,6 @@ bool Output::Play()
 		||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;
 	}
-
 	return ret;
 }
 
@@ -282,8 +281,8 @@ bool Output::GetFrameCount(int64_t &framecount)
 {
 	dvb_play_info_t playInfo;
 
-	if ((videofd > -1 && dioctl(videofd, VIDEO_GET_PLAY_INFO, (void *) &playInfo)) ||
-	    (audiofd > -1 && dioctl(audiofd, AUDIO_GET_PLAY_INFO, (void *) &playInfo))) {
+	if ((videofd > -1 && !dioctl(videofd, VIDEO_GET_PLAY_INFO, (void *) &playInfo)) ||
+	    (audiofd > -1 && !dioctl(audiofd, AUDIO_GET_PLAY_INFO, (void *) &playInfo))) {
 		framecount = playInfo.frame_count;
 		return true;
 	}

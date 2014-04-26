@@ -1,0 +1,73 @@
+#ifndef __HAL_PLAYBACK_H
+#define __HAL_PLAYBACK_H
+
+#include <string>
+#include <vector>
+
+typedef enum {
+	PLAYMODE_TS = 0,
+	PLAYMODE_FILE
+} playmode_t;
+
+class Player;
+
+class cPlayback
+{
+	private:
+		bool enabled;
+		bool playing;
+		bool no_probe;
+		int nPlaybackSpeed;
+		bool Stop(void);
+		bool decoders_closed;
+		playmode_t pm;
+		std::string fn_ts;
+		std::string fn_xml;
+		off_t last_size;
+		int init_jump;
+		Player *player;
+	public:
+		cPlayback(int num = 0);
+		~cPlayback();
+
+		bool Open(playmode_t PlayMode);
+		void Close(void);
+		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration);
+		bool SetAPid(int pid, bool ac3);
+		bool SetSubtitlePid(int pid);
+		bool SetTeletextPid(int pid);
+		int GetAPid(void);
+		int GetVPid(void);
+		int GetSubtitlePid(void);
+		int GetTeletextPid(void);
+		int GetFirstTeletextPid(void);
+		bool SetSpeed(int speed);
+		bool GetSpeed(int &speed) const;
+		bool GetPosition(int &position, int &duration);
+		void GetPts(uint64_t &pts);
+		bool SetPosition(int position, bool absolute = false);
+		void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
+		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
+		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage, int *mags, int *pages);
+		void RequestAbort(void);
+		bool IsPlaying(void);
+		uint64_t GetReadCount(void);
+#if 0
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
+		bool SelectSubtitles(int pid);
+#endif
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
+		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+#if 0
+		// Functions that are not used by movieplayer.cpp:
+		bool GetOffset(off64_t &offset);
+		bool IsPlaying(void) const;
+		bool IsEnabled(void) const;
+		void * GetHandle(void);
+		void * GetDmHandle(void);
+		int GetCurrPlaybackSpeed(void) const;
+		void PlaybackNotify (int  Event, void *pData, void *pTag);
+		void DMNotify(int Event, void *pTsBuf, void *Tag);
+#endif
+};
+#endif

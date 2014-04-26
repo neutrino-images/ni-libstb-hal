@@ -181,6 +181,7 @@ bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AV
 WriterVC1::WriterVC1()
 {
 	Register(this, AV_CODEC_ID_VC1, VIDEO_ENCODING_VC1);
+	Init();
 }
 
 static WriterVC1 writer_vc1 __attribute__ ((init_priority (300)));

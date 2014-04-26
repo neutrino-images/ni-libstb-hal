@@ -48,8 +48,5 @@ class Writer
 
 		virtual void Init(void) { }
 		virtual bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
-
-		Writer() { Init (); }
-		~Writer() {}
 };
 #endif

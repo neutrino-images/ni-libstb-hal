@@ -101,6 +101,7 @@ WriterDIVX::WriterDIVX()
 	Register(this, AV_CODEC_ID_MSMPEG4V1, VIDEO_ENCODING_MPEG4P2);
 	Register(this, AV_CODEC_ID_MSMPEG4V2, VIDEO_ENCODING_MPEG4P2);
 	Register(this, AV_CODEC_ID_MSMPEG4V3, VIDEO_ENCODING_MPEG4P2);
+	Init();
 }
 
 static WriterDIVX writer_divx __attribute__ ((init_priority (300)));

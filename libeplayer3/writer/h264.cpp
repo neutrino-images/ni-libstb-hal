@@ -249,6 +249,7 @@ bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, A
 WriterH264::WriterH264()
 {
 	Register(this, AV_CODEC_ID_H264, VIDEO_ENCODING_H264);
+	Init();
 }
 
 static WriterH264 writerh264 __attribute__ ((init_priority (300)));

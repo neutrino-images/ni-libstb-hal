@@ -164,6 +164,7 @@ WriterWMV::WriterWMV()
 	Register(this, AV_CODEC_ID_WMV1, VIDEO_ENCODING_WMV);
 	Register(this, AV_CODEC_ID_WMV2, VIDEO_ENCODING_WMV);
 	Register(this, AV_CODEC_ID_WMV3, VIDEO_ENCODING_WMV);
+	Init();
 }
 
 static WriterWMV writer_wmv __attribute__ ((init_priority (300)));

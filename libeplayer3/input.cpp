@@ -56,7 +56,7 @@ Input::~Input()
 {
 }
 
-int64_t calcPts(AVFormatContext *avfc, AVStream * stream, int64_t pts)
+int64_t Input::calcPts(AVStream * stream, int64_t pts)
 {
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
@@ -178,7 +178,7 @@ bool Input::Play()
 		Track *_teletextTrack = teletextTrack;
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
-			int64_t pts = calcPts(avfc, stream, packet.pts);
+			int64_t pts = calcPts(stream, packet.pts);
 			if (!player->output.Write(avfc, stream, &packet, pts)) {
 				if (warnVideoWrite)
 					warnVideoWrite--;
@@ -193,7 +193,7 @@ bool Input::Play()
 				player->output.Write(avfc, stream, NULL, 0);
 			}
 			if (!player->isBackWard) {
-				int64_t pts = calcPts(avfc, stream, packet.pts);
+				int64_t pts = calcPts(stream, packet.pts);
 				if (!player->output.Write(avfc, stream, &packet, _videoTrack ? pts : 0)) {
 					if (warnAudioWrite)
 						warnAudioWrite--;
@@ -219,8 +219,8 @@ bool Input::Play()
 							dvbsub_ass_write(stream->codec, &sub, stream->id);
 							break;
 						case SUBTITLE_BITMAP: {
-							int64_t pts = calcPts(avfc, stream, packet.pts);
-							dvbsub_write(&sub, calcPts(avfc, stream, pts));
+							int64_t pts = calcPts(stream, packet.pts);
+							dvbsub_write(&sub, pts);
 							// avsubtitle_free() will be called by handler
 							break;
 						}

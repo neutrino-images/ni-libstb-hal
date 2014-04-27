@@ -57,7 +57,7 @@ static input_device_t input_device[] = {
 	{ NULL,				NULL,				-1, 0, 0, 0 }
 };
 
-static int number_of_input_devices = 0;
+#define number_of_input_devices (sizeof(input_device)/sizeof(input_device_t) - 1)
 
 static void do_mknod(int i, char *d_name) {
 	char name[255];
@@ -102,7 +102,7 @@ static void create_input_devices (void) {
 						buf[l--] = 0;
 					while (l > 1 && buf[l] == '\n');
 
-					for (int i = 0; i < number_of_input_devices; i++)
+					for (unsigned int i = 0; i < number_of_input_devices; i++)
 						if (input_device[i].desc && !strcmp(buf, input_device[i].desc)) {
 							do_mknod(i, e->d_name);
 							break;
@@ -124,7 +124,7 @@ static void create_input_devices (void) {
 			struct stat st;
 			if (stat(name, &st))
 				continue;
-			for (int i = 0; i < number_of_input_devices; i++)
+			for (unsigned int i = 0; i < number_of_input_devices; i++)
 				if (input_device[i].major &&
 				    gnu_dev_major(st.st_rdev) == input_device[i].major &&
 				    gnu_dev_minor(st.st_rdev) == input_device[i].minor)
@@ -137,15 +137,9 @@ static void create_input_devices (void) {
 static pthread_t inmux_task = 0;
 static int inmux_thread_running = 0;
 
-static void count_input_devices(void) {
-	input_device_t *i = input_device;
-	while (i->name)
-		i++, number_of_input_devices++;
-}
-
 static void open_input_devices(void) {
 	time_t now = time(NULL);
-	for (int i = 0; i < number_of_input_devices; i++)
+	for (unsigned int i = 0; i < number_of_input_devices; i++)
 		if ((input_device[i].fd < 0) && (input_device[i].next_discovery <= now)) {
 			input_device[i].next_discovery = now + 60;
 			input_device[i].fd = open(input_device[i].name, O_RDWR | O_NONBLOCK);
@@ -155,7 +149,7 @@ static void open_input_devices(void) {
 static void reopen_input_devices(void) {
 	create_input_devices();
 	time_t now = time(NULL);
-	for (int i = 0; i < number_of_input_devices; i++) {
+	for (unsigned int i = 0; i < number_of_input_devices; i++) {
 		input_device[i].next_discovery = now + 60;
 		int fd = open(input_device[i].name, O_RDWR | O_NONBLOCK);
 		if (fd > -1) {
@@ -173,7 +167,7 @@ static void reopen_input_devices(void) {
 }
 
 static void close_input_devices(void) {
-	for (int i = 0; i < number_of_input_devices; i++)
+	for (unsigned int i = 0; i < number_of_input_devices; i++)
 		if (input_device[i].fd > -1) {
 			close(input_device[i].fd);
 			input_device[i].fd = -1;
@@ -184,7 +178,7 @@ static void poll_input_devices(void) {
 	struct pollfd fds[number_of_input_devices];
 	input_device_t *inputs[number_of_input_devices];
 	int nfds = 0;
-	for (int i = 1; i < number_of_input_devices; i++)
+	for (unsigned int i = 1; i < number_of_input_devices; i++)
 		if (input_device[i].fd > -1) {
 			fds[nfds].fd = input_device[i].fd;
 			fds[nfds].events = POLLIN | POLLHUP | POLLERR;
@@ -274,7 +268,6 @@ void init_td_api()
 	{
 		cCpuFreqManager f;
 		f.SetCpuFreq(0);	/* CPUFREQ == 0 is the trigger for leaving standby */
-		count_input_devices();
 		create_input_devices();
 		start_inmux_thread();
 

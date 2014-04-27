@@ -66,7 +66,7 @@ void WriterH264::Init(void)
 
 bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet)
+	if (fd < 0 || !packet || !packet->data)
 		return false;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	unsigned int TimeDelta;

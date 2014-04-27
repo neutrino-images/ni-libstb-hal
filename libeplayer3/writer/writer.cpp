@@ -34,7 +34,6 @@
 #include "ac3.cpp"
 #include "divx.cpp"
 #include "dts.cpp"
-#include "flac.cpp"
 #include "h263.cpp"
 #include "h264.cpp"
 #include "mp3.cpp"

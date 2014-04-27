@@ -41,25 +41,23 @@ class WriterMPEG2 : public Writer
 
 bool WriterMPEG2::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet)
+	if (fd < 0 || !packet || !packet->data)
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
-	for (int Position = 0; Position < packet->size; ) {
-		int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
+	for (int pos = 0; pos < packet->size; ) {
+		int PacketLength = std::min(packet->size - pos, MAX_PES_PACKET_SIZE);
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
-		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, 0xe0, pts, 0);
-		iov[1].iov_base = packet->data + Position;
+		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, pts, 0);
+		iov[1].iov_base = packet->data + pos;
 		iov[1].iov_len = PacketLength;
 
 		ssize_t l = writev(fd, iov, 2);
-		if (l < 0) {
+		if (l < 0)
 			return false;
-			break;
-		}
-		Position += PacketLength;
+		pos += PacketLength;
 		pts = INVALID_PTS_VALUE;
 	}
 	return true;

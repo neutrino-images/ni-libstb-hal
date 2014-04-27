@@ -64,6 +64,8 @@ class WriterPCM : public Writer
 		uint8_t lpcm_prv[14];
 		uint8_t injectBuffer[2048];
 		uint8_t breakBuffer[sizeof(injectBuffer)];
+		uint8_t *output;
+		uint8_t out_samples_max;
 		unsigned int breakBufferFillSize;
 		int uNoOfChannels;
 		int uSampleRate;
@@ -209,7 +211,7 @@ bool WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 			break;
 		}
 	}
-	if (size) {
+	if (size && res) {
 		breakBufferFillSize = size;
 		memcpy(breakBuffer, data, size);
 	}
@@ -234,20 +236,19 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 	}
 
 	AVCodecContext *c = stream->codec;
-	unsigned int packet_size = packet->size;
 
 	if (restart_audio_resampling) {
 		restart_audio_resampling = false;
 		initialHeader = true;
 
-		if (swr)
-			swr_free(&swr);
-		if (decoded_frame)
-			av_frame_free(&decoded_frame);
+		swr_free(&swr);
 
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
-
-		if (!codec || avcodec_open2(c, codec, NULL)) {
+		if (!codec) {
+			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
+			return false;
+		}
+		if (avcodec_open2(c, codec, NULL)) {
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
 			return false;
 		}
@@ -294,59 +295,62 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
 				-e, (int) c->channel_layout,
 				(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
-			swr_free(&swr);
 			restart_audio_resampling = true;
 			return false;
 		}
 	}
 
-	while (packet_size > 0) {
-		int got_frame = 0;
-		if (decoded_frame)
-			av_frame_unref(decoded_frame);
-		else if (!(decoded_frame = av_frame_alloc())) {
-				fprintf(stderr, "out of memory\n");
-				exit(1);
-		}
+	unsigned int packet_size = packet->size;
+	while (packet_size > 0 || (!packet_size && !packet->data)) {
+		av_frame_unref(decoded_frame);
 
+		int got_frame = 0;
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {
 			restart_audio_resampling = true;
 			break;
 		}
 
-		packet_size -= len;
-
-		if (!got_frame)
+		if (!got_frame) {
+			if (!packet->data)
+				break;
 			continue;
+		}
 
 		int in_samples = decoded_frame->nb_samples;
 		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
-
-		uint8_t *output = NULL;
-		int e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
-		if (e < 0) {
-			fprintf(stderr, "av_samples_alloc: %d\n", -e);
-			break;
+		if (out_samples > out_samples_max) {
+			if (output)
+				av_freep(&output);
+			int e = av_samples_alloc(&output, NULL, out_channels, out_samples, AV_SAMPLE_FMT_S16, 1);
+			if (e < 0) {
+				fprintf(stderr, "av_samples_alloc: %d\n", -e);
+				break;
+			}
+			out_samples_max = out_samples;
 		}
+
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-		if(!writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels)) {
+		if (!writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels)) {
 			restart_audio_resampling = true;
-			av_free(output);
 			break;
 		}
 
-		av_free(output);
 		pts = 0;
+
+		if (packet->data)
+			packet_size -= len;
 	}
-	return true;
+	return !packet_size;
 }
 
 WriterPCM::WriterPCM()
 {
 	swr = NULL;
-	decoded_frame = NULL;
+	output = NULL;
+	out_samples_max = 0;
+	decoded_frame = av_frame_alloc();
 
 	Register(this, AV_CODEC_ID_INJECTPCM, AUDIO_ENCODING_LPCMA);
 	Init();

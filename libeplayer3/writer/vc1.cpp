@@ -63,7 +63,7 @@ void WriterVC1::Init()
 
 bool WriterVC1::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet)
+	if (fd < 0 || !packet || !packet->data)
 		return false;
 
 	if (initialHeader) {

@@ -230,7 +230,8 @@ bool Input::Play()
 				}
 			}
 		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
-			teletext_write(stream->id, packet.data, packet.size);
+			if (packet.data && packet.size > 1)
+				teletext_write(stream->id, packet.data + 1, packet.size - 1);
 		}
 
 		av_free_packet(&packet);
@@ -238,8 +239,17 @@ bool Input::Play()
 
 	if (player->abortRequested)
 		player->output.Clear();
-	else
+	else {
+		Track *_audioTrack = audioTrack;
+		if (_audioTrack) {
+			// flush audio decoder
+			AVPacket packet;
+			av_init_packet(&packet);
+			packet.size = 0;
+			player->output.Write(avfc, _audioTrack->stream, &packet, 0);
+		}
 		player->output.Flush();
+	}
 
 	dvbsub_ass_clear();
 	abortPlayback = true;

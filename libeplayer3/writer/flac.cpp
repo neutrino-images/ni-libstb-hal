@@ -26,8 +26,10 @@
 #include <sys/uio.h>
 #include <errno.h>
 
-#include "pes.h"
+#include <algorithm>
+
 #include "misc.h"
+#include "pes.h"
 #include "writer.h"
 
 class WriterFLAC : public Writer
@@ -39,18 +41,26 @@ class WriterFLAC : public Writer
 
 bool WriterFLAC::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet)
+	if (fd < 0 || !packet || !packet->data)
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	struct iovec iov[2];
 
-	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE, pts, 0);
-	iov[1].iov_base = packet->data;
-	iov[1].iov_len = packet->size;
+	for (int pos = 0; pos < packet->size; ) {
+		int PacketLength = std::min(packet->size - pos, MAX_PES_PACKET_SIZE);
+		struct iovec iov[2];
+		iov[0].iov_base = PesHeader;
+		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_AUDIO_PES_START_CODE, pts, 0);
+		iov[1].iov_base = packet->data + pos;
+		iov[1].iov_len = PacketLength;
 
-	return writev(fd, iov, 2) > -1;
+		ssize_t l = writev(fd, iov, 2);
+		if (l < 0)
+			return false;
+		pos += PacketLength;
+		pts = INVALID_PTS_VALUE;
+	}
+	return true;
 }
 
 WriterFLAC::WriterFLAC()

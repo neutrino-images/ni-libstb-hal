@@ -129,18 +129,20 @@ bool Output::Play()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videoStream && videofd > -1) {
-		videoWriter = Writer::GetWriter(videoStream->codec->codec_id, videoStream->codec->codec_type);
-		videoWriter->Init();
-		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(videoStream->codec->codec_id))
+	AVCodecContext *avcc;
+
+	if (videoStream && videofd > -1 && (avcc = videoStream->codec)) {
+		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
+		videoWriter->Init(videofd, videoStream);
+		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(avcc->codec_id))
 		||  dioctl(videofd, VIDEO_PLAY, NULL))
 			ret = false;
 	}
 
-	if (audioStream && audiofd > -1) {
-		audioWriter = Writer::GetWriter(audioStream->codec->codec_id, audioStream->codec->codec_type);
-		audioWriter->Init();
-		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioWriter->GetAudioEncoding(audioStream->codec->codec_id))
+	if (audioStream && audiofd > -1 && (avcc = audioStream->codec)) {
+		audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
+		audioWriter->Init(audiofd, audioStream);
+		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioWriter->GetAudioEncoding(avcc->codec_id))
 		||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;
 	}
@@ -227,8 +229,16 @@ bool Output::Flush()
 	if (videofd > -1 && ioctl(videofd, VIDEO_FLUSH, NULL))
 		ret = false;
 
-	if (audiofd > -1 && ioctl(audiofd, AUDIO_FLUSH, NULL))
-		ret = false;
+	if (audiofd > -1 && audioWriter) {
+		// flush audio decoder
+		AVPacket packet;
+		packet.data = NULL;
+		packet.size = 0;
+		audioWriter->Write(&packet, 0);
+
+		if (ioctl(audiofd, AUDIO_FLUSH, NULL))
+			ret = false;
+	}
 
 	return ret;
 }
@@ -300,10 +310,13 @@ bool Output::SwitchAudio(AVStream *stream)
 	}
 	audioStream = stream;
 	if (stream) {
-		audioWriter = Writer::GetWriter(stream->codec->codec_id, stream->codec->codec_type);
-		audioWriter->Init();
+		AVCodecContext *avcc = stream->codec;
+		if (!avcc)
+			return false;
+		audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
+		audioWriter->Init(audiofd, audioStream);
 		if (audiofd > -1) {
-			dioctl (audiofd, AUDIO_SET_ENCODING, Writer::GetAudioEncoding(stream->codec->codec_id));
+			dioctl(audiofd, AUDIO_SET_ENCODING, Writer::GetAudioEncoding(avcc->codec_id));
 			dioctl(audiofd, AUDIO_PLAY, NULL);
 		}
 	}
@@ -321,10 +334,13 @@ bool Output::SwitchVideo(AVStream *stream)
 	}
 	videoStream = stream;
 	if (stream) {
-		videoWriter = Writer::GetWriter(stream->codec->codec_id, stream->codec->codec_type);
-		videoWriter->Init();
+		AVCodecContext *avcc = stream->codec;
+		if (!avcc)
+			return false;
+		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
+		videoWriter->Init(videofd, videoStream);
 		if (videofd > -1) {
-			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(stream->codec->codec_id));
+			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(avcc->codec_id));
 			dioctl(videofd, VIDEO_PLAY, NULL);
 		}
 	}
@@ -336,11 +352,11 @@ bool Output::Write(AVStream *stream, AVPacket *packet, int64_t pts)
 	switch (stream->codec->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-			return  videofd > -1 && videoWriter && videoWriter->Write(videofd, stream, packet, pts);
+			return videofd > -1 && videoWriter && videoWriter->Write(packet, pts);
 		}
 		case AVMEDIA_TYPE_AUDIO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-			return audiofd > -1 && audioWriter && audioWriter->Write(audiofd, stream, packet, pts);
+			return audiofd > -1 && audioWriter && audioWriter->Write(packet, pts);
 		}
 		default:
 			return false;

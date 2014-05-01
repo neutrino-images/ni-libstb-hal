@@ -150,8 +150,7 @@ bool Input::Play()
 			restart_audio_resampling = true;
 
 			// clear streams
-			unsigned int i;
-			for (i = 0; i < avfc->nb_streams; i++)
+			for (unsigned int i = 0; i < avfc->nb_streams; i++)
 				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
 					avcodec_flush_buffers(avfc->streams[i]->codec);
 			player->output.ClearAudio();
@@ -239,17 +238,8 @@ bool Input::Play()
 
 	if (player->abortRequested)
 		player->output.Clear();
-	else {
-		Track *_audioTrack = audioTrack;
-		if (_audioTrack) {
-			// flush audio decoder
-			AVPacket packet;
-			packet.data = NULL;
-			packet.size = 0;
-			player->output.Write(_audioTrack->stream, &packet, 0);
-		}
+	else
 		player->output.Flush();
-	}
 
 	dvbsub_ass_clear();
 	abortPlayback = true;
@@ -324,6 +314,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 		av_free_packet(&packet);
 	}
 	avformat_close_input(&subavfc);
+	avcodec_close(c);
 	avformat_free_context(subavfc);
 
 	Track track;
@@ -523,8 +514,11 @@ bool Input::Stop()
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
 
-	if (avfc)
+	if (avfc) {
+		for (unsigned int i = 0; i < avfc->nb_streams; i++)
+			avcodec_close(avfc->streams[i]->codec);
 		avformat_close_input(&avfc);
+	}
 
 	avformat_network_deinit();
 
@@ -554,7 +548,7 @@ bool Input::SwitchAudio(Track *track)
 {
 	audioTrack = track;
 	player->output.SwitchAudio(track ? track->stream : NULL);
-	player->Seek(-5000, false);
+	// player->Seek(-5000, false);
 	return true;
 }
 

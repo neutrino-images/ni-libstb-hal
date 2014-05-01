@@ -50,20 +50,23 @@ class WriterVC1 : public Writer
 	private:
 		bool initialHeader;
 		uint8_t FrameHeaderSeen;
+		AVStream *stream;
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
-		void Init();
+		bool Write(AVPacket *packet, int64_t pts);
+		void Init(int _fd, AVStream *_stream);
 		WriterVC1();
 };
 
-void WriterVC1::Init()
+void WriterVC1::Init(int _fd, AVStream *_stream)
 {
+	fd = _fd;
+	stream = _stream;
 	initialHeader = true;
 }
 
-bool WriterVC1::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterVC1::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 
 	if (initialHeader) {
@@ -181,7 +184,6 @@ bool WriterVC1::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
 WriterVC1::WriterVC1()
 {
 	Register(this, AV_CODEC_ID_VC1, VIDEO_ENCODING_VC1);
-	Init();
 }
 
 static WriterVC1 writer_vc1 __attribute__ ((init_priority (300)));

@@ -35,13 +35,13 @@
 class WriterAC3 : public Writer
 {
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(AVPacket *packet, int64_t pts);
 		WriterAC3();
 };
 
-bool WriterAC3::Write(int fd, AVStream * /* stream */, AVPacket *packet, int64_t pts)
+bool WriterAC3::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];

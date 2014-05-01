@@ -36,13 +36,13 @@
 class WriterDTS : public Writer
 {
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(AVPacket *packet, int64_t pts);
 		WriterDTS();
 };
 
-bool WriterDTS::Write(int fd, AVStream * /* stream */, AVPacket *packet, int64_t pts)
+bool WriterDTS::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 
 	uint8_t PesHeader[PES_AUDIO_HEADER_SIZE];

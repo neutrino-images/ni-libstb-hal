@@ -37,20 +37,23 @@ class WriterDIVX : public Writer
 {
 	private:
 		bool initialHeader;
+		AVStream *stream;
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
-		void Init();
+		bool Write(AVPacket *packet, int64_t pts);
+		void Init(int fd, AVStream *_stream);
 		WriterDIVX();
 };
 
-void WriterDIVX::Init()
+void WriterDIVX::Init(int _fd, AVStream *_stream)
 {
+	fd = _fd;
+	stream = _stream;
 	initialHeader = true;
 }
 
-bool WriterDIVX::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterDIVX::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
@@ -101,7 +104,6 @@ WriterDIVX::WriterDIVX()
 	Register(this, AV_CODEC_ID_MSMPEG4V1, VIDEO_ENCODING_MPEG4P2);
 	Register(this, AV_CODEC_ID_MSMPEG4V2, VIDEO_ENCODING_MPEG4P2);
 	Register(this, AV_CODEC_ID_MSMPEG4V3, VIDEO_ENCODING_MPEG4P2);
-	Init();
 }
 
 static WriterDIVX writer_divx __attribute__ ((init_priority (300)));

@@ -52,21 +52,24 @@ class WriterH264 : public Writer
 	private:
 		bool initialHeader;
 		unsigned int NalLengthBytes;
+		AVStream *stream;
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
-		void Init();
+		bool Write(AVPacket *packet, int64_t pts);
+		void Init(int _fd, AVStream *_stream);
 		WriterH264();
 };
 
-void WriterH264::Init(void)
+void WriterH264::Init(int _fd, AVStream *_stream)
 {
+	fd = _fd;
+	stream = _stream;
 	initialHeader = true;
 	NalLengthBytes = 1;
 }
 
-bool WriterH264::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterH264::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	unsigned int TimeDelta;
@@ -249,7 +252,6 @@ bool WriterH264::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
 WriterH264::WriterH264()
 {
 	Register(this, AV_CODEC_ID_H264, VIDEO_ENCODING_H264);
-	Init();
 }
 
 static WriterH264 writerh264 __attribute__ ((init_priority (300)));

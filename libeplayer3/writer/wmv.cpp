@@ -57,20 +57,23 @@ class WriterWMV : public Writer
 {
 	private:
 		bool initialHeader;
+		AVStream *stream;
 	public:
-		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
-		void Init();
+		bool Write(AVPacket *packet, int64_t pts);
+		void Init(int _fd, AVStream *_stream);
 		WriterWMV();
 };
 
-void WriterWMV::Init()
+void WriterWMV::Init(int _fd, AVStream *_stream)
 {
+	fd = _fd;
+	stream = _stream;
 	initialHeader = true;
 }
 
-bool WriterWMV::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterWMV::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0 || !packet || !packet->data)
+	if (!packet || !packet->data)
 		return false;
 
 	if (initialHeader) {
@@ -164,7 +167,6 @@ WriterWMV::WriterWMV()
 	Register(this, AV_CODEC_ID_WMV1, VIDEO_ENCODING_WMV);
 	Register(this, AV_CODEC_ID_WMV2, VIDEO_ENCODING_WMV);
 	Register(this, AV_CODEC_ID_WMV3, VIDEO_ENCODING_WMV);
-	Init();
 }
 
 static WriterWMV writer_wmv __attribute__ ((init_priority (300)));

@@ -58,7 +58,7 @@ void Writer::Register(Writer *w, enum AVCodecID id, audio_encoding_t encoding)
 	aencoding[id] = encoding;
 }
 
-bool Writer::Write(int /* fd */, AVStream * /*stream*/, AVPacket * /* packet */, int64_t /* pts */)
+bool Writer::Write(AVPacket * /* packet */, int64_t /* pts */)
 {
 	return false;
 }

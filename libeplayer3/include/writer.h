@@ -39,6 +39,8 @@ extern "C" {
 
 class Writer
 {
+	protected:
+		int fd;
 	public:
 		static void Register(Writer *w, enum AVCodecID id, video_encoding_t encoding);
 		static void Register(Writer *w, enum AVCodecID id, audio_encoding_t encoding);
@@ -46,7 +48,7 @@ class Writer
 		static audio_encoding_t GetAudioEncoding(enum AVCodecID id);
 		static Writer *GetWriter(enum AVCodecID id, enum AVMediaType codec_type);
 
-		virtual void Init(void) { }
-		virtual bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
+		virtual void Init(int _fd, AVStream * /*stream*/ ) { fd = _fd; }
+		virtual bool Write(AVPacket *packet, int64_t pts);
 };
 #endif

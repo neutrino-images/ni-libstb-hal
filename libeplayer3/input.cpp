@@ -244,7 +244,7 @@ bool Input::Play()
 		if (_audioTrack) {
 			// flush audio decoder
 			AVPacket packet;
-			av_init_packet(&packet);
+			packet.data = NULL;
 			packet.size = 0;
 			player->output.Write(avfc, _audioTrack->stream, &packet, 0);
 		}

@@ -35,11 +35,11 @@
 class WriterMPEG2 : public Writer
 {
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		WriterMPEG2();
 };
 
-bool WriterMPEG2::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
+bool WriterMPEG2::Write(int fd, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet || !packet->data)
 		return false;

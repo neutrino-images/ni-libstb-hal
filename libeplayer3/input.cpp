@@ -149,7 +149,7 @@ bool Input::Play()
 			seek_target = INT64_MIN;
 			restart_audio_resampling = true;
 
-			// flush streams
+			// clear streams
 			unsigned int i;
 			for (i = 0; i < avfc->nb_streams; i++)
 				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
@@ -179,7 +179,7 @@ bool Input::Play()
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
 			int64_t pts = calcPts(stream, packet.pts);
-			if (!player->output.Write(avfc, stream, &packet, pts)) {
+			if (!player->output.Write(stream, &packet, pts)) {
 				if (warnVideoWrite)
 					warnVideoWrite--;
 				else {
@@ -190,11 +190,11 @@ bool Input::Play()
 		} else if (_audioTrack && (_audioTrack->stream == stream)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
-				player->output.Write(avfc, stream, NULL, 0);
+				player->output.Write(stream, NULL, 0);
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(stream, packet.pts);
-				if (!player->output.Write(avfc, stream, &packet, _videoTrack ? pts : 0)) {
+				if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0)) {
 					if (warnAudioWrite)
 						warnAudioWrite--;
 					else {
@@ -246,7 +246,7 @@ bool Input::Play()
 			AVPacket packet;
 			packet.data = NULL;
 			packet.size = 0;
-			player->output.Write(avfc, _audioTrack->stream, &packet, 0);
+			player->output.Write(_audioTrack->stream, &packet, 0);
 		}
 		player->output.Flush();
 	}
@@ -313,9 +313,6 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 
 	AVPacket packet;
 	av_init_packet(&packet);
-
-	if (c->subtitle_header)
-		fprintf(stderr, "%s\n", c->subtitle_header);
 
 	while (av_read_frame(subavfc, &packet) > -1) {
 		AVSubtitle sub;
@@ -441,7 +438,6 @@ bool Input::UpdateTracks()
 			stream->id = n + 1;
 
 		Track track;
-		track.avfc = avfc;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";

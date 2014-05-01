@@ -74,7 +74,7 @@ class Output
 		bool GetFrameCount(int64_t &framecount);
 		bool SwitchAudio(AVStream *stream);
 		bool SwitchVideo(AVStream *stream);
-		bool Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t Pts);
+		bool Write(AVStream *stream, AVPacket *packet, int64_t Pts);
 };
 
 #endif

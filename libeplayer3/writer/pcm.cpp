@@ -80,7 +80,7 @@ class WriterPCM : public Writer
 		bool restart_audio_resampling;
 
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		bool prepareClipPlay();
 		bool writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
 		void Init();
@@ -225,7 +225,7 @@ void WriterPCM::Init()
 	restart_audio_resampling = true;
 }
 
-bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterPCM::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0)
 		return false;

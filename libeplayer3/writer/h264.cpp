@@ -53,7 +53,7 @@ class WriterH264 : public Writer
 		bool initialHeader;
 		unsigned int NalLengthBytes;
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();
 		WriterH264();
 };
@@ -64,7 +64,7 @@ void WriterH264::Init(void)
 	NalLengthBytes = 1;
 }
 
-bool WriterH264::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterH264::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet || !packet->data)
 		return false;

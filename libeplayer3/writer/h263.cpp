@@ -32,11 +32,11 @@
 class WriterH263 : public Writer
 {
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		WriterH263();
 };
 
-bool WriterH263::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
+bool WriterH263::Write(int fd, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet || !packet->data)
 		return false;

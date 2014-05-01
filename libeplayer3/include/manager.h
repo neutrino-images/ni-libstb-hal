@@ -44,13 +44,12 @@ struct Track
 {
 	std::string title;
 	int pid;
-	AVFormatContext *avfc;
 	AVStream *stream;
 	bool inactive;
 	bool is_static;
 	int ac3flags;
 	int type, mag, page; // for teletext
-	Track() : pid(-1), avfc(NULL), stream(NULL), inactive(0), is_static(0), ac3flags(0) {}
+	Track() : pid(-1), stream(NULL), inactive(0), is_static(0), ac3flags(0) {}
 };
 
 class Manager

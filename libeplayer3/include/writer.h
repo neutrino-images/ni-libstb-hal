@@ -47,6 +47,6 @@ class Writer
 		static Writer *GetWriter(enum AVCodecID id, enum AVMediaType codec_type);
 
 		virtual void Init(void) { }
-		virtual bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		virtual bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 };
 #endif

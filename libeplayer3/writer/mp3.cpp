@@ -35,11 +35,11 @@
 class WriterMP3 : public Writer
 {
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		WriterMP3();
 };
 
-bool WriterMP3::Write(int fd, AVFormatContext * /* avfc */, AVStream * /* stream */, AVPacket *packet, int64_t pts)
+bool WriterMP3::Write(int fd, AVStream * /* stream */, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet || !packet->data)
 		return false;

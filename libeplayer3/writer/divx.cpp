@@ -38,7 +38,7 @@ class WriterDIVX : public Writer
 	private:
 		bool initialHeader;
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts);
 		void Init();
 		WriterDIVX();
 };
@@ -48,7 +48,7 @@ void WriterDIVX::Init()
 	initialHeader = true;
 }
 
-bool WriterDIVX::Write(int fd, AVFormatContext * /* avfc */, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterDIVX::Write(int fd, AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	if (fd < 0 || !packet || !packet->data)
 		return false;

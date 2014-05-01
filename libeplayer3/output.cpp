@@ -331,16 +331,16 @@ bool Output::SwitchVideo(AVStream *stream)
 	return true;
 }
 
-bool Output::Write(AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts)
+bool Output::Write(AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	switch (stream->codec->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-			return  videofd > -1 && videoWriter && videoWriter->Write(videofd, avfc, stream, packet, pts);
+			return  videofd > -1 && videoWriter && videoWriter->Write(videofd, stream, packet, pts);
 		}
 		case AVMEDIA_TYPE_AUDIO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-			return audiofd > -1 && audioWriter && audioWriter->Write(audiofd, avfc, stream, packet, pts);
+			return audiofd > -1 && audioWriter && audioWriter->Write(audiofd, stream, packet, pts);
 		}
 		default:
 			return false;

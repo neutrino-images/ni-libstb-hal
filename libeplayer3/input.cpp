@@ -88,6 +88,8 @@ bool Input::Play()
 	int warnAudioWrite = 0;
 	int warnVideoWrite = 0;
 
+	bool audioSeen = !audioTrack; // HACK: Drop all video frames until the first audio frame was seen to keep player2 from stuttering.
+
 	while (player->isPlaying && !player->abortRequested) {
 
 		//IF MOVIE IS PAUSED, WAIT
@@ -178,7 +180,7 @@ bool Input::Play()
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
 			int64_t pts = calcPts(stream, packet.pts);
-			if (!player->output.Write(stream, &packet, pts)) {
+			if (audioSeen && !player->output.Write(stream, &packet, pts)) {
 				if (warnVideoWrite)
 					warnVideoWrite--;
 				else {
@@ -202,6 +204,7 @@ bool Input::Play()
 					}
 				}
 			}
+			audioSeen = true;
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
 			if (stream->codec->codec) {
 				AVSubtitle sub;

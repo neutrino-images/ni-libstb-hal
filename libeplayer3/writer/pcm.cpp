@@ -129,7 +129,7 @@ bool WriterPCM::prepareClipPlay()
 	SubFrameLen *= uBitsPerSample / 8;
 
 	//rewrite PES size to have as many complete subframes per PES as we can
-	SubFramesPerPES = ((sizeof(injectBuffer) - 18) - sizeof(lpcm_prv)) / SubFrameLen;
+	SubFramesPerPES = ((sizeof(injectBuffer) - 14) - sizeof(lpcm_prv)) / SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
 
 	//set number of channels

@@ -313,8 +313,8 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 			dvbsub_ass_write(c, &sub, pid);
 		av_free_packet(&packet);
 	}
-	avformat_close_input(&subavfc);
 	avcodec_close(c);
+	avformat_close_input(&subavfc);
 	avformat_free_context(subavfc);
 
 	Track track;

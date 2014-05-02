@@ -129,7 +129,6 @@ bool WriterPCM::prepareClipPlay()
 	SubFrameLen *= uBitsPerSample / 8;
 
 	//rewrite PES size to have as many complete subframes per PES as we can
-	// FIXME: PES header size was hardcoded to 18 in earlier code. Actual size returned by InsertPesHeader is 14.
 	SubFramesPerPES = ((sizeof(injectBuffer) - 18) - sizeof(lpcm_prv)) / SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
 
@@ -248,6 +247,7 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
 			return false;
 		}
+		avcodec_close(c);
 		if (avcodec_open2(c, codec, NULL)) {
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
 			return false;
@@ -292,7 +292,7 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 
 		int e = swr_init(swr);
 		if (e < 0) {
-			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d)\n",
 				-e, (int) c->channel_layout,
 				(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
 			restart_audio_resampling = true;

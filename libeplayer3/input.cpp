@@ -88,7 +88,9 @@ bool Input::Play()
 	int warnAudioWrite = 0;
 	int warnVideoWrite = 0;
 
-	bool audioSeen = !audioTrack; // HACK: Drop all video frames until the first audio frame was seen to keep player2 from stuttering.
+	// HACK: Drop all video frames until the first audio frame was seen to keep player2 from stuttering.
+	//       This seems to be necessary for network streaming only ...
+	bool audioSeen = !audioTrack || !player->isHttp;
 
 	while (player->isPlaying && !player->abortRequested) {
 

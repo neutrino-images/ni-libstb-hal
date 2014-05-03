@@ -273,7 +273,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	const char *lastDot = strrchr(filename, '.');
 	if (!lastDot)
 		return false;
-	char *subfile = (char *) alloca(strlen(filename) + strlen(format));
+	char subfile[strlen(filename) + strlen(format)];
 	strcpy(subfile, filename);
 	strcpy(subfile + (lastDot + 1 - filename), format);
 

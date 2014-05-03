@@ -78,6 +78,7 @@ bool Player::Open(const char *Url, bool _noprobe)
 		isHttp = true;
 	} else if (strstr(Url, "://")) {
 		url = Url;
+		isHttp = strncmp("file://", Url, 7);
 	} else {
 		fprintf(stderr, "%s %s %d: Unknown stream (%s)\n", __FILE__, __func__, __LINE__, Url);
 		return false;

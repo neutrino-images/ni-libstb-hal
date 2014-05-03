@@ -88,6 +88,10 @@ bool Input::Play()
 	int warnAudioWrite = 0;
 	int warnVideoWrite = 0;
 
+	// HACK: Drop all video frames until the first audio frame was seen to keep player2 from stuttering.
+	//       This seems to be necessary for network streaming only ...
+	bool audioSeen = !audioTrack || !player->isHttp;
+
 	while (player->isPlaying && !player->abortRequested) {
 
 		//IF MOVIE IS PAUSED, WAIT
@@ -149,9 +153,8 @@ bool Input::Play()
 			seek_target = INT64_MIN;
 			restart_audio_resampling = true;
 
-			// flush streams
-			unsigned int i;
-			for (i = 0; i < avfc->nb_streams; i++)
+			// clear streams
+			for (unsigned int i = 0; i < avfc->nb_streams; i++)
 				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
 					avcodec_flush_buffers(avfc->streams[i]->codec);
 			player->output.ClearAudio();
@@ -179,7 +182,7 @@ bool Input::Play()
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
 			int64_t pts = calcPts(stream, packet.pts);
-			if (!player->output.Write(avfc, stream, &packet, pts)) {
+			if (audioSeen && !player->output.Write(stream, &packet, pts)) {
 				if (warnVideoWrite)
 					warnVideoWrite--;
 				else {
@@ -190,11 +193,11 @@ bool Input::Play()
 		} else if (_audioTrack && (_audioTrack->stream == stream)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
-				player->output.Write(avfc, stream, NULL, 0);
+				player->output.Write(stream, NULL, 0);
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(stream, packet.pts);
-				if (!player->output.Write(avfc, stream, &packet, _videoTrack ? pts : 0)) {
+				if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0)) {
 					if (warnAudioWrite)
 						warnAudioWrite--;
 					else {
@@ -203,6 +206,7 @@ bool Input::Play()
 					}
 				}
 			}
+			audioSeen = true;
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
 			if (stream->codec->codec) {
 				AVSubtitle sub;
@@ -239,17 +243,8 @@ bool Input::Play()
 
 	if (player->abortRequested)
 		player->output.Clear();
-	else {
-		Track *_audioTrack = audioTrack;
-		if (_audioTrack) {
-			// flush audio decoder
-			AVPacket packet;
-			av_init_packet(&packet);
-			packet.size = 0;
-			player->output.Write(avfc, _audioTrack->stream, &packet, 0);
-		}
+	else
 		player->output.Flush();
-	}
 
 	dvbsub_ass_clear();
 	abortPlayback = true;
@@ -278,7 +273,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	const char *lastDot = strrchr(filename, '.');
 	if (!lastDot)
 		return false;
-	char *subfile = (char *) alloca(strlen(filename) + strlen(format));
+	char subfile[strlen(filename) + strlen(format)];
 	strcpy(subfile, filename);
 	strcpy(subfile + (lastDot + 1 - filename), format);
 
@@ -314,9 +309,6 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	AVPacket packet;
 	av_init_packet(&packet);
 
-	if (c->subtitle_header)
-		fprintf(stderr, "%s\n", c->subtitle_header);
-
 	while (av_read_frame(subavfc, &packet) > -1) {
 		AVSubtitle sub;
 		memset(&sub, 0, sizeof(sub));
@@ -326,6 +318,7 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 			dvbsub_ass_write(c, &sub, pid);
 		av_free_packet(&packet);
 	}
+	avcodec_close(c);
 	avformat_close_input(&subavfc);
 	avformat_free_context(subavfc);
 
@@ -441,15 +434,10 @@ bool Input::UpdateTracks()
 			stream->id = n + 1;
 
 		Track track;
-		track.avfc = avfc;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";
 		track.pid = stream->id;
-		if (stream->duration == AV_NOPTS_VALUE)
-			track.duration = avfc->duration;
-		else
-			track.duration = av_rescale(stream->time_base.num * AV_TIME_BASE, stream->duration, stream->time_base.den);
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {
@@ -531,8 +519,11 @@ bool Input::Stop()
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
 
-	if (avfc)
+	if (avfc) {
+		for (unsigned int i = 0; i < avfc->nb_streams; i++)
+			avcodec_close(avfc->streams[i]->codec);
 		avformat_close_input(&avfc);
+	}
 
 	avformat_network_deinit();
 
@@ -550,23 +541,11 @@ bool Input::Seek(int64_t avts, bool absolute)
 
 bool Input::GetDuration(int64_t &duration)
 {
+	if (avfc) {
+		duration = avfc->duration;
+		return true;
+	}
 	duration = 0;
-
-	Track *track = videoTrack;
-	if (track && track->duration) {
-		duration = track->duration;
-		return true;
-	}
-	track = audioTrack;
-	if (track && track->duration) {
-		duration = track->duration;
-		return true;
-	}
-	track = subtitleTrack;
-	if (track && track->duration) {
-		duration = track->duration;
-		return true;
-	}
 	return false;
 }
 
@@ -574,7 +553,7 @@ bool Input::SwitchAudio(Track *track)
 {
 	audioTrack = track;
 	player->output.SwitchAudio(track ? track->stream : NULL);
-	player->Seek(-5000, false);
+	// player->Seek(-5000, false);
 	return true;
 }
 
@@ -593,6 +572,7 @@ bool Input::SwitchTeletext(Track *track)
 bool Input::SwitchVideo(Track *track)
 {
 	videoTrack = track;
+	player->output.SwitchVideo(track ? track->stream : NULL);
 	return true;
 }
 

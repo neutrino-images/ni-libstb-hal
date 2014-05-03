@@ -71,6 +71,7 @@ class WriterPCM : public Writer
 		int uSampleRate;
 		int uBitsPerSample;
 
+		AVStream *stream;
 		SwrContext *swr;
 		AVFrame *decoded_frame;
 		int out_sample_rate;
@@ -80,10 +81,10 @@ class WriterPCM : public Writer
 		bool restart_audio_resampling;
 
 	public:
-		bool Write(int fd, AVFormatContext *avfc, AVStream *stream, AVPacket *packet, int64_t pts);
+		bool Write(AVPacket *packet, int64_t pts);
 		bool prepareClipPlay();
-		bool writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size);
-		void Init();
+		bool writePCM(int64_t Pts, uint8_t *data, unsigned int size);
+		void Init(int _fd, AVStream *_stream);
 		WriterPCM();
 };
 
@@ -128,8 +129,7 @@ bool WriterPCM::prepareClipPlay()
 	SubFrameLen *= uBitsPerSample / 8;
 
 	//rewrite PES size to have as many complete subframes per PES as we can
-	// FIXME: PES header size was hardcoded to 18 in earlier code. Actual size returned by InsertPesHeader is 14.
-	SubFramesPerPES = ((sizeof(injectBuffer) - 18) - sizeof(lpcm_prv)) / SubFrameLen;
+	SubFramesPerPES = ((sizeof(injectBuffer) - 14) - sizeof(lpcm_prv)) / SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
 
 	//set number of channels
@@ -148,7 +148,7 @@ bool WriterPCM::prepareClipPlay()
 	return true;
 }
 
-bool WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
+bool WriterPCM::writePCM(int64_t Pts, uint8_t *data, unsigned int size)
 {
 	bool res = true;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
@@ -219,17 +219,16 @@ bool WriterPCM::writePCM(int fd, int64_t Pts, uint8_t *data, unsigned int size)
 	return res;
 }
 
-void WriterPCM::Init()
+void WriterPCM::Init(int _fd, AVStream *_stream)
 {
+	fd = _fd;
+	stream = _stream;
 	initialHeader = true;
 	restart_audio_resampling = true;
 }
 
-bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPacket *packet, int64_t pts)
+bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 {
-	if (fd < 0)
-		return false;
-
 	if (!packet) {
 		restart_audio_resampling = true;
 		return true;
@@ -248,6 +247,7 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
 			return false;
 		}
+		avcodec_close(c);
 		if (avcodec_open2(c, codec, NULL)) {
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
 			return false;
@@ -292,7 +292,7 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 
 		int e = swr_init(swr);
 		if (e < 0) {
-			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d\n",
+			fprintf(stderr, "swr_init: %d (icl=%d ocl=%d isr=%d osr=%d isf=%d osf=%d)\n",
 				-e, (int) c->channel_layout,
 				(int) out_channel_layout, c->sample_rate, out_sample_rate, c->sample_fmt, AV_SAMPLE_FMT_S16);
 			restart_audio_resampling = true;
@@ -332,7 +332,7 @@ bool WriterPCM::Write(int fd, AVFormatContext * /*avfc*/, AVStream *stream, AVPa
 
 		out_samples = swr_convert(swr, &output, out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-		if (!writePCM(fd, pts, output, out_samples * sizeof(short) * out_channels)) {
+		if (!writePCM(pts, output, out_samples * sizeof(short) * out_channels)) {
 			restart_audio_resampling = true;
 			break;
 		}
@@ -353,7 +353,6 @@ WriterPCM::WriterPCM()
 	decoded_frame = av_frame_alloc();
 
 	Register(this, AV_CODEC_ID_INJECTPCM, AUDIO_ENCODING_LPCMA);
-	Init();
 }
 
 static WriterPCM writer_pcm __attribute__ ((init_priority (300)));

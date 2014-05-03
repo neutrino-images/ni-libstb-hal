@@ -572,6 +572,7 @@ bool Input::SwitchTeletext(Track *track)
 bool Input::SwitchVideo(Track *track)
 {
 	videoTrack = track;
+	player->output.SwitchVideo(track ? track->stream : NULL);
 	return true;
 }
 

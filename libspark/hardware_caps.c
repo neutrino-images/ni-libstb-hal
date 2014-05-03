@@ -34,6 +34,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.can_shutdown = 1;
 	caps.display_type = HW_DISPLAY_LED_NUM;
 	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
 	caps.display_xres = 4;
 	strcpy(caps.boxvendor, "SPARK");
 	const char *tmp;
@@ -64,109 +65,83 @@ hw_caps_t *get_hwcaps(void)
 			switch (sys_id) {
 				case 0x090003:
 					tmp = "Truman Premier 1+";
-					caps.has_SCART = 1;
 					break;
 				case 0x090007:
 					tmp = "GoldenMedia GM990";
-					caps.has_SCART = 1;
 					break;
 				case 0x090008:
 					tmp = "Edision Pingulux";
-					caps.has_SCART = 1; // RCA qualifies ... --martii
 					if (caps.display_type == HW_DISPLAY_LINE_TEXT)
 						tmp = "Edision Pingulux Plus";
 					break;
 				case 0x09000a:
 					tmp = "Amiko Alien SDH8900";
-					caps.has_SCART = 1;
 					break;
 				case 0x09000b:
 					tmp = "GalaxyInnovations S8120";
-					caps.has_SCART = 1;
 					break;
 				case 0x09000d:
 					tmp = "Dynavision Spark";
-					caps.has_SCART = 1;
 					break;
 				case 0x09000e:
 					tmp = "SAB Unix F+ Solo (S902)";
-					caps.has_SCART = 1;
 					break;
 				case 0x090015:
 					tmp = "Superbox S 750 HD";
-					caps.has_SCART = 1;
 					break;
 				case 0x09001d:
 					tmp = "Fulan Spark I+";
-					caps.has_SCART = 1;
 					break;
 				case 0x090020:
 					tmp = "SAMSAT LINUX 1";
-					caps.has_SCART = 1;
 					break;
 				case 0x090021:
 					tmp = "Visionnet Hammer 5400"; // or Startrack SRT 2020 HD, or Visionnet Fireball 101
-					caps.has_SCART = 1;
 					break;
 				case 0x090043:
 					tmp = "Sogno Spark Revolution";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0003:
 					tmp = "Truman Top Box 2";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0004:
 					tmp = "Delta";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0007:
 					tmp = "GoldenMedia Triplex";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c000a:
 					tmp = "Amiko Alien 2";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c000b:
 					tmp = "GalaxyInnovations Avatar 3 (8820)";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c000d:
 					tmp = "Dynavision 7162";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c000e:
 					tmp = "SAB Unix Triple HD (S903)";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0015:
 					tmp = "Superbox Z500";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c001d:
 					tmp = "Satcom 7162";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0020:
 					tmp = "Samsat 7162";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0021:
 					tmp = "Visionnet Falcon";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c002b:
 					tmp = "Icecrypt S3700 CHD";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0043:
 					tmp = "Sogno Spark Triple";
-					caps.has_SCART = 1;
 					break;
 				case 0x0c0045:
 					tmp = "Interstar";
-					caps.has_SCART = 1;
 					break;
 				default:
 					tmp = p;

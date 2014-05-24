@@ -262,10 +262,22 @@ bool Input::Play()
 	return res;
 }
 
+static std::string lastlog_message;
+static unsigned int lastlog_repeats;
+
 static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
 {
-//    if (debug_level > 10)
-	vfprintf(stderr, format, ap);
+	char m[1024];
+	if (sizeof(m) - 1 > (unsigned int) vsnprintf(m, sizeof(m), format, ap)) {
+		if (lastlog_message.compare(m) || lastlog_repeats > 999) {
+			if (lastlog_repeats)
+				fprintf(stderr, "last message repeated %u times\n", lastlog_repeats);
+			lastlog_message = m;
+			lastlog_repeats = 0;
+			fprintf(stderr, "%s", m);
+		} else
+			lastlog_repeats++;
+	}
 }
 
 bool Input::ReadSubtitle(const char *filename, const char *format, int pid)

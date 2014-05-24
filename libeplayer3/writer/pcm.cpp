@@ -311,8 +311,11 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			break;
 		}
 
+		if (packet->data)
+			packet_size -= len;
+
 		if (!got_frame) {
-			if (!packet->data)
+			if (!packet->data || !packet_size)
 				break;
 			continue;
 		}
@@ -338,9 +341,6 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 		}
 
 		pts = 0;
-
-		if (packet->data)
-			packet_size -= len;
 	}
 	return !packet_size;
 }

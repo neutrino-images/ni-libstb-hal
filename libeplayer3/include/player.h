@@ -114,6 +114,9 @@ class Player {
 		void RequestAbort();
 		bool GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 
+		AVFormatContext *GetAVFormatContext() { return input.GetAVFormatContext(); }
+		void ReleaseAVFormatContext() { input.ReleaseAVFormatContext(); }
+
 		Player();
 };
 #endif

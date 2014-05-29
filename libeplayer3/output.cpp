@@ -36,10 +36,6 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Thread>
-#include <OpenThreads/Condition>
-
 #include "player.h"
 #include "output.h"
 #include "writer.h"

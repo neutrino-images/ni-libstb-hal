@@ -47,6 +47,8 @@ class Input
 	friend int interrupt_cb(void *arg);
 
 	private:
+		OpenThreads::Mutex mutex;
+
 		Track *videoTrack;
 		Track *audioTrack;
 		Track *subtitleTrack;
@@ -81,6 +83,8 @@ class Input
 		bool SwitchVideo(Track *track);
 		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		bool GetReadCount(uint64_t &readcount);
+		AVFormatContext *GetAVFormatContext();
+		void ReleaseAVFormatContext();
 };
 
 #endif

@@ -532,6 +532,7 @@ bool Input::Stop()
 		usleep(100000);
 
 	if (avfc) {
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(mutex);
 		for (unsigned int i = 0; i < avfc->nb_streams; i++)
 			avcodec_close(avfc->streams[i]->codec);
 		avformat_close_input(&avfc);
@@ -540,6 +541,21 @@ bool Input::Stop()
 	avformat_network_deinit();
 
 	return true;
+}
+
+AVFormatContext *Input::GetAVFormatContext()
+{
+	mutex.lock();
+	if (avfc)
+		return avfc;
+	mutex.unlock();
+	return NULL;
+}
+
+void Input::ReleaseAVFormatContext()
+{
+	if (avfc)
+		mutex.unlock();
 }
 
 bool Input::Seek(int64_t avts, bool absolute)

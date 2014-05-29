@@ -362,3 +362,12 @@ int cPlayback::GetTeletextPid(void)
 {
 	return player->GetTeletextPid();
 }
+
+AVFormatContext *cPlayback::GetAVFormatContext()
+{
+	return player ? player->GetAVFormatContext() : NULL;
+}
+
+void cPlayback::ReleaseAVFormatContext() { if (player)
+	player->ReleaseAVFormatContext();
+}

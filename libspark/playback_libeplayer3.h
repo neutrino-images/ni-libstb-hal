@@ -10,9 +10,12 @@ typedef enum {
 } playmode_t;
 
 class Player;
+struct AVFormatContext;
 
 class cPlayback
 {
+	friend class CStreamInfo2;
+
 	private:
 		bool enabled;
 		bool playing;
@@ -58,6 +61,9 @@ class cPlayback
 #endif
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+
+		AVFormatContext *GetAVFormatContext();
+		void ReleaseAVFormatContext();
 #if 0
 		// Functions that are not used by movieplayer.cpp:
 		bool GetOffset(off64_t &offset);

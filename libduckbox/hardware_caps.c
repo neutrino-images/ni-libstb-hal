@@ -26,7 +26,6 @@ hw_caps_t *get_hwcaps(void)
 	memset(&caps, 0, sizeof(hw_caps_t));
 
 	initialized = 1;
-	const char *tmp;
 	char buf[64];
 	int len = -1;
 	int fd = open("/proc/stb/info/model", O_RDONLY);

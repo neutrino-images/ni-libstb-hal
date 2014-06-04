@@ -88,6 +88,7 @@ void eDVBCISession::sendSPDU(tSlot *slot, unsigned char tag, const void *data, i
 
 	if (apdu)
 		memcpy(ptr, apdu, alen);
+
 	ptr += alen;
 	sendData(slot, pkt, ptr - pkt);
 }
@@ -110,6 +111,7 @@ void eDVBCISession::recvCreateSessionResponse(const unsigned char *data)
 
 void eDVBCISession::recvCloseSessionRequest(const unsigned char *data)
 {
+	status = data[0];
 	state = stateInDeletion;
 	action = 1;
 	printf("close Session Request\n");
@@ -145,7 +147,7 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 	tag |= resource_identifier[2] << 8;
 	tag |= resource_identifier[3];
 
-	printf("Tag: %08X\n", tag);
+	printf("Tag: %08lx\n", tag);
 
 	switch (tag)
 	{

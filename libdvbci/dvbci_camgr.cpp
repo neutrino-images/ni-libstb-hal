@@ -36,7 +36,7 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 					printf("%04x ", (((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
 					caids.push_back((((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
 				}
-				sort(caids.begin(), caids.end());
+				std::sort(caids.begin(), caids.end());
 				printf("\n");
 
 				slot->pollConnection = false;

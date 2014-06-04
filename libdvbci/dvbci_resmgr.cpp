@@ -36,7 +36,7 @@ int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const v
 				state = stateFinal;
 				break;
 			default:
-				printf("%s %s unknown APDU tag 9F 80 %02x\n", tag[2], FILENAME, __FUNCTION__);
+				printf("%s %s unknown APDU tag 9F 80 %02x\n", FILENAME, __FUNCTION__, tag[2]);
 		}
 	}
 	return 0;

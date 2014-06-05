@@ -260,6 +260,7 @@ public:
 	/// Notify the module we closed the menu
 	void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
 	/// Get the supported CAIDs
+//	int GetCAIDS(CaIdVector & /*Caids*/) { return 0; };
 	int GetCAIDS(CaIdVector &Caids);
 	/// Send a CA-PMT object and Raw unparsed PMT to the CA layer
 	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/,

@@ -214,10 +214,8 @@ void cRecord::RecordThread()
 	prctl (PR_SET_NAME, (unsigned long)&threadname);
 	int readsize = (bufsize/(RECORD_WRITER_CHUNKS*188)) * 188;
 	uint8_t *buf = (uint8_t *)malloc(readsize * RECORD_WRITER_CHUNKS);
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 	if (!buf)
 	{
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		exit_flag = RECORD_FAILED_MEMORY;
 		lt_info("%s: unable to allocate buffer! (out of memory)\n", __func__);
 		if (failureCallback)
@@ -237,13 +235,10 @@ fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
 	sem_init(&sem, 0, 0);
 	pthread_t writer_thread;
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 	if (pthread_create(&writer_thread, 0, execute_writer_thread, this))
 		exit_flag = RECORD_FAILED_FILE;
 	else {
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		dmx->Start();
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		int overflow_count = 0;
 		unsigned int chunk = 0;
 
@@ -276,14 +271,10 @@ fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 			chunk++;
 			chunk %= RECORD_WRITER_CHUNKS;
 		}
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		dmx->Stop();
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		io_len[chunk] = 0;
 		sem_post(&sem);
-fprintf(stderr, "trying to join writer\n");
 		pthread_join(writer_thread, NULL);
-fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		free(buf);
 	}
 #if 0

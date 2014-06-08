@@ -8,18 +8,23 @@
 #include <cstdio>
 #include <cstring>
 
-#include <aio.h>
-
 #include "record_lib.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_RECORD, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_RECORD, this, args)
 
-/* helper function to call the cpp thread loop */
+/* helper functions to call the cpp thread loops */
 void *execute_record_thread(void *c)
 {
 	cRecord *obj = (cRecord *)c;
 	obj->RecordThread();
+	return NULL;
+}
+
+void *execute_writer_thread(void *c)
+{
+	cRecord *obj = (cRecord *)c;
+	obj->WriterThread();
 	return NULL;
 }
 
@@ -174,6 +179,32 @@ bool cRecord::AddPid(unsigned short pid)
 	return dmx->addPid(pid);
 }
 
+void cRecord::WriterThread()
+{
+	char threadname[17];
+	strncpy(threadname, "WriterThread", sizeof(threadname));
+	threadname[16] = 0;
+	prctl (PR_SET_NAME, (unsigned long)&threadname);
+	unsigned int chunk = 0;
+	while (!sem_wait(&sem)) {
+		if (!io_len[chunk]) // empty, assume end of recording
+			return;
+		unsigned char *p_buf = io_buf[chunk];
+		size_t p_len = io_len[chunk];
+		while (p_len) {
+			ssize_t written = write(file_fd, p_buf, p_len);
+			if (written < 0)
+				break;
+			p_len -= written;
+			p_buf += written;
+		}
+		if (posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED))
+			perror("posix_fadvise");
+		chunk++;
+		chunk %= RECORD_WRITER_CHUNKS;
+	}
+}
+
 void cRecord::RecordThread()
 {
 	lt_info("%s: begin\n", __func__);
@@ -181,15 +212,8 @@ void cRecord::RecordThread()
 	strncpy(threadname, "RecordThread", sizeof(threadname));
 	threadname[16] = 0;
 	prctl (PR_SET_NAME, (unsigned long)&threadname);
-	int readsize = bufsize/16;
-	int buf_pos = 0;
-	int count = 0;
-	int queued = 0;
-	uint8_t *buf;
-	struct aiocb a;
-
-	buf = (uint8_t *)malloc(bufsize);
-	lt_info("BUFSIZE=0x%x READSIZE=0x%x\n", bufsize, readsize);
+	int readsize = (bufsize/(RECORD_WRITER_CHUNKS*188)) * 188;
+	uint8_t *buf = (uint8_t *)malloc(readsize * RECORD_WRITER_CHUNKS);
 	if (!buf)
 	{
 		exit_flag = RECORD_FAILED_MEMORY;
@@ -204,122 +228,55 @@ void cRecord::RecordThread()
 	if (fcntl(file_fd, F_SETFL, val|O_APPEND))
 		lt_info("%s: O_APPEND? (%m)\n", __func__);
 
-	memset(&a, 0, sizeof(a));
-	a.aio_fildes = file_fd;
-	a.aio_sigevent.sigev_notify = SIGEV_NONE;
+	for (unsigned int chunk = 0; chunk < RECORD_WRITER_CHUNKS; chunk++) {
+		io_buf[chunk] = buf + chunk * readsize;
+		io_len[chunk] = 0;
+	}
 
-	dmx->Start();
-	int overflow_count = 0;
-	bool overflow = false;
-	int r = 0;
-	while (exit_flag == RECORD_RUNNING)
-	{
-		if (buf_pos < bufsize)
+	sem_init(&sem, 0, 0);
+	pthread_t writer_thread;
+	if (pthread_create(&writer_thread, 0, execute_writer_thread, this))
+		exit_flag = RECORD_FAILED_FILE;
+	else {
+		dmx->Start();
+		int overflow_count = 0;
+		unsigned int chunk = 0;
+
+		while (exit_flag == RECORD_RUNNING)
 		{
-			if (overflow_count) {
-				lt_info("%s: Overflow cleared after %d iterations\n", __func__, overflow_count);
-				overflow_count = 0;
-			}
-			int toread = bufsize - buf_pos;
-			if (toread > readsize)
-				toread = readsize;
-			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
-				buf_pos, (int)s, bufsize - buf_pos);
+			ssize_t s = dmx->Read(io_buf[chunk], readsize, 50);
+			lt_debug("%s: Read chunk=%d size=%d\n", __func__, chunk, s);
 			if (s < 0)
 			{
-				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
+				if (errno != EAGAIN && (errno != EOVERFLOW || overflow_count > 63 /* arbitrary */))
 				{
 					lt_info("%s: read failed: %m\n", __func__);
 					exit_flag = RECORD_FAILED_READ;
 					break;
 				}
+				if (!overflow_count)
+					lt_info("%s: dmx->Read(): %m\n", __func__);
+				overflow_count++;
+				continue;
 			}
-			else
-			{
-				overflow = false;
-				buf_pos += s;
-				if (count > 100)
-				{
-					if (buf_pos < bufsize / 2)
-						continue;
-				}
-				else
-				{
-					count += 1;
-				}
-			}
-		}
-		else
-		{
-			if (!overflow)
+			if (overflow_count) {
+				lt_info("%s: Overflow cleared after %d iterations\n", __func__, overflow_count);
 				overflow_count = 0;
-			overflow = true;
-			if (!(overflow_count % 10))
-				lt_info("%s: buffer full! Overflow? (%d)\n", __func__, ++overflow_count);
-		}
-		r = aio_error(&a);
-		if (r == EINPROGRESS)
-		{
-			lt_debug("%s: aio in progress, free: %d\n", __func__, bufsize - buf_pos);
-			continue;
-		}
-		// not calling aio_return causes a memory leak  --martii
-		r = aio_return(&a);
-		if (r < 0)
-		{
-			exit_flag = RECORD_FAILED_FILE;
-			lt_debug("%s: aio_return = %d (%m)\n", __func__, r);
-			break;
-		}
-		else
-			lt_debug("%s: aio_return = %d, free: %d\n", __func__, r, bufsize - buf_pos);
-		if (posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED))
-			perror("posix_fadvise");
-		if (queued)
-		{
-			memmove(buf, buf + queued, buf_pos - queued);
-			buf_pos -= queued;
-		}
-		queued = buf_pos;
-		a.aio_buf = buf;
-		a.aio_nbytes = queued;
-		r = aio_write(&a);
-		if (r)
-		{
-			lt_info("%s: aio_write %d (%m)\n", __func__, r);
-			exit_flag = RECORD_FAILED_FILE;
-			break;
-		}
-	}
-	dmx->Stop();
-	while (true) /* write out the unwritten buffer content */
-	{
-		lt_debug("%s: run-out write, buf_pos %d\n", __func__, buf_pos);
-		r = aio_error(&a);
-		if (r == EINPROGRESS)
-		{
-			usleep(50000);
-			continue;
-		}
-		r = aio_return(&a);
-		if (r < 0)
-		{
-			exit_flag = RECORD_FAILED_FILE;
-			lt_info("%s: aio_result: %d (%m)\n", __func__, r);
-			break;
-		}
-		if (!queued)
-			break;
-		memmove(buf, buf + queued, buf_pos - queued);
-		buf_pos -= queued;
-		queued = buf_pos;
-		a.aio_buf = buf;
-		a.aio_nbytes = queued;
-		r = aio_write(&a);
-	}
-	free(buf);
+			}
+			if (!s)
+				continue;
 
+			io_len[chunk] = s;
+			sem_post(&sem);
+			chunk++;
+			chunk %= RECORD_WRITER_CHUNKS;
+		}
+		dmx->Stop();
+		io_len[chunk] = 0;
+		sem_post(&sem);
+		pthread_join(writer_thread, NULL);
+		free(buf);
+	}
 #if 0
 	// TODO: do we need to notify neutrino about failing recording?
 	CEventServer eventServer;

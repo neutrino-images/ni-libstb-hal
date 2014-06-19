@@ -79,6 +79,8 @@ bool Player::Open(const char *Url, bool _noprobe)
 	} else if (strstr(Url, "://")) {
 		url = Url;
 		isHttp = strncmp("file://", Url, 7);
+	} else if (!strncmp(Url, "bluray:/", 8)) {
+		url = Url;
 	} else {
 		fprintf(stderr, "%s %s %d: Unknown stream (%s)\n", __FILE__, __func__, __LINE__, Url);
 		return false;

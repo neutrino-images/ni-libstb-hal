@@ -244,29 +244,37 @@ void cRecord::RecordThread()
 
 		while (exit_flag == RECORD_RUNNING)
 		{
-			ssize_t s = dmx->Read(io_buf[chunk], readsize, 50);
-			lt_debug("%s: Read chunk=%d size=%d\n", __func__, chunk, s);
-			if (s < 0)
-			{
-				if (errno != EAGAIN && (errno != EOVERFLOW || overflow_count > 63 /* arbitrary */))
+			uint8_t *bufstart = io_buf[chunk];
+			int left = readsize;
+			ssize_t len = 0;
+			while ((exit_flag == RECORD_RUNNING) && (left > 0)) {
+				int s = dmx->Read(bufstart, left, 50);
+				lt_debug("%s: Read chunk=%d size=%d\n", __func__, chunk, s);
+				if (s < 0)
 				{
-					lt_info("%s: read failed: %m\n", __func__);
-					exit_flag = RECORD_FAILED_READ;
-					break;
+					if (errno != EAGAIN && (errno != EOVERFLOW || overflow_count > 63 /* arbitrary */))
+					{
+						lt_info("%s: read failed: %m\n", __func__);
+						exit_flag = RECORD_FAILED_READ;
+						break;
+					}
+					if (!overflow_count)
+						lt_info("%s: dmx->Read(): %m\n", __func__);
+					overflow_count++;
+					continue;
 				}
-				if (!overflow_count)
-					lt_info("%s: dmx->Read(): %m\n", __func__);
-				overflow_count++;
-				continue;
+				len += s;
+				left -= s;
+				bufstart += s;
+				if (overflow_count) {
+					lt_info("%s: Overflow cleared after %d iterations\n", __func__, overflow_count);
+					overflow_count = 0;
+				}
 			}
-			if (overflow_count) {
-				lt_info("%s: Overflow cleared after %d iterations\n", __func__, overflow_count);
-				overflow_count = 0;
-			}
-			if (!s)
+			if (!len)
 				continue;
 
-			io_len[chunk] = s;
+			io_len[chunk] = len;
 			sem_post(&sem);
 			chunk++;
 			chunk %= RECORD_WRITER_CHUNKS;

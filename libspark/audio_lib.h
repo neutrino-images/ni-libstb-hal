@@ -35,6 +35,8 @@ typedef enum
    AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
 } AUDIO_FORMAT;
 
+class mixerVolume;
+
 class cAudio
 {
 	friend class cPlayback;
@@ -57,6 +59,11 @@ class cAudio
 
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
+
+		mixerVolume *mixerAnalog, *mixerHDMI, *mixerSPDIF;
+		int volumeAnalog, volumeHDMI, volumeSPDIF;
+		bool mixersMuted;
+
 	public:
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
@@ -92,7 +99,11 @@ class cAudio
 		void SetSpdifDD(bool enable);
 		void ScheduleMute(bool On);
 		void EnableAnalogOut(bool enable);
+
+		void openMixers(void);
+		void closeMixers(void);
+		void setMixerVolume(const char *name, long value, bool remember = true);
+		void muteMixers(bool m = true);
 };
 
 #endif
-

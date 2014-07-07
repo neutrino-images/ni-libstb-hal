@@ -15,7 +15,7 @@
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_RECORD, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_RECORD, this, args)
 
-/* helper function to call the cpp thread loop */
+/* helper functions to call the cpp thread loops */
 void *execute_record_thread(void *c)
 {
 	cRecord *obj = (cRecord *)c;
@@ -183,11 +183,13 @@ void cRecord::RecordThread()
 	prctl (PR_SET_NAME, (unsigned long)&threadname);
 	int readsize = bufsize/16;
 	int buf_pos = 0;
+	int count = 0;
 	int queued = 0;
 	uint8_t *buf;
 	struct aiocb a;
 
 	buf = (uint8_t *)malloc(bufsize);
+	lt_info("BUFSIZE=0x%x READSIZE=0x%x\n", bufsize, readsize);
 	if (!buf)
 	{
 		exit_flag = RECORD_FAILED_MEMORY;
@@ -222,8 +224,7 @@ void cRecord::RecordThread()
 			if (toread > readsize)
 				toread = readsize;
 			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
-				buf_pos, (int)s, bufsize - buf_pos);
+			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
 			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
@@ -237,6 +238,15 @@ void cRecord::RecordThread()
 			{
 				overflow = false;
 				buf_pos += s;
+				if (count > 100)
+				{
+					if (buf_pos < bufsize / 2)
+						continue;
+				}
+				else
+				{
+					count += 1;
+				}
 			}
 		}
 		else

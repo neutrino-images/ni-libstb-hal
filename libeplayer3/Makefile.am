@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 noinst_LTLIBRARIES = libeplayer3.la
 
 AM_CPPFLAGS = -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS

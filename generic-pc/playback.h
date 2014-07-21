@@ -10,6 +10,7 @@ typedef enum {
 	PLAYMODE_FILE,
 } playmode_t; 
 
+struct AVFormatContext;
 class cPlayback
 {
 	private:
@@ -26,6 +27,7 @@ class cPlayback
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
 		int GetAPid(void) { return mAudioStream; }
+		int GetVPid(void);
 		int GetSubtitlePid(void) { return mSubtitleStream; }
 		int GetTeletextPid(void);
 		void SuspendSubtitle(bool);
@@ -49,6 +51,7 @@ class cPlayback
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		//
 		~cPlayback();
+		AVFormatContext *GetAVFormatContext(){ return NULL; }
+		void ReleaseAVFormatContext() {}
 };
-
 #endif

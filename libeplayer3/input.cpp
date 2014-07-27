@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#define ENABLE_AVLOG 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -262,6 +264,7 @@ bool Input::Play()
 	return res;
 }
 
+#if ENABLE_AVLOG
 static std::string lastlog_message;
 static unsigned int lastlog_repeats;
 
@@ -279,6 +282,7 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 			lastlog_repeats++;
 	}
 }
+#endif
 
 bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 {
@@ -356,7 +360,9 @@ bool Input::ReadSubtitles(const char *filename) {
 bool Input::Init(const char *filename)
 {
 	abortPlayback = false;
+#if ENABLE_AVLOG
 	av_log_set_callback(log_callback);
+#endif
 
 	if (!filename) {
 		fprintf(stderr, "filename NULL\n");

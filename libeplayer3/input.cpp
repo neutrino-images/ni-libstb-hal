@@ -387,7 +387,13 @@ again:
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
 	if (player->noprobe) {
+#if (LIBAVFORMAT_VERSION_MAJOR <  55) || \
+    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR <  43) || \
+    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR == 43 && LIBAVFORMAT_VERSION_MICRO < 100)
 		avfc->max_analyze_duration = 1;
+#else
+		avfc->max_analyze_duration2 = 1;
+#endif
 		avfc->probesize = 131072;
 	}
 
@@ -442,14 +448,13 @@ bool Input::UpdateTracks()
 	for (unsigned int n = 0; n < avfc->nb_streams; n++) {
 		AVStream *stream = avfc->streams[n];
 
-		if (!stream->id)
-			stream->id = n + 1;
-
 		Track track;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";
 		track.pid = stream->id;
+		if (!track.pid)
+			track.pid = n + 1;
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {

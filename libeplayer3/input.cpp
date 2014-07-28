@@ -222,7 +222,7 @@ bool Input::Play()
 					switch (sub.rects[0]->type) {
 						case SUBTITLE_TEXT: // FIXME?
 						case SUBTITLE_ASS:
-							dvbsub_ass_write(stream->codec, &sub, stream->id);
+							dvbsub_ass_write(stream->codec, &sub, _subtitleTrack->pid);
 							break;
 						case SUBTITLE_BITMAP: {
 							int64_t pts = calcPts(stream, packet.pts);
@@ -237,7 +237,7 @@ bool Input::Play()
 			}
 		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
 			if (packet.data && packet.size > 1)
-				teletext_write(stream->id, packet.data + 1, packet.size - 1);
+				teletext_write(_teletextTrack->pid, packet.data + 1, packet.size - 1);
 		}
 
 		av_free_packet(&packet);

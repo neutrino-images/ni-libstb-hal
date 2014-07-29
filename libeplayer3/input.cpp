@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#define ENABLE_AVLOG 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -220,7 +222,7 @@ bool Input::Play()
 					switch (sub.rects[0]->type) {
 						case SUBTITLE_TEXT: // FIXME?
 						case SUBTITLE_ASS:
-							dvbsub_ass_write(stream->codec, &sub, stream->id);
+							dvbsub_ass_write(stream->codec, &sub, _subtitleTrack->pid);
 							break;
 						case SUBTITLE_BITMAP: {
 							int64_t pts = calcPts(stream, packet.pts);
@@ -235,7 +237,7 @@ bool Input::Play()
 			}
 		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
 			if (packet.data && packet.size > 1)
-				teletext_write(stream->id, packet.data + 1, packet.size - 1);
+				teletext_write(_teletextTrack->pid, packet.data + 1, packet.size - 1);
 		}
 
 		av_free_packet(&packet);
@@ -262,6 +264,7 @@ bool Input::Play()
 	return res;
 }
 
+#if ENABLE_AVLOG
 static std::string lastlog_message;
 static unsigned int lastlog_repeats;
 
@@ -279,6 +282,7 @@ static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute
 			lastlog_repeats++;
 	}
 }
+#endif
 
 bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 {
@@ -356,7 +360,9 @@ bool Input::ReadSubtitles(const char *filename) {
 bool Input::Init(const char *filename)
 {
 	abortPlayback = false;
+#if ENABLE_AVLOG
 	av_log_set_callback(log_callback);
+#endif
 
 	if (!filename) {
 		fprintf(stderr, "filename NULL\n");
@@ -387,7 +393,13 @@ again:
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
 	if (player->noprobe) {
+#if (LIBAVFORMAT_VERSION_MAJOR <  55) || \
+    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR <  43) || \
+    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR == 43 && LIBAVFORMAT_VERSION_MICRO < 100)
 		avfc->max_analyze_duration = 1;
+#else
+		avfc->max_analyze_duration2 = 1;
+#endif
 		avfc->probesize = 131072;
 	}
 
@@ -442,14 +454,13 @@ bool Input::UpdateTracks()
 	for (unsigned int n = 0; n < avfc->nb_streams; n++) {
 		AVStream *stream = avfc->streams[n];
 
-		if (!stream->id)
-			stream->id = n + 1;
-
 		Track track;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";
 		track.pid = stream->id;
+		if (!track.pid)
+			track.pid = n + 1;
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO: {

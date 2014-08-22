@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include <sys/prctl.h>
+#include <sstream>
 
 #include "player.h"
 #include "misc.h"
@@ -410,4 +411,34 @@ int Player::GetTeletextPid()
 {
 	Track *track = input.teletextTrack;
 	return track ? track->pid : 0;
+}
+
+bool Player::GetPrograms(std::vector<std::string> &keys, std::vector<std::string> &values)
+{
+	keys.clear();
+	values.clear();
+
+	std::vector<Program> p = manager.getPrograms();
+
+	if (p.empty())
+		return false;
+
+	for (std::vector<Program>::iterator it = p.begin(); it != p.end(); ++it) {
+		std::stringstream s;
+		s << it->id;
+		keys.push_back(s.str());
+		values.push_back(it->title);
+	}
+
+	return true;
+}
+
+bool Player::SelectProgram(int key)
+{
+	return manager.selectProgram(key);
+}
+
+bool Player::SelectProgram(std::string &key)
+{
+	return manager.selectProgram(atoi(key.c_str()));
 }

@@ -58,14 +58,15 @@ class WriterWMV : public Writer
 		AVStream *stream;
 	public:
 		bool Write(AVPacket *packet, int64_t pts);
-		void Init(int _fd, AVStream *_stream);
+		void Init(int _fd, AVStream *_stream, Player *_player);
 		WriterWMV();
 };
 
-void WriterWMV::Init(int _fd, AVStream *_stream)
+void WriterWMV::Init(int _fd, AVStream *_stream, Player *_player)
 {
 	fd = _fd;
 	stream = _stream;
+	player = _player;
 	initialHeader = true;
 }
 

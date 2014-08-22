@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#define ENABLE_AVLOG 0
+#define ENABLE_LOGGING 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,6 +80,32 @@ extern void dvbsub_ass_clear(void);
 // from neutrino-mp/lib/lib/libtuxtxt/tuxtxt_common.h
 extern void teletext_write(int pid, uint8_t *data, int size);
 
+static std::string lastlog_message;
+static unsigned int lastlog_repeats;
+
+static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
+{
+	char m[1024];
+	if (sizeof(m) - 1 > (unsigned int) vsnprintf(m, sizeof(m), format, ap)) {
+		if (lastlog_message.compare(m) || lastlog_repeats > 999) {
+			if (lastlog_repeats)
+				fprintf(stderr, "last message repeated %u times\n", lastlog_repeats);
+			lastlog_message = m;
+			lastlog_repeats = 0;
+			fprintf(stderr, "%s", m);
+		} else
+			lastlog_repeats++;
+	}
+}
+
+static void logprintf(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	log_callback(NULL, 0, format, ap);
+	va_end(ap);
+}
+
 bool Input::Play()
 {
 	hasPlayThreadStarted = 1;
@@ -87,11 +113,9 @@ bool Input::Play()
 	int64_t showtime = 0;
 	bool restart_audio_resampling = false;
 	bool bof = false;
-	int warnAudioWrite = 0;
-	int warnVideoWrite = 0;
 
-	// HACK: Drop all video frames until the first audio frame was seen to keep player2 from stuttering.
-	//       This seems to be necessary for network streaming only ...
+	// HACK: Dropping all video frames until the first audio frame was seen will keep player2 from stuttering.
+	//       Oddly, this seems to be necessary for network streaming only ...
 	bool audioSeen = !audioTrack || !player->isHttp;
 
 	while (player->isPlaying && !player->abortRequested) {
@@ -184,14 +208,8 @@ bool Input::Play()
 
 		if (_videoTrack && (_videoTrack->stream == stream)) {
 			int64_t pts = calcPts(stream, packet.pts);
-			if (audioSeen && !player->output.Write(stream, &packet, pts)) {
-				if (warnVideoWrite)
-					warnVideoWrite--;
-				else {
-					fprintf(stderr, "writing data to %s device failed\n", "video");
-					warnVideoWrite = 100;
-				}
-			}
+			if (audioSeen && !player->output.Write(stream, &packet, pts))
+				logprintf("writing data to %s device failed\n", "video");
 		} else if (_audioTrack && (_audioTrack->stream == stream)) {
 			if (restart_audio_resampling) {
 				restart_audio_resampling = false;
@@ -199,14 +217,8 @@ bool Input::Play()
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(stream, packet.pts);
-				if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0)) {
-					if (warnAudioWrite)
-						warnAudioWrite--;
-					else {
-						fprintf(stderr, "writing data to %s device failed\n", "audio");
-						warnAudioWrite = 100;
-					}
-				}
+				if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0))
+					logprintf("writing data to %s device failed\n", "audio");
 			}
 			audioSeen = true;
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
@@ -241,7 +253,7 @@ bool Input::Play()
 		}
 
 		av_free_packet(&packet);
-	}				/* while */
+	} /* while */
 
 	if (player->abortRequested)
 		player->output.Clear();
@@ -264,25 +276,26 @@ bool Input::Play()
 	return res;
 }
 
-#if ENABLE_AVLOG
-static std::string lastlog_message;
-static unsigned int lastlog_repeats;
-
-static void log_callback(void *ptr __attribute__ ((unused)), int lvl __attribute__ ((unused)), const char *format, va_list ap)
+static int lock_callback(void **mutex, enum AVLockOp op)
 {
-	char m[1024];
-	if (sizeof(m) - 1 > (unsigned int) vsnprintf(m, sizeof(m), format, ap)) {
-		if (lastlog_message.compare(m) || lastlog_repeats > 999) {
-			if (lastlog_repeats)
-				fprintf(stderr, "last message repeated %u times\n", lastlog_repeats);
-			lastlog_message = m;
-			lastlog_repeats = 0;
-			fprintf(stderr, "%s", m);
-		} else
-			lastlog_repeats++;
+	switch (op) {
+		case AV_LOCK_CREATE:
+			*mutex = (void *) new OpenThreads::Mutex;
+			return !*mutex;
+		case AV_LOCK_DESTROY:
+			delete static_cast<OpenThreads::Mutex *>(*mutex);
+			*mutex = NULL;
+			return 0;
+		case AV_LOCK_OBTAIN:
+			static_cast<OpenThreads::Mutex *>(*mutex)->lock();
+			return 0;
+		case AV_LOCK_RELEASE:
+			static_cast<OpenThreads::Mutex *>(*mutex)->unlock();
+			return 0;
+		default:
+			return -1;
 	}
 }
-#endif
 
 bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 {
@@ -360,7 +373,8 @@ bool Input::ReadSubtitles(const char *filename) {
 bool Input::Init(const char *filename)
 {
 	abortPlayback = false;
-#if ENABLE_AVLOG
+	av_lockmgr_register(lock_callback);
+#if ENABLE_LOGGING
 	av_log_set_callback(log_callback);
 #endif
 
@@ -451,6 +465,7 @@ bool Input::UpdateTracks()
 
 	av_dump_format(avfc, 0, player->url.c_str(), 0);
 
+	bool use_index_as_pid = false;
 	for (unsigned int n = 0; n < avfc->nb_streams; n++) {
 		AVStream *stream = avfc->streams[n];
 
@@ -458,18 +473,27 @@ bool Input::UpdateTracks()
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";
-		track.pid = stream->id;
-		if (!track.pid)
-			track.pid = n + 1;
+
+		if (!use_index_as_pid)
+			switch (stream->codec->codec_type) {
+				case AVMEDIA_TYPE_VIDEO:
+				case AVMEDIA_TYPE_AUDIO:
+				case AVMEDIA_TYPE_SUBTITLE:
+					if (!stream->id)
+						use_index_as_pid = true;
+				default:
+					break;
+			}
+
+		track.pid = use_index_as_pid ? n + 1: stream->id;
 
 		switch (stream->codec->codec_type) {
-			case AVMEDIA_TYPE_VIDEO: {
+			case AVMEDIA_TYPE_VIDEO:
 				player->manager.addVideoTrack(track);
 				if (!videoTrack)
 					videoTrack = player->manager.getVideoTrack(track.pid);
 				break;
-			}
-			case AVMEDIA_TYPE_AUDIO: {
+			case AVMEDIA_TYPE_AUDIO:
 				switch(stream->codec->codec_id) {
 					case AV_CODEC_ID_MP2:
 						track.ac3flags = 9;
@@ -496,8 +520,7 @@ bool Input::UpdateTracks()
 				if (!audioTrack)
 					audioTrack = player->manager.getAudioTrack(track.pid);
 				break;
-			}
-			case AVMEDIA_TYPE_SUBTITLE: {
+			case AVMEDIA_TYPE_SUBTITLE:
 				if (stream->codec->codec_id == AV_CODEC_ID_DVB_TELETEXT) {
 					std::string l = lang ? lang->value : "";
 					uint8_t *data = stream->codec->extradata;
@@ -525,10 +548,22 @@ bool Input::UpdateTracks()
 						player->manager.addSubtitleTrack(track);
 				}
 				break;
-			}
 			default:
 				fprintf(stderr, "not handled or unknown codec_type %d\n", stream->codec->codec_type);
 				break;
+		}
+	}
+
+	for (unsigned int n = 0; n < avfc->nb_programs; n++) {
+		AVProgram *p = avfc->programs[n];
+		if (p->nb_stream_indexes) {
+			AVDictionaryEntry *name = av_dict_get(p->metadata, "name", NULL, 0);
+			Program program;
+			program.title = name ? name->value : "";
+			program.id = p->id;
+			for (unsigned m = 0; m < p->nb_stream_indexes; m++)
+				program.streams.push_back(avfc->streams[p->stream_index[m]]);
+			player->manager.addProgram(program);
 		}
 	}
 

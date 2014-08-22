@@ -29,6 +29,11 @@ class cPlayback
 		off_t last_size;
 		int init_jump;
 		Player *player;
+		const char *(*ProgramSelectionCallback)(void *, std::vector<std::string> &keys, std::vector<std::string> &values);
+		void *ProgramSelectionCallbackData;
+
+		bool GetPrograms(std::vector<std::string> &keys, std::vector<std::string> &values);
+		bool SelectProgram(std::string &key);
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();
@@ -36,7 +41,8 @@ class cPlayback
 		bool Open(playmode_t PlayMode);
 		void Close(void);
 		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration);
-		bool SetAPid(int pid, bool ac3);
+		bool SetAPid(int pid, bool ac3 = false);
+		bool SetVPid(int pid);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
 		int GetAPid(void);
@@ -55,16 +61,18 @@ class cPlayback
 		void RequestAbort(void);
 		bool IsPlaying(void);
 		uint64_t GetReadCount(void);
-#if 0
-		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
-		bool SelectSubtitles(int pid);
-#endif
+
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+
+		void SetProgramSelectionCallback(const char *(*fun)(void *, std::vector<std::string> &keys, std::vector<std::string> &values), void *opaque);
 
 		AVFormatContext *GetAVFormatContext();
 		void ReleaseAVFormatContext();
 #if 0
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language);
+		bool SelectSubtitles(int pid);
+
 		// Functions that are not used by movieplayer.cpp:
 		bool GetOffset(off64_t &offset);
 		bool IsPlaying(void) const;

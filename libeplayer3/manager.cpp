@@ -61,7 +61,7 @@ std::vector<Track> Manager::getTracks(std::map<int,Track*> &tracks)
 	std::vector<Track> res;
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = tracks.begin(); it != tracks.end(); ++it)
-		if (!it->second->inactive)
+		if (!it->second->inactive && !it->second->hidden)
 			res.push_back(*it->second);
 	return res;
 }
@@ -133,6 +133,107 @@ bool Manager::initTrackUpdate()
 	return true;
 }
 
+void Manager::addProgram(Program &program)
+{
+	Programs[program.id] = program;
+}
+
+std::vector<Program> Manager::getPrograms(void)
+{
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
+	std::vector<Program> res;
+	for (std::map<int,Program>::iterator it = Programs.begin(); it != Programs.end(); ++it)
+		res.push_back(it->second);
+	return res;
+}
+
+bool Manager::selectProgram(const int id)
+{
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
+	std::map<int,Program>::iterator i = Programs.find(id);
+	if (i != Programs.end()) {
+
+		// mark all tracks as hidden
+		for (std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
+			it->second->hidden = true;
+
+		for (std::map<int, Track*>::iterator it = videoTracks.begin(); it != videoTracks.end(); ++it)
+			it->second->hidden = true;
+
+		for (std::map<int,Track*>::iterator it = subtitleTracks.begin(); it != subtitleTracks.end(); ++it)
+			it->second->hidden = true;
+
+		for (std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)
+			it->second->hidden = true;
+
+		// unhide tracks that are part of the selected program
+		for (unsigned int j = 0; j < i->second.streams.size(); j++) {
+			AVStream *stream = i->second.streams[j];
+			bool h = true;
+			for (std::map<int,Track*>::iterator it = audioTracks.begin(); h && (it != audioTracks.end()); ++it)
+				if (stream == it->second->stream)
+					h = it->second->hidden = false;
+
+			if (!h)
+				continue;
+
+			for (std::map<int, Track*>::iterator it = videoTracks.begin(); h && (it != videoTracks.end()); ++it)
+				if (stream == it->second->stream)
+					h = it->second->hidden = false;
+
+			if (!h)
+				continue;
+
+			for (std::map<int,Track*>::iterator it = subtitleTracks.begin(); h && (it != subtitleTracks.end()); ++it)
+				if (stream == it->second->stream)
+					h = it->second->hidden = false;
+
+			if (!h)
+				continue;
+
+			for (std::map<int,Track*>::iterator it = teletextTracks.begin(); h && (it != teletextTracks.end()); ++it)
+				if (stream == it->second->stream)
+					h = it->second->hidden = false;
+		}
+
+		// tell ffmpeg what we're interested in
+		for (std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
+			if (it->second->hidden || it->second->inactive) {
+				it->second->stream->discard = AVDISCARD_ALL;
+			} else {
+				it->second->stream->discard = AVDISCARD_DEFAULT;
+				player->input.SwitchAudio(it->second);
+			}
+
+		for (std::map<int, Track*>::iterator it = videoTracks.begin(); it != videoTracks.end(); ++it)
+			if (it->second->hidden || it->second->inactive) {
+				it->second->stream->discard = AVDISCARD_ALL;
+			} else {
+				it->second->stream->discard = AVDISCARD_DEFAULT;
+				player->input.SwitchVideo(it->second);
+			}
+
+		for (std::map<int,Track*>::iterator it = subtitleTracks.begin(); it != subtitleTracks.end(); ++it)
+			if (it->second->hidden || it->second->inactive) {
+				it->second->stream->discard = AVDISCARD_ALL;
+			} else {
+				it->second->stream->discard = AVDISCARD_DEFAULT;
+				player->input.SwitchSubtitle(it->second);
+			}
+
+		for (std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)
+			if (it->second->hidden || it->second->inactive) {
+				it->second->stream->discard = AVDISCARD_ALL;
+			} else {
+				it->second->stream->discard = AVDISCARD_DEFAULT;
+				player->input.SwitchTeletext(it->second);
+			}
+
+		return true;
+	}
+	return false;
+}
+
 void Manager::clearTracks()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
@@ -152,6 +253,8 @@ void Manager::clearTracks()
 	for (std::map<int,Track*>::iterator it = teletextTracks.begin(); it != teletextTracks.end(); ++it)
 		delete it->second;
 	teletextTracks.clear();
+
+	Programs.clear();
 }
 
 Manager::~Manager()

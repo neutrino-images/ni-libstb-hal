@@ -37,10 +37,13 @@ extern "C" {
 
 #define AV_CODEC_ID_INJECTPCM AV_CODEC_ID_PCM_S16LE
 
+class Player;
+
 class Writer
 {
 	protected:
 		int fd;
+		Player *player;
 	public:
 		static void Register(Writer *w, enum AVCodecID id, video_encoding_t encoding);
 		static void Register(Writer *w, enum AVCodecID id, audio_encoding_t encoding);
@@ -48,7 +51,7 @@ class Writer
 		static audio_encoding_t GetAudioEncoding(enum AVCodecID id);
 		static Writer *GetWriter(enum AVCodecID id, enum AVMediaType codec_type);
 
-		virtual void Init(int _fd, AVStream * /*stream*/ ) { fd = _fd; }
+		virtual void Init(int _fd, AVStream * /*stream*/, Player *_player ) { fd = _fd; player = _player; }
 		virtual bool Write(AVPacket *packet, int64_t pts);
 };
 #endif

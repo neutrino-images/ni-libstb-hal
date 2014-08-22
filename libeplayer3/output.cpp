@@ -129,7 +129,7 @@ bool Output::Play()
 
 	if (videoStream && videofd > -1 && (avcc = videoStream->codec)) {
 		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
-		videoWriter->Init(videofd, videoStream);
+		videoWriter->Init(videofd, videoStream, player);
 		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(avcc->codec_id))
 		||  dioctl(videofd, VIDEO_PLAY, NULL))
 			ret = false;
@@ -137,7 +137,7 @@ bool Output::Play()
 
 	if (audioStream && audiofd > -1 && (avcc = audioStream->codec)) {
 		audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
-		audioWriter->Init(audiofd, audioStream);
+		audioWriter->Init(audiofd, audioStream, player);
 		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioWriter->GetAudioEncoding(avcc->codec_id))
 		||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;
@@ -310,7 +310,7 @@ bool Output::SwitchAudio(AVStream *stream)
 		if (!avcc)
 			return false;
 		audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
-		audioWriter->Init(audiofd, audioStream);
+		audioWriter->Init(audiofd, audioStream, player);
 		if (audiofd > -1) {
 			dioctl(audiofd, AUDIO_SET_ENCODING, Writer::GetAudioEncoding(avcc->codec_id));
 			dioctl(audiofd, AUDIO_PLAY, NULL);
@@ -334,7 +334,7 @@ bool Output::SwitchVideo(AVStream *stream)
 		if (!avcc)
 			return false;
 		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type);
-		videoWriter->Init(videofd, videoStream);
+		videoWriter->Init(videofd, videoStream, player);
 		if (videofd > -1) {
 			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(avcc->codec_id));
 			dioctl(videofd, VIDEO_PLAY, NULL);

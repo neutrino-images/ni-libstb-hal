@@ -32,6 +32,7 @@
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
+#include "player.h"
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -84,7 +85,7 @@ class WriterPCM : public Writer
 		bool Write(AVPacket *packet, int64_t pts);
 		bool prepareClipPlay();
 		bool writePCM(int64_t Pts, uint8_t *data, unsigned int size);
-		void Init(int _fd, AVStream *_stream);
+		void Init(int _fd, AVStream *_stream, Player *_player);
 		WriterPCM();
 };
 
@@ -219,10 +220,11 @@ bool WriterPCM::writePCM(int64_t Pts, uint8_t *data, unsigned int size)
 	return res;
 }
 
-void WriterPCM::Init(int _fd, AVStream *_stream)
+void WriterPCM::Init(int _fd, AVStream *_stream, Player *_player)
 {
 	fd = _fd;
 	stream = _stream;
+	player = _player;
 	initialHeader = true;
 	restart_audio_resampling = true;
 }
@@ -320,6 +322,8 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			continue;
 		}
 
+		pts = player->input.calcPts(stream, av_frame_get_best_effort_timestamp(decoded_frame));
+
 		int in_samples = decoded_frame->nb_samples;
 		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
 		if (out_samples > out_samples_max) {
@@ -339,8 +343,6 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			restart_audio_resampling = true;
 			break;
 		}
-
-		pts = 0;
 	}
 	return !packet_size;
 }

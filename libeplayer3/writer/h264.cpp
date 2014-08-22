@@ -30,7 +30,7 @@
 #include "pes.h"
 #include "writer.h"
 
-#define NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS		24
+#define NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS		24	// Reference: player/standards/h264.h
 #define CONTAINER_PARAMETERS_VERSION			0x00
 
 typedef struct avcC_s {
@@ -43,8 +43,6 @@ typedef struct avcC_s {
 	uint8_t Params[1];		// {length,params}{length,params}...sequence then picture
 } avcC_t;
 
-static uint8_t Head[] = { 0, 0, 0, 1 };
-
 class WriterH264 : public Writer
 {
 	private:
@@ -53,14 +51,15 @@ class WriterH264 : public Writer
 		AVStream *stream;
 	public:
 		bool Write(AVPacket *packet, int64_t pts);
-		void Init(int _fd, AVStream *_stream);
+		void Init(int _fd, AVStream *_stream, Player *_player);
 		WriterH264();
 };
 
-void WriterH264::Init(int _fd, AVStream *_stream)
+void WriterH264::Init(int _fd, AVStream *_stream, Player *_player)
 {
 	fd = _fd;
 	stream = _stream;
+	player = _player;
 	initialHeader = true;
 	NalLengthBytes = 1;
 }
@@ -70,20 +69,66 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 	if (!packet || !packet->data)
 		return false;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	unsigned int TimeDelta;
-	unsigned int TimeScale;
-	int len = 0;
-	int ic = 0;
-	struct iovec iov[128];
+	struct iovec iov[512];
 
-	TimeDelta = av_rescale(1000ll, stream->r_frame_rate.num, stream->r_frame_rate.den);
-	TimeScale = (TimeDelta < 23970) ? 1001 : 1000; /* fixme: revise this */
+	uint8_t *d = packet->data;
 
-	if ((packet->size > 3)
-	 && ((packet->data[0] == 0x00 && packet->data[1] == 0x00 && packet->data[2] == 0x00 && packet->data[3] == 0x01)
-	  || (packet->data[0] == 0xff && packet->data[1] == 0xff && packet->data[2] == 0xff && packet->data[3] == 0xff))) {
+	if (initialHeader) {
+		// The player will use FrameRate and TimeScale to calculate the default frame rate.
+		// FIXME: TimeDelta should be used instead of FrameRate. This is a historic implementation bug.
+		// Reference:  player/frame_parser/frame_parser_video_h264.cpp FrameParser_VideoH264_c::ReadPlayer2ContainerParameters()
+		unsigned int FrameRate = av_rescale(1000ll, stream->r_frame_rate.num, stream->r_frame_rate.den);
+		unsigned int TimeScale = (FrameRate < 23970) ? 1001 : 1000; /* FIXME: revise this */
+
+		uint8_t Header[20];
+		unsigned int len = 0;
+		Header[len++] = 0x00;	// Start code, 00 00 00 01 for first NAL unit
+		Header[len++] = 0x00;
+		Header[len++] = 0x00;
+		Header[len++] = 0x01;
+		Header[len++] = NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS; // NAL unit header
+		// Container message version - changes when/if we vary the format of the message
+		Header[len++] = CONTAINER_PARAMETERS_VERSION;
+		Header[len++] = 0xff;	// marker bits
+
+		#if 0
+		if (FrameRate == 0xffffffff)
+			FrameRate = (TimeScale > 1000) ? 1001 : 1;
+		#endif
+
+		Header[len++] = (TimeScale >> 24) & 0xff;	// Output the timescale
+		Header[len++] = (TimeScale >> 16) & 0xff;
+		Header[len++] = 0xff;	// marker bits
+		Header[len++] = (TimeScale >>  8) & 0xff;
+		Header[len++] = (TimeScale      ) & 0xff;
+		Header[len++] = 0xff;	// marker bits
+
+		Header[len++] = (FrameRate >> 24) & 0xff;	// Output frame period (should be: time delta)
+		Header[len++] = (FrameRate >> 16) & 0xff;
+		Header[len++] = 0xff;	// marker bits
+		Header[len++] = (FrameRate >>  8) & 0xff;
+		Header[len++] = (FrameRate      ) & 0xff;
+		Header[len++] = 0xff;	// marker bits
+
+		Header[len++] = 0x80;	// Rsbp trailing bits
+
+		int ic = 0;
+		iov[ic].iov_base = PesHeader;
+		iov[ic++].iov_len = InsertPesHeader(PesHeader, len, MPEG_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
+		iov[ic].iov_base = Header;
+		iov[ic++].iov_len = len;
+		if (writev(fd, iov, ic) < 0)
+			return false;
+	}
+
+	// byte-stream format
+	if ((packet->size > 3) && (   (d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x00 && d[3] == 0x01) // first NAL unit
+			           || (d[0] == 0xff && d[1] == 0xff && d[2] == 0xff && d[3] == 0xff) // FIXME, needed???
+	)) {
 		unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
+		int ic = 0;
 		iov[ic++].iov_base = PesHeader;
+		unsigned int len = 0;
 		if (initialHeader) {
 			initialHeader = false;
 			iov[ic].iov_base = stream->codec->extradata;
@@ -93,15 +138,19 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 		iov[ic].iov_base = packet->data;
 		iov[ic++].iov_len = packet->size;
 		len += packet->size;
+#if 1 // FIXME: needed?
 		// Hellmaster1024:
 		// some packets will only be accepted by the player if we send one byte more than data is available.
 		// The content of this byte does not matter. It will be ignored by the player
 		iov[ic].iov_base = (void *) "";
 		iov[ic++].iov_len = 1;
+		len++;
+#endif
 		iov[0].iov_len = InsertPesHeader(PesHeader, len, MPEG_VIDEO_PES_START_CODE, pts, FakeStartCode);
 		return writev(fd, iov, ic) > -1;
 	}
 
+	// convert NAL units without sync byte sequence to byte-stream format
 	if (initialHeader) {
 		avcC_t *avcCHeader = (avcC_t *) stream->codec->extradata;
 
@@ -113,138 +162,94 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 		if (avcCHeader->Version != 1)
 			fprintf(stderr, "Error unknown avcC version (%x). Expect problems.\n", avcCHeader->Version);
 
-		uint8_t Header[19];
-		unsigned int HeaderLen = 0;
-		Header[HeaderLen++] = 0x00;	// Start code
-		Header[HeaderLen++] = 0x00;
-		Header[HeaderLen++] = 0x01;
-		Header[HeaderLen++] = NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS;
-		// Container message version - changes when/if we vary the format of the message
-		Header[HeaderLen++] = CONTAINER_PARAMETERS_VERSION;
-		Header[HeaderLen++] = 0xff;	// Field separator
-
-		if (TimeDelta == 0xffffffff)
-			TimeDelta = (TimeScale > 1000) ? 1001 : 1;
-
-		Header[HeaderLen++] = (TimeScale >> 24) & 0xff;	// Output the timescale
-		Header[HeaderLen++] = (TimeScale >> 16) & 0xff;
-		Header[HeaderLen++] = 0xff;
-		Header[HeaderLen++] = (TimeScale >> 8) & 0xff;
-		Header[HeaderLen++] = TimeScale & 0xff;
-		Header[HeaderLen++] = 0xff;
-
-		Header[HeaderLen++] = (TimeDelta >> 24) & 0xff;	// Output frame period
-		Header[HeaderLen++] = (TimeDelta >> 16) & 0xff;
-		Header[HeaderLen++] = 0xff;
-		Header[HeaderLen++] = (TimeDelta >> 8) & 0xff;
-		Header[HeaderLen++] = TimeDelta & 0xff;
-		Header[HeaderLen++] = 0xff;
-		Header[HeaderLen++] = 0x80;	// Rsbp trailing bits
-
-		ic = 0;
-		iov[ic].iov_base = PesHeader;
-		iov[ic++].iov_len = InsertPesHeader(PesHeader, HeaderLen, MPEG_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
-		iov[ic].iov_base = Header;
-		iov[ic++].iov_len = HeaderLen;
-		len = writev(fd, iov, ic);
-		if (len < 0)
-			return false;
+		int ic = 0;
+		iov[ic++].iov_base = PesHeader;
 
 		NalLengthBytes = (avcCHeader->NalLengthMinusOne & 0x03) + 1;
-		unsigned int ParamSets = avcCHeader->NumParamSets & 0x1f;
 		unsigned int ParamOffset = 0;
-		unsigned int InitialHeaderLength = 0;
+		unsigned int len = 0;
 
-		ic = 0;
-		iov[ic++].iov_base = PesHeader;
+		// sequence parameter set
+		unsigned int ParamSets = avcCHeader->NumParamSets & 0x1f;
 		for (unsigned int i = 0; i < ParamSets; i++) {
-			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) + avcCHeader->Params[ParamOffset + 1];
+			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) | avcCHeader->Params[ParamOffset + 1];
 
-			iov[ic].iov_base = (char *) Head;
-			iov[ic++].iov_len = sizeof(Head);
-			InitialHeaderLength += sizeof(Head);
+			iov[ic].iov_base = (uint8_t *) "\0\0\0\1";
+			iov[ic++].iov_len = 4;
+			len += 4;
 			iov[ic].iov_base = &avcCHeader->Params[ParamOffset + 2];
 			iov[ic++].iov_len = PsLength;
-			InitialHeaderLength += PsLength;
+			len += PsLength;
 			ParamOffset += PsLength + 2;
 		}
 
+		// picture parameter set
 		ParamSets = avcCHeader->Params[ParamOffset++];
 
 		for (unsigned int i = 0; i < ParamSets; i++) {
-			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) + avcCHeader->Params[ParamOffset + 1];
+			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) | avcCHeader->Params[ParamOffset + 1];
 
-			iov[ic].iov_base = (char *) Head;
-			iov[ic++].iov_len = sizeof(Head);
-			InitialHeaderLength += sizeof(Head);
+			iov[ic].iov_base = (uint8_t *) "\0\0\0\1";
+			iov[ic++].iov_len = 4;
+			len += 4;
 			iov[ic].iov_base = &avcCHeader->Params[ParamOffset + 2];
 			iov[ic++].iov_len = PsLength;
-			InitialHeaderLength += PsLength;
+			len += PsLength;
 			ParamOffset += PsLength + 2;
 		}
 
-		iov[0].iov_len = InsertPesHeader(PesHeader, InitialHeaderLength, MPEG_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
+		iov[0].iov_len = InsertPesHeader(PesHeader, len, MPEG_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
 		ssize_t l = writev(fd, iov, ic);
 		if (l < 0)
 			return false;
-		len += l;
 
-		initialHeader = 0;
+		initialHeader = false;
 	}
 
-	unsigned int SampleSize = packet->size;
-	unsigned int NalStart = 0;
-	unsigned int VideoPosition = 0;
-
+	uint8_t *de = d + packet->size;
 	do {
-		unsigned int NalLength;
-		uint8_t NalData[4];
-
-		memcpy(NalData, packet->data + VideoPosition, NalLengthBytes);
-		VideoPosition += NalLengthBytes;
-		NalStart += NalLengthBytes;
+		unsigned int len = 0;
 		switch (NalLengthBytes) {
-			case 1:
-				NalLength = (NalData[0]);
-				break;
-			case 2:
-				NalLength = (NalData[0] << 8) | (NalData[1]);
-				break;
+			case 4:
+				len = *d;
+				d++;
 			case 3:
-				NalLength = (NalData[0] << 16) | (NalData[1] << 8) | (NalData[2]);
-				break;
+				len <<= 8;
+				len |= *d;
+				d++;
+			case 2:
+				len <<= 8;
+				len |= *d;
+				d++;
 			default:
-				NalLength = (NalData[0] << 24) | (NalData[1] << 16) | (NalData[2] << 8) | (NalData[3]);
-				break;
+				len <<= 8;
+				len |= *d;
+				d++;
 		}
 
-		if (NalStart + NalLength > SampleSize) {
-			fprintf(stderr, "nal length past end of buffer - size %u frame offset %u left %u\n", NalLength, NalStart, SampleSize - NalStart);
-			NalStart = SampleSize;
-		} else {
-			NalStart += NalLength;
-			ic = 0;
-			iov[ic++].iov_base = PesHeader;
-
-			iov[ic].iov_base = Head;
-			iov[ic++].iov_len = sizeof(Head);
-
-			iov[ic].iov_base = packet->data + VideoPosition;
-			iov[ic++].iov_len = NalLength;
-
-			VideoPosition += NalLength;
-
-			iov[0].iov_len = InsertPesHeader(PesHeader, NalLength, MPEG_VIDEO_PES_START_CODE, pts, 0);
-			ssize_t l = writev(fd, iov, ic);
-			if (l < 0)
-				return false;
-			len += l;
-
-			pts = INVALID_PTS_VALUE;
+		if (d + len > de) {
+			fprintf(stderr, "NAL length past end of buffer - size %u frame offset %d left %d\n", len, (int) (d - packet->data), (int) (de - d));
+			break;
 		}
-	} while (NalStart < SampleSize);
 
-	return len > -1;
+		int ic = 0;
+		iov[ic++].iov_base = PesHeader;
+		iov[ic].iov_base = (uint8_t *) "\0\0\0\1";
+		iov[ic++].iov_len = 4;
+
+		iov[ic].iov_base = d;
+		iov[ic++].iov_len = len;
+		iov[0].iov_len = InsertPesHeader(PesHeader, len + 3, MPEG_VIDEO_PES_START_CODE, pts, 0);
+		ssize_t l = writev(fd, iov, ic);
+		if (l < 0)
+			return false;
+
+		d += len;
+		pts = INVALID_PTS_VALUE;
+
+	} while (d < de);
+
+	return true;
 }
 
 WriterH264::WriterH264()

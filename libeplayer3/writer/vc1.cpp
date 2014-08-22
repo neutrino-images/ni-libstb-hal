@@ -51,14 +51,15 @@ class WriterVC1 : public Writer
 		AVStream *stream;
 	public:
 		bool Write(AVPacket *packet, int64_t pts);
-		void Init(int _fd, AVStream *_stream);
+		void Init(int _fd, AVStream *_stream, Player *_player);
 		WriterVC1();
 };
 
-void WriterVC1::Init(int _fd, AVStream *_stream)
+void WriterVC1::Init(int _fd, AVStream *_stream, Player *_player)
 {
 	fd = _fd;
 	stream = _stream;
+	player = _player;
 	initialHeader = true;
 }
 

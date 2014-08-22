@@ -56,6 +56,7 @@ class Player {
 	friend class Output;
 	friend class Manager;
 	friend class cPlayback;
+	friend class WriterPCM;
 	friend int interrupt_cb(void *arg);
 
 	private:
@@ -116,6 +117,10 @@ class Player {
 
 		AVFormatContext *GetAVFormatContext() { return input.GetAVFormatContext(); }
 		void ReleaseAVFormatContext() { input.ReleaseAVFormatContext(); }
+
+		bool GetPrograms(std::vector<std::string> &keys, std::vector<std::string> &values);
+		bool SelectProgram(int key);
+		bool SelectProgram(std::string &key);
 
 		Player();
 };

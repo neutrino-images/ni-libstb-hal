@@ -44,6 +44,7 @@ class Track;
 class Input
 {
 	friend class Player;
+	friend class WriterPCM; // needs calcPts()
 	friend int interrupt_cb(void *arg);
 
 	private:

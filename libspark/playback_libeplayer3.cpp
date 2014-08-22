@@ -80,10 +80,27 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			videoDecoder->Stop(false);
 			audioDecoder->Stop();
 		} else {
+			std::vector<std::string> keys, values;
+			int selected_program = 0;
+			if (GetPrograms(keys, values) && (keys.size() > 1) && ProgramSelectionCallback) {
+				const char *key = ProgramSelectionCallback(ProgramSelectionCallbackData, keys, values);
+				if (!key) {
+					player->Close();
+					return false;
+				}
+				selected_program = atoi(key);
+
+			} else if (keys.size() > 0)
+				selected_program = atoi(keys[0].c_str());
+
+			if (!keys.size() || !player->SelectProgram(selected_program)) {
+				if (apid)
+					SetAPid(apid);
+				if (vpid)
+					SetVPid(vpid);
+			}
 			playing = true;
 			player->output.Open();
-			if (apid)
-				SetAPid(apid, 0);
 			ret = player->Play();
 			if (ret && !isHTTP)
 				playing = ret = player->Pause();
@@ -107,6 +124,11 @@ bool cPlayback::Stop(void)
 bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 {
 	return player->SwitchAudio(pid);
+}
+
+bool cPlayback::SetVPid(int pid)
+{
+	return player->SwitchVideo(pid);
 }
 
 bool cPlayback::SetSubtitlePid(int pid)
@@ -343,6 +365,9 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 {
 	playing = false;
 	decoders_closed = false;
+	ProgramSelectionCallback = NULL;
+	ProgramSelectionCallbackData = NULL;
+
 	player = new Player();
 }
 
@@ -390,6 +415,24 @@ AVFormatContext *cPlayback::GetAVFormatContext()
 	return player ? player->GetAVFormatContext() : NULL;
 }
 
-void cPlayback::ReleaseAVFormatContext() { if (player)
-	player->ReleaseAVFormatContext();
+void cPlayback::ReleaseAVFormatContext()
+{
+	if (player)
+		player->ReleaseAVFormatContext();
+}
+
+bool cPlayback::GetPrograms(std::vector<std::string> &keys, std::vector<std::string> &values)
+{
+	return player->GetPrograms(keys, values);
+}
+
+bool cPlayback::SelectProgram(std::string &key)
+{
+	return player->SelectProgram(key);
+}
+
+void cPlayback::SetProgramSelectionCallback(const char *(*fun)(void *, std::vector<std::string> &keys, std::vector<std::string> &values), void *opaque)
+{
+	ProgramSelectionCallback = fun;
+	ProgramSelectionCallbackData = opaque;
 }

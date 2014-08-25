@@ -23,6 +23,13 @@ void *execute_record_thread(void *c)
 	return NULL;
 }
 
+void *execute_writer_thread(void *c)
+{
+	cRecord *obj = (cRecord *)c;
+	obj->WriterThread();
+	return NULL;
+}
+
 cRecord::cRecord(int num, int bs_dmx, int bs)
 {
 	lt_info("%s %d\n", __func__, num);
@@ -172,6 +179,32 @@ bool cRecord::AddPid(unsigned short pid)
 			return true; /* or is it an error to try to add the same PID twice? */
 	}
 	return dmx->addPid(pid);
+}
+
+void cRecord::WriterThread()
+{
+	char threadname[17];
+	strncpy(threadname, "WriterThread", sizeof(threadname));
+	threadname[16] = 0;
+	prctl (PR_SET_NAME, (unsigned long)&threadname);
+	unsigned int chunk = 0;
+	while (!sem_wait(&sem)) {
+		if (!io_len[chunk]) // empty, assume end of recording
+			return;
+		unsigned char *p_buf = io_buf[chunk];
+		size_t p_len = io_len[chunk];
+		while (p_len) {
+			ssize_t written = write(file_fd, p_buf, p_len);
+			if (written < 0)
+				break;
+			p_len -= written;
+			p_buf += written;
+		}
+		if (posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED))
+			perror("posix_fadvise");
+		chunk++;
+		chunk %= RECORD_WRITER_CHUNKS;
+	}
 }
 
 void cRecord::RecordThread()

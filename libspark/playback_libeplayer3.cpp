@@ -82,7 +82,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		} else {
 			std::vector<std::string> keys, values;
 			int selected_program = 0;
-			if (GetPrograms(keys, values) && (keys.size() > 1) && ProgramSelectionCallback) {
+			if (!vpid && !apid && GetPrograms(keys, values) && (keys.size() > 1) && ProgramSelectionCallback) {
 				const char *key = ProgramSelectionCallback(ProgramSelectionCallbackData, keys, values);
 				if (!key) {
 					player->Close();

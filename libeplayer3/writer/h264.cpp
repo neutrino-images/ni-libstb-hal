@@ -73,7 +73,47 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 
 	uint8_t *d = packet->data;
 
+	// byte-stream format
+	if ((packet->size > 3) && (   (d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x00 && d[3] == 0x01) // first NAL unit
+			           || (d[0] == 0xff && d[1] == 0xff && d[2] == 0xff && d[3] == 0xff) // FIXME, needed???
+	)) {
+		unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
+		int ic = 0;
+		iov[ic++].iov_base = PesHeader;
+		unsigned int len = 0;
+		if (initialHeader) {
+			initialHeader = false;
+			iov[ic].iov_base = stream->codec->extradata;
+			iov[ic++].iov_len = stream->codec->extradata_size;
+			len += stream->codec->extradata_size;
+		}
+		iov[ic].iov_base = packet->data;
+		iov[ic++].iov_len = packet->size;
+		len += packet->size;
+#if 1 // FIXME: needed?
+		// Hellmaster1024:
+		// some packets will only be accepted by the player if we send one byte more than data is available.
+		// The content of this byte does not matter. It will be ignored by the player
+		iov[ic].iov_base = (void *) "";
+		iov[ic++].iov_len = 1;
+		len++;
+#endif
+		iov[0].iov_len = InsertPesHeader(PesHeader, len, MPEG_VIDEO_PES_START_CODE, pts, FakeStartCode);
+		return writev(fd, iov, ic) > -1;
+	}
+
+	// convert NAL units without sync byte sequence to byte-stream format
 	if (initialHeader) {
+		avcC_t *avcCHeader = (avcC_t *) stream->codec->extradata;
+
+		if (!avcCHeader) {
+			fprintf(stderr, "stream->codec->extradata == NULL\n");
+			return false;
+		}
+
+		if (avcCHeader->Version != 1)
+			fprintf(stderr, "Error unknown avcC version (%x). Expect problems.\n", avcCHeader->Version);
+
 		// The player will use FrameRate and TimeScale to calculate the default frame rate.
 		// FIXME: TimeDelta should be used instead of FrameRate. This is a historic implementation bug.
 		// Reference:  player/frame_parser/frame_parser_video_h264.cpp FrameParser_VideoH264_c::ReadPlayer2ContainerParameters()
@@ -119,55 +159,13 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 		iov[ic++].iov_len = len;
 		if (writev(fd, iov, ic) < 0)
 			return false;
-	}
 
-	// byte-stream format
-	if ((packet->size > 3) && (   (d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x00 && d[3] == 0x01) // first NAL unit
-			           || (d[0] == 0xff && d[1] == 0xff && d[2] == 0xff && d[3] == 0xff) // FIXME, needed???
-	)) {
-		unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
-		int ic = 0;
-		iov[ic++].iov_base = PesHeader;
-		unsigned int len = 0;
-		if (initialHeader) {
-			initialHeader = false;
-			iov[ic].iov_base = stream->codec->extradata;
-			iov[ic++].iov_len = stream->codec->extradata_size;
-			len += stream->codec->extradata_size;
-		}
-		iov[ic].iov_base = packet->data;
-		iov[ic++].iov_len = packet->size;
-		len += packet->size;
-#if 1 // FIXME: needed?
-		// Hellmaster1024:
-		// some packets will only be accepted by the player if we send one byte more than data is available.
-		// The content of this byte does not matter. It will be ignored by the player
-		iov[ic].iov_base = (void *) "";
-		iov[ic++].iov_len = 1;
-		len++;
-#endif
-		iov[0].iov_len = InsertPesHeader(PesHeader, len, MPEG_VIDEO_PES_START_CODE, pts, FakeStartCode);
-		return writev(fd, iov, ic) > -1;
-	}
-
-	// convert NAL units without sync byte sequence to byte-stream format
-	if (initialHeader) {
-		avcC_t *avcCHeader = (avcC_t *) stream->codec->extradata;
-
-		if (!avcCHeader) {
-			fprintf(stderr, "stream->codec->extradata == NULL\n");
-			return false;
-		}
-
-		if (avcCHeader->Version != 1)
-			fprintf(stderr, "Error unknown avcC version (%x). Expect problems.\n", avcCHeader->Version);
-
-		int ic = 0;
+		ic = 0;
 		iov[ic++].iov_base = PesHeader;
 
 		NalLengthBytes = (avcCHeader->NalLengthMinusOne & 0x03) + 1;
 		unsigned int ParamOffset = 0;
-		unsigned int len = 0;
+		len = 0;
 
 		// sequence parameter set
 		unsigned int ParamSets = avcCHeader->NumParamSets & 0x1f;

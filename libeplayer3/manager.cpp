@@ -201,7 +201,7 @@ bool Manager::selectProgram(const int id)
 			if (it->second->hidden || it->second->inactive) {
 				it->second->stream->discard = AVDISCARD_ALL;
 			} else {
-				it->second->stream->discard = AVDISCARD_DEFAULT;
+				it->second->stream->discard = AVDISCARD_NONE;
 				player->input.SwitchAudio(it->second);
 			}
 
@@ -209,7 +209,7 @@ bool Manager::selectProgram(const int id)
 			if (it->second->hidden || it->second->inactive) {
 				it->second->stream->discard = AVDISCARD_ALL;
 			} else {
-				it->second->stream->discard = AVDISCARD_DEFAULT;
+				it->second->stream->discard = AVDISCARD_NONE;
 				player->input.SwitchVideo(it->second);
 			}
 
@@ -217,7 +217,7 @@ bool Manager::selectProgram(const int id)
 			if (it->second->hidden || it->second->inactive) {
 				it->second->stream->discard = AVDISCARD_ALL;
 			} else {
-				it->second->stream->discard = AVDISCARD_DEFAULT;
+				it->second->stream->discard = AVDISCARD_NONE;
 				player->input.SwitchSubtitle(it->second);
 			}
 
@@ -225,7 +225,7 @@ bool Manager::selectProgram(const int id)
 			if (it->second->hidden || it->second->inactive) {
 				it->second->stream->discard = AVDISCARD_ALL;
 			} else {
-				it->second->stream->discard = AVDISCARD_DEFAULT;
+				it->second->stream->discard = AVDISCARD_NONE;
 				player->input.SwitchTeletext(it->second);
 			}
 

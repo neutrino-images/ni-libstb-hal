@@ -18,7 +18,7 @@
 
 #include "ca_ci.h"
 #include "lt_debug.h"
-#include <include/cs_api.h>
+#include <cs_api.h>
 #include <hardware_caps.h>
 
 #include <dvbci_session.h>

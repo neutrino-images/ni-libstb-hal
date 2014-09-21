@@ -26,7 +26,7 @@ class cPlayback
 		playmode_t pm;
 		std::string fn_ts;
 		std::string fn_xml;
-		off_t last_size;
+		off64_t last_size;
 		int init_jump;
 		Player *player;
 		const char *(*ProgramSelectionCallback)(void *, std::vector<std::string> &keys, std::vector<std::string> &values);

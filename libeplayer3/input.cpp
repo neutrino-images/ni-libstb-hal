@@ -657,7 +657,6 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 
 	if (avfc) {
 		AVDictionaryEntry *tag = NULL;
-
 		if (avfc->metadata)
 			while ((tag = av_dict_get(avfc->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
 				keys.push_back(tag->key);
@@ -675,6 +674,20 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 				keys.push_back(tag->key);
 				values.push_back(tag->value);
 			}
+
+		// find the first attached picture, if available
+		for(unsigned int i = 0; i < avfc->nb_streams; i++) {
+			if (avfc->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC) {
+			AVPacket *pkt = &avfc->streams[i]->attached_pic;
+			FILE *cover_art = fopen("/tmp/cover.jpg", "wb");
+			if (cover_art) {
+				fwrite(pkt->data, pkt->size, 1, cover_art);
+				fclose(cover_art);
+			}
+			av_free_packet(pkt);
+			break;
+			}
+		}
 	}
 	return true;
 }

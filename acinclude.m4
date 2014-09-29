@@ -307,6 +307,14 @@ AC_ARG_WITH(boxtype,
 			BOXTYPE="duckbox"
 			BOXMODEL="$withval"
 			;;
+		hs7*)
+			BOXTYPE="duckbox"
+			BOXMODEL="$withval"
+			;;
+		dp*)
+			BOXTYPE="duckbox"
+			BOXMODEL="$withval"
+			;;
 		cuberevo*)
 			BOXTYPE="duckbox"
 			BOXMODEL="$withval"
@@ -322,7 +330,7 @@ AC_ARG_WITH(boxtype,
 AC_ARG_WITH(boxmodel,
 	[  --with-boxmodel         valid for dreambox: dm500, dm500plus, dm600pvr, dm56x0, dm7000, dm7020, dm7025
                           valid for ipbox: ip200, ip250, ip350, ip400
-                          valid for duckbox: ufs910, ufs912, ufs913, ufs922, atevio7500, fortis_hdbox, octagon1008, cuberevo, cuberevo_mini2, cuberevo_2000hd, tf7700],
+                          valid for duckbox: ufs910, ufs912, ufs913, ufs922, atevio7500, fortis_hdbox, octagon1008, hs7110, hs7810a, hs7119, hs7819, dp7000, cuberevo, cuberevo_mini2, cuberevo_2000hd, tf7700],
 	[case "${withval}" in
 		dm500|dm500plus|dm600pvr|dm56x0|dm7000|dm7020|dm7025)
 			if test "$BOXTYPE" = "dreambox"; then
@@ -338,7 +346,7 @@ AC_ARG_WITH(boxmodel,
 				AC_MSG_ERROR([unknown model $withval for boxtype $BOXTYPE])
 			fi
 			;;
-		ufs910|ufs912|ufs913|ufs922|atevio7500|fortis_hdbox|octagon1008|cuberevo|cuberevo_mini2|cuberevo_2000hd|tf7700)
+		ufs910|ufs912|ufs913|ufs922|atevio7500|fortis_hdbox|octagon1008|hs7110|hs7810a|hs7119|hs7819|dp7000|cuberevo|cuberevo_mini2|cuberevo_2000hd|tf7700)
 			if test "$BOXTYPE" = "duckbox"; then
 				BOXMODEL="$withval"
 			else
@@ -394,6 +402,12 @@ AM_CONDITIONAL(BOXMODEL_SPARK7162,test "$BOXMODEL" = "spark7162")
 AM_CONDITIONAL(BOXMODEL_ATEVIO7500, test "$BOXMODEL" = "atevio7500")
 AM_CONDITIONAL(BOXMODEL_FORTIS_HDBOX,test "$BOXMODEL" = "fortis_hdbox")
 AM_CONDITIONAL(BOXMODEL_OCTAGON1008,test "$BOXMODEL" = "octagon1008")
+AM_CONDITIONAL(BOXMODEL_HS7110,test "$BOXMODEL" = "hs7110")
+AM_CONDITIONAL(BOXMODEL_HS7810A,test "$BOXMODEL" = "hs7810a")
+AM_CONDITIONAL(BOXMODEL_HS7119,test "$BOXMODEL" = "hs7119")
+AM_CONDITIONAL(BOXMODEL_HS7819,test "$BOXMODEL" = "hs7819")
+AM_CONDITIONAL(BOXMODEL_DP7000,test "$BOXMODEL" = "dp7000")
+
 AM_CONDITIONAL(BOXMODEL_CUBEREVO,test "$BOXMODEL" = "cuberevo")
 AM_CONDITIONAL(BOXMODEL_CUBEREVO_MINI2,test "$BOXMODEL" = "cuberevo_mini2")
 AM_CONDITIONAL(BOXMODEL_CUBEREVO_2000HD,test "$BOXMODEL" = "cuberevo_2000hd")
@@ -449,6 +463,16 @@ elif test "$BOXMODEL" = "fortis_hdbox"; then
 	AC_DEFINE(BOXMODEL_FORTIS_HDBOX, 1, [fortis_hdbox])
 elif test "$BOXMODEL" = "octagon1008"; then
 	AC_DEFINE(BOXMODEL_OCTAGON1008, 1, [octagon1008])
+elif test "$BOXMODEL" = "hs7110"; then
+	AC_DEFINE(BOXMODEL_HS7110, 1, [hs7110])
+elif test "$BOXMODEL" = "hs7810a"; then
+	AC_DEFINE(BOXMODEL_HS7810A, 1, [hs7810a])
+elif test "$BOXMODEL" = "hs7119"; then
+	AC_DEFINE(BOXMODEL_HS7119, 1, [hs7119])
+elif test "$BOXMODEL" = "hs7819"; then
+	AC_DEFINE(BOXMODEL_HS7819, 1, [hs7819])
+elif test "$BOXMODEL" = "dp7000"; then
+	AC_DEFINE(BOXMODEL_DP7000, 1, [dp7000])
 elif test "$BOXMODEL" = "cuberevo"; then
 	AC_DEFINE(BOXMODEL_CUBEREVO, 1, [cuberevo])
 elif test "$BOXMODEL" = "cuberevo_mini2"; then

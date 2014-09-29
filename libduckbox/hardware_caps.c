@@ -105,6 +105,51 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 		}
+		else if (!strncmp(buf, "hs7110", 6)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+		}
+		else if (!strncmp(buf, "hs7810a", 7)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+		}
+		else if (!strncmp(buf, "hs7119", 6)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+		}
+		else if (!strncmp(buf, "hs7819", 6)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+		}
+		else if (!strncmp(buf, "dp7000", 6)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+		}
 		else if (!strncmp(buf, "cuberevo", 8)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
 			strcpy(caps.boxname, buf);

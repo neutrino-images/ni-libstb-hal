@@ -11,6 +11,8 @@
 /install-sh
 /common/Makefile.in
 /libeplayer3/Makefile.in
+/libdvbci/Makefile.in
+/libduckbox/Makefile.in
 /libspark/Makefile.in
 /libtriple/Makefile.in
 /azbox/Makefile.in
@@ -20,3 +22,10 @@
 /missing
 /Makefile.in
 /tools/Makefile.in
+*.a
+*.la
+*.lai
+*.Plo
+*.o
+*.lo
+*.Po

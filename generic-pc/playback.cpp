@@ -100,10 +100,10 @@ int cPlayback::GetTeletextPid(void)
 	return -1;
 }
 
-void cPlayback::FindAllSubs(int *, unsigned int *, unsigned int *numpida, std::string *)
+void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
 {
 	printf("%s:%s\n", FILENAME, __func__);
-	*numpida = 0;
+	*num = 0;
 }
 
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
@@ -116,6 +116,14 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 {
 	keys.clear();
 	values.clear();
+}
+
+void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
+{
+}
+
+void cPlayback::SetTitle(int /*title*/)
+{
 }
 
 cPlayback::cPlayback(int /*num*/)

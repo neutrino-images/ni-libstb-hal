@@ -41,6 +41,7 @@
 #include "pcm.cpp"
 #include "vc1.cpp"
 #include "wmv.cpp"
+#include "aac.cpp"
 
 static std::map<enum AVCodecID,Writer *>writers __attribute__ ((init_priority (200)));
 static std::map<enum AVCodecID,video_encoding_t>vencoding __attribute__ ((init_priority (200)));

@@ -64,9 +64,10 @@ int64_t Input::calcPts(AVStream * stream, int64_t pts)
 		return INVALID_PTS_VALUE;
 
 	pts = av_rescale(90000ll * stream->time_base.num, pts, stream->time_base.den);
+#if 0
 	if (avfc->start_time != AV_NOPTS_VALUE)
 		pts -= av_rescale(90000ll, avfc->start_time, AV_TIME_BASE);
-
+#endif
 	if (pts < 0)
 		return INVALID_PTS_VALUE;
 

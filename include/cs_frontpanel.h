@@ -136,7 +136,7 @@ typedef enum {
 	FP_ICON_RADIO = ICON_RADIO,
 	FP_ICON_TV = ICON_TV,
 	FP_ICON_MUSIC,
-#elif defined(BOXMODEL_UFS910)
+#elif defined(BOXMODEL_UFS910) || defined(BOXMODEL_UFS912) || defined(BOXMODEL_UFS913)
 	FP_ICON_USB = 0x10,
 	FP_ICON_HD,
 	FP_ICON_HDD,
@@ -153,6 +153,13 @@ typedef enum {
 	FP_ICON_FR,
 	FP_ICON_REC,
 	FP_ICON_CLOCK,
+	FP_ICON_MAX,
+	FP_ICON_CAM1 = FP_ICON_REC,
+	FP_ICON_TV = 0,
+	FP_ICON_RADIO = FP_ICON_MUSIC,
+	FP_ICON_RECORD = FP_ICON_REC,
+	FP_ICON_DOWNLOAD = 0,
+	FP_ICON_TIMESHIFT = 0
 #else
 	FP_ICON_USB = 0x10,
 	FP_ICON_HD,
@@ -171,6 +178,7 @@ typedef enum {
 	FP_ICON_REC,
 	FP_ICON_CLOCK,
 #endif
+#if !defined(BOXMODEL_UFS910) && !defined(BOXMODEL_UFS912) && !defined(BOXMODEL_UFS913)
 #if !defined(FP_ICON_CAM1)
 	FP_ICON_CAM1 = FP_ICON_REC,
 #endif
@@ -190,6 +198,7 @@ typedef enum {
 	FP_ICON_TIMESHIFT,
 #endif
 	FP_ICON_MAX
+#endif
 } fp_icon;
 
 typedef enum {

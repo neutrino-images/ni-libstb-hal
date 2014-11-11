@@ -124,17 +124,18 @@ typedef enum {
 	FP_ICON_LOCK = ICON_SCRAMBLED,
 	FP_ICON_DD = ICON_DOLBY,
 	FP_ICON_MUTE = ICON_MUTE,
-	FP_ICON_BT,
+	FP_ICON_BT = 0,
 	FP_ICON_MP3 = ICON_MP3,
 	FP_ICON_PLAY = ICON_Play,
-	FP_ICON_PAUSE,
-	FP_ICON_HDD,
-	FP_ICON_MAIL,
-	FP_ICON_FF,
-	FP_ICON_FR,
+	FP_ICON_PAUSE = 0,
+	FP_ICON_HDD = 0,
+	FP_ICON_MAIL = 0,
+	FP_ICON_FF = 0,
+	FP_ICON_FR = 0,
 	FP_ICON_RADIO = ICON_RADIO,
 	FP_ICON_TV = ICON_TV,
-	FP_ICON_MUSIC,
+	FP_ICON_MUSIC = ICON_RADIO,
+	FP_ICON_MAX = ICON_MAX
 #elif defined(BOXMODEL_UFS910) || defined(BOXMODEL_UFS922) || defined(BOXMODEL_UFS912) || defined(BOXMODEL_UFS913)
 	FP_ICON_USB = 0x10,
 	FP_ICON_HD,
@@ -176,26 +177,14 @@ typedef enum {
 	FP_ICON_FR,
 	FP_ICON_REC,
 	FP_ICON_CLOCK,
-#endif
-#if !defined(BOXMODEL_UFS910) && !defined(BOXMODEL_UFS922) && !defined(BOXMODEL_UFS912) && !defined(BOXMODEL_UFS913)
-#if !defined(FP_ICON_CAM1)
 	FP_ICON_CAM1 = FP_ICON_REC,
-#endif
-#if !defined(FP_ICON_TV)
 	FP_ICON_TV = FP_ICON_MUSIC,
-#endif
-#if !defined(FP_ICON_RADIO)
 	FP_ICON_RADIO = FP_ICON_MUSIC,
-#endif
-#if !defined(FP_ICON_RECORD)
 	FP_ICON_RECORD = FP_ICON_REC,
-#endif
-#if !defined(FP_ICON_DOWNLOAD)
 	FP_ICON_DOWNLOAD,
-#endif
-#if !defined(FP_ICON_TIMESHIFT)
 	FP_ICON_TIMESHIFT,
 #endif
+#if !defined(BOXMODEL_UFS910) && !defined(BOXMODEL_UFS922) && !defined(BOXMODEL_UFS912) && !defined(BOXMODEL_UFS913) && !defined(BOXMODEL_FORTIS_HDBOX)
 	FP_ICON_MAX
 #endif
 } fp_icon;
@@ -220,12 +209,6 @@ typedef struct {
 	unsigned char		timer_minutes_lo;
 } fp_standby_data_t;
 
-typedef struct {
-	unsigned char		source;
-	unsigned char		time_minutes_hi;
-	unsigned char		time_minutes_lo;
-} fp_wakeup_data_t;
-
 typedef enum {
 	FP_LED_1_ON		= 0x81,
 	FP_LED_2_ON		= 0x82,
@@ -234,6 +217,12 @@ typedef enum {
 	FP_LED_2_OFF		= 0x02,
 	FP_LED_3_OFF		= 0x03,
 } fp_led_ctrl_t;
+
+typedef struct {
+	unsigned char		source;
+	unsigned char		time_minutes_hi;
+	unsigned char		time_minutes_lo;
+} fp_wakeup_data_t;
 
 typedef enum {
 	FP_WAKEUP_SOURCE_TIMER  = 0x01,
@@ -247,5 +236,26 @@ typedef struct {
 	unsigned short		addr;
 	unsigned short		cmd;
 } fp_standby_cmd_data_t;
+
+typedef enum {
+	FP_DISPLAY_TEXT_NONE	= 0,
+	FP_DISPLAY_TEXT_LIMITED,
+	FP_DISPLAY_TEXT_ALL,
+} fp_display_text_type_t;
+
+typedef enum {
+	FP_DISPLAY_TYPE_NONE	= 0,
+	FP_DISPLAY_TYPE_VFD,
+	FP_DISPLAY_TYPE_OLED,
+	FP_DISPLAY_TYPE_LED_SEGMENT
+} fp_display_type_t;
+
+typedef struct {
+	fp_display_type_t	display_type;
+	unsigned short		xres, yres;
+	unsigned int		segment_count;
+	fp_display_text_type_t	text_support;
+	bool			number_support;
+} fp_display_caps_t;
 
 #endif /* __DUCKBOX_VFD__ */

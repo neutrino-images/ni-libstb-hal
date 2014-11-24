@@ -436,10 +436,9 @@ again:
 		avfc->max_analyze_duration2 = 1;
 #endif
 		avfc->probesize = 131072;
-		err = avformat_find_stream_info(avfc, NULL);
 	}
 
-#if 0
+	err = avformat_find_stream_info(avfc, NULL);
 	if (averror(err, avformat_find_stream_info)) {
 		avformat_close_input(&avfc);
 		if (player->noprobe) {
@@ -448,7 +447,6 @@ again:
 		}
 		return false;
 	}
-#endif
 
 	bool res = UpdateTracks();
 

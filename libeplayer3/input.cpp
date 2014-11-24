@@ -90,6 +90,8 @@ int64_t Input::calcPts(AVStream * stream, int64_t pts)
 	if (pts < 0)
 		return INVALID_PTS_VALUE;
 
+	if (pts & 0x8000000000000000ull)
+		pts = INVALID_PTS_VALUE;
 	return pts;
 }
 #endif
@@ -678,7 +680,6 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 
 	if (avfc) {
 		AVDictionaryEntry *tag = NULL;
-
 		if (avfc->metadata)
 			while ((tag = av_dict_get(avfc->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
 				keys.push_back(tag->key);

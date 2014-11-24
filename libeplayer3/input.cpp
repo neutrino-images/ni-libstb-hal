@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#define ENABLE_LOGGING 0
+#define ENABLE_LOGGING 1
 
 #include <stdio.h>
 #include <stdlib.h>

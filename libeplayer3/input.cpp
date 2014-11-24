@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#define ENABLE_LOGGING 1
+#define ENABLE_LOGGING 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,43 +58,21 @@ Input::~Input()
 {
 }
 
-#if 1
-int64_t Input::calcPts(AVStream * stream, int64_t pts)
-{
-	if (!stream) {
-		return INVALID_PTS_VALUE;
-	}
-
-	if (pts == AV_NOPTS_VALUE)
-		pts = INVALID_PTS_VALUE;
-	else if (avfc->start_time == AV_NOPTS_VALUE)
-		pts = 90000.0 * (double) pts * av_q2d(stream->time_base);
-	else
-		pts = 90000.0 * (double) pts * av_q2d(stream->time_base) - 90000.0 * avfc->start_time / AV_TIME_BASE;
-
-	if (pts & 0x8000000000000000ull)
-		pts = INVALID_PTS_VALUE;
-
-	return pts;
-}
-#else
 int64_t Input::calcPts(AVStream * stream, int64_t pts)
 {
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
 
 	pts = av_rescale(90000ll * stream->time_base.num, pts, stream->time_base.den);
+#if 0
 	if (avfc->start_time != AV_NOPTS_VALUE)
 		pts -= av_rescale(90000ll, avfc->start_time, AV_TIME_BASE);
-
+#endif
 	if (pts < 0)
 		return INVALID_PTS_VALUE;
 
-	if (pts & 0x8000000000000000ull)
-		pts = INVALID_PTS_VALUE;
 	return pts;
 }
-#endif
 
 // from neutrino-mp/lib/libdvbsubtitle/dvbsub.cpp
 extern void dvbsub_write(AVSubtitle *, int64_t);

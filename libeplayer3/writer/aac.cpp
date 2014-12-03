@@ -153,7 +153,7 @@ bool WriterAAC::Write(AVPacket *packet, int64_t pts)
 
 		memcpy(ExtraData, aacbuf, AAC_HEADER_LENGTH);
 
-		ExtraData[3] |= (PacketLength >> 11) & 0x3;
+//		ExtraData[3] |= (PacketLength >> 11) & 0x3;
 		ExtraData[4] = (PacketLength >> 3) & 0xff;
 		ExtraData[5] |= (PacketLength << 5) & 0xe0;
 

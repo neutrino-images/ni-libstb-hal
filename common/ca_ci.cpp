@@ -245,7 +245,7 @@ bool sendCreateTC(tSlot* slot)
 	return true;
 }
 
-void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id)
+void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int /*con_id*/)
 {
 	switch (tpdu_tag)
 	{
@@ -532,7 +532,7 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 	{
 		if ((*it)->camIsReady)
 		{
-			for (int i = 0; i < (*it)->cam_caids.size(); i++)
+			for (unsigned int i = 0; i < (*it)->cam_caids.size(); i++)
 				Caids.push_back((*it)->cam_caids[i]);
 		}
 	}
@@ -559,7 +559,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 	printf("%s:%s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	ca_map_iterator_t caIt;
-	int i;
+	unsigned int i;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->inUse)
@@ -593,7 +593,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 }
 
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
-bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * rawpmt, u32 rawlen, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
+bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
 	printf("%s:%s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
@@ -626,7 +626,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 				(*It)->tpid = tpid;
 				(*It)->source = source_demux;
 				(*It)->pmtlen = calen;
-				for(int i = 0; i < calen; i++)
+				for (unsigned int i = 0; i < calen; i++)
 					(*It)->pmtdata[i] = cabuf[i];
 				(*It)->newCapmt = true;
 			}
@@ -642,7 +642,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 	if (!cm.empty())
 	{
 		printf("Service Caids: ");
-		for(ca_map_iterator_t it = cm.begin(); it != cm.end(); ++it)
+		for (ca_map_iterator_t it = cm.begin(); it != cm.end(); ++it)
 		{
 			printf("%04x ", (*it));
 		}
@@ -702,7 +702,7 @@ cCA::cCA(int Slots)
 		slot_data.push_back(slot);
 		/* now reset the slot so the poll pri can happen in the thread */
 		if (ioctl(fd, CA_RESET, i) < 0)
-			printf("IOCTL CA_RESET failed for slot %d\n", slot);
+			printf("IOCTL CA_RESET failed for slot %p\n", slot);
 		/* create a thread for each slot */
 		if (fd > 0)
 		{
@@ -744,9 +744,9 @@ void cCA::setSource(tSlot* slot)
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_input", slot->slot);
 	FILE *ci = fopen(buf, "wb");
 
-	if(ci > 0)
+	if (ci > (void*)0)
 	{
-		switch(slot->source)
+		switch (slot->source)
 		{
 			case TUNER_A:
 				fprintf(ci, "A");
@@ -1005,7 +1005,7 @@ void cCA::slot_pollthread(void *c)
 			slot->cam_caids = slot->camgrSession->getCAIDs();
 
 			printf("Anzahl Caids: %d Slot: %d > ", slot->cam_caids.size(), slot->slot);
-			for (int i = 0; i < slot->cam_caids.size(); i++)
+			for (unsigned int i = 0; i < slot->cam_caids.size(); i++)
 			{
 				printf("%04x ", slot->cam_caids[i]);
 
@@ -1046,7 +1046,7 @@ bool cCA::SendCaPMT(tSlot* slot)
 		{
 #if x_debug
 			printf("buffered capmt(0x%X): > \n", slot->pmtlen);
-			for(int i = 0; i < slot->pmtlen; i++)
+			for (unsigned int i = 0; i < slot->pmtlen; i++)
 				printf("%02X ", slot->pmtdata[i]);
 			printf("\n");
 #endif

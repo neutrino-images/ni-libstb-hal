@@ -338,7 +338,7 @@ void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint
 	*num = 0;
 }
 
-bool cPlayback::SelectSubtitles(int pid)
+bool cPlayback::SelectSubtitles(int /*pid*/)
 {
 	return false;
 }

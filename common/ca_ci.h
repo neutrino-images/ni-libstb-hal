@@ -160,7 +160,7 @@ class eDVBCICAManagerSession;
 typedef struct
 {
 	pthread_t slot_thread;
-	int slot;
+	unsigned int slot;
 	int fd;
 	int connection_id;
 	eStatus status;

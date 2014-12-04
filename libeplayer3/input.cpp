@@ -394,7 +394,9 @@ bool Input::Init(const char *filename)
 	subtitleTrack = NULL;
 	teletextTrack = NULL;
 
+#if 0
 again:
+#endif
 	avfc = avformat_alloc_context();
 	avfc->interrupt_callback.callback = interrupt_cb;
 	avfc->interrupt_callback.opaque = (void *) player;
@@ -418,7 +420,7 @@ again:
 		avfc->probesize = 131072;
 	}
 
-	for (int i = 0; i < avfc->nb_streams; i++) {
+	for (unsigned int i = 0; i < avfc->nb_streams; i++) {
 		if (avfc->streams[i]->codec->codec_id == AV_CODEC_ID_AAC)
 			find_info = false;
 	}

@@ -494,7 +494,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
 			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
 		bool seq_end_avail = false;
-		size_t pos=0;
+		off_t pos=0;
 		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
 		if (! iframe)
 		{

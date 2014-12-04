@@ -316,7 +316,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 		while (len > 0)
 		{
 			int alen;
-			const unsigned char *tag = pkt;
+			const unsigned char *stag = pkt;
 			pkt += 3; // tag
 			len -= 3;
 			hlen = parseLengthField(pkt, alen);
@@ -331,9 +331,9 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 				alen = len;
 			}
 
-			printf("1. Call receivedAPDU tag = 0x%2x, len = %d\n", (int) tag, alen);
+			printf("1. Call receivedAPDU tag = 0x%2x, len = %d\n", (int) stag, alen);
 
-			if (session->receivedAPDU(tag, pkt, alen))
+			if (session->receivedAPDU(stag, pkt, alen))
 				session->action = 1;
 			pkt += alen;
 			len -= alen;

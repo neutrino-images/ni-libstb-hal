@@ -22,7 +22,17 @@ libgeneric_la_SOURCES = \
 	audio.cpp \
 	glfb.cpp \
 	init.cpp \
-	playback.cpp \
 	pwrmngr.cpp \
 	record.cpp
+
+if ENABLE_GSTREAMER
+libgeneric_la_SOURCES += \
+	playback_gst.cpp
+AM_LDFLAGS += \
+	-lgstreamer-0.10 \
+	-lgstinterfaces-0.10
+else
+libgeneric_la_SOURCES += \
+	playback.cpp
+endif
 

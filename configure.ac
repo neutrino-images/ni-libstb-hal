@@ -23,7 +23,20 @@ if test x"$BOXTYPE" = x"tripledragon"; then
 	TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)
 fi
 
+AC_ARG_ENABLE(gstreamer,
+	AS_HELP_STRING(--enable-gstreamer,use gstreamer playback),
+	,[enable_gstreamer=no])
+
+AM_CONDITIONAL(ENABLE_GSTREAMER,test "$enable_gstreamer" = "yes")
+if test "$enable_gstreamer" = "yes"; then
+	AC_DEFINE(ENABLE_GSTREAMER,1,[enable gstreamer])
+fi
+
 if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
+if test x$ENABLE_GSTREAMER = x1; then
+	PKG_CHECK_MODULES([GSTREAMER], [gstreamer-0.10])
+	PKG_CHECK_MODULES([GSTREAMER_INTERFACES], [gstinterfaces-0.10])
+fi
 	PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1])
 	PKG_CHECK_MODULES([AVCODEC], [libavcodec >= 54.28.0])
 	# don't know which version is exactly needed here...

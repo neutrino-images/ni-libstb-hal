@@ -47,6 +47,7 @@ public:
 
 	void clear();
 	fb_var_screeninfo getScreenInfo() { return screeninfo; }
+	int getWindowID() { return GLWinID; }
 
 private:
 	fb_var_screeninfo screeninfo;
@@ -61,6 +62,7 @@ private:
 	float zoom;			/* for cropping */
 	float xscale;			/* and aspect ratio */
 	int mCrop;			/* DISPLAY_AR_MODE */
+	int GLWinID;
 
 	bool mFullscreen;		/* fullscreen? */
 	bool mReInit;			/* setup things for GL */

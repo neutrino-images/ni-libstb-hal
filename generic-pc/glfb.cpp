@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <linux/input.h>
 #include "glfb.h"
+#include <GL/glx.h>
 #include "video_lib.h"
 #include "audio_lib.h"
 
@@ -121,10 +122,16 @@ void GLFramebuffer::initKeys()
 	mSpecialMap[GLUT_KEY_F3] = KEY_YELLOW;
 	mSpecialMap[GLUT_KEY_F4] = KEY_BLUE;
 
-	mSpecialMap[GLUT_KEY_F5] = KEY_WWW;
-	mSpecialMap[GLUT_KEY_F6] = KEY_SUBTITLE;
-	mSpecialMap[GLUT_KEY_F7] = KEY_MOVE;
-	mSpecialMap[GLUT_KEY_F8] = KEY_SLEEP;
+	mSpecialMap[GLUT_KEY_F5] = KEY_PLAY;
+	mSpecialMap[GLUT_KEY_F6] = KEY_STOP;
+	mSpecialMap[GLUT_KEY_F7] = KEY_FORWARD;
+	mSpecialMap[GLUT_KEY_F8] = KEY_REWIND;
+
+	mSpecialMap[GLUT_KEY_F9] = KEY_RECORD;
+	mSpecialMap[GLUT_KEY_F10] = KEY_PAUSE;
+
+	mSpecialMap[GLUT_KEY_F11] = KEY_NEXT;
+	mSpecialMap[GLUT_KEY_F12] = KEY_PREVIOUS;
 
 	mSpecialMap[GLUT_KEY_PAGE_UP]   = KEY_PAGEUP;
 	mSpecialMap[GLUT_KEY_PAGE_DOWN] = KEY_PAGEDOWN;
@@ -205,6 +212,7 @@ void GLFramebuffer::setupCtx()
 	glutInitWindowSize(mX[0], mY[0]);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("Neutrino");
+	GLWinID = glXGetCurrentDrawable(); // this was the holy grail to get the right window handle for gstreamer :D
 }
 
 void GLFramebuffer::setupOSDBuffer()

@@ -30,4 +30,5 @@ void Thread::joinThread()
 void* Thread::runThread(void* ptr)
 {
 	((Thread*)ptr)->run();
+	return 0;
 }

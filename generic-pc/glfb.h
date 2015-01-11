@@ -18,8 +18,9 @@
 
 #ifndef __glthread__
 #define __glthread__
-#include <OpenThreads/Thread>
-#include <OpenThreads/Mutex>
+#include "../common/thread_abstraction.h"
+#include "../common/mutex_abstraction.h"
+
 #include <vector>
 #include <map>
 #include <GL/glew.h>
@@ -30,7 +31,7 @@ extern "C" {
 #include <libavutil/rational.h>
 }
 
-class GLFramebuffer : public OpenThreads::Thread
+class GLFramebuffer : public Thread
 {
 public:
 	GLFramebuffer(int x, int y);
@@ -66,7 +67,7 @@ private:
 
 	bool mFullscreen;		/* fullscreen? */
 	bool mReInit;			/* setup things for GL */
-	OpenThreads::Mutex mReInitLock;
+	Mutex mReInitLock;
 	bool mShutDown;			/* if set main loop is left */
 	bool mInitDone;			/* condition predicate */
 	// OpenThreads::Condition mInitCond;	/* condition variable for init */

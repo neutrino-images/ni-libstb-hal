@@ -48,6 +48,7 @@ AC_OUTPUT([
 Makefile
 common/Makefile
 libeplayer3/Makefile
+libthread/Makefile
 azbox/Makefile
 generic-pc/Makefile
 libduckbox/Makefile

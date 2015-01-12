@@ -5,16 +5,21 @@
 
 class Mutex
 {
+	friend class Condition;
+
 	pthread_mutex_t mMutex;
 
 	Mutex(const Mutex&);
 	const Mutex& operator=(const Mutex&);
 
+	protected:
+		explicit Mutex(int);
+
 	public:
 		Mutex();
 		virtual ~Mutex();
-		void lock();
-		void unlock();
+		virtual void lock();
+		virtual void unlock();
 };
 
 #endif

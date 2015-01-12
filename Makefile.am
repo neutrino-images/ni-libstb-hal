@@ -2,11 +2,15 @@ ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = libstb-hal.la
 libstb_hal_la_SOURCES =
-SUBDIRS = common tools
+SUBDIRS = common tools libthread
 bin_PROGRAMS = libstb-hal-test
 
 libstb_hal_la_LIBADD = \
-	common/libcommon.la
+	common/libcommon.la \
+	libthread/libthread.la
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include
 
 libstb_hal_test_SOURCES = libtest.cpp
 libstb_hal_test_LDADD = libstb-hal.la

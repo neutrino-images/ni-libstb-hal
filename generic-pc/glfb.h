@@ -18,8 +18,8 @@
 
 #ifndef __glthread__
 #define __glthread__
-#include "../common/thread_abstraction.h"
-#include "../common/mutex_abstraction.h"
+#include <thread_abstraction.h>
+#include <mutex_abstraction.h>
 
 #include <vector>
 #include <map>
@@ -31,7 +31,7 @@ extern "C" {
 #include <libavutil/rational.h>
 }
 
-class GLFramebuffer : public SimpleThread
+class GLFramebuffer : public Thread
 {
 public:
 	GLFramebuffer(int x, int y);

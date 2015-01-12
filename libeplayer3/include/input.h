@@ -26,9 +26,7 @@
 #include <vector>
 #include <map>
 
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Thread>
-#include <OpenThreads/Condition>
+#include <scoped_lock.h>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -48,7 +46,7 @@ class Input
 	friend int interrupt_cb(void *arg);
 
 	private:
-		OpenThreads::Mutex mutex;
+		Mutex mutex;
 
 		Track *videoTrack;
 		Track *audioTrack;

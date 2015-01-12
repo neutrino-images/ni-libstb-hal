@@ -66,9 +66,9 @@ Output::~Output()
 
 bool Output::Open()
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-	
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
+
 	if (videofd < 0)
 		videofd = open(VIDEODEV, O_RDWR);
 
@@ -100,8 +100,8 @@ bool Output::Close()
 {
 	Stop();
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	if (videofd > -1) {
 		close(videofd);
@@ -122,8 +122,8 @@ bool Output::Play()
 {
 	bool ret = true;
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	AVCodecContext *avcc;
 
@@ -149,8 +149,8 @@ bool Output::Stop()
 {
 	bool ret = true;
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	if (videofd > -1) {
 		ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
@@ -175,8 +175,8 @@ bool Output::Pause()
 {
 	bool ret = true;
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	if (videofd > -1) {
 		if (dioctl(videofd, VIDEO_FREEZE, NULL))
@@ -195,8 +195,8 @@ bool Output::Continue()
 {
 	bool ret = true;
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	if (videofd > -1 && dioctl(videofd, VIDEO_CONTINUE, NULL))
 		ret = false;
@@ -209,7 +209,7 @@ bool Output::Continue()
 
 bool Output::Mute(bool b)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock a_lock(audioMutex);
 	//AUDIO_SET_MUTE has no effect with new player
 	return audiofd > -1 && !dioctl(audiofd, b ? AUDIO_STOP : AUDIO_PLAY, NULL);
 }
@@ -219,8 +219,8 @@ bool Output::Flush()
 {
 	bool ret = true;
 
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock v_lock(videoMutex);
+	ScopedLock a_lock(audioMutex);
 
 	if (videofd > -1 && ioctl(videofd, VIDEO_FLUSH, NULL))
 		ret = false;
@@ -241,31 +241,31 @@ bool Output::Flush()
 
 bool Output::FastForward(int speed)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
+	ScopedLock v_lock(videoMutex);
 	return videofd > -1 && !dioctl(videofd, VIDEO_FAST_FORWARD, speed);
 }
 
 bool Output::SlowMotion(int speed)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
+	ScopedLock v_lock(videoMutex);
 	return videofd > -1 && !dioctl(videofd, VIDEO_SLOWMOTION, speed);
 }
 
 bool Output::AVSync(bool b)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock a_lock(audioMutex);
 	return audiofd > -1 && !dioctl(audiofd, AUDIO_SET_AV_SYNC, b);
 }
 
 bool Output::ClearAudio()
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock a_lock(audioMutex);
 	return audiofd > -1 && !ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 }
 
 bool Output::ClearVideo()
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
+	ScopedLock v_lock(videoMutex);
 	return videofd > -1 && !ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 }
 
@@ -297,7 +297,7 @@ bool Output::GetFrameCount(int64_t &framecount)
 
 bool Output::SwitchAudio(AVStream *stream)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+	ScopedLock a_lock(audioMutex);
 	if (stream == audioStream)
 		return true;
 	if (audiofd > -1) {
@@ -321,7 +321,7 @@ bool Output::SwitchAudio(AVStream *stream)
 
 bool Output::SwitchVideo(AVStream *stream)
 {
-	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
+	ScopedLock v_lock(videoMutex);
 	if (stream == videoStream)
 		return true;
 	if (videofd > -1) {
@@ -347,11 +347,11 @@ bool Output::Write(AVStream *stream, AVPacket *packet, int64_t pts)
 {
 	switch (stream->codec->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
-			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
+			ScopedLock v_lock(videoMutex);
 			return videofd > -1 && videoWriter && videoWriter->Write(packet, pts);
 		}
 		case AVMEDIA_TYPE_AUDIO: {
-			OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
+			ScopedLock a_lock(audioMutex);
 			return audiofd > -1 && audioWriter && audioWriter->Write(packet, pts);
 		}
 		default:

@@ -26,9 +26,7 @@
 #include <vector>
 #include <map>
 
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Thread>
-#include <OpenThreads/Condition>
+#include <scoped_lock.h>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -66,7 +64,7 @@ class Manager
 
 	private:
 		Player *player;
-		OpenThreads::Mutex mutex;
+		Mutex mutex;
 		std::map<int,Track*> videoTracks, audioTracks, subtitleTracks, teletextTracks;
 		std::map<int,Program> Programs;
 		void addTrack(std::map<int,Track*> &tracks, Track &track);

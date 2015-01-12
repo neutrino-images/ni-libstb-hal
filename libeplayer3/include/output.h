@@ -26,9 +26,7 @@
 #include <vector>
 #include <map>
 
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Thread>
-#include <OpenThreads/Condition>
+#include <scoped_lock.h>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -50,7 +48,7 @@ class Output
 		int videofd;
 		int audiofd;
 		Writer *videoWriter, *audioWriter;
-		OpenThreads::Mutex audioMutex, videoMutex;
+		Mutex audioMutex, videoMutex;
 		AVStream *audioStream, *videoStream;
 		Player *player;
 	public:

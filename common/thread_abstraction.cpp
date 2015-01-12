@@ -1,12 +1,12 @@
 #include "thread_abstraction.h"
 
-Thread::Thread() :
+SimpleThread::SimpleThread() :
 	mIsRunning(false),
 	mThread()
 {
 }
 
-Thread::~Thread()
+SimpleThread::~SimpleThread()
 {
 	// if thread is still running on object destruction, cancel thread the hard way:
 	if (mIsRunning)
@@ -15,20 +15,20 @@ Thread::~Thread()
 	}
 }
 
-void Thread::startThread()
+void SimpleThread::startThread()
 {
 	mIsRunning = true;
-	pthread_create(&mThread, 0, &Thread::runThread, this);
+	pthread_create(&mThread, 0, &SimpleThread::runThread, this);
 }
 
-void Thread::joinThread()
+void SimpleThread::joinThread()
 {
 	pthread_join(mThread, 0);
 	mIsRunning = false;
 }
 
-void* Thread::runThread(void* ptr)
+void* SimpleThread::runThread(void* ptr)
 {
-	((Thread*)ptr)->run();
+	static_cast<SimpleThread*>(ptr)->run();
 	return 0;
 }

@@ -31,7 +31,7 @@ extern "C" {
 #include <libavutil/rational.h>
 }
 
-class GLFramebuffer : public Thread
+class GLFramebuffer : public SimpleThread
 {
 public:
 	GLFramebuffer(int x, int y);

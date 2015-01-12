@@ -120,7 +120,7 @@ typedef enum
 
 
 #define VDEC_MAXBUFS 0x30
-class cVideo : public Thread
+class cVideo : public SimpleThread
 {
 	friend class GLFramebuffer;
 	friend class cDemux;

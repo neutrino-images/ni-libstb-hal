@@ -3,6 +3,7 @@ noinst_LTLIBRARIES = libspark.la
 AM_CPPFLAGS = -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/libeplayer3/include
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing

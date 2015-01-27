@@ -157,6 +157,16 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
 			caps.can_cec = 0;
+			caps.has_fan = 1;
+			caps.has_CI = 2;
+		}
+		else if (!strncmp(buf, "cuberevo-mini", 14)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 0;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 		}
@@ -167,8 +177,18 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
 			caps.can_cec = 0;
-			caps.has_fan = 0;
+			caps.has_fan = 1;
 			caps.has_CI = 2;
+		}
+		else if (!strncmp(buf, "cuberevo-250hd", 4)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 0;
+			caps.has_fan = 1;
+			caps.has_CI = 0;
 		}
 		else if (!strncmp(buf, "cuberevo-2000hd", 15)) {
 			strcpy(caps.boxvendor, "DUCKBOX");

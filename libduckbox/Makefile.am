@@ -8,11 +8,12 @@ AM_CPPFLAGS += \
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
-AM_LDFLAGS = -lpthread -lasound -lass -lrt \
+AM_LDFLAGS = \
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
-	@SWRESAMPLE_LIBS@
+	@SWRESAMPLE_LIBS@ \
+	-lpthread -lasound -lass -lrt
 
 libduckbox_la_SOURCES = \
 	hardware_caps.c \

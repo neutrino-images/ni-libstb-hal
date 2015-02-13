@@ -8,11 +8,13 @@ AM_CPPFLAGS += \
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
-AM_LDFLAGS = -lpthread -lasound -lass -lrt \
+AM_LDFLAGS = \
+	-lOpenThreads \
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
-	@SWRESAMPLE_LIBS@
+	@SWRESAMPLE_LIBS@ \
+	-lpthread -lasound -lass -lrt
 
 libspark_la_SOURCES = \
 	hardware_caps.c \
@@ -24,5 +26,3 @@ libspark_la_SOURCES = \
 	playback_libeplayer3.cpp \
 	pwrmngr.cpp \
 	record.cpp
-
-#AM_CPPFLAGS += -DF_INTERRUPTS=20000 -DIRMP_EMBED -DLIRC_IRMP

@@ -240,15 +240,6 @@ void cDemux::Close(void)
 	fd = -1;
 	if (measure)
 		return;
-	if (dmx_type == DMX_TP_CHANNEL)
-	{
-		dmx_tp_count--;
-		if (dmx_tp_count < 0)
-		{
-			lt_info("%s dmx_tp_count < 0!!\n", __func__);
-			dmx_tp_count = 0;
-		}
-	}
 }
 
 bool cDemux::Start(bool)

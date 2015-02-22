@@ -32,11 +32,13 @@
 #include "player.h"
 #include "misc.h"
 
+static const char *FILENAME = "eplayer/input.cpp";
+
 #define averror(_err,_fun) ({										\
 	if (_err < 0) {											\
 		char _error[512];									\
 		av_strerror(_err, _error, sizeof(_error));						\
-		fprintf(stderr, "%s %d: %s: %d (%s)\n", __FILE__, __LINE__, #_fun, _err, _error);	\
+		fprintf(stderr, "%s %d: %s: %d (%s)\n", FILENAME, __LINE__, #_fun, _err, _error);	\
 	}												\
 	_err;												\
 })
@@ -272,7 +274,7 @@ bool Input::Play()
 	Player *player = (Player *) arg;
 	bool res = player->input.abortPlayback || player->abortRequested;
 	if (res)
-		fprintf(stderr, "%s %s %d: abort requested (%d/%d)\n", __FILE__, __func__, __LINE__, player->input.abortPlayback, player->abortRequested);
+		fprintf(stderr, "%s %s %d: abort requested (%d/%d)\n", FILENAME, __func__, __LINE__, player->input.abortPlayback, player->abortRequested);
 	return res;
 }
 
@@ -383,7 +385,7 @@ bool Input::Init(const char *filename)
 		fprintf(stderr, "filename NULL\n");
 		return false;
 	}
-	fprintf(stderr, "%s %s %d: %s\n", __FILE__, __func__, __LINE__, filename);
+	fprintf(stderr, "%s %s %d: %s\n", FILENAME, __func__, __LINE__, filename);
 
 	avcodec_register_all();
 	av_register_all();

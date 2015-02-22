@@ -42,10 +42,12 @@
 #include "misc.h"
 #include "pes.h"
 
+static const char *FILENAME = "eplayer/output.cpp";
+
 #define dioctl(fd,req,arg) ({		\
 	int _r = ioctl(fd,req,arg); \
 	if (_r)				\
-		fprintf(stderr, "%s %d: ioctl '%s' failed: %d (%s)\n", __FILE__, __LINE__, #req, errno, strerror(errno)); \
+		fprintf(stderr, "%s %d: ioctl '%s' failed: %d (%s)\n", FILENAME, __LINE__, #req, errno, strerror(errno)); \
 	_r; \
 })
 

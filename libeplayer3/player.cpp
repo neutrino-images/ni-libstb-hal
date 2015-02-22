@@ -30,6 +30,8 @@
 #include "player.h"
 #include "misc.h"
 
+static const char *FILENAME = "eplayer/player.cpp";
+
 #define cMaxSpeed_ff   128	/* fixme: revise */
 #define cMaxSpeed_fr   -320	/* fixme: revise */
 
@@ -83,7 +85,7 @@ bool Player::Open(const char *Url, bool _noprobe)
 	} else if (!strncmp(Url, "bluray:/", 8)) {
 		url = Url;
 	} else {
-		fprintf(stderr, "%s %s %d: Unknown stream (%s)\n", __FILE__, __func__, __LINE__, Url);
+		fprintf(stderr, "%s %s %d: Unknown stream (%s)\n", FILENAME, __func__, __LINE__, Url);
 		return false;
 	}
 
@@ -127,7 +129,7 @@ bool Player::Play()
 				int err = pthread_create(&playThread, NULL, playthread, this);
 
 				if (err) {
-					fprintf(stderr, "%s %s %d: pthread_create: %d (%s)\n", __FILE__, __func__, __LINE__, err, strerror(err));
+					fprintf(stderr, "%s %s %d: pthread_create: %d (%s)\n", FILENAME, __func__, __LINE__, err, strerror(err));
 					ret = false;
 					isPlaying = false;
 				} else {

@@ -205,6 +205,7 @@ class cVideo
 		int  StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		void SetColorFormat(COLOR_FORMAT color_format);
+		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 
 #endif

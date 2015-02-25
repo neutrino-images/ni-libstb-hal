@@ -1206,8 +1206,10 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 		yblockoffset = xblock * 256/*16x16px*/ * 2/*2 block rows*/; //0xA000 for 1280
 
 		ioctl(fbfd, FBIO_WAITFORVSYNC, 0);
+#if 0
 		if (vdec)
 			ioctl(vdec->fd, VIDEO_FREEZE);
+#endif
 		//luma
 		layer_offset  = 0;
 		OUTITER       = 0;
@@ -1287,9 +1289,10 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 		}
 		munmap(decode_surface, vid_mem_size);
 		close(mfd);
+#if 0
 		if (vdec)
 			ioctl(vdec->fd, VIDEO_CONTINUE);
-
+#endif
 		/* yuv2rgb conversion (4:2:0)
 		   TODO: there has to be a way to use the blitter for this */
 		const int rgbstride = vid_x * 3;

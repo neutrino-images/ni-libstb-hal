@@ -200,6 +200,36 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 0;
 		}
+		else if (!strncmp(buf, "ipbox9900", 9)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 2;
+			caps.can_cec = 0;
+			caps.has_fan = 1;
+			caps.has_CI = 2;
+		}
+		else if (!strncmp(buf, "ipbox99", 7)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 0;
+			caps.has_fan = 1;
+			caps.has_CI = 0;
+		}
+		else if (!strncmp(buf, "ipbox55", 7)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 0;
+			caps.has_fan = 0;
+			caps.has_CI = 0;
+		}
 		else if (!strncmp(buf, "tf7700", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
 			strcpy(caps.boxname, buf);

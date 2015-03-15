@@ -360,7 +360,6 @@ void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint
 
 bool cPlayback::SelectSubtitles(int /*pid*/)
 {
-	lt_info("%s pid %d\n", __func__, pid);
 	return false;
 }
 

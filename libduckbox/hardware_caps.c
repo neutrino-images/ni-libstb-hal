@@ -240,9 +240,24 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 		}
+		else if ((!strncmp(buf, "arivalink200", 12)) ||
+				(!strncasecmp(vName, "adb_box", 7)) ||
+				(!strncasecmp(vName, "sagemcom88", 10)) ||
+				(!strncasecmp(vName, "esi_88", 6)) ||
+				(!strncasecmp(vName, "esi88", 5)) ||
+				(!strncasecmp(vName, "dsi87", 5))) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 0;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 0;
+			caps.has_fan = 0;
+			caps.has_CI = 0;
+		}
 		else {
 			strcpy(caps.boxvendor, "unknown");
-			strcpy(caps.boxname, "unknown model");
+			strcpy(caps.boxname, buf);
 		}
 	}
 	else

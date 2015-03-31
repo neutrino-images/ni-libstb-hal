@@ -544,7 +544,7 @@ void GLFramebuffer::bltDisplayBuffer()
 	cVideo::SWFramebuffer *buf = videoDecoder->getDecBuf();
 	if (!buf) {
 		if (warn)
-			lt_info("GLFB::%s did not get a buffer...\n", __func__);
+			lt_debug("GLFB::%s did not get a buffer...\n", __func__);
 		warn = false;
 		return;
 	}

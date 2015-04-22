@@ -250,8 +250,8 @@ void cVideo::ShowPicture(const char *fname, const char *)
 		lt_info("%s: Could not find/open the codec, id 0x%x\n", __func__, c->codec_id);
 		goto out_close;
 	}
-	frame = avcodec_alloc_frame();
-	rgbframe = avcodec_alloc_frame();
+	frame = av_frame_alloc();
+	rgbframe = av_frame_alloc();
 	if (!frame || !rgbframe) {
 		lt_info("%s: Could not allocate video frame\n", __func__);
 		goto out_free;
@@ -306,8 +306,8 @@ void cVideo::ShowPicture(const char *fname, const char *)
 	av_free_packet(&avpkt);
  out_free:
 	avcodec_close(c);
-	avcodec_free_frame(&frame);
-	avcodec_free_frame(&rgbframe);
+	av_frame_free(&frame);
+	av_frame_free(&rgbframe);
  out_close:
 	avformat_close_input(&avfc);
 	lt_debug("%s(%s) end\n", __func__, fname);
@@ -452,8 +452,8 @@ void cVideo::run(void)
 		lt_info("%s: Could not open codec\n", __func__);
 		goto out;
 	}
-	frame = avcodec_alloc_frame();
-	rgbframe = avcodec_alloc_frame();
+	frame = av_frame_alloc();
+	rgbframe = av_frame_alloc();
 	if (!frame || !rgbframe) {
 		lt_info("%s: Could not allocate video frame\n", __func__);
 		goto out2;
@@ -533,8 +533,8 @@ void cVideo::run(void)
 	sws_freeContext(convert);
  out2:
 	avcodec_close(c);
-	avcodec_free_frame(&frame);
-	avcodec_free_frame(&rgbframe);
+	av_frame_free(&frame);
+	av_frame_free(&rgbframe);
  out:
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);
@@ -557,8 +557,8 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 		lt_info_c("%s: ERROR setting up SWS context\n", __func__);
 		return false;
 	}
-	sframe = avcodec_alloc_frame();
-	dframe = avcodec_alloc_frame();
+	sframe = av_frame_alloc();
+	dframe = av_frame_alloc();
 	if (!sframe || !dframe) {
 		lt_info_c("%s: could not alloc sframe (%p) or dframe (%p)\n", __func__, sframe, dframe);
 		goto out;
@@ -567,8 +567,8 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 	avpicture_fill((AVPicture *)dframe, &(dst[0]), PIX_FMT_RGB32, dw, dh);
 	sws_scale(scale, sframe->data, sframe->linesize, 0, sh, dframe->data, dframe->linesize);
  out:
-	avcodec_free_frame(&sframe);
-	avcodec_free_frame(&dframe);
+	av_frame_free(&sframe);
+	av_frame_free(&dframe);
 	sws_freeContext(scale);
 	return ret;
 }

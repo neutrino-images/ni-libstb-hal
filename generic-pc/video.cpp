@@ -516,7 +516,7 @@ void cVideo::run(void)
 				buf_in %= VDEC_MAXBUFS;
 				buf_num++;
 				if (buf_num > (VDEC_MAXBUFS - 1)) {
-					lt_info("%s: buf_num overflow\n", __func__);
+					lt_debug("%s: buf_num overflow\n", __func__);
 					buf_out++;
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;

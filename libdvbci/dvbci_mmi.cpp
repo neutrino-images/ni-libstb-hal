@@ -11,7 +11,7 @@ static const char * FILENAME = "[dvbci_mmi]";
 
 eDVBCIMMISession::eDVBCIMMISession(tSlot *tslot)
 {
-	printf("%s:%s\n", FILENAME, __func__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	slot = tslot;
 	slot->hasMMIManager = true;
 	slot->mmiSession = this;

@@ -9,6 +9,7 @@
 #include "dvbci_camgr.h"
 #include "dvbci_datetimemgr.h"
 #include "dvbci_mmi.h"
+#include "dvbci_ccmgr.h"
 
 static const char * FILENAME = "[dvbci_session]";
 
@@ -156,6 +157,7 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 			printf("RESOURCE MANAGER\n");
 			break;
 		case 0x00020041:
+		case 0x00020043:
 			sessions[session_nb - 1] = new eDVBCIApplicationManagerSession(slot);
 			printf("APPLICATION MANAGER\n");
 			break;
@@ -170,6 +172,10 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 		case 0x00400041:
 			sessions[session_nb - 1] = new eDVBCIMMISession(slot);
 			printf("MMI - create session\n");
+			break;
+		case 0x008c1001:
+			sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
+			printf("CC MANAGER\n");
 			break;
 		case 0x00100041:
 //			session=new eDVBCIAuthSession;
@@ -236,12 +242,12 @@ int eDVBCISession::pollAll()
 
 void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t len)
 {
-	printf("slot: %p\n", slot);
-
+	printf("%s -> %s\n",FILENAME, __FUNCTION__);
+#if 0
 	for(unsigned int i = 0; i < len; i++)
 		printf("%02x ", ptr[i]);
 	printf("\n");
-
+#endif
 	if ((ptr[0] == 0x90 || ptr[0] == 0x95) && (ptr[3] == 0 ))
 	{
 		printf("****Mist: %02x %02x %02x %02x\n", ptr[0], ptr[1], ptr[2], ptr[3]);
@@ -272,7 +278,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 	else
 	{
 		unsigned session_nb;
-		printf("hlen = %d, %d, %d\n", hlen,  pkt[hlen - 2], pkt[hlen - 1]);
+		//printf("hlen = %d, %d, %d\n", hlen,  pkt[hlen - 2], pkt[hlen - 1]);
 		session_nb = pkt[hlen - 2] << 8;
 		session_nb |= pkt[hlen - 1] & 0xFF;
 
@@ -312,7 +318,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 
 	if (session)
 	{
-		printf("len %d\n", len);
+		//printf("len %d\n", len);
 		while (len > 0)
 		{
 			int alen;
@@ -323,7 +329,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 			pkt += hlen;
 			len -= hlen;
 
-			printf("len = %d, hlen = %d, alen = %d\n", len, hlen, alen);
+			//printf("len = %d, hlen = %d, alen = %d\n", len, hlen, alen);
 
 			if (((len - alen) > 0) && ((len - alen) < 3))
 			{

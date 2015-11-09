@@ -6,7 +6,7 @@ static const char * FILENAME = "[dvbci_resmgr]";
 
 int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d) %02x %02x %02x (len = %d): \n", session_nb, tag[0], tag[1], tag[2], len);
+	printf("SESSION(%d)RES %02x %02x %02x (len = %d): \n", session_nb, tag[0], tag[1], tag[2], len);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
 	printf("\n");
@@ -15,7 +15,7 @@ int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const v
 		switch (tag[2])
 		{
 			case 0x10:  // profile enquiry
-				printf("cam fragt was ich kann.");
+				printf("cam fragt was ich kann.\n");
 				state = stateProfileEnquiry;
 				return 1;
 				break;
@@ -72,10 +72,12 @@ int eDVBCIResourceManagerSession::doAction()
 			{
 				{0x00, 0x01, 0x00, 0x41},
 				{0x00, 0x02, 0x00, 0x41},
+				{0x00, 0x02, 0x00, 0x43},
 				{0x00, 0x03, 0x00, 0x41},
 //				{0x00, 0x20, 0x00, 0x41}, // host control
 				{0x00, 0x40, 0x00, 0x41},
-				{0x00, 0x24, 0x00, 0x41}
+				{0x00, 0x24, 0x00, 0x41},
+				{0x00, 0x8c, 0x10, 0x01} // content control
 //				{0x00, 0x10, 0x00, 0x41} // auth.
 			};
 			sendAPDU(tag, data, sizeof(data));

@@ -25,17 +25,20 @@
 #include <dvbci_appmgr.h>
 #include <dvbci_camgr.h>
 #include <dvbci_mmi.h>
+#include <dvbci_ccmgr.h>
 
 /* for some debug > set to 1 */
 #define x_debug 1
 #define y_debug 0
+
+#define tricky	0
 
 #define TAG_MENU_ANSWER         0x9f880b
 #define TAG_ENTER_MENU          0x9f8022
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_CA, this, args)
 
-static const char * FILENAME = "[ca.cpp]";
+static const char * FILENAME = "[ca_ci]";
 
 /* für callback */
 /* nur diese Message wird vom CI aus neutrinoMessages.h benutzt */
@@ -177,46 +180,8 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 	return eDataError;
 }
 
-//send some data on an fd, for a special slot and connection_id
-eData sendData(tSlot* slot, unsigned char* data, int len)
+static bool transmitData(tSlot* slot, unsigned char* d, int len)
 {
-	unsigned char *d = (unsigned char*) malloc(len + 5);
-
-	// only poll connection if we are not awaiting an answer
-	slot->pollConnection = false;
-
-	/* should we send a data last ? */
-	if (data != NULL)
-	{
-		if ((data[2] >= T_SB) && (data[2] <= T_NEW_T_C))
-		{
-			memcpy(d, data, len);
-		}
-		else
-		{
-			//send data_last and data
-			memcpy(d + 5, data, len);
-			d[0] = slot->slot;
-			d[1] = slot->connection_id;
-			d[2] = T_DATA_LAST;
-			if (len > 127)
-				d[3] = 4;
-			else
-				d[3] = len + 1;
-			d[4] = slot->connection_id;
-			len += 5;
-		}
-	}
-	else
-	{
-		//send a data last only
-		d[0] = slot->slot;
-		d[1] = slot->connection_id;
-		d[2] = T_DATA_LAST;
-		d[3] = len + 1;
-		d[4] = slot->connection_id;
-		len = 5;
-	}
 #ifdef direct_write
 	int res = write(slot->fd, d, len);
 
@@ -227,21 +192,116 @@ eData sendData(tSlot* slot, unsigned char* data, int len)
 		return eDataError;
 	}
 #else
+#if x_debug
+	printf("SendData with data (len %d) >\n", len);
+	for (int i = 0; i < len; i++)
+		printf("%02x ", d[i]);
+	printf("\n");
+#endif
 	slot->sendqueue.push(queueData(d, len));
 #endif
+	return true;
+}
+
+static bool sendDataLast(tSlot* slot)
+{
+	unsigned char data[5];
+	slot->pollConnection = false;
+	slot->DataLast = false;
+	data[0] = slot->slot;
+	data[1] = slot->connection_id;
+	data[2] = T_DATA_LAST;
+	data[3] = 1;
+	data[4] = slot->connection_id;
+#if y_debug
+	printf("*** > Data Last: ");
+	for (int i = 0; i < 5; i++)
+		printf("%02x ", data[i]);
+	printf("\n");
+#endif
+	write(slot->fd, data, 5);
+	return true;
+}
+
+static bool sendRCV(tSlot* slot)
+{
+	unsigned char send_data[5];
+	slot->pollConnection = false;
+	slot->DataRCV = false;
+	send_data[0] = slot->slot;
+	send_data[1] = slot->connection_id;
+	send_data[2] = T_RCV;
+	send_data[3] = 1;
+	send_data[4] = slot->connection_id;
+	printf("*** > T_RCV: ");
+	for (int i = 0; i < 5; i++)
+		printf("%02x ", send_data[i]);
+	printf("\n");
+	write(slot->fd, send_data, 5);
+	return true;
+}
+
+//send some data on an fd, for a special slot and connection_id
+eData sendData(tSlot* slot, unsigned char* data, int len)
+{
+	// only poll connection if we are not awaiting an answer
+	slot->pollConnection = false;
+
+	//send data_last and data
+	if (len < 127) {
+		unsigned char *d = (unsigned char*) malloc(len + 5);
+		memcpy(d + 5, data, len);
+		d[0] = slot->slot;
+		d[1] = slot->connection_id;
+		d[2] = T_DATA_LAST;
+		d[3] = len + 1;
+		d[4] = slot->connection_id;
+		len += 5;
+		transmitData(slot, d, len);
+	}
+	else if (len > 126 && len < 255) {
+		unsigned char *d = (unsigned char*) malloc(len + 6);
+		memcpy(d + 6, data, len);
+		d[0] = slot->slot;
+		d[1] = slot->connection_id;
+		d[2] = T_DATA_LAST;
+		d[3] = 0x81;
+		d[4] = len + 1;
+		d[5] = slot->connection_id;
+		len += 6;
+		transmitData(slot, d, len);
+	}
+	else if (len > 254) {
+		unsigned char *d = (unsigned char*) malloc(len + 7);
+		memcpy(d + 7, data, len);
+		d[0] = slot->slot;
+		d[1] = slot->connection_id;
+		d[2] = T_DATA_LAST;
+		d[3] = 0x82;
+		d[4] = len >> 8;
+		d[5] = len + 1;
+		d[6] = slot->connection_id;
+		len += 7;
+		transmitData(slot, d, len);
+	}
+
 	return eDataReady;
 }
 
 //send a transport connection create request
 bool sendCreateTC(tSlot* slot)
 {
-	unsigned char* data = (unsigned char*) malloc(sizeof(char) * 5);
+	unsigned char data[5];
 	data[0] = slot->slot;
 	data[1] = slot->slot + 1; 	/* conid */
 	data[2] = T_CREATE_T_C;
 	data[3] = 1;
 	data[4] = slot->slot + 1 	/* conid */;
-	sendData(slot, data, 5);
+	printf("Create TC: ");
+	for (int i = 0; i < 5; i++)
+		printf("%02x ", data[i]);
+	printf("\n");
+	write(slot->fd, data, 5);
 	return true;
 }
 
@@ -250,9 +310,11 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 	switch (tpdu_tag)
 	{
 		case T_C_T_C_REPLY:
+#if y_debug
 			printf("%s %s Got CTC Replay (slot %d, con %d)\n", FILENAME, __FUNCTION__, slot->slot, slot->connection_id);
-			//answer with data last (and if we have with data)
-			sendData(slot, NULL, 0);
+#endif
+			/*answer with data last (and if we have with data)
+			--> DataLast flag will be generated in next loop from received APDU*/
 			break;
 		case T_DELETE_T_C:
 			//FIXME: close sessions etc; slot->reset ?
@@ -282,16 +344,23 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 				printf("%s -> single package\n", FILENAME);
 #if x_debug
 				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
+#if y_debug
 				for (int i = 0; i < asn_data_length; i++)
 					printf("%02x ", data[i]);
 				printf("\n");
 #endif
-				eDVBCISession::receiveData(slot, data, asn_data_length);
-				eDVBCISession::pollAll();
+#endif
+				/* to avoid illegal session number: only if > 0 */
+				if (asn_data_length)
+				{
+					eDVBCISession::receiveData(slot, data, asn_data_length);
+					eDVBCISession::pollAll();
+				}
 			}
 			else
 			{
-				/* chained package */
+				/* chained package 
+				?? DBO: I never have seen one */
 				int new_data_length = slot->receivedLen + asn_data_length;
 				printf("%s -> chained data\n", FILENAME);
 				__u8 *new_data_buffer = (__u8*) realloc(slot->receivedData, new_data_length);
@@ -318,22 +387,20 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 			{
 				/* we now wait for an answer so dont poll */
 				slot->pollConnection = false;
-
-				/* send the RCV and ask for the data */
-				unsigned char send_data[5];
-				send_data[0] = slot->slot;
-				send_data[1] = slot->connection_id;
-				send_data[2] = T_RCV;
-				send_data[3] = 1;
-				send_data[4] = slot->connection_id;
-				write(slot->fd, send_data, 5);
+				/* set the RCV Flag and set DataLast Flag false */
+				slot->DataRCV = true;
+				slot->DataLast = false;
 			}
 			else
 			{
-				//if the queue is not empty we dont need to send
-				//	a polling to the module.
-				//if (checkQueueSize(slot) == false)
-				//	slot->pollConnection = true;
+				/* set DataLast Flag if it is false*/
+				if (!slot->DataLast)
+				{
+					slot->DataLast = true;
+#if y_debug
+					printf("**** > T_SB\n");
+#endif
+				}
 			}
 			break;
 		}
@@ -490,14 +557,22 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 	{
 		(*it)->status = eStatusReset;
 		usleep(200000);
+		if ((*it)->hasCCManager)
+			(*it)->ccmgrSession->ci_ccmgr_doClose((tSlot*)(*it));
 		eDVBCISession::deleteSessions((tSlot*)(*it));
 		(*it)->mmiSession = NULL;
 		(*it)->hasMMIManager = false;
 		(*it)->hasCAManager = false;
+		(*it)->hasCCManager = false;
+		(*it)->ccmgr_ready = false;
 		(*it)->hasDateTime = false;
 		(*it)->hasAppManager = false;
 		(*it)->mmiOpened = false;
 		(*it)->camIsReady = false;
+
+		(*it)->DataLast = false;
+		(*it)->DataRCV = false;
+
 		(*it)->counter = 0;
 		(*it)->init = false;
 		(*it)->pollConnection = false;
@@ -541,7 +616,7 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 
 bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
 {
-	printf("%s:%s\n", FILENAME, __func__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -556,7 +631,7 @@ bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
 
 SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 {
-	printf("%s:%s\n", FILENAME, __func__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	ca_map_iterator_t caIt;
 	unsigned int i;
@@ -595,7 +670,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
 bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
-	printf("%s:%s\n", FILENAME, __func__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
 #if x_debug
 	printf("TPID: %llX\n", tpid);
@@ -684,6 +759,8 @@ cCA::cCA(int Slots)
 		slot->camIsReady = false;
 		slot->hasMMIManager = false;
 		slot->hasCAManager = false;
+		slot->hasCCManager = false;
+		slot->ccmgr_ready = false;
 		slot->hasDateTime = false;
 		slot->hasAppManager = false;
 		slot->mmiOpened = false;
@@ -696,9 +773,15 @@ cCA::cCA(int Slots)
 		slot->camask = 0;
 		memset(slot->pmtdata, 0, sizeof(slot->pmtdata));
 
+		slot->DataLast = false;
+		slot->DataRCV = false;
+
 		slot->counter = 0;
 		slot->init = false;
 		sprintf(slot->name, "unknown module %d", i);
+
+		slot->private_data = NULL;
+
 		slot_data.push_back(slot);
 		/* now reset the slot so the poll pri can happen in the thread */
 		if (ioctl(fd, CA_RESET, i) < 0)
@@ -723,7 +806,7 @@ static cCA* pcCAInstance = NULL;
 
 cCA * cCA::GetInstance()
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
 	if (pcCAInstance == NULL)
 	{
@@ -768,12 +851,12 @@ void cCA::setSource(tSlot* slot)
 void cCA::slot_pollthread(void *c)
 {
 	ca_slot_info_t info;
-	unsigned char data[1024];
+	unsigned char data[1024 * 4];
 	tSlot* slot = (tSlot*) c;
 
 	while (1)
 	{
-		int len = 1024;
+		int len = 1024 *4;
 		unsigned char* d;
 		eData status;
 
@@ -852,6 +935,15 @@ void cCA::slot_pollthread(void *c)
 				{
 					slot->pollConnection = false;
 					d = data;
+#if y_debug
+					if ((len == 6 && d[4] == 0x80) || len > 6) { 
+						printf("slot: %d con-id: %d tpdu-tag: %02X len: %d\n", d[0], d[1], d[2], len);
+						printf("received data: >");
+						for (int i = 0; i < len; i++)
+							printf("%02x ", data[i]);
+						printf("\n");
+					}
+#endif
 					/* taken from the dvb-apps */
 					int data_length = len - 2;
 					d += 2; /* remove leading slot and connection id */
@@ -872,10 +964,15 @@ void cCA::slot_pollthread(void *c)
 							break;
 						}
 						slot->connection_id = d[1 + length_field_len];
-						//printf("Setting connection_id from received data to %d\n", slot->connection_id);
+#if y_debug
+						printf("Setting connection_id from received data to %d\n", slot->connection_id);
+#endif
 						d += 1 + length_field_len + 1;
 						data_length -= (1 + length_field_len + 1);
 						asn_data_length--;
+#if y_debug
+						printf("****tpdu_tag: 0x%02X\n", tpdu_tag);
+#endif
 						process_tpdu(slot, tpdu_tag, d, asn_data_length, slot->connection_id);
 						// skip over the consumed data
 						d += asn_data_length;
@@ -884,6 +981,7 @@ void cCA::slot_pollthread(void *c)
 				} /*if data ready */
 				else if (status == eDataWrite)
 				{
+					/* only writing any data here while status = eDataWrite */
 					if (!slot->sendqueue.empty())
 					{
 						const queueData &qe = slot->sendqueue.top();
@@ -898,15 +996,32 @@ void cCA::slot_pollthread(void *c)
 							printf("r = %d, %m\n", res);
 						}
 					}
-					else
+					/* no comment :) */
+#if tricky
+					if ((!checkQueueSize(slot) && !slot->hasCAManager && !slot->ccmgr_ready) || slot->counter < 3)
+						slot->pollConnection = true;
+					if (slot->hasCAManager && slot->ccmgr_ready)
+						slot->counter++;
+#else
+					/* check for activate the pollConnection */
+					if (!checkQueueSize(slot) && (slot->DataRCV || slot->mmiOpened || slot->counter > 5))
 					{
-						//printf("sendqueue emtpy\n");
-						if ((checkQueueSize(slot) == false) && ((!slot->hasCAManager) || (slot->mmiOpened) || (slot->counter < 30)))
-							slot->pollConnection = true;
-						if (slot->hasCAManager && !slot->mmiOpened)
-							slot->counter++;
-						if (slot->mmiOpened)
-							slot->counter = 0;
+						slot->pollConnection = true;
+					}
+					if (slot->counter < 6)
+						slot->counter++;
+					else
+						slot->counter = 0;
+#endif
+					/* if Flag: send a DataLast */
+					if (!checkQueueSize(slot) && slot->pollConnection && slot->DataLast)
+					{
+						sendDataLast(slot);
+					}
+					/* if Flag: send a RCV */
+					if (!checkQueueSize(slot) && slot->pollConnection && slot->DataRCV)
+					{
+						sendRCV(slot);
 					}
 				}
 				else if (status == eDataStatusChanged)
@@ -925,6 +1040,8 @@ void cCA::slot_pollthread(void *c)
 						slot->mmiSession = NULL;
 						slot->hasMMIManager = false;
 						slot->hasCAManager = false;
+						slot->hasCCManager = false;
+						slot->ccmgr_ready = false;
 						slot->hasDateTime = false;
 						slot->hasAppManager = false;
 						slot->mmiOpened = false;
@@ -945,14 +1062,22 @@ void cCA::slot_pollthread(void *c)
 					else if ((slot->camIsReady == true) && (!(info.flags & CA_CI_MODULE_READY)))
 					{
 						printf("cam (%d) status changed ->cam now _not_ present\n", slot->slot);
+						if (slot->hasCCManager)
+							slot->ccmgrSession->ci_ccmgr_doClose(slot);
 						eDVBCISession::deleteSessions(slot);
 						slot->mmiSession = NULL;
 						slot->hasMMIManager = false;
 						slot->hasCAManager = false;
+						slot->hasCCManager = false;
+						slot->ccmgr_ready = false;
 						slot->hasDateTime = false;
 						slot->hasAppManager = false;
 						slot->mmiOpened = false;
 						slot->init = false;
+
+						slot->DataLast = false;
+						slot->DataRCV = false;
+
 						slot->counter = 0;
 						slot->pollConnection = false;
 						sprintf(slot->name, "unknown module %d", slot->slot);
@@ -985,11 +1110,6 @@ void cCA::slot_pollthread(void *c)
 						slot->camIsReady = false;
 						usleep(100000);
 					}
-				}
-				if (!checkQueueSize(slot) && slot->pollConnection)
-				{
-					//printf("****poll1\n");
-					sendData(slot, NULL, 0);
 				}
 			}
 			break;
@@ -1024,10 +1144,14 @@ void cCA::slot_pollthread(void *c)
 			SendMessage(pMsg);
 			/* resend a capmt if we have one. this is not very proper but I cant any mechanism in
 			neutrino currently. so if a cam is inserted a pmt is not resend */
-
-			SendCaPMT(slot);
+			/* not necessary: the arrived capmt will be automaticly send */ 
+			//SendCaPMT(slot);
 		}
-		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt)
+		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt
+#if tricky
+		&& slot->ccmgr_ready
+#endif
+		)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;
@@ -1059,7 +1183,6 @@ bool cCA::SendCaPMT(tSlot* slot)
 	if (slot->fd > 0)
 	{
 		setSource(slot);
-		slot->counter = 0;
 	}
 	return true;
 }

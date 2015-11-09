@@ -156,6 +156,7 @@ struct queueData
 class eDVBCIMMISession;
 class eDVBCIApplicationManagerSession;
 class eDVBCICAManagerSession;
+class eDVBCIContentControlManagerSession;
 
 typedef struct
 {
@@ -176,13 +177,17 @@ typedef struct
 	eDVBCIMMISession* mmiSession;
 	eDVBCIApplicationManagerSession* appSession;
 	eDVBCICAManagerSession* camgrSession;
+	eDVBCIContentControlManagerSession* ccmgrSession;
 
 	bool hasAppManager;
 	bool hasMMIManager;
 	bool hasCAManager;
+	bool hasCCManager;
 	bool hasDateTime;
 	bool mmiOpened;
 	bool init;
+
+	bool ccmgr_ready;
 
 	char name[512];
 
@@ -192,11 +197,17 @@ typedef struct
 	u32 pmtlen;
 	u8 source;
 	u8 camask;
-	unsigned char pmtdata[1024];
+	unsigned char pmtdata[1024 * 4];
 
 	int counter;
 	CaIdVector cam_caids;
 	std::priority_queue<queueData> sendqueue;
+
+	bool DataLast;
+	bool DataRCV;
+	/* private data */
+	void *private_data;
+
 } tSlot;
 
 eData sendData(tSlot *slot, unsigned char* data, int len);

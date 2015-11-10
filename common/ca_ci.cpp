@@ -31,8 +31,6 @@
 #define x_debug 1
 #define y_debug 0
 
-#define tricky	0
-
 #define TAG_MENU_ANSWER         0x9f880b
 #define TAG_ENTER_MENU          0x9f8022
 
@@ -996,13 +994,6 @@ void cCA::slot_pollthread(void *c)
 							printf("r = %d, %m\n", res);
 						}
 					}
-					/* no comment :) */
-#if tricky
-					if ((!checkQueueSize(slot) && !slot->hasCAManager && !slot->ccmgr_ready) || slot->counter < 3)
-						slot->pollConnection = true;
-					if (slot->hasCAManager && slot->ccmgr_ready)
-						slot->counter++;
-#else
 					/* check for activate the pollConnection */
 					if (!checkQueueSize(slot) && (slot->DataRCV || slot->mmiOpened || slot->counter > 5))
 					{
@@ -1012,7 +1003,6 @@ void cCA::slot_pollthread(void *c)
 						slot->counter++;
 					else
 						slot->counter = 0;
-#endif
 					/* if Flag: send a DataLast */
 					if (!checkQueueSize(slot) && slot->pollConnection && slot->DataLast)
 					{
@@ -1147,11 +1137,7 @@ void cCA::slot_pollthread(void *c)
 			/* not necessary: the arrived capmt will be automaticly send */ 
 			//SendCaPMT(slot);
 		}
-		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt
-#if tricky
-		&& slot->ccmgr_ready
-#endif
-		)
+		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;

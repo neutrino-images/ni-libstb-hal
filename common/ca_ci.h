@@ -274,7 +274,7 @@ public:
 //	int GetCAIDS(CaIdVector & /*Caids*/) { return 0; };
 	int GetCAIDS(CaIdVector &Caids);
 	/// Send a CA-PMT object and Raw unparsed PMT to the CA layer
-	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/,
+	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/, enum CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL,
 		unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
 
 	bool StopRecordCI( u64 tpid, u8 source, u32 calen);
@@ -292,4 +292,4 @@ public:
 	virtual ~cCA();
 };
 
-#endif // __CA_H_
+#endif ///__CA_H_

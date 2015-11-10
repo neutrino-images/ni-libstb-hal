@@ -666,7 +666,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 }
 
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
-bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
+bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE SlotType, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */

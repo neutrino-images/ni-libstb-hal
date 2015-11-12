@@ -871,7 +871,7 @@ static void check_new_key(struct cc_ctrl_data *cc_data)
 	for (i = 0; i < 32; i++)
 		dec[i] ^= kp[i];
 
-	descrambler_set_key(cc_data->slot->slot, slot, dec);
+	descrambler_set_key((int)cc_data->slot->source, slot, dec);
 
 	/* reset */
 	element_invalidate(cc_data, 12);

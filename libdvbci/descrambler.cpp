@@ -21,6 +21,7 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
+	index |= 0x100;
 
 	d.index = index;
 	d.parity = (ca_descr_parity)parity;
@@ -56,7 +57,7 @@ int descrambler_set_pid(int index, int enable, int pid)
 
 int descrambler_init(void)
 {
-	const char *filename = "/dev/dvb/adapter0/ca1";
+	const char *filename = "/dev/dvb/adapter0/ca3";
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 

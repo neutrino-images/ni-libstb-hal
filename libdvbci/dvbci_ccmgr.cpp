@@ -869,9 +869,14 @@ static void check_new_key(struct cc_ctrl_data *cc_data)
 		AES_ecb_encrypt(&kp[i], &dec[i], &aes_ctx, 1);
 
 	for (i = 0; i < 32; i++)
+	{
 		dec[i] ^= kp[i];
+		cc_data->slot->lastKey[i] = dec[i];
+	}
+	cc_data->slot->lastParity = slot;
 
-	descrambler_set_key((int)cc_data->slot->source, slot, dec);
+	if (cc_data->slot->scrambled)
+		cc_data->slot->ccmgrSession->resendKey(cc_data->slot);
 
 	/* reset */
 	element_invalidate(cc_data, 12);
@@ -1268,8 +1273,8 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(tSlot *tslot)
 	printf("close content_control\n");
 	for (int i = 0; i < 32; i++)
 		clearData[i] = 0;
-	descrambler_set_key(data->slot->slot, 0, clearData);
-	descrambler_set_key(data->slot->slot, 1, clearData);
+	descrambler_set_key((int)data->slot->source, 0, clearData);
+	descrambler_set_key((int)data->slot->source, 1, clearData);
 
 	descrambler_deinit();
 
@@ -1319,3 +1324,9 @@ int eDVBCIContentControlManagerSession::doAction()
 			return 0;
 	}
 }
+
+void eDVBCIContentControlManagerSession::resendKey(tSlot *tslot)
+{
+	descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
+}
+

@@ -203,6 +203,9 @@ typedef struct
 	CaIdVector cam_caids;
 	std::priority_queue<queueData> sendqueue;
 
+	unsigned char lastKey[32];
+	unsigned char scrambled;
+	u8 lastParity;
 	bool DataLast;
 	bool DataRCV;
 	/* private data */

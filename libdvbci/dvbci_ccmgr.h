@@ -22,5 +22,6 @@ public:
 	eDVBCIContentControlManagerSession(tSlot *tslot);
 	~eDVBCIContentControlManagerSession();
 	void ci_ccmgr_doClose(tSlot *tslot);
+	void resendKey(tSlot *tslot);
 };
 #endif

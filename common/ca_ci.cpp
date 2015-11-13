@@ -643,6 +643,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 				printf("%04x ", (*it)->cam_caids[i]);
 			printf("\n");
 #endif
+			(*it)->scrambled = scrambled;
 			if (scrambled)
 			{
 				for (i = 0; i < (*it)->cam_caids.size(); i++)
@@ -666,7 +667,7 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 }
 
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
-bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE SlotType, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
+bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
@@ -1141,6 +1142,13 @@ void cCA::slot_pollthread(void *c)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;
+			if (slot->ccmgr_ready && slot->hasCCManager)
+			{
+				if (slot->scrambled)
+				{
+					slot->ccmgrSession->resendKey(slot);
+				}
+			}
 		}
 	}
 }

@@ -810,3 +810,8 @@ bool cPlayback::SetTeletextPid(int /*pid*/)
 {
 	return true;
 }
+
+uint64_t cPlayback::GetReadCount()
+{
+	return 0;
+}

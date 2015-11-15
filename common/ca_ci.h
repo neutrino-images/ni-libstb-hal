@@ -103,6 +103,8 @@ typedef struct CA_MESSAGE {
 typedef std::set<int> ca_map_t;
 typedef ca_map_t::iterator ca_map_iterator_t;
 
+typedef std::vector<u16>			bSIDVector;
+
 typedef std::vector<u16>			CaIdVector;
 typedef std::vector<u16>::iterator		CaIdVectorIterator;
 typedef std::vector<u16>::const_iterator	CaIdVectorConstIterator;
@@ -203,11 +205,13 @@ typedef struct
 	CaIdVector cam_caids;
 	std::priority_queue<queueData> sendqueue;
 
+	bSIDVector bsids;
 	unsigned char lastKey[32];
 	unsigned char scrambled;
 	u8 lastParity;
 	bool DataLast;
 	bool DataRCV;
+	bool SidBlackListed;
 	/* private data */
 	void *private_data;
 

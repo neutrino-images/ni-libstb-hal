@@ -1,6 +1,8 @@
 /* DVB CI Application Manager */
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "dvbci_appmgr.h"
 
@@ -73,6 +75,7 @@ int eDVBCIApplicationManagerSession::doAction()
 			const unsigned char tag[3] = {0x9F, 0x80, 0x20};
 			sendAPDU(tag);
 			state = stateFinal;
+			checkBlist();
 			return 1;
 		}
 		case stateFinal:
@@ -99,6 +102,59 @@ int eDVBCIApplicationManagerSession::startMMI()
 	const unsigned char tag[3] = {0x9F, 0x80, 0x22};
 	sendAPDU(tag);
 	slot->mmiOpened = true;
+	return 0;
+}
+
+bool eDVBCIApplicationManagerSession::readBlist()
+{
+	int rc, i;
+	char cSid[4] = {0,0,0,0};
+	u16 Sid;
+	FILE *fd;
+	char blacklist_file[32];
+
+	sprintf(blacklist_file,"/etc/blacklist_slot_%d",slot->slot);
+
+	if (access(blacklist_file, F_OK) != 0)
+		return false;
+	fd = fopen(blacklist_file,"r");
+	if (!fd)
+		return false;
+	else
+	{
+		do
+		{
+			for (i = 0; i < 4; i++)
+			{
+				rc = fgetc(fd);
+				if (rc == ',' || rc == EOF) break;
+				cSid[i] = (char)rc;
+			}
+			if (rc == EOF) goto fin;
+			if (i == 4)
+			{
+				Sid = (u16)strtol(cSid, NULL, 16);
+				slot->bsids.push_back(Sid);
+			}
+		} while (rc != EOF);
+fin:
+		fclose(fd);
+	}
+	if (slot->bsids.size())
+		return true;
+	else
+		return false;
+}
+
+int eDVBCIApplicationManagerSession::checkBlist()
+{
+	if (readBlist())
+	{
+		printf("Blacked sids: %d > ", slot->bsids.size());
+		for (unsigned int i = 0; i < slot->bsids.size(); i++)
+			printf("%04x ", slot->bsids[i]);
+		printf("\n");
+	}
 	return 0;
 }
 

@@ -570,6 +570,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 
 		(*it)->DataLast = false;
 		(*it)->DataRCV = false;
+		(*it)->SidBlackListed = false;
 
 		(*it)->counter = 0;
 		(*it)->init = false;
@@ -669,10 +670,13 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
 bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
+	u16 SID = (u16)(tpid & 0x000000000000FFFF);
+	unsigned int i = 0;
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
 #if x_debug
 	printf("TPID: %llX\n", tpid);
+	printf("SID: %04X\n", SID);
 	printf("SOURCE_DEMUX: %X\n", source_demux);
 	printf("CA_MASK: %X\n", camask);
 	printf("CALEN: %d\n", calen);
@@ -700,11 +704,17 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 				(*It)->tpid = tpid;
 				(*It)->source = source_demux;
 				(*It)->pmtlen = calen;
-				for (unsigned int i = 0; i < calen; i++)
+				for (i = 0; i < calen; i++)
 					(*It)->pmtdata[i] = cabuf[i];
 				(*It)->newCapmt = true;
 			}
-			if (mode && scrambled && enabled)
+			if ((*It)->bsids.size())
+			{
+				for (i = 0; i < (*It)->bsids.size(); i++)
+					if ((*It)->bsids[i] == SID) {(*It)->SidBlackListed = true; break;}
+				if (i == (*It)->bsids.size()) {(*It)->SidBlackListed = false;}
+			}
+			if (mode && scrambled && enabled && !(*It)->SidBlackListed)
 				(*It)->inUse = true;
 		}
 	}
@@ -774,6 +784,7 @@ cCA::cCA(int Slots)
 
 		slot->DataLast = false;
 		slot->DataRCV = false;
+		slot->SidBlackListed = false;
 
 		slot->counter = 0;
 		slot->init = false;
@@ -1068,6 +1079,7 @@ void cCA::slot_pollthread(void *c)
 
 						slot->DataLast = false;
 						slot->DataRCV = false;
+						slot->SidBlackListed = false;
 
 						slot->counter = 0;
 						slot->pollConnection = false;
@@ -1138,7 +1150,7 @@ void cCA::slot_pollthread(void *c)
 			/* not necessary: the arrived capmt will be automaticly send */ 
 			//SendCaPMT(slot);
 		}
-		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt)
+		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt && !slot->SidBlackListed)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;

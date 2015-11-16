@@ -6,6 +6,9 @@
 
 #include "dvbci_appmgr.h"
 
+/* prevent possibly segfaults: read at end of this file */ 
+#define yy_debug	0
+
 static const char * FILENAME = "[dvbci_appmgr]";
 
 eDVBCIApplicationManagerSession::eDVBCIApplicationManagerSession(tSlot *tslot)
@@ -150,10 +153,13 @@ int eDVBCIApplicationManagerSession::checkBlist()
 {
 	if (readBlist())
 	{
+/* out commented: causes sometimes segfault when reboot....don't know why :( */
+#if yy_debug
 		printf("Blacked sids: %d > ", slot->bsids.size());
 		for (unsigned int i = 0; i < slot->bsids.size(); i++)
 			printf("%04x ", slot->bsids[i]);
 		printf("\n");
+#endif
 	}
 	return 0;
 }

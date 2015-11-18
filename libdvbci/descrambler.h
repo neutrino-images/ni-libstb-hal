@@ -3,7 +3,10 @@
 
 int descrambler_init(void);
 void descrambler_deinit(void);
+bool descrambler_open(void);
+void descrambler_close(void);
 int descrambler_set_key(int index, int parity, unsigned char *data);
-int descrambler_set_pid(int index, int enable, int pid);
+/* we don't use this for ci cam ! */
+//int descrambler_set_pid(int index, int enable, int pid);
 
 #endif

@@ -1029,7 +1029,6 @@ bool eDVBCIContentControlManagerSession::data_initialize(tSlot *tslot)
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
-//	if (session->private_data) {
 	if (tslot->private_data) {
 		fprintf(stderr, "strange private_data not null!\n");
 		return false;
@@ -1042,7 +1041,6 @@ bool eDVBCIContentControlManagerSession::data_initialize(tSlot *tslot)
 	}
 
 	/* parent */
-//	data->session = session;
 	data->slot = tslot;
 
 	/* clear storage of credentials */
@@ -1267,14 +1265,7 @@ eDVBCIContentControlManagerSession::~eDVBCIContentControlManagerSession()
 void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(tSlot *tslot)
 {
 	struct cc_ctrl_data *data = (struct cc_ctrl_data*)(tslot->private_data);
-	uint8_t clearData[32];
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
-	printf("close content_control\n");
-	for (int i = 0; i < 32; i++)
-		clearData[i] = 0;
-	descrambler_set_key((int)data->slot->source, 0, clearData);
-	descrambler_set_key((int)data->slot->source, 1, clearData);
 
 	descrambler_deinit();
 
@@ -1295,7 +1286,7 @@ int eDVBCIContentControlManagerSession::receivedAPDU(const unsigned char *tag, c
 		switch (tag[2]) {
 		case 0x01: ci_ccmgr_cc_open_cnf(slot); break;
 		case 0x03: ci_ccmgr_cc_data_req(slot, (const uint8_t*)data, len); break;
-		case 0x05: ci_ccmgr_cc_sync_req(); slot->ccmgr_ready = false; break;
+		case 0x05: ci_ccmgr_cc_sync_req(); break;
 		case 0x07: ci_ccmgr_cc_sac_data_req(slot, (const uint8_t*)data, len); break;
 		case 0x09: ci_ccmgr_cc_sac_sync_req(slot, (const uint8_t*)data, len); break;
 		default:
@@ -1327,7 +1318,7 @@ int eDVBCIContentControlManagerSession::doAction()
 
 void eDVBCIContentControlManagerSession::resendKey(tSlot *tslot)
 {
-	if (!tslot->SidBlackListed)
+	if (!tslot->SidBlackListed && (tslot->inUse || tslot->slot == cCA::GetInstance()->GetLiveSlot()))
 		descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
 }
 

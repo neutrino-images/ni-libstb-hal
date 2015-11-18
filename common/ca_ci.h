@@ -286,6 +286,7 @@ public:
 
 	bool StopRecordCI( u64 tpid, u8 source, u32 calen);
 	SlotIt FindFreeSlot(ca_map_t camap, unsigned char scrambled);
+	SlotIt GetSlot(unsigned int slot);
 	bool SendDateTime(void);
 	bool SendCaPMT(tSlot* slot);
 	void slot_pollthread(void *c);
@@ -293,6 +294,8 @@ public:
 	bool checkQueueSize(tSlot* slot);
 	void process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
 
+	unsigned int GetLiveSlot(void);
+	bool SendNullPMT(tSlot* slot);
 	void Test(int slot, CaIdVector caids);
 	void DelTest(int slot);
 	/// Virtual destructor

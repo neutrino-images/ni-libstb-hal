@@ -37,6 +37,9 @@
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_CA, this, args)
 
 static const char * FILENAME = "[ca_ci]";
+static unsigned int LiveSlot = 0;
+static uint8_t NullPMT[50]={0x9F,0x80,0x32,0x2E,0x03,0x6E,0xA7,0x37,0x00,0x00,0x1B,0x15,0x7D,0x00,0x00,0x03,0x15,0x7E,0x00,0x00,0x03,0x15,0x7F,0x00,
+0x00,0x06,0x15,0x80,0x00,0x00,0x06,0x15,0x82,0x00,0x00,0x0B,0x08,0x7B,0x00,0x00,0x05,0x09,0x42,0x00,0x00,0x06,0x15,0x81,0x00,0x00};
 
 /* für callback */
 /* nur diese Message wird vom CI aus neutrinoMessages.h benutzt */
@@ -699,15 +702,6 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 		printf("Slot: %d\n", (*It)->slot);
 		if (scrambled || (!scrambled && (*It)->source == source_demux))
 		{
-			if ((*It)->tpid != tpid)
-			{
-				(*It)->tpid = tpid;
-				(*It)->source = source_demux;
-				(*It)->pmtlen = calen;
-				for (i = 0; i < calen; i++)
-					(*It)->pmtdata[i] = cabuf[i];
-				(*It)->newCapmt = true;
-			}
 			if ((*It)->bsids.size())
 			{
 				for (i = 0; i < (*It)->bsids.size(); i++)
@@ -716,6 +710,34 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 			}
 			if (mode && scrambled && enabled && !(*It)->SidBlackListed)
 				(*It)->inUse = true;
+
+			SlotIt It2 = GetSlot(!(*It)->slot);
+			if ((*It2))
+			{
+				if ((*It)->source == (*It2)->source || source_demux == (*It2)->source)
+				{
+					if ((*It2)->inUse)
+						(*It)->SidBlackListed = true;
+					else
+					{
+						SendNullPMT((tSlot*)(*It2));
+						(*It2)->tpid = 0;
+						(*It2)->scrambled = 0;
+					}
+				}
+			}
+			LiveSlot = (*It)->slot;
+
+			if ((*It)->tpid != tpid)
+			{
+				(*It)->tpid = tpid;
+				(*It)->source = source_demux;
+				(*It)->pmtlen = calen;
+				for (i = 0; i < calen; i++)
+					(*It)->pmtdata[i] = cabuf[i];
+				(*It)->newCapmt = true;
+			} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->inUse && !(*It)->SidBlackListed)
+				(*It)->ccmgrSession->resendKey((tSlot*)(*It));
 		}
 	}
 	else
@@ -1154,13 +1176,8 @@ void cCA::slot_pollthread(void *c)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;
-			if (slot->ccmgr_ready && slot->hasCCManager)
-			{
-				if (slot->scrambled)
-				{
-					slot->ccmgrSession->resendKey(slot);
-				}
-			}
+			if (slot->ccmgr_ready && slot->hasCCManager && slot->scrambled)
+				slot->ccmgrSession->resendKey(slot);
 		}
 	}
 }
@@ -1191,6 +1208,11 @@ bool cCA::SendCaPMT(tSlot* slot)
 		setSource(slot);
 	}
 	return true;
+}
+
+unsigned int cCA::GetLiveSlot(void)
+{
+	return LiveSlot;
 }
 
 bool cCA::Init(void)
@@ -1225,3 +1247,23 @@ void cCA::SetInitMask(enum CA_INIT_MASK p)
 {
 	printf("%s %s param:%d\n", FILENAME, __FUNCTION__, (int)p);
 }
+
+SlotIt cCA::GetSlot(unsigned int slot)
+{
+	std::list<tSlot*>::iterator it;
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+		if ((*it)->slot == slot && (*it)->ccmgr_ready && (*it)->hasCCManager && (*it)->scrambled)
+			return it;
+	return it;
+}
+
+bool cCA::SendNullPMT(tSlot* slot)
+{
+	printf("%s > %s >**\n", FILENAME, __func__);
+	if ((slot->fd > 0) && (slot->camIsReady) && (slot->hasCAManager))
+	{
+		slot->camgrSession->sendSPDU(0x90, 0, 0, NullPMT, 50);
+	}
+	return true;
+}
+

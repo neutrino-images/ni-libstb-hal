@@ -337,7 +337,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 				alen = len;
 			}
 
-			printf("1. Call receivedAPDU tag = 0x%2x, len = %d\n", (int) stag, alen);
+			//printf("1. Call receivedAPDU tag = 0x%2x, len = %d\n", (int) stag, alen);
 
 			if (session->receivedAPDU(stag, pkt, alen))
 				session->action = 1;

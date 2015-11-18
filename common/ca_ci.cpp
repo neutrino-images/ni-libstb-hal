@@ -193,7 +193,7 @@ static bool transmitData(tSlot* slot, unsigned char* d, int len)
 		return eDataError;
 	}
 #else
-#if x_debug
+#if y_debug
 	printf("SendData with data (len %d) >\n", len);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", d[i]);
@@ -234,10 +234,12 @@ static bool sendRCV(tSlot* slot)
 	send_data[2] = T_RCV;
 	send_data[3] = 1;
 	send_data[4] = slot->connection_id;
+#if y_debug
 	printf("*** > T_RCV: ");
 	for (int i = 0; i < 5; i++)
 		printf("%02x ", send_data[i]);
 	printf("\n");
+#endif
 	write(slot->fd, send_data, 5);
 	return true;
 }
@@ -343,13 +345,11 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 			if (slot->receivedData == NULL)
 			{
 				printf("%s -> single package\n", FILENAME);
-#if x_debug
-				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
 #if y_debug
+				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
 				for (int i = 0; i < asn_data_length; i++)
 					printf("%02x ", data[i]);
 				printf("\n");
-#endif
 #endif
 				/* to avoid illegal session number: only if > 0 */
 				if (asn_data_length)
@@ -368,7 +368,7 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 				slot->receivedData = new_data_buffer;
 				memcpy(slot->receivedData + slot->receivedLen, data, asn_data_length);
 				slot->receivedLen = new_data_length;
-#if x_debug
+#if y_debug
 				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
 				for (int i = 0; i < slot->receivedLen; i++)
 					printf("%02x ", slot->receivedData[i]);

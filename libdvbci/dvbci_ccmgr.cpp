@@ -23,6 +23,10 @@
 
 #include "dvbci_ccmgr.h"
 
+/* for some debug > set to 1 */
+#define x_debug 0
+#define y_debug 0
+
 static const char * FILENAME = "[dvbci_ccmgr]";
 
 /* storage & load of authenticated data (HostID & DHSK & AKH) */
@@ -620,9 +624,9 @@ static int sac_crypt(uint8_t *dst, const uint8_t *src, unsigned int len, const u
 	AES_KEY key;
 
 	/* AES_ENCRYPT is '1' */
-
+#if x_debug
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
+#endif
 	if (encrypt)
 		AES_set_encrypt_key(key_data, 128, &key);
 	else
@@ -850,9 +854,9 @@ static void check_new_key(struct cc_ctrl_data *cc_data)
 	uint8_t *kp;
 	uint8_t slot;
 	unsigned int i;
-
+#if x_debug
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
+#endif
 	/* check for keyprecursor */
 	if (!element_valid(cc_data, 12))
 		return;
@@ -885,7 +889,9 @@ static void check_new_key(struct cc_ctrl_data *cc_data)
 
 static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 {
+#if x_debug
 	printf("%s -> %s ID = (%d)\n", FILENAME, __FUNCTION__, id);
+#endif
 	/* handle trigger events */
 
 	/* depends on new received items */
@@ -934,8 +940,9 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 
 static int data_req_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 {
+#if x_debug
 	printf("%s -> %s ID = (%d)\n", FILENAME, __FUNCTION__, id);
-
+#endif
 	switch (id) {
 	case 22:                /* AKH */
 	{
@@ -962,9 +969,9 @@ static int data_get_loop(struct cc_ctrl_data *cc_data, const unsigned char *data
 	unsigned int i;
 	int dt_id, dt_len;
 	unsigned int pos = 0;
-
+#if x_debug
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
+#endif
 	for (i = 0; i < items; i++) {
 		if (pos + 3 > datalen)
 			return 0;
@@ -975,9 +982,14 @@ static int data_get_loop(struct cc_ctrl_data *cc_data, const unsigned char *data
 
 		if (pos + dt_len > datalen)
 			return 0;
-
+#if x_debug
 		printf("set element (%d) ", dt_id);
+#if y_debug
 		hexdump(&data[pos], dt_len);
+#else
+		printf("\n");
+#endif
+#endif
 		element_set(cc_data, dt_id, &data[pos], dt_len);
 
 		data_get_handle_new(cc_data, dt_id);
@@ -994,27 +1006,32 @@ static int data_req_loop(struct cc_ctrl_data *cc_data, unsigned char *dest, cons
 	unsigned int i;
 	int pos = 0;
 	int len;
-
+#if x_debug
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
+#endif
 	if (items > datalen)
 		return -1;
 
 	for (i = 0; i < items; i++) {
 		dt_id = *data++;
+#if x_debug
 		printf("req element %d\n", dt_id);
+#endif
 		data_req_handle_new(cc_data, dt_id);    /* check if there is any action needed before we answer */
 		len = element_get_req(cc_data, dest, dt_id);
 		if (len == 0) {
 			printf("cannot get element %d\n", dt_id);
 			return -1;
 		}
-//
+#if x_debug
 		printf("element (%d) > ", dt_id);
+#if y_debug
 		for (int ic = 0; ic < len; ic++)
 			printf("%02x ", dest[ic]);
+#endif
 		printf("\n");
-//
+#endif
+
 		pos += len;
 		dest += len;
 	}
@@ -1138,8 +1155,9 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(tSlot *tslot, 
 	int pos = 0;
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
+#if y_debug
 	hexdump(data, len);
-
+#endif
 	serial = UINT32(data, 4);
 
 	pos += BYTE32(&dest[pos], serial);
@@ -1173,12 +1191,12 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(tSlot *tslot, cons
 	BYTE16(&data[6], pos - 8);      /* len in header */
 
 	pos += sac_gen_auth(&data[pos], data, pos, cc_data->sak);
-//
+#if y_debug
 	printf("Data for encrypt > ");
 	for (unsigned int i = 0; i < pos; i++)
 		printf("%02x ", data[i]);
 	printf("\n");
-//
+#endif
 	sac_crypt(&data[8], &data[8], pos - 8, cc_data->sek, AES_ENCRYPT);
 
 	sendAPDU(tag, data, pos);
@@ -1204,12 +1222,12 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(tSlot *tslot, 
 	memcpy(tmp, data, 8);
 	sac_crypt(&tmp[8], &data[8], len - 8, cc_data->sek, AES_DECRYPT);
 	data = tmp;
-//
+#if y_debug
 	printf("decryted > ");
 	for (unsigned int i = 0; i < len; i++)
 		printf("%02x ", data[i]);
 	printf("\n");
-//
+#endif
 	if (!sac_check_auth(data, len, cc_data->sak)) {
 		fprintf(stderr, "check_auth of message failed\n");
 		return false;
@@ -1277,9 +1295,10 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(tSlot *tslot)
 int eDVBCIContentControlManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
 	printf("SESSION(%d)/CC %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
-
+#if y_debug
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
+#endif
 	printf("\n");
 
 	if ((tag[0] == 0x9f) && (tag[1] == 0x90)) {

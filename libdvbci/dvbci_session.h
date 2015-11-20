@@ -5,6 +5,10 @@
 
 #define SLMS 256
 
+#define ROOT_CERT     "/etc/pem/root.pem"
+#define CUSTOMER_CERT "/etc/pem/customer.pem"
+#define DEVICE_CERT   "/etc/pem/device.pem"
+
 class eDVBCISession
 {
 	static eDVBCISession* sessions[SLMS];

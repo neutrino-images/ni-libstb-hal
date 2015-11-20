@@ -173,10 +173,13 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 			sessions[session_nb - 1] = new eDVBCIMMISession(slot);
 			printf("MMI - create session\n");
 			break;
-		case 0x008c1001:
-			sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
-			printf("CC MANAGER\n");
-			break;
+		if (cCA::GetInstance()->CheckCerts())
+		{
+			case 0x008c1001:
+				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
+				printf("CC MANAGER\n");
+				break;
+		}
 		case 0x00100041:
 //			session=new eDVBCIAuthSession;
 			printf("AuthSession\n");

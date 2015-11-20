@@ -773,9 +773,9 @@ static int restart_dh_challenge(struct cc_ctrl_data *cc_data)
 	}
 
 	/* load certificates and device key */
-	certificate_load_and_check(ctx, "/etc/pem/root.pem");
-	ctx->cust_cert = certificate_load_and_check(ctx, "/etc/pem/customer.pem");
-	ctx->device_cert = certificate_load_and_check(ctx, "/etc/pem/device.pem");
+	certificate_load_and_check(ctx, ROOT_CERT);
+	ctx->cust_cert = certificate_load_and_check(ctx, CUSTOMER_CERT);
+	ctx->device_cert = certificate_load_and_check(ctx, DEVICE_CERT);
 
 	if (!ctx->cust_cert || !ctx->device_cert) {
 		fprintf(stderr, "cannot loader certificates\n");
@@ -792,7 +792,7 @@ static int restart_dh_challenge(struct cc_ctrl_data *cc_data)
 	if (!element_set_hostid_from_certificate(cc_data, 5, ctx->device_cert))
 		fprintf(stderr, "cannot set hostid in elements\n");
 
-	cc_data->rsa_device_key = rsa_privatekey_open("/etc/pem/device.pem");
+	cc_data->rsa_device_key = rsa_privatekey_open(DEVICE_CERT);
 	if (!cc_data->rsa_device_key) {
 		fprintf(stderr, "cannot read private key\n");
 		return -1;

@@ -296,6 +296,7 @@ public:
 
 	unsigned int GetLiveSlot(void);
 	bool SendNullPMT(tSlot* slot);
+	bool CheckCerts(void);
 	void Test(int slot, CaIdVector caids);
 	void DelTest(int slot);
 	/// Virtual destructor

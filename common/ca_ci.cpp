@@ -716,7 +716,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 			SlotIt It2 = GetSlot(!(*It)->slot);
 			if ((*It2))
 			{
-				if ((*It)->source == (*It2)->source || source_demux == (*It2)->source)
+				if (source_demux == (*It2)->source)
 				{
 					if ((*It2)->inUse)
 						(*It)->SidBlackListed = true;

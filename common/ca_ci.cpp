@@ -660,6 +660,10 @@ SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
 						printf("Found: %04x\n", *caIt);
 						return it;
 					}
+					else
+					{
+						(*it)->scrambled = 0;
+					}
 				}
 			}
 			else

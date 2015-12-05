@@ -576,6 +576,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->DataLast = false;
 		(*it)->DataRCV = false;
 		(*it)->SidBlackListed = false;
+		(*it)->bsids.clear();
 
 		(*it)->counter = 0;
 		(*it)->init = false;
@@ -1108,6 +1109,7 @@ void cCA::slot_pollthread(void *c)
 						slot->DataLast = false;
 						slot->DataRCV = false;
 						slot->SidBlackListed = false;
+						slot->bsids.clear();
 
 						slot->counter = 0;
 						slot->pollConnection = false;

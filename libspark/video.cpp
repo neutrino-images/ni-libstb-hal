@@ -268,6 +268,12 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 	if (playstate == VIDEO_FREEZED)  /* in theory better, but not in practice :-) */
 		fop(ioctl, MPEG_VID_CONTINUE);
 #endif
+	/* implicitly do StopPicture() on video->Start() */
+	if (stillpicture) {
+		lt_info("%s: stillpicture == true, doing implicit StopPicture()\n", __func__);
+		stillpicture = false;
+		Stop(1);
+	}
 	playstate = VIDEO_PLAYING;
 	fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	int res = fop(ioctl, VIDEO_PLAY);

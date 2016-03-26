@@ -52,7 +52,7 @@ void cPlayback::Close(void)
 	}
 }
 
-bool cPlayback::Start(std::string filename, std::string headers = "")
+bool cPlayback::Start(std::string filename, std::string headers)
 {
 	Start(filename.c_str(),0,0,0,0,0);
 }

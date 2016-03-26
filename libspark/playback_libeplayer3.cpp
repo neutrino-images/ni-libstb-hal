@@ -54,7 +54,7 @@ void cPlayback::Close(void)
 
 bool cPlayback::Start(std::string filename, std::string headers)
 {
-	Start(filename.c_str(),0,0,0,0,0);
+	Start((char*) filename.c_str(),0,0,0,0,0);
 }
 
 bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int)

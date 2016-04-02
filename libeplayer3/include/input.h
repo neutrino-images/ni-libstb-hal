@@ -70,7 +70,7 @@ class Input
 
 		bool ReadSubtitle(const char *filename, const char *format, int pid);
 		bool ReadSubtitles(const char *filename);
-		bool Init(const char *filename);
+		bool Init(const char *filename, std::string headers = "");
 		bool UpdateTracks();
 		bool Play();
 		bool Stop();

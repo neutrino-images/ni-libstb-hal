@@ -103,7 +103,7 @@ class Player {
 		bool FastBackward(int speed);
 		bool FastForward(int speed);
 
-		bool Open(const char *Url, bool noprobe = false);
+		bool Open(const char *Url, bool noprobe = false, std::string headers = "");
 		bool Close();
 		bool Play();
 		bool Pause();

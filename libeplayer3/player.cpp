@@ -65,7 +65,7 @@ void *Player::playthread(void *arg)
 	pthread_exit(NULL);
 }
 
-bool Player::Open(const char *Url, bool _noprobe)
+bool Player::Open(const char *Url, bool _noprobe, std::string headers)
 {
 	fprintf(stderr, "URL=%s\n", Url);
 
@@ -89,7 +89,7 @@ bool Player::Open(const char *Url, bool _noprobe)
 		return false;
 	}
 
-	return input.Init(url.c_str());
+	return input.Init(url.c_str(), headers);
 }
 
 bool Player::Close()

@@ -54,10 +54,10 @@ void cPlayback::Close(void)
 
 bool cPlayback::Start(std::string filename, std::string headers)
 {
-	Start((char*) filename.c_str(),0,0,0,0,0);
+	return Start((char*) filename.c_str(),0,0,0,0,0, headers);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers)
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -82,7 +82,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	} else
 		isHTTP = true;
 
-	if (player->Open(file.c_str(), no_probe)) {
+	if (player->Open(file.c_str(), no_probe, headers)) {
 		if (pm == PLAYMODE_TS) {
 			struct stat64 s;
 			if (!stat64(file.c_str(), &s))

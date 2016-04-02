@@ -372,12 +372,13 @@ bool Input::ReadSubtitles(const char *filename) {
 	return ret;
 }
 
-bool Input::Init(const char *filename)
+bool Input::Init(const char *filename, std::string headers)
 {
 	bool find_info = true;
 	abortPlayback = false;
 	av_lockmgr_register(lock_callback);
 #if ENABLE_LOGGING
+	av_log_set_level(AV_LOG_INFO);
 	av_log_set_callback(log_callback);
 #endif
 
@@ -385,7 +386,16 @@ bool Input::Init(const char *filename)
 		fprintf(stderr, "filename NULL\n");
 		return false;
 	}
-	fprintf(stderr, "%s %s %d: %s\n", FILENAME, __func__, __LINE__, filename);
+
+	if (!headers.empty())
+	{
+		fprintf(stderr, "%s %s %d: %s\n%s\n", FILENAME, __func__, __LINE__, filename, headers.c_str());
+		headers += "\r\n";
+	}
+	else
+	{
+		fprintf(stderr, "%s %s %d: %s\n", FILENAME, __func__, __LINE__, filename);
+	}
 
 	avcodec_register_all();
 	av_register_all();
@@ -403,7 +413,14 @@ again:
 	avfc->interrupt_callback.callback = interrupt_cb;
 	avfc->interrupt_callback.opaque = (void *) player;
 
-	int err = avformat_open_input(&avfc, filename, NULL, 0);
+	AVDictionary *options = NULL;
+	av_dict_set(&options, "auth_type", "basic", 0);
+	if (!headers.empty())
+	{
+		av_dict_set(&options, "headers", headers.c_str(), 0);
+	}
+	int err = avformat_open_input(&avfc, filename, NULL, &options);
+	av_dict_free(&options);
 	if (averror(err, avformat_open_input)) {
 		avformat_free_context(avfc);
 		return false;

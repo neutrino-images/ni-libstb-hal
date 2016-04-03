@@ -350,10 +350,10 @@ void cPlayback::Close(void)
 // start
 bool cPlayback::Start(std::string filename, std::string headers)
 {
-	Start((char *) filename.c_str(),0,0,0,0,0);
+	return Start((char*) filename.c_str(),0,0,0,0,0, headers);
 }
 
-bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/, int /*ac3*/, int /*duration*/)
+bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/, int /*ac3*/, int /*duration*/, std::string headers)
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 

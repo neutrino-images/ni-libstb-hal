@@ -428,7 +428,7 @@ again:
 
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
-	if (player->noprobe) {
+	if (player->noprobe || player->isHttp) {
 #if (LIBAVFORMAT_VERSION_MAJOR <  55) || \
     (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR <  43) || \
     (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR == 43 && LIBAVFORMAT_VERSION_MICRO < 100)
@@ -439,9 +439,12 @@ again:
 		avfc->probesize = 131072;
 	}
 
-	for (unsigned int i = 0; i < avfc->nb_streams; i++) {
-		if (avfc->streams[i]->codec->codec_id == AV_CODEC_ID_AAC)
-			find_info = false;
+	if (!player->isHttp)
+	{
+		for (unsigned int i = 0; i < avfc->nb_streams; i++) {
+			if (avfc->streams[i]->codec->codec_id == AV_CODEC_ID_AAC)
+				find_info = false;
+		}
 	}
 	if (find_info)
 		err = avformat_find_stream_info(avfc, NULL);

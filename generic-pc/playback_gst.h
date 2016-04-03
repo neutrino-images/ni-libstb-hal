@@ -55,7 +55,7 @@ class cPlayback
 		cPlayback(int);
 		bool Open(playmode_t PlayMode);
 		void Close(void);
-		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration);
+		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers = "");
 		bool Start(std::string filename, std::string headers = "");
 		bool Play(void);
 		bool SyncAV(void);

@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#define ENABLE_LOGGING 0
+#define ENABLE_LOGGING 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -378,8 +378,13 @@ bool Input::Init(const char *filename, std::string headers)
 	abortPlayback = false;
 	av_lockmgr_register(lock_callback);
 #if ENABLE_LOGGING
+	av_log_set_flags(AV_LOG_SKIP_REPEATED);
 	av_log_set_level(AV_LOG_INFO);
-	av_log_set_callback(log_callback);
+	/* out commented here for using ffmpeg default: av_log_default_callback
+	because of better log level handling */
+	//av_log_set_callback(log_callback);
+#else
+	av_log_set_level(AV_LOG_PANIC);
 #endif
 
 	if (!filename) {
@@ -419,7 +424,13 @@ again:
 	{
 		av_dict_set(&options, "headers", headers.c_str(), 0);
 	}
+#if ENABLE_LOGGING
+	av_log_set_level(AV_LOG_DEBUG);
+#endif
 	int err = avformat_open_input(&avfc, filename, NULL, &options);
+#if ENABLE_LOGGING
+	av_log_set_level(AV_LOG_INFO);
+#endif
 	av_dict_free(&options);
 	if (averror(err, avformat_open_input)) {
 		avformat_free_context(avfc);
@@ -609,6 +620,8 @@ bool Input::Stop()
 
 	while (hasPlayThreadStarted != 0)
 		usleep(100000);
+
+	av_log(NULL, AV_LOG_QUIET, "%s", "");
 
 	if (avfc) {
 		ScopedLock lock(mutex);

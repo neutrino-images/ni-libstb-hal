@@ -65,9 +65,9 @@ int64_t Input::calcPts(AVStream * stream, int64_t pts)
 	if (pts == AV_NOPTS_VALUE)
 		return INVALID_PTS_VALUE;
 
-	pts = av_rescale(90000ll * stream->time_base.num, pts, stream->time_base.den);
+	pts = 90000 * (double)pts * stream->time_base.num / stream->time_base.den;
 	if (avfc->start_time != AV_NOPTS_VALUE)
-		pts -= av_rescale(90000ll, avfc->start_time, AV_TIME_BASE);
+		pts -= 90000 * avfc->start_time / AV_TIME_BASE;
 
 	if (pts < 0)
 		return INVALID_PTS_VALUE;
@@ -154,16 +154,16 @@ bool Input::Play()
 				seek_target = seek_avts_abs;
 			}
 			seek_avts_abs = INT64_MIN;
-		} else if (player->isBackWard && av_gettime() >= showtime) {
+		} else if (player->isBackWard && av_gettime_relative() >= showtime) {
 			player->output.ClearVideo();
 
 			if (bof) {
-				showtime = av_gettime();
+				showtime = av_gettime_relative();
 				usleep(100000);
 				continue;
 			}
 			seek_avts_rel = player->Speed * AV_TIME_BASE;
-			showtime = av_gettime() + 300000;	//jump back every 300ms
+			showtime = av_gettime_relative() + 300000;	//jump back every 300ms
 			continue;
 		} else {
 			bof = false;

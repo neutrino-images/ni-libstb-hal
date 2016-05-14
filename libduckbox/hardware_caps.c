@@ -250,6 +250,16 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 		}
+		else if (!strncmp(buf, "hl101", 5)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 1;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 2;
+			caps.can_cec = 0;
+			caps.has_fan = 0;
+			caps.has_CI = 2;
+		}
 		else if ((!strncmp(buf, "arivalink200", 12)) ||
 				(!strncasecmp(buf, "adb_box", 7)) ||
 				(!strncasecmp(buf, "sagemcom88", 10)) ||

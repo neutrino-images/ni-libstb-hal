@@ -451,7 +451,7 @@ again:
 
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
-	if (player->noprobe || player->isHttp) {
+	if (player->noprobe) {
 #if (LIBAVFORMAT_VERSION_MAJOR <  55) || \
     (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR <  43) || \
     (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR == 43 && LIBAVFORMAT_VERSION_MICRO < 100) || \

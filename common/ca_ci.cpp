@@ -1285,3 +1285,14 @@ bool cCA::CheckCerts(void)
 	}
 	return Cert_OK;
 }
+
+bool cCA::checkChannelID(u64 chanID)
+{
+	std::list<tSlot*>::iterator it;
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+	{
+		if ((*it)->tpid == chanID && !(*it)->SidBlackListed)
+			return true;
+	}
+	return false;
+}

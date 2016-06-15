@@ -294,6 +294,7 @@ public:
 	bool checkQueueSize(tSlot* slot);
 	void process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
 
+	bool checkChannelID(u64 chanID);
 	unsigned int GetLiveSlot(void);
 	bool SendNullPMT(tSlot* slot);
 	bool CheckCerts(void);

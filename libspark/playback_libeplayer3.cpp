@@ -72,6 +72,9 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		file = "file://";
 	file += filename;
 
+	if (file.find(":31339/id=") != std::string::npos)	// for LocalTV streaming
+		no_probe = true;
+
 	if (file.substr(0, 7) == "file://") {
 		if (file.substr(file.length() - 3) ==  ".ts") {
 			fn_ts = file.substr(7);

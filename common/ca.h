@@ -118,6 +118,7 @@ public:
 	void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
 	void SetTSClock(u32 /*Speed*/) { return; };
 	bool checkChannelID(u64 /*chanID*/) { return false; };
+	void setCheckLiveSlot(int /*check*/) { return; };
 	virtual ~cCA();
 };
 

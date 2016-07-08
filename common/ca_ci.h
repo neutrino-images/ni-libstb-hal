@@ -194,7 +194,8 @@ typedef struct
 	char name[512];
 
 	bool newCapmt;
-	bool inUse;
+	bool recordUse;
+	bool liveUse;
 	u64 tpid;
 	u32 pmtlen;
 	u8 source;
@@ -285,7 +286,8 @@ public:
 		unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
 
 	bool StopRecordCI( u64 tpid, u8 source, u32 calen);
-	SlotIt FindFreeSlot(ca_map_t camap, unsigned char scrambled);
+	bool StopLiveCI( u64 tpid, u8 source, u32 calen);
+	SlotIt FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scrambled);
 	SlotIt GetSlot(unsigned int slot);
 	bool SendDateTime(void);
 	bool SendCaPMT(tSlot* slot);
@@ -295,7 +297,7 @@ public:
 	void process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
 
 	bool checkChannelID(u64 chanID);
-	unsigned int GetLiveSlot(void);
+	void setCheckLiveSlot(int check);
 	bool SendNullPMT(tSlot* slot);
 	bool CheckCerts(void);
 	void Test(int slot, CaIdVector caids);

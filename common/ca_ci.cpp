@@ -37,7 +37,7 @@
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_CA, this, args)
 
 static const char * FILENAME = "[ca_ci]";
-static unsigned int LiveSlot = 0;
+static bool checkLiveSlot = false;
 static bool CertChecked = false;
 static bool Cert_OK = false;
 static uint8_t NullPMT[50]={0x9F,0x80,0x32,0x2E,0x03,0x6E,0xA7,0x37,0x00,0x00,0x1B,0x15,0x7D,0x00,0x00,0x03,0x15,0x7E,0x00,0x00,0x03,0x15,0x7F,0x00,
@@ -585,7 +585,8 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->cam_caids.clear();
 
 		(*it)->newCapmt = false;
-		(*it)->inUse = false;
+		(*it)->recordUse = false;
+		(*it)->liveUse = false;
 		(*it)->tpid = 0;
 		(*it)->pmtlen = 0;
 		(*it)->source = TUNER_A;
@@ -619,60 +620,97 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 	return 0;
 }
 
-bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
+bool cCA::StopLiveCI( u64 tpid, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if ((*it)->inUse && (*it)->tpid == tpid && (*it)->source == source && !calen)
+		if ((*it)->liveUse && (*it)->tpid == tpid && (*it)->source == source && !calen)
 		{
-			(*it)->inUse = false;
+			(*it)->liveUse = false;
 			return true;
 		}
 	}
 	return false;
 }
 
-SlotIt cCA::FindFreeSlot(ca_map_t camap, unsigned char scrambled)
+bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
+{
+	printf("%s -> %s\n", FILENAME, __func__);
+	std::list<tSlot*>::iterator it;
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+	{
+		if ((*it)->recordUse && (*it)->tpid == tpid && (*it)->source == source && !calen)
+		{
+			(*it)->recordUse = false;
+			return true;
+		}
+	}
+	return false;
+}
+
+SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scrambled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	ca_map_iterator_t caIt;
 	unsigned int i;
+
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->inUse)
+		if (!scrambled) { continue; }
+
+		if ((*it)->tpid == tpid && (*it)->source == source)
+			return it;
+	}
+
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+	{
+		if (!scrambled) { continue; }
+
+		if ((*it)->bsids.size())
 		{
-#if x_debug
-			printf("Slot Caids: %d > ", (*it)->cam_caids.size());
-			for (i = 0; i < (*it)->cam_caids.size(); i++)
-				printf("%04x ", (*it)->cam_caids[i]);
-			printf("\n");
-#endif
-			(*it)->scrambled = scrambled;
-			if (scrambled)
-			{
-				for (i = 0; i < (*it)->cam_caids.size(); i++)
-				{
-					caIt = camap.find((*it)->cam_caids[i]);
-					if (caIt != camap.end())
-					{
-						printf("Found: %04x\n", *caIt);
-						return it;
-					}
-					else
-					{
-						(*it)->scrambled = 0;
-					}
-				}
-			}
-			else
-			{
-				return it;
-			}
+			for (i = 0; i < (*it)->bsids.size(); i++)
+				if ((*it)->bsids[i] == (u16)(tpid & 0xFFFF)) {goto OUT;}
+			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
 		}
 
+		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->recordUse)
+		{
+			if (!checkLiveSlot || (!(*it)->liveUse || ((*it)->liveUse && (*it)->tpid == tpid)))
+			{
+#if x_debug
+				printf("Slot Caids: %d > ", (*it)->cam_caids.size());
+				for (i = 0; i < (*it)->cam_caids.size(); i++)
+					printf("%04x ", (*it)->cam_caids[i]);
+				printf("\n");
+#endif
+				(*it)->scrambled = scrambled;
+				if (scrambled)
+				{
+					for (i = 0; i < (*it)->cam_caids.size(); i++)
+					{
+						caIt = camap.find((*it)->cam_caids[i]);
+						if (caIt != camap.end())
+						{
+							printf("Found: %04x\n", *caIt);
+							return it;
+						}
+						else
+						{
+							(*it)->scrambled = 0;
+						}
+					}
+				}
+				else
+				{
+					return it;
+				}
+			}
+		}
+OUT:
+		usleep(0);
 	}
 	return it;
 }
@@ -694,36 +732,48 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 	printf("Mode: %d\n", mode);
 	printf("Enabled: %s\n", enabled ? "START" : "STOP");
 #endif
-	if (mode && scrambled && !enabled)
+	if (scrambled && !enabled)
 	{
-		if (StopRecordCI(tpid, source_demux, calen))
-			printf("CI set free\n");
+		if (mode)
+		{
+			if (StopRecordCI(tpid, source_demux, calen))
+				printf("Record CI set free\n");
+		}
+		else
+		{
+			if (StopLiveCI(tpid, source_demux, calen))
+				printf("Live CI set free\n");
+		}
 	}
 
 	if (calen == 0)
 		return true;
-	SlotIt It = FindFreeSlot(cm, scrambled);
+	SlotIt It = FindFreeSlot(tpid, source_demux, cm, scrambled);
 
 	if ((*It))
 	{
 		printf("Slot: %d\n", (*It)->slot);
 		if (scrambled || (!scrambled && (*It)->source == source_demux))
 		{
-			if ((*It)->bsids.size())
+
+			if (scrambled && enabled && !(*It)->SidBlackListed)
 			{
-				for (i = 0; i < (*It)->bsids.size(); i++)
-					if ((*It)->bsids[i] == SID) {(*It)->SidBlackListed = true; break;}
-				if (i == (*It)->bsids.size()) {(*It)->SidBlackListed = false;}
+				if (mode)
+				{
+					if(!checkLiveSlot)
+						(*It)->liveUse = false;
+					(*It)->recordUse = true;
+				}
+				else
+					(*It)->liveUse = true;
 			}
-			if (mode && scrambled && enabled && !(*It)->SidBlackListed)
-				(*It)->inUse = true;
 
 			SlotIt It2 = GetSlot(!(*It)->slot);
 			if ((*It2))
 			{
 				if (source_demux == (*It2)->source)
 				{
-					if ((*It2)->inUse)
+					if ((*It2)->recordUse)
 						(*It)->SidBlackListed = true;
 					else
 					{
@@ -733,9 +783,8 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 					}
 				}
 			}
-			LiveSlot = (*It)->slot;
 
-			if ((*It)->tpid != tpid)
+			if ((*It)->tpid != tpid || (*It)->source != source_demux)
 			{
 				(*It)->tpid = tpid;
 				(*It)->source = source_demux;
@@ -743,7 +792,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 				for (i = 0; i < calen; i++)
 					(*It)->pmtdata[i] = cabuf[i];
 				(*It)->newCapmt = true;
-			} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->inUse && !(*It)->SidBlackListed)
+			} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
 				(*It)->ccmgrSession->resendKey((tSlot*)(*It));
 		}
 	}
@@ -804,7 +853,8 @@ cCA::cCA(int Slots)
 		slot->mmiOpened = false;
 
 		slot->newCapmt = false;
-		slot->inUse = false;
+		slot->recordUse = false;
+		slot->liveUse = false;
 		slot->tpid = 0;
 		slot->pmtlen = 0;
 		slot->source = TUNER_A;
@@ -1118,7 +1168,8 @@ void cCA::slot_pollthread(void *c)
 						slot->cam_caids.clear();
 
 						slot->newCapmt = false;
-						slot->inUse = false;
+						slot->recordUse = false;
+						slot->liveUse = false;
 						slot->tpid = 0;
 						slot->pmtlen = 0;
 						slot->source = TUNER_A;
@@ -1218,11 +1269,6 @@ bool cCA::SendCaPMT(tSlot* slot)
 	return true;
 }
 
-unsigned int cCA::GetLiveSlot(void)
-{
-	return LiveSlot;
-}
-
 bool cCA::Init(void)
 {
 	printf("%s %s\n", FILENAME, __FUNCTION__);
@@ -1295,4 +1341,12 @@ bool cCA::checkChannelID(u64 chanID)
 			return true;
 	}
 	return false;
+}
+
+void cCA::setCheckLiveSlot(int check)
+{
+	if (check)
+		checkLiveSlot = true;
+	else
+		checkLiveSlot = false;
 }

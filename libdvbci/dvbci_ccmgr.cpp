@@ -1337,7 +1337,7 @@ int eDVBCIContentControlManagerSession::doAction()
 
 void eDVBCIContentControlManagerSession::resendKey(tSlot *tslot)
 {
-	if (!tslot->SidBlackListed && (tslot->inUse || tslot->slot == cCA::GetInstance()->GetLiveSlot()))
+	if (!tslot->SidBlackListed && (tslot->recordUse || tslot->liveUse))
 		descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
 }
 

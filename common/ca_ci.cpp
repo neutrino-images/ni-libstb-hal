@@ -650,7 +650,7 @@ bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
 	return false;
 }
 
-SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scrambled)
+SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
@@ -672,7 +672,7 @@ SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scra
 		if ((*it)->bsids.size())
 		{
 			for (i = 0; i < (*it)->bsids.size(); i++)
-				if ((*it)->bsids[i] == (u16)(tpid & 0xFFFF)) {goto OUT;}
+				if ((*it)->bsids[i] == sid) {goto OUT;}
 			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
 		}
 
@@ -687,25 +687,19 @@ SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scra
 				printf("\n");
 #endif
 				(*it)->scrambled = scrambled;
-				if (scrambled)
+
+				for (i = 0; i < (*it)->cam_caids.size(); i++)
 				{
-					for (i = 0; i < (*it)->cam_caids.size(); i++)
+					caIt = camap.find((*it)->cam_caids[i]);
+					if (caIt != camap.end())
 					{
-						caIt = camap.find((*it)->cam_caids[i]);
-						if (caIt != camap.end())
-						{
-							printf("Found: %04x\n", *caIt);
-							return it;
-						}
-						else
-						{
-							(*it)->scrambled = 0;
-						}
+						printf("Found: %04x\n", *caIt);
+						return it;
 					}
-				}
-				else
-				{
-					return it;
+					else
+					{
+						(*it)->scrambled = 0;
+					}
 				}
 			}
 		}
@@ -718,7 +712,7 @@ OUT:
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
 bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
-	u16 SID = (u16)(tpid & 0x000000000000FFFF);
+	u16 SID = (u16)(tpid & 0xFFFF);
 	unsigned int i = 0;
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
@@ -748,53 +742,51 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 
 	if (calen == 0)
 		return true;
-	SlotIt It = FindFreeSlot(tpid, source_demux, cm, scrambled);
+	SlotIt It = FindFreeSlot(tpid, source_demux, SID, cm, scrambled);
 
 	if ((*It))
 	{
 		printf("Slot: %d\n", (*It)->slot);
-		if (scrambled || (!scrambled && (*It)->source == source_demux))
+
+		if (enabled)
 		{
-
-			if (scrambled && enabled && !(*It)->SidBlackListed)
+			if (mode)
 			{
-				if (mode)
-				{
-					if(!checkLiveSlot)
-						(*It)->liveUse = false;
-					(*It)->recordUse = true;
-				}
-				else
-					(*It)->liveUse = true;
+				if(!checkLiveSlot)
+					(*It)->liveUse = false;
+				(*It)->recordUse = true;
 			}
-
-			SlotIt It2 = GetSlot(!(*It)->slot);
-			if ((*It2))
-			{
-				if (source_demux == (*It2)->source)
-				{
-					if ((*It2)->recordUse)
-						(*It)->SidBlackListed = true;
-					else
-					{
-						SendNullPMT((tSlot*)(*It2));
-						(*It2)->tpid = 0;
-						(*It2)->scrambled = 0;
-					}
-				}
-			}
-
-			if ((*It)->tpid != tpid || (*It)->source != source_demux)
-			{
-				(*It)->tpid = tpid;
-				(*It)->source = source_demux;
-				(*It)->pmtlen = calen;
-				for (i = 0; i < calen; i++)
-					(*It)->pmtdata[i] = cabuf[i];
-				(*It)->newCapmt = true;
-			} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
-				(*It)->ccmgrSession->resendKey((tSlot*)(*It));
+			else if (!(*It)->recordUse)
+				(*It)->liveUse = true;
 		}
+
+		SlotIt It2 = GetSlot(!(*It)->slot);
+
+		if ((*It2) && ((*It)->hasCCManager || (*It2)->hasCCManager))
+		{
+			if (source_demux == (*It2)->source)
+			{
+				if ((*It2)->recordUse)
+					(*It)->SidBlackListed = true;
+				else
+				{
+					SendNullPMT((tSlot*)(*It2));
+					(*It2)->tpid = 0;
+					(*It2)->scrambled = 0;
+				}
+			}
+		}
+
+		if ((*It)->tpid != tpid || (*It)->source != source_demux)
+		{
+			(*It)->tpid = tpid;
+			(*It)->source = source_demux;
+			(*It)->pmtlen = calen;
+			for (i = 0; i < calen; i++)
+				(*It)->pmtdata[i] = cabuf[i];
+			(*It)->newCapmt = true;
+		} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
+			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
 	}
 	else
 	{

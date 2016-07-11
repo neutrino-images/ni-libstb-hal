@@ -287,7 +287,7 @@ public:
 
 	bool StopRecordCI( u64 tpid, u8 source, u32 calen);
 	bool StopLiveCI( u64 tpid, u8 source, u32 calen);
-	SlotIt FindFreeSlot(u64 tpid, u8 source, ca_map_t camap, unsigned char scrambled);
+	SlotIt FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled);
 	SlotIt GetSlot(unsigned int slot);
 	bool SendDateTime(void);
 	bool SendCaPMT(tSlot* slot);

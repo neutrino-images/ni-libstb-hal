@@ -99,6 +99,8 @@ static const char *VMPEG_framerate[] = {
 #define VIDEO_STREAMTYPE_MPEG4_Part2 4
 #define VIDEO_STREAMTYPE_VC1_SM 5
 #define VIDEO_STREAMTYPE_MPEG1 6
+#define VIDEO_STREAMTYPE_H265_HEVC 7
+#define VIDEO_STREAMTYPE_AVS 16
 
 
 static int proc_put(const char *path, const char *value, const int len)

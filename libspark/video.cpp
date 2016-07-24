@@ -725,8 +725,14 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 
 	switch (type)
 	{
-		case VIDEO_FORMAT_MPEG4:
+		case VIDEO_FORMAT_MPEG4_H264:
 			t = VIDEO_STREAMTYPE_MPEG4_H264;
+			break;
+		case VIDEO_FORMAT_MPEG4_H265:
+			t = VIDEO_STREAMTYPE_H265_HEVC;
+			break;
+		case VIDEO_FORMAT_AVS:
+			t = VIDEO_STREAMTYPE_AVS;
 			break;
 		case VIDEO_FORMAT_VC1:
 			t = VIDEO_STREAMTYPE_VC1;

@@ -43,7 +43,7 @@ int eDVBCIApplicationManagerSession::receivedAPDU(const unsigned char *tag, cons
 				printf("  application_type: %d\n", ((unsigned char*)data)[0]);
 				printf("  application_manufacturer: %02x %02x\n", ((unsigned char*)data)[2], ((unsigned char*)data)[1]);
 				printf("  manufacturer_code: %02x %02x\n", ((unsigned char*)data)[4], ((unsigned char*)data)[3]);
-				printf("  menu string: \n");
+				printf("  menu string: ");
 				dl = ((unsigned char*)data)[5];
 				if ((dl + 6) > len)
 				{
@@ -58,7 +58,9 @@ int eDVBCIApplicationManagerSession::receivedAPDU(const unsigned char *tag, cons
 				printf("\n");
 
 				strcpy(slot->name, str);
-				printf("%s set cam name %s on slot %d, %p\n", FILENAME, slot->name, slot->slot, slot);
+				if (!strcmp(slot->name, "AlphaCrypt"))
+					slot->multi = true;
+				printf("%s set cam name %s on slot(%d)\n", FILENAME, slot->name, slot->slot);
 				break;
 			}
 			default:
@@ -82,7 +84,7 @@ int eDVBCIApplicationManagerSession::doAction()
 			return 1;
 		}
 		case stateFinal:
-			printf("in final state.");
+			printf("%s -> in final state\n", FILENAME);
 			wantmenu = 0;
 			if (wantmenu)
 			{

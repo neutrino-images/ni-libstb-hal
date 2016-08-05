@@ -26,6 +26,9 @@
 #define T_DATA_LAST         0xA0	// convey data from higher      constructed h<->m
 #define T_DATA_MORE         0xA1	// convey data from higher      constructed h<->m
 
+/* max multi decrypt per ci-cam */
+#define CI_MAX_MULTI			4
+
 enum CA_INIT_MASK {
 	CA_INIT_SC = 1,
 	CA_INIT_CI,
@@ -194,9 +197,12 @@ typedef struct
 	char name[512];
 
 	bool newCapmt;
-	bool recordUse;
-	bool liveUse;
-	u64 tpid;
+	bool multi;
+	bool recordUse[CI_MAX_MULTI];
+	bool liveUse[CI_MAX_MULTI];
+	u16 SID[CI_MAX_MULTI];
+	u64 TP;
+	int ci_use_count;
 	u32 pmtlen;
 	u8 source;
 	u8 camask;
@@ -285,8 +291,8 @@ public:
 	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/, enum CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL,
 		unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
 
-	bool StopRecordCI( u64 tpid, u8 source, u32 calen);
-	bool StopLiveCI( u64 tpid, u8 source, u32 calen);
+	bool StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen);
+	bool StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen);
 	SlotIt FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled);
 	SlotIt GetSlot(unsigned int slot);
 	bool SendDateTime(void);

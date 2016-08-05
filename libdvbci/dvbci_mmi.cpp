@@ -135,11 +135,11 @@ int eDVBCIMMISession::receivedAPDU(const unsigned char *tag, const void *data, i
 					if ((d + 3) > max)
 						break;
 
-					printf("text tag: %02x %02x %02x\n", d[0], d[1], d[2]);
+					//printf("text tag: %02x %02x %02x\n", d[0], d[1], d[2]);
 					d += 3;
 					d += eDVBCISession::parseLengthField(d, textlen);
 
-					printf("%d bytes text", textlen);
+					printf("%d bytes text > ", textlen);
 					if ((d + textlen) > max)
 						break;
 
@@ -159,7 +159,8 @@ int eDVBCIMMISession::receivedAPDU(const unsigned char *tag, const void *data, i
 					{
 						strcpy(listInfo->choice_item[listInfo->choice_nb], str);
 						listInfo->choice_nb++;
-						printf("%d. %s\n", listInfo->choice_nb, listInfo->choice_item[listInfo->choice_nb - 1]);
+						printf("%d. ", listInfo->choice_nb);
+						//printf("%s\n", listInfo->choice_item[listInfo->choice_nb - 1]);
 					}
 					while (textlen--)
 						printf("%c", *d++);
@@ -234,6 +235,8 @@ int eDVBCIMMISession::doAction()
 
 int eDVBCIMMISession::stopMMI()
 {
+	printf("%s -> %s\n", FILENAME, __func__);
+
 	unsigned char tag[] = {0x9f, 0x88, 0x00};
 	unsigned char data[] = {0x00};
 	sendAPDU(tag, data, 1);
@@ -244,7 +247,7 @@ int eDVBCIMMISession::stopMMI()
 
 int eDVBCIMMISession::answerText(int answer)
 {
-	printf("eDVBCIMMISession::answerText(%d)\n", answer);
+	printf("%s -> %s(%d)\n", FILENAME, __func__, answer);
 
 	unsigned char tag[] = {0x9f, 0x88, 0x0B};
 	unsigned char data[] = {0x00};
@@ -256,7 +259,7 @@ int eDVBCIMMISession::answerText(int answer)
 
 int eDVBCIMMISession::answerEnq(char * answer, int len)
 {
-	printf("eDVBCIMMISession::answerEnq(%d bytes)\n", len);
+	printf("%s -> %s(%d bytes)\n", FILENAME, __func__, len);
 
 	unsigned char data[len + 1];
 	data[0] = 0x01; // answer ok
@@ -270,7 +273,7 @@ int eDVBCIMMISession::answerEnq(char * answer, int len)
 
 int eDVBCIMMISession::cancelEnq()
 {
-	printf("eDVBCIMMISession::cancelEnq()\n");
+	printf("%s -> %s\n", FILENAME, __func__);
 
 	unsigned char tag[] = {0x9f, 0x88, 0x08};
 	unsigned char data[] = {0x00}; // canceled

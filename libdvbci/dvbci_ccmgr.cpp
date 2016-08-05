@@ -1147,7 +1147,11 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(tSlot *tslot, cons
 	return true;
 }
 
-void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(tSlot *tslot, const uint8_t *data, unsigned int len)
+void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(tSlot *tslot, const uint8_t *data, unsigned int
+#if y_debug
+ len
+#endif
+ )
 {
 	const uint8_t sync_cnf_tag[3] = { 0x9f, 0x90, 0x10 };
 	uint8_t dest[64];
@@ -1337,7 +1341,11 @@ int eDVBCIContentControlManagerSession::doAction()
 
 void eDVBCIContentControlManagerSession::resendKey(tSlot *tslot)
 {
-	if (!tslot->SidBlackListed && (tslot->recordUse || tslot->liveUse))
+	/* Fix me ! no ci* cam with multi decrypt is known
+	 * therefore for now it is OK to use element [0]
+	 * in bool arrays									*/
+	 
+	if (!tslot->SidBlackListed && (tslot->recordUse[0] || tslot->liveUse[0]))
 		descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
 }
 

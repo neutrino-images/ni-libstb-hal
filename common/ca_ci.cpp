@@ -185,6 +185,8 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 
 static bool transmitData(tSlot* slot, unsigned char* d, int len)
 {
+	printf("%s -> %s len(%d)\n", FILENAME, __func__, len);
+
 #ifdef direct_write
 	int res = write(slot->fd, d, len);
 
@@ -196,7 +198,6 @@ static bool transmitData(tSlot* slot, unsigned char* d, int len)
 	}
 #else
 #if y_debug
-	printf("SendData with data (len %d) >\n", len);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", d[i]);
 	printf("\n");
@@ -428,7 +429,7 @@ bool cCA::SendMessage(const CA_MESSAGE *msg)
 
 void cCA::MenuEnter(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
-	printf("%s %s bSlotIndex: %d\n", FILENAME, __FUNCTION__, bSlotIndex);
+	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
 	std::list<tSlot*>::iterator it;
 
@@ -456,7 +457,7 @@ void cCA::MenuEnter(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 
 void cCA::MenuAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint32_t choice)
 {
-	printf("%s %s bSlotIndex: %d choice: %c\n", FILENAME, __FUNCTION__, bSlotIndex, choice);
+	printf("%s -> %s Slot(%d) choice(%d)\n", FILENAME, __func__, bSlotIndex, choice);
 
 	std::list<tSlot*>::iterator it;
 
@@ -472,7 +473,7 @@ void cCA::MenuAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint32_t choice)
 
 void cCA::InputAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint8_t * pBuffer, int nLength)
 {
-	printf("%s %s bSlotIndex: %d\n", FILENAME, __FUNCTION__, bSlotIndex);
+	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
 	std::list<tSlot*>::iterator it;
 
@@ -489,7 +490,8 @@ void cCA::InputAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint8_t * pBuffer,
 
 void cCA::MenuClose(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
-	printf("%s %s bSlotIndex: %d\n", FILENAME, __FUNCTION__, bSlotIndex);
+	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
+
 	std::list<tSlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -505,13 +507,13 @@ void cCA::MenuClose(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 
 uint32_t cCA::GetNumberCISlots(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	return num_slots;
 }
 
 uint32_t cCA::GetNumberSmartCardSlots(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	return 0;
 }
 
@@ -545,6 +547,8 @@ bool cCA::ModulePresent(enum CA_SLOT_TYPE, uint32_t slot)
 
 void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 {
+	printf("%s -> %s\n", FILENAME, __func__);
+
 	std::list<tSlot*>::iterator it;
 	bool haveFound = false;
 
@@ -585,9 +589,15 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->cam_caids.clear();
 
 		(*it)->newCapmt = false;
-		(*it)->recordUse = false;
-		(*it)->liveUse = false;
-		(*it)->tpid = 0;
+		(*it)->multi = false;
+		for (int j = 0; j < CI_MAX_MULTI; j++)
+		{
+			(*it)->SID[j] = 0;
+			(*it)->recordUse[j] = false;
+			(*it)->liveUse[j] = false;
+		}
+		(*it)->TP = 0;
+		(*it)->ci_use_count = 0;
 		(*it)->pmtlen = 0;
 		(*it)->source = TUNER_A;
 		(*it)->camask = 0;
@@ -620,37 +630,43 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 	return 0;
 }
 
-bool cCA::StopLiveCI( u64 tpid, u8 source, u32 calen)
+bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if ((*it)->liveUse && (*it)->tpid == tpid && (*it)->source == source && !calen)
+		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
-			(*it)->liveUse = false;
-			return true;
+			if ((*it)->liveUse[j] && (*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source && !calen)
+			{
+				(*it)->liveUse[j] = false;
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
-bool cCA::StopRecordCI( u64 tpid, u8 source, u32 calen)
+bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if ((*it)->recordUse && (*it)->tpid == tpid && (*it)->source == source && !calen)
+		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
-			(*it)->recordUse = false;
-			return true;
+			if ((*it)->recordUse[j] && (*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source && !calen)
+			{
+				(*it)->recordUse[j] = false;
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
-SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled)
+SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned char scrambled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	std::list<tSlot*>::iterator it;
@@ -661,8 +677,14 @@ SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned 
 	{
 		if (!scrambled) { continue; }
 
-		if ((*it)->tpid == tpid && (*it)->source == source)
-			return it;
+		for (int j = 0; j < CI_MAX_MULTI; j++)
+		{
+			if ((*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source)
+				return it;
+		}
+
+		if ((*it)->multi && (*it)->TP == TP && (*it)->source == source && (*it)->ci_use_count < CI_MAX_MULTI)
+				return it;
 	}
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -672,13 +694,13 @@ SlotIt cCA::FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned 
 		if ((*it)->bsids.size())
 		{
 			for (i = 0; i < (*it)->bsids.size(); i++)
-				if ((*it)->bsids[i] == sid) {goto OUT;}
+				if ((*it)->bsids[i] == SID) {goto OUT;}
 			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
 		}
 
-		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->recordUse)
+		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->recordUse[0])
 		{
-			if (!checkLiveSlot || (!(*it)->liveUse || ((*it)->liveUse && (*it)->tpid == tpid)))
+			if (!checkLiveSlot || (!(*it)->liveUse[0] || ((*it)->liveUse[0] && (*it)->TP == TP && (*it)->SID[0] == SID)))
 			{
 #if x_debug
 				printf("Slot Caids: %d > ", (*it)->cam_caids.size());
@@ -710,16 +732,19 @@ OUT:
 }
 
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
-bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
+bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
 	u16 SID = (u16)(tpid & 0xFFFF);
+	u64 TP = tpid >> 16;
 	unsigned int i = 0;
+	bool sid_found = false;
+	//bool recordUse_found = false;
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
 #if x_debug
-	printf("TPID: %llX\n", tpid);
+	printf("TP: %llX\n", TP);
 	printf("SID: %04X\n", SID);
-	printf("SOURCE_DEMUX: %X\n", source_demux);
+	printf("SOURCE: %X\n", source);
 	printf("CA_MASK: %X\n", camask);
 	printf("CALEN: %d\n", calen);
 	printf("Scrambled: %d\n", scrambled);
@@ -730,63 +755,104 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 	{
 		if (mode)
 		{
-			if (StopRecordCI(tpid, source_demux, calen))
+			if (StopRecordCI(TP, SID, source, calen))
 				printf("Record CI set free\n");
 		}
 		else
 		{
-			if (StopLiveCI(tpid, source_demux, calen))
+			if (StopLiveCI(TP, SID, source, calen))
 				printf("Live CI set free\n");
 		}
 	}
 
 	if (calen == 0)
 		return true;
-	SlotIt It = FindFreeSlot(tpid, source_demux, SID, cm, scrambled);
+	SlotIt It = FindFreeSlot(TP, source, SID, cm, scrambled);
 
 	if ((*It))
 	{
 		printf("Slot: %d\n", (*It)->slot);
-
-		if (enabled)
-		{
-			if (mode)
-			{
-				if(!checkLiveSlot)
-					(*It)->liveUse = false;
-				(*It)->recordUse = true;
-			}
-			else if (!(*It)->recordUse)
-				(*It)->liveUse = true;
-		}
-
+/* outcommented, it seems to be not necessary */
+#if 0
 		SlotIt It2 = GetSlot(!(*It)->slot);
 
 		if ((*It2) && ((*It)->hasCCManager || (*It2)->hasCCManager))
 		{
-			if (source_demux == (*It2)->source)
+			if (source == (*It2)->source)
 			{
-				if ((*It2)->recordUse)
+				for (int j = 0; j < CI_MAX_MULTI; j++)
+				{
+					if ((*It2)->recordUse[j])
+						recordUse_found = true;
+				}
+
+				if (recordUse_found)
 					(*It)->SidBlackListed = true;
 				else
 				{
 					SendNullPMT((tSlot*)(*It2));
-					(*It2)->tpid = 0;
 					(*It2)->scrambled = 0;
+					(*It2)->TP = 0;
+					for (int j = 0; j < CI_MAX_MULTI; j++)
+						(*It2)->SID[j] = 0;
 				}
 			}
 		}
-
-		if ((*It)->tpid != tpid || (*It)->source != source_demux)
+#endif
+		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
-			(*It)->tpid = tpid;
-			(*It)->source = source_demux;
+			if ((*It)->SID[j] == SID)
+				sid_found = true;
+		}
+
+		if ((*It)->multi && (*It)->TP == TP && (*It)->source == source && !sid_found && (*It)->ci_use_count < CI_MAX_MULTI)
+		{
+			int pos = 3;
+			
+			(*It)->SID[(*It)->ci_use_count] = SID;
+			(*It)->ci_use_count++;
+
+			if (!(cabuf[pos] & 0x80))
+				pos +=1;
+			else
+				pos += ((cabuf[pos] & 0x7F) + 1);
+
+			(*It)->pmtlen = calen;
+			for (i = 0; i < calen; i++)
+				(*It)->pmtdata[i] = cabuf[i];
+			(*It)->pmtdata[pos] = 0x04;		// CAPMT_ADD
+			(*It)->newCapmt = true;
+		}
+
+		else if ((*It)->TP != TP || !sid_found || (*It)->source != source)
+		{
+			for (int j = 0; j < CI_MAX_MULTI; j++)
+				(*It)->SID[j] = 0;
+			(*It)->SID[0] = SID;
+			(*It)->ci_use_count = 1;
+			(*It)->TP = TP;
+			(*It)->source = source;
 			(*It)->pmtlen = calen;
 			for (i = 0; i < calen; i++)
 				(*It)->pmtdata[i] = cabuf[i];
 			(*It)->newCapmt = true;
 		} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
 			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
+
+		for (int j = 0; j < CI_MAX_MULTI; j++)
+		{
+			if (enabled && (*It)->SID[j] == SID)
+			{
+				if (mode)
+				{
+					if(!checkLiveSlot)
+						(*It)->liveUse[j] = false;
+					(*It)->recordUse[j] = true;
+				}
+				else if (!(*It)->recordUse[j])
+					(*It)->liveUse[j] = true;
+			}
+		}
 	}
 	else
 	{
@@ -812,7 +878,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source_demux, u8 camask, const unsigned char * 
 
 cCA::cCA(int Slots)
 {
-	printf("%s %s %d\n", FILENAME, __FUNCTION__, Slots);
+	printf("%s -> %s %d\n", FILENAME, __func__, Slots);
 
 	int fd, i;
 	char filename[128];
@@ -845,9 +911,15 @@ cCA::cCA(int Slots)
 		slot->mmiOpened = false;
 
 		slot->newCapmt = false;
-		slot->recordUse = false;
-		slot->liveUse = false;
-		slot->tpid = 0;
+		slot->multi = false;
+		for (int j = 0; j < CI_MAX_MULTI; j++)
+		{
+			slot->SID[j] = 0;
+			slot->recordUse[j] = false;
+			slot->liveUse[j] = false;
+		}
+		slot->TP = 0;
+		slot->ci_use_count = 0;
 		slot->pmtlen = 0;
 		slot->source = TUNER_A;
 		slot->camask = 0;
@@ -880,7 +952,7 @@ cCA::cCA(int Slots)
 
 cCA::~cCA()
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 }
 
 static cCA* pcCAInstance = NULL;
@@ -899,7 +971,7 @@ cCA * cCA::GetInstance()
 
 cCA::cCA(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 }
 
 void cCA::setSource(tSlot* slot)
@@ -1160,9 +1232,15 @@ void cCA::slot_pollthread(void *c)
 						slot->cam_caids.clear();
 
 						slot->newCapmt = false;
-						slot->recordUse = false;
-						slot->liveUse = false;
-						slot->tpid = 0;
+						slot->multi = false;
+						for (int j = 0; j < CI_MAX_MULTI; j++)
+						{
+							slot->SID[j] = 0;
+							slot->recordUse[j] = false;
+							slot->liveUse[j] = false;
+						}
+						slot->TP = 0;
+						slot->ci_use_count = 0;
 						slot->pmtlen = 0;
 						slot->source = TUNER_A;
 						slot->camask = 0;
@@ -1237,13 +1315,13 @@ cCA *CA = cCA::GetInstance();
 
 bool cCA::SendCaPMT(tSlot* slot)
 {
-	printf("%s:%s\n", FILENAME, __func__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	if ((slot->fd > 0) && (slot->camIsReady))
 	{
 		if (slot->hasCAManager)
 		{
-#if x_debug
-			printf("buffered capmt(0x%X): > \n", slot->pmtlen);
+			printf("buffered capmt(%d): > \n", slot->pmtlen);
+#if y_debug
 			for (unsigned int i = 0; i < slot->pmtlen; i++)
 				printf("%02X ", slot->pmtdata[i]);
 			printf("\n");
@@ -1263,42 +1341,42 @@ bool cCA::SendCaPMT(tSlot* slot)
 
 bool cCA::Init(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	return true;
 }
 
 bool cCA::SendDateTime(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	return false;
 }
 
 bool cCA::Start(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 	return true;
 }
 
 void cCA::Stop(void)
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __func__);
 }
 
 void cCA::Ready(bool p)
 {
-	printf("%s %s param:%d\n", FILENAME, __FUNCTION__, (int)p);
+	printf("%s -> %s param:%d\n", FILENAME, __func__, (int)p);
 }
 
 void cCA::SetInitMask(enum CA_INIT_MASK p)
 {
-	printf("%s %s param:%d\n", FILENAME, __FUNCTION__, (int)p);
+	printf("%s -> %s param:%d\n", FILENAME, __func__, (int)p);
 }
 
 SlotIt cCA::GetSlot(unsigned int slot)
 {
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
-		if ((*it)->slot == slot && (*it)->ccmgr_ready && (*it)->hasCCManager && (*it)->scrambled)
+		if ((*it)->slot == slot && (*it)->ccmgr_ready && (*it)->hasCCManager)
 			return it;
 	return it;
 }
@@ -1327,10 +1405,15 @@ bool cCA::CheckCerts(void)
 bool cCA::checkChannelID(u64 chanID)
 {
 	std::list<tSlot*>::iterator it;
+	u16 SID = (u16)(chanID & 0xFFFF);
+	u64 TP = chanID >> 16;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if ((*it)->tpid == chanID && !(*it)->SidBlackListed)
-			return true;
+		for (int j = 0; j < CI_MAX_MULTI; j++)
+		{
+			if ((*it)->TP == TP && (*it)->SID[j] == SID && !(*it)->SidBlackListed)
+				return true;
+		}
 	}
 	return false;
 }

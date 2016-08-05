@@ -107,7 +107,7 @@ void eDVBCISession::recvCreateSessionResponse(const unsigned char *data)
 	status = data[0];
 	state = stateStarted;
 	action = 1;
-	printf("create Session Response, status %x\n", status);
+	printf("%s -> %s status(%x)\n", FILENAME, __func__, status);
 }
 
 void eDVBCISession::recvCloseSessionRequest(const unsigned char *data)
@@ -115,11 +115,13 @@ void eDVBCISession::recvCloseSessionRequest(const unsigned char *data)
 	status = data[0];
 	state = stateInDeletion;
 	action = 1;
-	printf("close Session Request\n");
+	printf("%s -> %s\n", FILENAME, __func__);
 }
 
 void eDVBCISession::deleteSessions(const tSlot *slot)
 {
+	printf("%s -> %s\n", FILENAME, __func__);
+
 	for (unsigned short session_nb = 0; session_nb < SLMS; ++session_nb)
 	{
 		if (sessions[session_nb] && sessions[session_nb]->slot == slot)
@@ -132,11 +134,13 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 	unsigned long tag;
 	unsigned short session_nb;
 
+	printf("%s -> %s\n", FILENAME, __func__);
+
 	for (session_nb = 1; session_nb < SLMS; ++session_nb)
 		if (!sessions[session_nb - 1])
 			break;
 
-	printf("use session_nb = %d\n", session_nb);
+	printf("%s -> use session_nb = %d\n", FILENAME, session_nb);
 	if (session_nb == SLMS)
 	{
 		status = 0xF3;
@@ -148,7 +152,7 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 	tag |= resource_identifier[2] << 8;
 	tag |= resource_identifier[3];
 
-	printf("Tag: %08lx\n", tag);
+	printf("Tag: %08lx > ", tag);
 
 	switch (tag)
 	{
@@ -170,14 +174,14 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 			printf("DATE-TIME\n");
 			break;
 		case 0x00400041:
+			printf("MMI\n");
 			sessions[session_nb - 1] = new eDVBCIMMISession(slot);
-			printf("MMI - create session\n");
 			break;
 		if (cCA::GetInstance()->CheckCerts())
 		{
 			case 0x008c1001:
-				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				printf("CC MANAGER\n");
+				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				break;
 		}
 		case 0x00100041:
@@ -197,7 +201,7 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 		return NULL;
 	}
 
-	printf("new session nb %d %p\n", session_nb, sessions[session_nb - 1]);
+	printf("%s -> new session nb %d %p\n", FILENAME, session_nb, sessions[session_nb - 1]);
 	sessions[session_nb - 1]->session_nb = session_nb;
 
 	if (sessions[session_nb - 1])
@@ -235,7 +239,6 @@ int eDVBCISession::pollAll()
 
 			if (r)
 			{
-				printf("%s <\n", __func__);
 				return 1;
 			}
 		}

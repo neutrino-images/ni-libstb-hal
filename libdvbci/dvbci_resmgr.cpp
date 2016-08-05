@@ -7,22 +7,25 @@ static const char * FILENAME = "[dvbci_resmgr]";
 int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
 	printf("SESSION(%d)RES %02x %02x %02x (len = %d): \n", session_nb, tag[0], tag[1], tag[2], len);
-	for (int i = 0; i < len; i++)
-		printf("%02x ", ((const unsigned char*)data)[i]);
-	printf("\n");
+	if (len)
+	{
+		for (int i = 0; i < len; i++)
+			printf("%02x ", ((const unsigned char*)data)[i]);
+		printf("\n");
+	}
 	if ((tag[0] == 0x9f) && (tag[1] == 0x80))
 	{
 		switch (tag[2])
 		{
 			case 0x10:  // profile enquiry
-				printf("cam fragt was ich kann.\n");
+				printf("%s -> cam asks what I'm able to\n", FILENAME);
 				state = stateProfileEnquiry;
 				return 1;
 				break;
 			case 0x11: // Tprofile
-				printf("mein cam kann: ");
+				printf("%s -> my cam can do: ", FILENAME);
 				if (!len)
-					printf("nichts\n");
+					printf("nothing");
 				else
 					for (int i = 0; i < len; i++)
 						printf("%02x ", ((const unsigned char*)data)[i]);

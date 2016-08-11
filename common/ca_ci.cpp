@@ -682,6 +682,11 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 			if ((*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source)
 				return it;
 		}
+	}
+
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+	{
+		if (!scrambled) { continue; }
 
 		if ((*it)->multi && (*it)->TP == TP && (*it)->source == source && (*it)->ci_use_count < CI_MAX_MULTI)
 				return it;
@@ -691,16 +696,31 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 	{
 		if (!scrambled) { continue; }
 
+		bool recordUse_found = false;
+		bool liveUse_found = false;
+		int found_count = 0;
+
 		if ((*it)->bsids.size())
 		{
 			for (i = 0; i < (*it)->bsids.size(); i++)
-				if ((*it)->bsids[i] == SID) {goto OUT;}
+				if ((*it)->bsids[i] == SID) {(*it)->SidBlackListed = true; break;}
 			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
 		}
 
-		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !(*it)->recordUse[0])
+		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
-			if (!checkLiveSlot || (!(*it)->liveUse[0] || ((*it)->liveUse[0] && (*it)->TP == TP && (*it)->SID[0] == SID)))
+			if ((*it)->recordUse[j])
+				recordUse_found = true;
+			if ((*it)->liveUse[j])
+			{
+				liveUse_found = true;
+				found_count = j;
+			}
+		}
+
+		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !recordUse_found)
+		{
+			if (!checkLiveSlot || (!liveUse_found || ((*it)->liveUse[found_count] && (*it)->TP == TP && (*it)->SID[found_count] == SID)))
 			{
 #if x_debug
 				printf("Slot Caids: %d > ", (*it)->cam_caids.size());
@@ -708,25 +728,24 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 					printf("%04x ", (*it)->cam_caids[i]);
 				printf("\n");
 #endif
-				(*it)->scrambled = scrambled;
-
 				for (i = 0; i < (*it)->cam_caids.size(); i++)
 				{
 					caIt = camap.find((*it)->cam_caids[i]);
 					if (caIt != camap.end())
 					{
 						printf("Found: %04x\n", *caIt);
+						(*it)->scrambled = scrambled;
 						return it;
 					}
 					else
 					{
+						printf("Not Found\n");
 						(*it)->scrambled = 0;
+						return it;
 					}
 				}
 			}
 		}
-OUT:
-		usleep(0);
 	}
 	return it;
 }
@@ -839,18 +858,21 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 		} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
 			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
 
-		for (int j = 0; j < CI_MAX_MULTI; j++)
+		if ((*It)->scrambled && !(*It)->SidBlackListed)
 		{
-			if (enabled && (*It)->SID[j] == SID)
+			for (int j = 0; j < CI_MAX_MULTI; j++)
 			{
-				if (mode)
+				if (enabled && (*It)->SID[j] == SID)
 				{
-					if(!checkLiveSlot)
-						(*It)->liveUse[j] = false;
-					(*It)->recordUse[j] = true;
+					if (mode)
+					{
+						if(!checkLiveSlot)
+							(*It)->liveUse[j] = false;
+						(*It)->recordUse[j] = true;
+					}
+					else if (!(*It)->recordUse[j])
+						(*It)->liveUse[j] = true;
 				}
-				else if (!(*It)->recordUse[j])
-					(*It)->liveUse[j] = true;
 			}
 		}
 	}
@@ -959,10 +981,10 @@ static cCA* pcCAInstance = NULL;
 
 cCA * cCA::GetInstance()
 {
-	printf("%s -> %s\n", FILENAME, __FUNCTION__);
-
 	if (pcCAInstance == NULL)
 	{
+		printf("%s -> %s\n", FILENAME, __FUNCTION__);
+
 		hw_caps_t *caps = get_hwcaps();
 		pcCAInstance = new cCA(caps->has_CI);
 	}
@@ -1301,11 +1323,11 @@ void cCA::slot_pollthread(void *c)
 			/* not necessary: the arrived capmt will be automaticly send */ 
 			//SendCaPMT(slot);
 		}
-		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt && !slot->SidBlackListed)
+		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt)
 		{
 			SendCaPMT(slot);
 			slot->newCapmt = false;
-			if (slot->ccmgr_ready && slot->hasCCManager && slot->scrambled)
+			if (slot->ccmgr_ready && slot->hasCCManager && slot->scrambled && !slot->SidBlackListed)
 				slot->ccmgrSession->resendKey(slot);
 		}
 	}
@@ -1411,7 +1433,7 @@ bool cCA::checkChannelID(u64 chanID)
 	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
-			if ((*it)->TP == TP && (*it)->SID[j] == SID && !(*it)->SidBlackListed)
+			if ((*it)->TP == TP && (*it)->SID[j] == SID && !(*it)->SidBlackListed && (*it)->scrambled)
 				return true;
 		}
 	}

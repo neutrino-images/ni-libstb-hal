@@ -27,7 +27,7 @@
 #define T_DATA_MORE         0xA1	// convey data from higher      constructed h<->m
 
 /* max multi decrypt per ci-cam */
-#define CI_MAX_MULTI			4
+#define CI_MAX_MULTI			5
 
 enum CA_INIT_MASK {
 	CA_INIT_SC = 1,

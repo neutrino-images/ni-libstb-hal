@@ -672,11 +672,22 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 	std::list<tSlot*>::iterator it;
 	ca_map_iterator_t caIt;
 	unsigned int i;
+	int count = 0;
+	int loop_count = 0;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if (!scrambled) { continue; }
 
+		if ((*it)->init)
+			count++;
+	}
+
+	if (!count || !scrambled)
+		return it;
+
+	for (it = slot_data.begin(); it != slot_data.end(); ++it)
+	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
 			if ((*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source)
@@ -686,19 +697,16 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if (!scrambled) { continue; }
-
 		if ((*it)->multi && (*it)->TP == TP && (*it)->source == source && (*it)->ci_use_count < CI_MAX_MULTI)
 				return it;
 	}
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if (!scrambled) { continue; }
-
 		bool recordUse_found = false;
 		bool liveUse_found = false;
 		int found_count = 0;
+		loop_count++;
 
 		if ((*it)->bsids.size())
 		{
@@ -728,20 +736,21 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 					printf("%04x ", (*it)->cam_caids[i]);
 				printf("\n");
 #endif
+				(*it)->scrambled = scrambled;
+
 				for (i = 0; i < (*it)->cam_caids.size(); i++)
 				{
 					caIt = camap.find((*it)->cam_caids[i]);
 					if (caIt != camap.end())
 					{
 						printf("Found: %04x\n", *caIt);
-						(*it)->scrambled = scrambled;
 						return it;
 					}
 					else
 					{
-						printf("Not Found\n");
-						(*it)->scrambled = 0;
-						return it;
+						//printf("Not Found\n");
+						if (loop_count == count)
+							return it;
 					}
 				}
 			}
@@ -757,7 +766,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 	u64 TP = tpid >> 16;
 	unsigned int i = 0;
 	bool sid_found = false;
-	//bool recordUse_found = false;
+	bool recordUse_found = false;
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (!num_slots) return true;	/* stb's without ci-slots */
 #if x_debug
@@ -791,13 +800,12 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 	if ((*It))
 	{
 		printf("Slot: %d\n", (*It)->slot);
-/* outcommented, it seems to be not necessary */
-#if 0
-		SlotIt It2 = GetSlot(!(*It)->slot);
 
-		if ((*It2) && ((*It)->hasCCManager || (*It2)->hasCCManager))
+		SlotIt It2 = GetSlot(!(*It)->slot);
+		/* only if 2nd CI is present */
+		if ((*It2))
 		{
-			if (source == (*It2)->source)
+			if (source == (*It2)->source && (*It2)->TP)
 			{
 				for (int j = 0; j < CI_MAX_MULTI; j++)
 				{
@@ -806,7 +814,10 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 
 				if (recordUse_found)
-					(*It)->SidBlackListed = true;
+				{
+					if ((*It)->hasCCManager && (*It2)->hasCCManager)
+						(*It)->SidBlackListed = true;
+				}
 				else
 				{
 					SendNullPMT((tSlot*)(*It2));
@@ -817,7 +828,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 			}
 		}
-#endif
+		/* end 2nd CI present */
 		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
 			if ((*It)->SID[j] == SID)
@@ -855,8 +866,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			for (i = 0; i < calen; i++)
 				(*It)->pmtdata[i] = cabuf[i];
 			(*It)->newCapmt = true;
-		} else if ((*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
-			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
+		}
 
 		if ((*It)->scrambled && !(*It)->SidBlackListed)
 		{
@@ -875,6 +885,10 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 			}
 		}
+
+		if (!(*It)->newCapmt && (*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
+			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
+
 	}
 	else
 	{
@@ -1398,7 +1412,7 @@ SlotIt cCA::GetSlot(unsigned int slot)
 {
 	std::list<tSlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
-		if ((*it)->slot == slot && (*it)->ccmgr_ready && (*it)->hasCCManager)
+		if ((*it)->slot == slot && (*it)->init)
 			return it;
 	return it;
 }

@@ -703,6 +703,7 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
+		bool tmpSidBlackListed = false;
 		bool recordUse_found = false;
 		bool liveUse_found = false;
 		int found_count = 0;
@@ -711,7 +712,7 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 		if ((*it)->bsids.size())
 		{
 			for (i = 0; i < (*it)->bsids.size(); i++)
-				if ((*it)->bsids[i] == SID) {(*it)->SidBlackListed = true; break;}
+				if ((*it)->bsids[i] == SID) {tmpSidBlackListed = true; break;}
 			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
 		}
 
@@ -728,6 +729,23 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 
 		if ((*it)->camIsReady && (*it)->hasCAManager && (*it)->hasAppManager && !recordUse_found)
 		{
+
+			if (tmpSidBlackListed)
+			{
+				if ((*it)->source == source && (!checkLiveSlot || !liveUse_found))
+				{
+					SendNullPMT((tSlot*)(*it));
+					(*it)->SidBlackListed = true;
+					for (int j = 0; j < CI_MAX_MULTI; j++)
+						(*it)->SID[j] = 0;
+					(*it)->TP = 0;
+					(*it)->scrambled = 0;
+					continue;
+				}
+				else
+					continue;
+			}
+
 			if (!checkLiveSlot || (!liveUse_found || ((*it)->liveUse[found_count] && (*it)->TP == TP && (*it)->SID[found_count] == SID)))
 			{
 #if x_debug
@@ -736,21 +754,20 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 					printf("%04x ", (*it)->cam_caids[i]);
 				printf("\n");
 #endif
-				(*it)->scrambled = scrambled;
-
 				for (i = 0; i < (*it)->cam_caids.size(); i++)
 				{
 					caIt = camap.find((*it)->cam_caids[i]);
 					if (caIt != camap.end())
 					{
 						printf("Found: %04x\n", *caIt);
+						(*it)->scrambled = scrambled;
 						return it;
 					}
 					else
 					{
 						//printf("Not Found\n");
 						if (loop_count == count)
-							return it;
+							(*it)->scrambled = 0;
 					}
 				}
 			}

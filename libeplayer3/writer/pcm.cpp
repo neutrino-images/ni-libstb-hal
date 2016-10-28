@@ -242,27 +242,36 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 		restart_audio_resampling = false;
 		initialHeader = true;
 
+	if (swr) {
 		swr_free(&swr);
+		swr = NULL;
+		}
+	if (decoded_frame) {
+		av_frame_free(&decoded_frame);
+		decoded_frame = NULL;
+		}
 
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
-		if (!codec) {
-			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
-			return false;
+	if (!codec) {
+		fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
+		return false;
 		}
 		avcodec_close(c);
-		if (avcodec_open2(c, codec, NULL)) {
-			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
-			return false;
+	if (avcodec_open2(c, codec, NULL)) {
+		fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
+		return false;
 		}
 	}
 
 	if (!swr) {
-		int rates[] = { 48000, 96000, 192000, 44100, 88200, 176400, 0 };
-		int *rate = rates;
 		int in_rate = c->sample_rate;
-		while (*rate && ((*rate / in_rate) * in_rate != *rate) && (in_rate / *rate) * *rate != in_rate)
-			rate++;
-		out_sample_rate = *rate ? *rate : 44100;
+		// rates in descending order
+		int rates[] = {192000, 176400, 96000, 88200, 48000, 44100, 0};
+		int i = 0;
+		// find the next equal or smallest rate
+		while (rates[i] && in_rate < rates[i])
+		i++;
+		out_sample_rate = rates[i] ? rates[i] : 44100;
 		out_channels = c->channels;
 		if (c->channel_layout == 0) {
 			// FIXME -- need to guess, looks pretty much like a bug in the FFMPEG WMA decoder
@@ -304,9 +313,16 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 
 	unsigned int packet_size = packet->size;
 	while (packet_size > 0 || (!packet_size && !packet->data)) {
-		av_frame_unref(decoded_frame);
-
 		int got_frame = 0;
+
+        if (!decoded_frame) {
+            if (!(decoded_frame = av_frame_alloc())) {
+                fprintf(stderr, "out of memory\n");
+                exit(1);
+            }
+        } else
+            av_frame_unref(decoded_frame);
+
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {
 			restart_audio_resampling = true;

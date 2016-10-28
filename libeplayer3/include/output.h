@@ -49,7 +49,7 @@ class Output
 		int audiofd;
 		Writer *videoWriter, *audioWriter;
 		Mutex audioMutex, videoMutex;
-		AVStream *audioStream, *videoStream;
+		Track *audioTrack, *videoTrack;
 		Player *player;
 	public:
 		Output();
@@ -70,8 +70,8 @@ class Output
 		bool ClearVideo();
 		bool GetPts(int64_t &pts);
 		bool GetFrameCount(int64_t &framecount);
-		bool SwitchAudio(AVStream *stream);
-		bool SwitchVideo(AVStream *stream);
+		bool SwitchAudio(Track *track);
+		bool SwitchVideo(Track *track);
 		bool Write(AVStream *stream, AVPacket *packet, int64_t Pts);
 };
 

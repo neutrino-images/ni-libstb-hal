@@ -66,20 +66,23 @@ bool Writer::Write(AVPacket * /* packet */, int64_t /* pts */)
 
 static Writer writer __attribute__ ((init_priority (300)));
 
-Writer *Writer::GetWriter(enum AVCodecID id, enum AVMediaType codec_type)
+Writer *Writer::GetWriter(enum AVCodecID id, enum AVMediaType codec_type, int track_type)
 {
-	std::map<enum AVCodecID,Writer*>::iterator it = writers.find(id);
+        fprintf(stderr, "GETWRITER %d %d %d", id, codec_type, track_type);
+	if (track_type != 6) { // hack for ACC resampling
+		std::map<enum AVCodecID,Writer*>::iterator it = writers.find(id);
 	if (it != writers.end())
 		return it->second;
+	}
 	switch (codec_type) {
 		case AVMEDIA_TYPE_AUDIO:
 			if (id == AV_CODEC_ID_INJECTPCM) // should not happen
 				break;
-			return GetWriter(AV_CODEC_ID_INJECTPCM, codec_type);
+            return GetWriter(AV_CODEC_ID_INJECTPCM, codec_type, 100);
 		case AVMEDIA_TYPE_VIDEO:
 			if (id == AV_CODEC_ID_MPEG2TS) // should not happen
 				break;
-			return GetWriter(AV_CODEC_ID_MPEG2TS, codec_type);
+            return GetWriter(AV_CODEC_ID_MPEG2TS, codec_type, 100);
 		default:
 			break;
 	}

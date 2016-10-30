@@ -22,6 +22,7 @@
 	TODO:	AV-Sync code is "experimental" at best
 */
 
+#include "config.h"
 #include <vector>
 
 #include <sys/types.h>

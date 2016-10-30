@@ -23,6 +23,7 @@
  * TODO: buffer handling surely needs some locking...
  */
 
+#include "config.h"
 #include <unistd.h>
 #include <cstring>
 #include <cstdio>
@@ -38,6 +39,13 @@ extern "C" {
 #define INBUF_SIZE 0x8000
 /* my own buf 256k */
 #define DMX_BUF_SZ 0x20000
+
+#if USE_OPENGL
+#define VDEC_PIXFMT AV_PIX_FMT_RGB32
+#endif
+#if USE_CLUTTER
+#define VDEC_PIXFMT AV_PIX_FMT_BGR24
+#endif
 
 #include "video_lib.h"
 #include "dmx_hal.h"
@@ -294,9 +302,9 @@ void cVideo::ShowPicture(const char *fname)
 	if (avpkt.size > len)
 		lt_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
 	if (got_frame) {
-		unsigned int need = av_image_get_buffer_size(AV_PIX_FMT_RGB32, c->width, c->height, 1);
+		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
-							    c->width, c->height, AV_PIX_FMT_RGB32,
+							    c->width, c->height, VDEC_PIXFMT,
 							    SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
 			lt_info("%s: ERROR setting up SWS context\n", __func__);
@@ -305,7 +313,7 @@ void cVideo::ShowPicture(const char *fname)
 			SWFramebuffer *f = &buffers[buf_in];
 			if (f->size() < need)
 				f->resize(need);
-			av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], AV_PIX_FMT_RGB32,
+			av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
 					c->width, c->height, 1);
 			sws_scale(convert, frame->data, frame->linesize, 0, c->height,
 					rgbframe->data, rgbframe->linesize);
@@ -538,10 +546,10 @@ void cVideo::run(void)
 			lt_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
 		still_m.lock();
 		if (got_frame && ! stillpicture) {
-			unsigned int need = av_image_get_buffer_size(AV_PIX_FMT_RGB32, c->width, c->height, 1);
+			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
 						       c->width, c->height, c->pix_fmt,
-						       c->width, c->height, AV_PIX_FMT_RGB32,
+						       c->width, c->height, VDEC_PIXFMT,
 						       SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
 				lt_info("%s: ERROR setting up SWS context\n", __func__);
@@ -550,7 +558,7 @@ void cVideo::run(void)
 				SWFramebuffer *f = &buffers[buf_in];
 				if (f->size() < need)
 					f->resize(need);
-				av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], AV_PIX_FMT_RGB32,
+				av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
 						c->width, c->height, 1);
 				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
 						rgbframe->data, rgbframe->linesize);

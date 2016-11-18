@@ -309,7 +309,7 @@ void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *num
 	std::vector<Track> tracks = player->manager.getAudioTracks();
 	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
 		pids[i] = it->pid;
-		ac3flags[i] = it->ac3flags;
+		ac3flags[i] = (it->ac3flags > 2) ? 1 : 0;
 		language[i] = it->title;
 		i++;
 	}

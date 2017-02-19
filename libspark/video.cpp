@@ -1190,7 +1190,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 			lt_info("%s: primary display pane not found in /proc/bpa2\n", __func__);
 		}
 
-		mfd = open("/dev/mem", O_RDWR);
+		mfd = open("/dev/mem", O_RDWR | O_CLOEXEC);
 		if (mfd < 0) {
 			lt_info("%s: cannot open open /dev/mem (%m)\n", __func__);
 			goto error_cleanup;

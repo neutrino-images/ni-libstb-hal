@@ -155,5 +155,6 @@ hw_caps_t *get_hwcaps(void)
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
 	}
+	strcpy(caps.boxarch,caps.boxname);
 	return &caps;
 }

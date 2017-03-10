@@ -283,5 +283,6 @@ hw_caps_t *get_hwcaps(void)
 	else
 		strcpy(caps.boxname, "(unknown model)");
 
+	strcpy(caps.boxarch,caps.boxname);
 	return &caps;
 }

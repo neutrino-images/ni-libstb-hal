@@ -50,5 +50,6 @@ void shutdown_td_api()
 	lt_info("%s, initialized = %d\n", __func__, (int)initialized);
 	if (glfb)
 		delete glfb;
+	glfb = NULL;
 	initialized = false;
 }

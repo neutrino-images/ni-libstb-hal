@@ -30,11 +30,16 @@ typedef struct hw_caps
 	int has_YUV_cinch;
 	int can_shutdown;
 	int can_cec;
+	int can_ar_14_9;	/* video drivers have 14:9 aspect ratio mode */
+	int can_ps_14_9;	/* video drivers have 14:9 panscan mode */
+	int force_tuner_2G;	/* force DVB-S2 even though driver may not advertise it */
 	display_type_t display_type;
 	int display_xres;	/* x resolution or chars per line */
 	int display_yres;
+	int can_set_display_brightness;
 	char boxvendor[64];
 	char boxname[64];
+	char boxarch[64];
 	int boxtype;
 	int has_CI;
 } hw_caps_t;

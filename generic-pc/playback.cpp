@@ -18,7 +18,7 @@ bool cPlayback::Start(std::string filename, std::string headers)
 	return Start((char*) filename.c_str(),0,0,0,0,0, headers);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers)
 {
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d duration=%i\n",
 		FILENAME, __func__, filename, vpid, vtype, apid, ac3, duration);
@@ -129,6 +129,11 @@ void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> 
 
 void cPlayback::SetTitle(int /*title*/)
 {
+}
+
+uint64_t cPlayback::GetReadCount()
+{
+	return 0;
 }
 
 cPlayback::cPlayback(int /*num*/)

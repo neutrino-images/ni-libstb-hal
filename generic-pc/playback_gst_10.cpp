@@ -72,10 +72,12 @@ static int end_eof = 0;
 
 extern GLFramebuffer *glfb;
 
-gint match_sinktype(GstElement *element, gpointer type)
+gint match_sinktype(const GValue *velement, const gchar *type)
 {
-	return strcmp(g_type_name(G_OBJECT_TYPE(element)), (const char*)type);
+	GstElement *element = GST_ELEMENT_CAST(g_value_get_object(velement));
+	return strcmp(g_type_name(G_OBJECT_TYPE(element)), type);
 }
+
 GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 {
 	gchar * sourceName;
@@ -207,9 +209,13 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 						videoSink = NULL;
 					}
 					children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-					GValue *elem;
-					audioSink = GST_ELEMENT_CAST(gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, elem, (gpointer)"GstDVBAudioSink"));
-					videoSink = GST_ELEMENT_CAST(gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, elem, (gpointer)"GstDVBVideoSink"));
+					GValue r = G_VALUE_INIT;
+					gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink");
+					audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
+					g_value_unset (&r);
+					gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink");
+					videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
+					g_value_unset (&r);
 					gst_iterator_free(children);
 					
 				}	break;

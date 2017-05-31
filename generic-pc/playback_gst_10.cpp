@@ -171,7 +171,7 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 				//FIXME: how shall playback handle this event???
 			}
 			gst_tag_list_free(tags);
-			lt_info_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
+			lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 			break;
 		}
 		
@@ -247,7 +247,7 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 #if 0
 		case GST_MESSAGE_ELEMENT:
 		{
-			if(gst_structure_has_name(gst_message_get_structure(msg), "prepare-xwindow-id")) 
+			if(gst_structure_has_name(gst_message_get_structure(msg), "prepare-window-handle")) 
 			{
 				// set window id
 				gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC (msg)), glfb->getWindowID());

@@ -25,14 +25,21 @@ libgeneric_la_SOURCES = \
 	pwrmngr.cpp \
 	record.cpp
 
-if ENABLE_GSTREAMER
+if ENABLE_GSTREAMER_01
 libgeneric_la_SOURCES += \
-	playback_gst.cpp
+	playback_gst_01.cpp
 AM_LDFLAGS += \
 	-lgstreamer-0.10 \
 	-lgstinterfaces-0.10
 else
+if ENABLE_GSTREAMER_10
+libgeneric_la_SOURCES += \
+	playback_gst_10.cpp
+AM_LDFLAGS += \
+	-lgstreamer-1.0
+else
 libgeneric_la_SOURCES += \
 	playback.cpp
+endif
 endif
 

@@ -348,6 +348,41 @@ int cVideo::setBlank(int)
 	return Stop(1);
 }
 
+int cVideo::GetVideoSystem()
+{
+	lt_debug("%s\n", __func__);
+	char current[32];
+	static const char *modes[] = {
+		"pal",		// VIDEO_STD_NTSC
+		"pal",		// VIDEO_STD_SECAM
+		"pal",		// VIDEO_STD_PAL
+		"480p",		// VIDEO_STD_480P
+		"576p50",	// VIDEO_STD_576P
+		"720p60",	// VIDEO_STD_720P60
+		"1080i60",	// VIDEO_STD_1080I60
+		"720p50",	// VIDEO_STD_720P50
+		"1080i50",	// VIDEO_STD_1080I50
+		"1080p30",	// VIDEO_STD_1080P30
+		"1080p24",	// VIDEO_STD_1080P24
+		"1080p25",	// VIDEO_STD_1080P25
+		"1080p50",	// VIDEO_STD_1080P50
+		"1080p60",	// VIDEO_STD_1080P60
+		"1080p2397",	// VIDEO_STD_1080P2397
+		"1080p2997",	// VIDEO_STD_1080P2997
+		"720p50"	// VIDEO_STD_AUTO
+	};
+
+	int ret = proc_get("/proc/stb/video/videomode", current, 32);
+	for (int i=0; i<sizeof(modes)/sizeof(*modes); i++) {
+		if (strcmp(current,  modes[i]) == 0)
+		{
+			lt_info("%s: video_system (%s) \n", __func__, current);
+			return i;
+		}
+	}
+	return -1;
+}
+
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
@@ -365,8 +400,11 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		"1080p30",	// VIDEO_STD_1080P30
 		"1080p24",	// VIDEO_STD_1080P24
 		"1080p25",	// VIDEO_STD_1080P25
-		"720p50",	// VIDEO_STD_AUTO -> not implemented
-		"1080p50"	// VIDEO_STD_1080P50 -> SPARK only
+		"1080p50",	// VIDEO_STD_1080P50
+		"1080p60",	// VIDEO_STD_1080P60
+		"1080p2397",	// VIDEO_STD_1080P2397
+		"1080p2997",	// VIDEO_STD_1080P2997
+		"720p50"	// VIDEO_STD_AUTO
 	};
 
 	if (video_system > VIDEO_STD_MAX)

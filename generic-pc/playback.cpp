@@ -145,3 +145,8 @@ cPlayback::~cPlayback()
 {
 	printf("%s:%s\n", FILENAME, __func__);
 }
+
+uint64_t cPlayback::GetReadCount()
+{
+	return 0;
+}

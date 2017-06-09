@@ -101,9 +101,12 @@ typedef enum {
 	VIDEO_STD_1080P30,
 	VIDEO_STD_1080P24,
 	VIDEO_STD_1080P25,
+	VIDEO_STD_1080P50,
+	VIDEO_STD_1080P60,
+	VIDEO_STD_1080P2397,
+	VIDEO_STD_1080P2997,
 	VIDEO_STD_AUTO,
-	VIDEO_STD_1080P50,	/* SPARK only */
-	VIDEO_STD_MAX
+	VIDEO_STD_MAX = VIDEO_STD_AUTO
 } VIDEO_STD;
 
 /* not used, for dummy functions */
@@ -181,6 +184,9 @@ class cVideo
 		int Start(void *PcrChannel = NULL, unsigned short PcrPid = 0, unsigned short VideoPid = 0, void *x = NULL);
 		int Stop(bool blank = true);
 		bool Pause(void);
+
+		/* get video system infos */
+		int GetVideoSystem();
 
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);

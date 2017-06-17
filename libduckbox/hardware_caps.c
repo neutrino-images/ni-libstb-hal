@@ -29,6 +29,7 @@ hw_caps_t *get_hwcaps(void)
 	char buf[64];
 	int len = -1;
 	int fd = open("/proc/stb/info/model", O_RDONLY);
+	caps.can_set_display_brightness = 0;
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);
@@ -54,6 +55,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.can_set_display_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs913", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -64,6 +66,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.can_set_display_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs922", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -84,6 +87,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.can_set_display_brightness = 1;
 		}
 		else if (!strncmp(buf, "hdbox", 5)) {
 			strcpy(caps.boxvendor, "DUCKBOX");

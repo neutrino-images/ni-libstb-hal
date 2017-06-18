@@ -177,6 +177,7 @@ class cVideo : public Thread
 
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);
+		int GetVideoSystem();
 		int SetStreamType(VIDEO_FORMAT type);
 		void SetSyncMode(AVSYNC_TYPE mode);
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };

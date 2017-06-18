@@ -34,6 +34,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
 	caps.display_type = HW_DISPLAY_LED_NUM;
+	caps.can_set_display_brightness = 0;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
 	caps.display_xres = 4;
@@ -49,6 +50,7 @@ hw_caps_t *get_hwcaps(void)
 		else if (val & 1) { /* VFD = 1, DVFD = 3 */
 			caps.display_type = HW_DISPLAY_LINE_TEXT;
 			caps.display_xres = 8;
+			caps.can_set_display_brightness = 1;
 		}
 		close(fd);
 	}

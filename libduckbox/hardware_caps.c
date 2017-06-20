@@ -264,20 +264,53 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 		}
-		else if ((!strncmp(buf, "arivalink200", 12)) ||
-				(!strncasecmp(buf, "adb_box", 7)) ||
-				(!strncasecmp(buf, "sagemcom88", 10)) ||
-				(!strncasecmp(buf, "esi_88", 6)) ||
-				(!strncasecmp(buf, "esi88", 5)) ||
-				(!strncasecmp(buf, "dsi87", 5))) {
+		else if (!strncmp(buf, "arivalink200", 12)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
 			strcpy(caps.boxname, buf);
 			caps.can_shutdown = 0;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
-			caps.can_cec = 0;
+			caps.can_cec = 1;
+			caps.has_fan = 0;
+			caps.has_CI = 2;
+			caps.can_set_display_brightness = 0;
+		}
+		else if ((!strncasecmp(buf, "nbox", 4)) ||
+				(!strncasecmp(buf, "adb_box", 7))) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 0;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 1;
+			caps.has_CI = 2;
+			caps.can_set_display_brightness = 1;
+		}
+		else if ((!strncasecmp(buf, "sagemcom88", 10)) ||
+			(!strncasecmp(buf, "esi_88", 6)) ||
+			(!strncasecmp(buf, "esi88", 5)) ||
+			(!strncasecmp(buf, "dsi87", 5))) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 0;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 1;
+			caps.can_cec = 1;
+			caps.has_fan = 1;
+			caps.has_CI = 0;
+			caps.can_set_display_brightness = 1;
+		}
+		else if (!strncasecmp(buf, "dsi87", 5)) {
+			strcpy(caps.boxvendor, "DUCKBOX");
+			strcpy(caps.boxname, buf);
+			caps.can_shutdown = 0;
+			caps.has_HDMI = 1;
+			caps.has_SCART = 0;
+			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 0;
+			caps.can_set_display_brightness = 0;
 		}
 		else {
 			strcpy(caps.boxvendor, "unknown");

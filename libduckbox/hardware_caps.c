@@ -310,7 +310,7 @@ hw_caps_t *get_hwcaps(void)
       caps.can_cec = 1;
       caps.has_fan = 0;
       caps.has_CI = 0;
-      caps.can_set_display_brightness = 1;
+      caps.can_set_display_brightness = 0;
     }
 		else {
 			strcpy(caps.boxvendor, "unknown");

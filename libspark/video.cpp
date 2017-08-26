@@ -95,6 +95,23 @@ static const char *VMPEG_framerate[] = {
 	"/proc/stb/vmpeg/1/framerate"
 };
 
+static const char *vid_modes[] = {
+	"pal",		// VIDEO_STD_NTSC
+	"pal",		// VIDEO_STD_SECAM
+	"pal",		// VIDEO_STD_PAL
+	"480p",		// VIDEO_STD_480P
+	"576p50",	// VIDEO_STD_576P
+	"720p60",	// VIDEO_STD_720P60
+	"1080i60",	// VIDEO_STD_1080I60
+	"720p50",	// VIDEO_STD_720P50
+	"1080i50",	// VIDEO_STD_1080I50
+	"1080p30",	// VIDEO_STD_1080P30
+	"1080p24",	// VIDEO_STD_1080P24
+	"1080p25",	// VIDEO_STD_1080P25
+	"720p50",	// VIDEO_STD_AUTO -> not implemented
+	"1080p50",	// VIDEO_STD_1080P50 -> SPARK only
+	NULL
+};
 
 #define VIDEO_STREAMTYPE_MPEG2 0
 #define VIDEO_STREAMTYPE_MPEG4_H264 1
@@ -321,22 +338,6 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
 	char current[32];
-	static const char *modes[] = {
-		"pal",		// VIDEO_STD_NTSC
-		"pal",		// VIDEO_STD_SECAM
-		"pal",		// VIDEO_STD_PAL
-		"480p",		// VIDEO_STD_480P
-		"576p50",	// VIDEO_STD_576P
-		"720p60",	// VIDEO_STD_720P60
-		"1080i60",	// VIDEO_STD_1080I60
-		"720p50",	// VIDEO_STD_720P50
-		"1080i50",	// VIDEO_STD_1080I50
-		"1080p30",	// VIDEO_STD_1080P30
-		"1080p24",	// VIDEO_STD_1080P24
-		"1080p25",	// VIDEO_STD_1080P25
-		"720p50",	// VIDEO_STD_AUTO -> not implemented
-		"1080p50"	// VIDEO_STD_1080P50 -> SPARK only
-	};
 
 	if (video_system > VIDEO_STD_MAX)
 	{
@@ -344,12 +345,12 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		return -1;
 	}
 	int ret = proc_get("/proc/stb/video/videomode", current, 32);
-	if (strcmp(current,  modes[video_system]) == 0)
+	if (strcmp(current, vid_modes[video_system]) == 0)
 	{
 		lt_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
 		return 0;
 	}
-	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
+	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, vid_modes[video_system]);
 	bool stopped = false;
 	if (playstate == VIDEO_PLAYING)
 	{
@@ -358,12 +359,25 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		stopped = true;
 	}
 	hdmi_out(false);
-	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
+	ret = proc_put("/proc/stb/video/videomode", vid_modes[video_system],strlen(vid_modes[video_system]));
 	hdmi_out(true);
 	if (stopped)
 		Start();
 
 	return ret;
+}
+
+int cVideo::GetVideoSystem(void)
+{
+	char current[32];
+	proc_get("/proc/stb/video/videomode", current, 32);
+	for (int i = 2; vid_modes[i]; i++) /* 0,1,2 are all "pal" */
+	{
+		if (strcmp(current, vid_modes[i]) == 0)
+			return i;
+	}
+	lt_info("%s: could not find '%s' mode, returning VIDEO_STD_720P50\n", __func__, current);
+	return VIDEO_STD_720P50;
 }
 
 int cVideo::getPlayState(void)

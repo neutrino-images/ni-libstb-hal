@@ -380,6 +380,17 @@ int cVideo::GetVideoSystem(void)
 	return VIDEO_STD_720P50;
 }
 
+void cVideo::GetVideoSystemFormatName(cs_vs_format_t *format, int system)
+{
+	if (system == -1)
+		system = GetVideoSystem();
+	if (system < 0 || system > VIDEO_STD_1080P50) {
+		lt_info("%s: invalid system %d\n", __func__, system);
+		strcpy(format->format, "invalid");
+	} else
+		strcpy(format->format, vid_modes[system]);
+}
+
 int cVideo::getPlayState(void)
 {
 	return playstate;

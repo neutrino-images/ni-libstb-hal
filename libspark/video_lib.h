@@ -5,6 +5,11 @@
 #include "../common/cs_types.h"
 #include "dmx_lib.h"
 
+typedef struct cs_vs_format_t
+{
+	char format[16];
+} cs_vs_format_struct_t;
+
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
 	ANALOG_SD_YPRPB_CINCH,
@@ -108,7 +113,7 @@ typedef enum {
 
 /* not used, for dummy functions */
 typedef enum {
-	VIDEO_HDMI_CEC_MODE_OFF	= 0,
+	VIDEO_HDMI_CEC_MODE_OFF = 0,
 	VIDEO_HDMI_CEC_MODE_TUNER,
 	VIDEO_HDMI_CEC_MODE_RECORDER
 } VIDEO_HDMI_CEC_MODE;
@@ -126,8 +131,8 @@ typedef enum
 
 class cVideo
 {
-	friend class cDemux;
 	friend class cPlayback;
+	friend class cDemux;
 	private:
 		/* video device */
 		int fd;
@@ -181,6 +186,11 @@ class cVideo
 		int Start(void *PcrChannel = NULL, unsigned short PcrPid = 0, unsigned short VideoPid = 0, void *x = NULL);
 		int Stop(bool blank = true);
 		bool Pause(void);
+
+		/* get video system infos */
+		int GetVideoSystem(void);
+		/* when system = -1 then use current video system */
+		void GetVideoSystemFormatName(cs_vs_format_t* format, int system = -1);
 
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);

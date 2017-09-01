@@ -49,7 +49,7 @@ static uint8_t NullPMT[50]={0x9F,0x80,0x32,0x2E,0x03,0x6E,0xA7,0x37,0x00,0x00,0x
 /* die Feinheiten werden ja in CA_MESSAGE verpackt */
 uint32_t EVT_CA_MESSAGE = 0x80000000 + 60;
 
-static cs_messenger cam_messenger;
+static cs_messenger cam_messenger = NULL;
 
 void cs_register_messenger(cs_messenger messenger)
 {
@@ -416,7 +416,8 @@ void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_
 bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
 	lt_debug("%s\n", __func__);
-	cam_messenger(EVT_CA_MESSAGE, (uint32_t) msg);
+	if(cam_messenger)
+		cam_messenger(EVT_CA_MESSAGE, (uint32_t) msg);
 #if y_debug
 	printf("*******Message\n");
 	printf("msg: %p\n", msg);

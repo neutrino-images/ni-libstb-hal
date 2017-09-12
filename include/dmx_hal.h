@@ -7,6 +7,8 @@
 #include "../libspark/dmx_lib.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/dmx_lib.h"
+#elif HAVE_ARM_HARDWARE
+#include "../libarmbox/dmx_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
 #include "../raspi/dmx_lib.h"

@@ -5,6 +5,8 @@
 #include "../libduckbox/video_lib.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/video_lib.h"
+#elif HAVE_ARM_HARDWARE
+#include "../libarmbox/video_lib.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/video_lib.h"
 #elif HAVE_GENERIC_HARDWARE

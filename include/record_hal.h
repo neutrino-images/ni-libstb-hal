@@ -5,6 +5,8 @@
 #include "../libduckbox/record_lib.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/record_lib.h"
+#elif HAVE_ARM_HARDWARE
+#include "../libarmbox/record_lib.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/record_lib.h"
 #elif HAVE_GENERIC_HARDWARE

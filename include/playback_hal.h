@@ -5,6 +5,8 @@
 #include "../libduckbox/playback_libeplayer3.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/playback_libeplayer3.h"
+#elif HAVE_ARM_HARDWARE
+#include "../libarmbox/playback_gst.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/playback.h"
 #elif HAVE_GENERIC_HARDWARE

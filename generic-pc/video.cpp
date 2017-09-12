@@ -82,6 +82,7 @@ cVideo::cVideo(int, void *, void *, unsigned int)
 	display_aspect = DISPLAY_AR_16_9;
 	display_crop = DISPLAY_AR_MODE_LETTERBOX;
 	v_format = VIDEO_FORMAT_MPEG2;
+	output_h = 0;
 }
 
 cVideo::~cVideo(void)
@@ -98,7 +99,7 @@ int cVideo::setAspectRatio(int vformat, int cropping)
 		display_aspect = (DISPLAY_AR) vformat;
 	if (cropping >= 0)
 		display_crop = (DISPLAY_AR_MODE) cropping;
-	if (display_aspect < DISPLAY_AR_RAW) /* don't know what to do with this */
+	if (display_aspect < DISPLAY_AR_RAW && output_h > 0) /* don't know what to do with this */
 		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
 	return 0;
 }
@@ -197,8 +198,20 @@ int cVideo::SetVideoSystem(int system, bool)
 	}
 	v_std = (VIDEO_STD) system;
 	output_h = h;
-	if (display_aspect < DISPLAY_AR_RAW) /* don't know what to do with this */
+	if (display_aspect < DISPLAY_AR_RAW && output_h > 0) /* don't know what to do with this */
 		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
+	return 0;
+}
+
+int cVideo::GetVideoSystem()
+{
+	int current_video_system = VIDEO_STD_1080I50;
+
+	if(dec_w < 720)
+		current_video_system = VIDEO_STD_PAL;
+	else if(dec_w > 720 && dec_w <= 1280)
+		current_video_system = VIDEO_STD_720P50;
+
 	return 0;
 }
 

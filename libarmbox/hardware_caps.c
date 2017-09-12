@@ -17,7 +17,7 @@
 
 #include <hardware_caps.h>
 
-#define FP_DEV "/dev/vfd"
+#define FP_DEV "/dev/dbox/oled0"
 static int initialized = 0;
 static hw_caps_t caps;
 
@@ -32,7 +32,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
-	caps.display_type = HW_DISPLAY_LED_NUM;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
 	caps.can_set_display_brightness = 0;
 	caps.has_HDMI = 1;
 	caps.display_xres = 4;

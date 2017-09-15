@@ -26,5 +26,6 @@ static inline void cs_deregister_messenger(void) { return; };
 
 /* compat... HD1 seems to be version 6. everything newer ist > 6... */
 static inline unsigned int cs_get_revision(void) { return 1; };
+static inline unsigned int cs_get_chip_type(void) { return 0; };
 extern int cnxt_debug;
 #endif //__CS_API_H_

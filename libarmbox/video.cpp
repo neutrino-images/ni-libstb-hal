@@ -85,6 +85,26 @@ static const char *VMPEG_dst_all[] = {
 	"/proc/stb/vmpeg/1/dst_all"
 };
 
+static const char *VMPEG_dst_height[] = {
+	"/proc/stb/vmpeg/0/dst_height",
+	"/proc/stb/vmpeg/1/dst_height"
+};
+
+static const char *VMPEG_dst_width[] = {
+	"/proc/stb/vmpeg/0/dst_width",
+	"/proc/stb/vmpeg/1/dst_width"
+};
+
+static const char *VMPEG_dst_top[] = {
+	"/proc/stb/vmpeg/0/dst_top",
+	"/proc/stb/vmpeg/1/dst_top"
+};
+
+static const char *VMPEG_dst_left[] = {
+	"/proc/stb/vmpeg/0/dst_left",
+	"/proc/stb/vmpeg/1/dst_left"
+};
+
 static const char *VMPEG_framerate[] = {
 	"/proc/stb/vmpeg/0/framerate",
 	"/proc/stb/vmpeg/1/framerate"
@@ -653,8 +673,17 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 		_h /= 720;
 	}
 	lt_debug("#%d %s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", devnum, __func__, _x, _y, _w, _h, xres, yres);
-	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);
-	proc_put(VMPEG_dst_all[devnum], buffer, strlen(buffer));
+	sprintf(buffer, "%x", _x);
+	proc_put(VMPEG_dst_left[devnum], buffer, strlen(buffer));
+
+	sprintf(buffer, "%x", _y);
+	proc_put(VMPEG_dst_top[devnum], buffer, strlen(buffer));
+
+	sprintf(buffer, "%x", _w);
+	proc_put(VMPEG_dst_width[devnum], buffer, strlen(buffer));
+
+	sprintf(buffer, "%x", _h);
+	proc_put(VMPEG_dst_height[devnum], buffer, strlen(buffer));
 }
 
 static inline int rate2csapi(int rate)

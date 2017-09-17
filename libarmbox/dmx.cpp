@@ -110,14 +110,19 @@ static const char *DMX_T[] = {
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
 
 /* map the device numbers. */
-#define NUM_DEMUXDEV 3
+#define NUM_DEMUXDEV 8
 static const char *devname[NUM_DEMUXDEV] = {
 	"/dev/dvb/adapter0/demux0",
 	"/dev/dvb/adapter0/demux1",
-	"/dev/dvb/adapter0/demux2"
+	"/dev/dvb/adapter0/demux2",
+	"/dev/dvb/adapter0/demux3",
+	"/dev/dvb/adapter0/demux4",
+	"/dev/dvb/adapter0/demux5",
+	"/dev/dvb/adapter0/demux6",
+	"/dev/dvb/adapter0/demux7"
 };
 /* did we already DMX_SET_SOURCE on that demux device? */
-static bool init[NUM_DEMUXDEV] = { false, false, false };
+static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false };
 
 /* uuuugly */
 static int dmx_tp_count = 0;

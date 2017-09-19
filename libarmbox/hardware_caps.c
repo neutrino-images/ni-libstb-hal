@@ -32,10 +32,10 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
+	caps.display_xres = 16;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
-	caps.can_set_display_brightness = 0;
+	caps.can_set_display_brightness = 1;
 	caps.has_HDMI = 1;
-	caps.display_xres = 4;
 	strcpy(caps.boxvendor, "armbox");
 	strcpy(caps.boxname, "armbox");
 	strcpy(caps.boxarch,caps.boxname);

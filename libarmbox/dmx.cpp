@@ -90,7 +90,6 @@ extern cVideo *videoDecoder;
 
 cDemux *videoDemux = NULL;
 cDemux *audioDemux = NULL;
-//cDemux *pcrDemux = NULL;
 
 static const char *DMX_T[] = {
 	"DMX_INVALID",
@@ -483,10 +482,10 @@ bool cDemux::pesFilter(const unsigned short pid)
 	_open();
 
 	memset(&p_flt, 0, sizeof(p_flt));
-	p_flt.pid = pid;
+	p_flt.pid    = pid;
 	p_flt.output = DMX_OUT_DECODER;
 	p_flt.input  = DMX_IN_FRONTEND;
-	p_flt.flags  = DMX_IMMEDIATE_START;
+	p_flt.flags  = 0;
 
 	switch (dmx_type) {
 	case DMX_PCR_ONLY_CHANNEL:

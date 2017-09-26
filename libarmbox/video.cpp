@@ -786,19 +786,19 @@ void cVideo::SetControl(int control, int value) {
 	switch (control) {
 	case VIDEO_CONTROL_BRIGHTNESS:
 		brightness = value;
-		p = "/proc/stb/video/plane/psi_brightness";
+		p = "/proc/stb/vmpeg/0/pep_brightness";
 		break;
 	case VIDEO_CONTROL_CONTRAST:
 		contrast = value;
-		p = "/proc/stb/video/plane/psi_contrast";
+		p = "/proc/stb/vmpeg/0/pep_contrast";
 		break;
 	case VIDEO_CONTROL_SATURATION:
 		saturation = value;
-		p = "/proc/stb/video/plane/psi_saturation";
+		p = "/proc/stb/vmpeg/0/pep_saturation";
 		break;
 	case VIDEO_CONTROL_HUE:
 		hue = value;
-		p = "/proc/stb/video/plane/psi_tint";
+		p = "/proc/stb/vmpeg/0/pep_hue";
 		break;
 	}
 	if (p) {
@@ -835,7 +835,7 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 		break;
 	}
 	if (p)
-		proc_put("/proc/stb/avs/0/colorformat", p, strlen(p));
+		proc_put("/proc/stb/video/hdmi_colorspace", p, strlen(p));
 }
 
 /* TODO: aspect ratio correction and PIP */

@@ -13,7 +13,7 @@ AM_LDFLAGS = \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
 	@SWRESAMPLE_LIBS@ \
-	-lpthread -lasound -lass -lrt \
+	-lpthread -lasound -lrt \
 	-lgstreamer-1.0
 
 libarmbox_la_SOURCES = \

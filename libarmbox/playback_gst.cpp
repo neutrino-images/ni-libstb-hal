@@ -196,6 +196,8 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 				case GST_STATE_CHANGE_READY_TO_PAUSED:
 				{
 					GstIterator *children;
+					GValue r = { 0, };
+
 					if (audioSink)
 					{
 						gst_object_unref(GST_OBJECT(audioSink));
@@ -208,13 +210,23 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 						videoSink = NULL;
 					}
 					children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-					GValue r = G_VALUE_INIT;
-					gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink");
-					audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
-					g_value_unset (&r);
-					gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink");
-					videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
-					g_value_unset (&r);
+
+					if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
+					{
+						audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
+						g_value_unset (&r);
+						lt_info_c( "%s %s - audio sink created\n", FILENAME, __FUNCTION__);
+					}
+
+					gst_iterator_free(children);
+					children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
+
+					if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
+					{
+						videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
+						g_value_unset (&r);
+						lt_info_c( "%s %s - video sink created\n", FILENAME, __FUNCTION__);
+					}
 					gst_iterator_free(children);
 					
 				}	break;
@@ -395,6 +407,9 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	guint flags =	GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_VIDEO | \
 					GST_PLAY_FLAG_TEXT | GST_PLAY_FLAG_NATIVE_VIDEO;
 
+	/* increase the default 2 second / 2 MB buffer limitations to 5s / 5MB */
+	int m_buffer_size = 5*1024*1024;
+
 	// create gst pipeline
 	m_gst_playbin = gst_element_factory_make ("playbin", "playbin");
 
@@ -402,8 +417,17 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	{
 		lt_info("%s:%s - m_gst_playbin\n", FILENAME, __FUNCTION__);
 
-		g_object_set(G_OBJECT (m_gst_playbin), "uri", uri, NULL);
+ 		if(isHTTP)
+		{
+ 			// set buffer size
+ 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-size", m_buffer_size, NULL);
+ 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-duration", 5LL * GST_SECOND, NULL);
+ 			flags |= GST_PLAY_FLAG_BUFFERING;
+ 		}
+
 		g_object_set(G_OBJECT (m_gst_playbin), "flags", flags, NULL);	
+
+		g_object_set(G_OBJECT (m_gst_playbin), "uri", uri, NULL);
 	
 		//gstbus handler
 		GstBus * bus = gst_pipeline_get_bus( GST_PIPELINE(m_gst_playbin) );
@@ -411,7 +435,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		gst_object_unref(bus); 
 		
 		// state playing
-		gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
+		gst_element_set_state(GST_ELEMENT(m_gst_playbin), GST_STATE_PLAYING);
 		
 		playing = true;
 		playstate = STATE_PLAY;
@@ -425,12 +449,6 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	}
 	
 	g_free(uri);	
-
-	// set buffer size
-	/* increase the default 2 second / 2 MB buffer limitations to 5s / 5MB */
-	int m_buffer_size = 5*1024*1024;
-	//g_object_set(G_OBJECT(m_gst_playbin), "buffer-duration", 5LL * GST_SECOND, NULL);
-	g_object_set(G_OBJECT(m_gst_playbin), "buffer-size", m_buffer_size, NULL);
 		
 	return true;
 }

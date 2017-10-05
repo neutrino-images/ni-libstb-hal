@@ -200,7 +200,7 @@ void cVideo::openDevice(void)
 	if (fd != -1) /* already open */
 		return;
 retry:
-	if ((fd = open(VDEV[devnum], O_RDWR|O_CLOEXEC)) < 0)
+	if ((fd = open(VDEV[devnum], O_RDWR|O_CLOEXEC|O_NONBLOCK)) < 0)
 	{
 		if (errno == EBUSY)
 		{
@@ -359,6 +359,10 @@ int cVideo::GetVideoSystem()
 		"1080p60",	// VIDEO_STD_1080P60
 		"1080p2397",	// VIDEO_STD_1080P2397
 		"1080p2997",	// VIDEO_STD_1080P2997
+		"2160p24",	//VIDEO_STD_2160P24
+		"2160p25",	// VIDEO_STD_2160P25
+		"2160p30",	// VIDEO_STD_2160P30
+		"2160p50",	// VIDEO_STD_2160P50
 		"720p50"	// VIDEO_STD_AUTO
 	};
 

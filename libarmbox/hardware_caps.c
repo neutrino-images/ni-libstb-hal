@@ -36,8 +36,8 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
 	caps.can_set_display_brightness = 1;
 	caps.has_HDMI = 1;
-	strcpy(caps.boxvendor, "armbox");
-	strcpy(caps.boxname, "armbox");
-	strcpy(caps.boxarch,caps.boxname);
+	strcpy(caps.boxvendor, "AX-Technologies");
+	strcpy(caps.boxname, "HD51");
+	strcpy(caps.boxarch, "BCM7251S");
 	return &caps;
 }

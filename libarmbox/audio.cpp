@@ -58,7 +58,7 @@ void cAudio::openDevice(void)
 
 	if (fd < 0)
 	{
-		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
+		if ((fd = open(AUDIO_DEVICE, O_RDWR | O_NONBLOCK)) < 0)
 			lt_info("openDevice: open failed (%m)\n");
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
 		do_mute(true, false);
@@ -397,9 +397,7 @@ void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int
 
 void cAudio::SetHdmiDD(bool enable)
 {
-	const char *opt[] = { "pcm", "spdif" };
-	lt_debug("%s %d\n", __func__, enable);
-	proc_put("/proc/stb/hdmi/audio_source", opt[enable], strlen(opt[enable]));
+	lt_debug("%s\n", __FUNCTION__);
 }
 
 void cAudio::SetSpdifDD(bool enable)
@@ -422,9 +420,9 @@ void cAudio::EnableAnalogOut(bool enable)
 #define AUDIO_BYPASS_OFF 1
 void cAudio::setBypassMode(bool disable)
 {
-	const char *opt[] = { "passthrough", "downmix" };
-	lt_debug("%s %d\n", __func__, disable);
-	proc_put("/proc/stb/audio/ac3", opt[disable], strlen(opt[disable]));
+	int mode = disable ? AUDIO_BYPASS_OFF : AUDIO_BYPASS_ON;
+	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, mode) < 0)
+		lt_info("%s AUDIO_SET_BYPASS_MODE %d: %m\n", __func__, mode);
 }
 
 void cAudio::openMixers(void)

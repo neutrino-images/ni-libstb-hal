@@ -158,13 +158,13 @@ class cVideo
 		int64_t GetPTS(void);
 
 		int brightness, contrast, saturation, hue;
-
-		void openDevice(void);
-		void closeDevice(void);
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
+
+		void openDevice(void);
+		void closeDevice(void);
 
 		void * GetTVEnc() { return NULL; };
 		void * GetTVEncSD() { return NULL; };

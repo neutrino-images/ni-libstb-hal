@@ -54,9 +54,6 @@ class cAudio
 
 		int volume;
 
-		void openDevice(void);
-		void closeDevice(void);
-
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
 
@@ -68,6 +65,9 @@ class cAudio
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
 		~cAudio(void);
+
+		void openDevice(void);
+		void closeDevice(void);
 
 		void *GetHandle() { return NULL; };
 		/* shut up */

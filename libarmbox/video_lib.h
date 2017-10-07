@@ -5,6 +5,11 @@
 #include "../common/cs_types.h"
 #include "dmx_lib.h"
 
+typedef struct cs_vs_format_t
+{
+	char format[16];
+} cs_vs_format_struct_t;
+
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
 	ANALOG_SD_YPRPB_CINCH,
@@ -195,7 +200,9 @@ class cVideo
 		bool Pause(void);
 
 		/* get video system infos */
-		int GetVideoSystem();
+		int GetVideoSystem(void);
+		/* when system = -1 then use current video system */
+		void GetVideoSystemFormatName(cs_vs_format_t* format, int system);
 
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);

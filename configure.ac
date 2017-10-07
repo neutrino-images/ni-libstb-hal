@@ -6,11 +6,11 @@ AC_GNU_SOURCE
 
 TUXBOX_APPS
 TUXBOX_APPS_DIRECTORY
-TUXBOX_APPS_PKGCONFIG
 TUXBOX_BOXTYPE
 
 AC_PROG_CC
 AC_PROG_CXX
+PKG_PROG_PKG_CONFIG
 ## both disabled => libtool still defaults to static
 ##                  at least the libtool I tested with ;-)
 ## --enable-shared => build only shared
@@ -21,7 +21,7 @@ AC_SYS_LARGEFILE
 AC_PROG_LIBTOOL
 
 if test x"$BOXTYPE" = x"tripledragon"; then
-	TUXBOX_APPS_LIB_PKGCONFIG(DIRECTFB, directfb)
+	PKG_CHECK_MODULES([DIRECTFB], [directfb])
 fi
 
 AC_ARG_ENABLE(gstreamer_01,
@@ -55,6 +55,7 @@ if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
 	PKG_CHECK_MODULES([SWSCALE], [libswscale])
 	PKG_CHECK_MODULES([SWRESAMPLE], [libswresample])
 fi
+
 AC_OUTPUT([
 Makefile
 common/Makefile

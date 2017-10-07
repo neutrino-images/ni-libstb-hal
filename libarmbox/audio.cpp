@@ -8,7 +8,7 @@
 
 #include <linux/dvb/audio.h>
 #include "audio_lib.h"
-#include "audio_mixer.h"
+//#include "audio_mixer.h"
 #include "lt_debug.h"
 
 #define AUDIO_DEVICE	"/dev/dvb/adapter0/audio0"
@@ -38,9 +38,11 @@ cAudio::cAudio(void *, void *, void *)
 	clipfd = -1;
 	mixer_fd = -1;
 
+/*
 	mixerAnalog = mixerHDMI = mixerSPDIF = NULL;
 	volumeAnalog = volumeHDMI = volumeSPDIF = 0;
-	mixersMuted = false;
+	mixersMuted = false
+*/
 
 	openDevice();
 	Muted = false;
@@ -48,13 +50,13 @@ cAudio::cAudio(void *, void *, void *)
 
 cAudio::~cAudio(void)
 {
-	closeMixers();
+	//closeMixers();
 	closeDevice();
 }
 
 void cAudio::openDevice(void)
 {
-	openMixers();
+	//openMixers();
 
 	if (fd < 0)
 	{
@@ -69,7 +71,7 @@ void cAudio::openDevice(void)
 
 void cAudio::closeDevice(void)
 {
-	closeMixers();
+	//closeMixers();
 
 	if (fd > -1) {
 		close(fd);
@@ -425,6 +427,7 @@ void cAudio::setBypassMode(bool disable)
 		lt_info("%s AUDIO_SET_BYPASS_MODE %d: %m\n", __func__, mode);
 }
 
+#if 0
 void cAudio::openMixers(void)
 {
 	if (!mixerAnalog)
@@ -476,3 +479,4 @@ void cAudio::muteMixers(bool m)
 		setMixerVolume("SPDIF", volumeSPDIF, false);
 	}
 }
+#endif

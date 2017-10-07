@@ -21,7 +21,6 @@ libarmbox_la_SOURCES = \
 	dmx.cpp \
 	video.cpp \
 	audio.cpp \
-	audio_mixer.cpp \
 	init.cpp \
 	playback_gst.cpp \
 	pwrmngr.cpp \

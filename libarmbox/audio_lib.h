@@ -100,10 +100,12 @@ class cAudio
 		void ScheduleMute(bool On);
 		void EnableAnalogOut(bool enable);
 
+#if 0
 		void openMixers(void);
 		void closeMixers(void);
 		void setMixerVolume(const char *name, long value, bool remember = true);
 		void muteMixers(bool m = true);
+#endif
 };
 
 #endif

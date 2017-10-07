@@ -36,6 +36,9 @@
 #include <linux/fb.h>
 #include "video_lib.h"
 #include "lt_debug.h"
+
+#include <proc_tools.h>
+
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
@@ -119,46 +122,6 @@ static const char *VMPEG_framerate[] = {
 #define VIDEO_STREAMTYPE_MPEG1 6
 #define VIDEO_STREAMTYPE_H265_HEVC 7
 #define VIDEO_STREAMTYPE_AVS 16
-
-
-static int proc_put(const char *path, const char *value, const int len)
-{
-	int ret, ret2;
-	int pfd = open(path, O_WRONLY);
-	if (pfd < 0)
-		return pfd;
-	ret = write(pfd, value, len);
-	ret2 = close(pfd);
-	if (ret2 < 0)
-		return ret2;
-	return ret;
-}
-
-static int proc_get(const char *path, char *value, const int len)
-{
-	int ret, ret2;
-	int pfd = open(path, O_RDONLY);
-	if (pfd < 0)
-		return pfd;
-	ret = read(pfd, value, len);
-	value[len-1] = '\0'; /* make sure string is terminated */
-	while (ret > 0 && isspace(value[ret-1]))
-		value[--ret] = '\0';	/* remove trailing whitespace */
-	ret2 = close(pfd);
-	if (ret2 < 0)
-		return ret2;
-	return ret;
-}
-
-static unsigned int proc_get_hex(const char *path)
-{
-	unsigned int n, ret = 0;
-	char buf[16];
-	n = proc_get(path, buf, 16);
-	if (n > 0)
-		sscanf(buf, "%x", &ret);
-	return ret;
-}
 
 static int hdmi_out(bool enable)
 {

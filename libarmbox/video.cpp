@@ -61,7 +61,6 @@ cVideo * pipDecoder = NULL;
 
 int system_rev = 0;
 
-static bool hdmi_enabled = true;
 static bool stillpicture = false;
 
 static const char *VDEV[] = {
@@ -123,13 +122,6 @@ static const char *VMPEG_framerate[] = {
 #define VIDEO_STREAMTYPE_H265_HEVC 7
 #define VIDEO_STREAMTYPE_AVS 16
 
-static int hdmi_out(bool enable)
-{
-	int ret = -1;
-	return ret;
-}
-
-
 cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
 	lt_debug("%s unit %u\n", __func__, unit);
@@ -138,8 +130,6 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	contrast = -1;
 	saturation = -1;
 	hue = -1;
-
-	scartvoltage = -1;
 	video_standby = 0;
 	if (unit > 1) {
 		lt_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
@@ -387,9 +377,7 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		Stop();
 		stopped = true;
 	}
-	hdmi_out(false);
 	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
-	hdmi_out(true);
 	if (stopped)
 		Start();
 
@@ -540,20 +528,9 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		closeDevice();
-		hdmi_out(false);
 	}
 	else
 	{
-		/* only enable HDMI output when coming from standby, not on
-		 * start. I have no idea why, but enabling it on startup leads
-		 * to strange locking problems of the framebuffer driver :-( */
-		if (!hdmi_enabled)
-		{
-			hdmi_out(true);
-			/* make sure the driver has time to settle.
-			 * again - lame, but makes it work... */
-			sleep(1);
-		}
 		openDevice();
 	}
 	video_standby = bOn;
@@ -693,12 +670,6 @@ void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 	 * { 1, LOCALE_OPTIONS_ON  },
 	 * { 2, LOCALE_AUDIOMENU_AVSYNC_AM }
 	 */
-	const char *apply[] = { "disapply", "apply" };
-	const char *clock[] = { "video", "audio" };
-	const char *a = apply[mode > 0]; /* mode == 1 or mode == 2 -> "apply" */
-	const char *c = clock[mode > 1];  /* mode == 2 -> "audio" */
-	proc_put("/proc/stb/stream/policy/AV_SYNC", a, strlen(a));
-	proc_put("/proc/stb/stream/policy/MASTER_CLOCK", c, strlen(c));
 };
 
 int cVideo::SetStreamType(VIDEO_FORMAT type)

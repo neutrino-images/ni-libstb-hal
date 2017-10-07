@@ -144,7 +144,6 @@ class cVideo
 		video_play_state_t playstate;
 		int /*vidDispMode_t*/ croppingMode;
 		int /*vidOutFmt_t*/ outputformat;
-		int scartvoltage;
 
 		VIDEO_FORMAT StreamType;
 		VIDEO_DEFINITION VideoDefinition;
@@ -155,14 +154,20 @@ class cVideo
 		DISPLAY_AR PictureAR;
 		VIDEO_FRAME_RATE FrameRate;
 		int video_standby;
+		int brightness;
+		int contrast;
+		int saturation;
+		int hue;
+
+		/* used internally by dmx */
 		int64_t GetPTS(void);
 
-		int brightness, contrast, saturation, hue;
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
+		/* used internally by playback */
 		void openDevice(void);
 		void closeDevice(void);
 

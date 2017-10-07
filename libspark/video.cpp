@@ -337,8 +337,7 @@ int cVideo::GetVideoSystem()
 		"1080p50",	// VIDEO_STD_1080P50
 		"1080p60",	// VIDEO_STD_1080P60
 		"1080p2397",	// VIDEO_STD_1080P2397
-		"1080p2997",	// VIDEO_STD_1080P2997
-		"720p50"	// VIDEO_STD_AUTO
+		"1080p2997"	// VIDEO_STD_1080P2997
 	};
 
 	int ret = proc_get("/proc/stb/video/videomode", current, 32);
@@ -369,11 +368,8 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		"1080p30",	// VIDEO_STD_1080P30
 		"1080p24",	// VIDEO_STD_1080P24
 		"1080p25",	// VIDEO_STD_1080P25
-		"1080p50",	// VIDEO_STD_1080P50
-		"1080p60",	// VIDEO_STD_1080P60
-		"1080p2397",	// VIDEO_STD_1080P2397
-		"1080p2997",	// VIDEO_STD_1080P2997
-		"720p50"	// VIDEO_STD_AUTO
+		"720p50",	// VIDEO_STD_AUTO -> not implemented
+		"1080p50"	// VIDEO_STD_1080P50 -> SPARK only
 	};
 
 	if (video_system > VIDEO_STD_MAX)

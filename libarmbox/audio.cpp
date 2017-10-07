@@ -399,7 +399,9 @@ void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int
 
 void cAudio::SetHdmiDD(bool enable)
 {
-	lt_debug("%s\n", __FUNCTION__);
+	const char *opt[] = {  "downmix", "passthrough" };
+	lt_debug("%s %d\n", __func__, enable);
+	proc_put("/proc/stb/audio/ac3", opt[enable], strlen(opt[enable]));
 }
 
 void cAudio::SetSpdifDD(bool enable)

@@ -52,18 +52,18 @@ extern cAudio * audioDecoder;
 
 typedef enum
 {
-	GST_PLAY_FLAG_VIDEO				= (1 << 0),
-	GST_PLAY_FLAG_AUDIO				= (1 << 1),
-	GST_PLAY_FLAG_TEXT				= (1 << 2),
-	GST_PLAY_FLAG_VIS				= (1 << 3),
-	GST_PLAY_FLAG_SOFT_VOLUME		= (1 << 4),
-	GST_PLAY_FLAG_NATIVE_AUDIO		= (1 << 5),
-	GST_PLAY_FLAG_NATIVE_VIDEO		= (1 << 6),
-	GST_PLAY_FLAG_DOWNLOAD			= (1 << 7),
-	GST_PLAY_FLAG_BUFFERING			= (1 << 8),
-	GST_PLAY_FLAG_DEINTERLACE		= (1 << 9),
-	GST_PLAY_FLAG_SOFT_COLORBALANCE	= (1 << 10),
-	GST_PLAY_FLAG_FORCE_FILTERS		= (1 << 11),
+	GST_PLAY_FLAG_VIDEO             = (1 << 0),
+	GST_PLAY_FLAG_AUDIO             = (1 << 1),
+	GST_PLAY_FLAG_TEXT              = (1 << 2),
+	GST_PLAY_FLAG_VIS               = (1 << 3),
+	GST_PLAY_FLAG_SOFT_VOLUME       = (1 << 4),
+	GST_PLAY_FLAG_NATIVE_AUDIO      = (1 << 5),
+	GST_PLAY_FLAG_NATIVE_VIDEO      = (1 << 6),
+	GST_PLAY_FLAG_DOWNLOAD          = (1 << 7),
+	GST_PLAY_FLAG_BUFFERING         = (1 << 8),
+	GST_PLAY_FLAG_DEINTERLACE       = (1 << 9),
+	GST_PLAY_FLAG_SOFT_COLORBALANCE = (1 << 10),
+	GST_PLAY_FLAG_FORCE_FILTERS     = (1 << 11),
 } GstPlayFlags;
 
 
@@ -354,6 +354,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				gst_object_unref(GST_OBJECT(videoSink));
 				videoSink = NULL;
 			}
+
+					// set audio sink
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
 			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
 			{
@@ -363,6 +365,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			}
 
 			gst_iterator_free(children);
+
+					// set video sink
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
 			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
 			{
@@ -370,7 +374,10 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				g_value_unset (&r);
 				lt_info_c( "%s %s - video sink created\n", FILENAME, __FUNCTION__);
 			}
+
 			gst_iterator_free(children);
+				}
+				break;
 
 		}
 		break;
@@ -408,13 +415,13 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	return GST_BUS_DROP;
 }
 
-
 cPlayback::cPlayback(int num)
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	const gchar *nano_str;
 	guint major, minor, micro, nano;
 
+	/* init gstreamer */
 	gst_init(NULL, NULL);
 
 	gst_version (&major, &minor, &micro, &nano);
@@ -443,6 +450,7 @@ cPlayback::cPlayback(int num)
 	first = false;
 }
 
+/* called at housekepping */
 cPlayback::~cPlayback()
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
@@ -611,12 +619,14 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 			flags |= GST_PLAY_FLAG_BUFFERING;
 		}
 
+		// set flags
 		g_object_set(G_OBJECT (m_gst_playbin), "flags", flags, NULL);
 
+		// set uri
 		g_object_set(G_OBJECT (m_gst_playbin), "uri", uri, NULL);
 
 		//gstbus handler
-		GstBus * bus = gst_pipeline_get_bus( GST_PIPELINE(m_gst_playbin) );
+		GstBus * bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_playbin));
 		gst_bus_set_sync_handler(bus, Gst_bus_call, NULL, NULL);
 		if (bus)
 			gst_object_unref(bus);
@@ -673,6 +683,7 @@ bool cPlayback::Stop(void)
 {
 	if(playing == false)
 		return false;
+
 	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	// stop
@@ -846,7 +857,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
 			}
 		}
-		position = pts /  1000000.0;
+		position = pts / 1000000.0;
 		// duration
 		GstFormat fmt_d = GST_FORMAT_TIME; //Returns time in nanosecs
 		double length = 0;
@@ -997,7 +1008,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 				gst_tag_list_free(tags);
 			}
 		}
-		*numpida=i;
+		*numpida = i;
 	}
 }
 

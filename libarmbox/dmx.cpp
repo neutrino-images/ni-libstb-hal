@@ -69,8 +69,8 @@
 #include "dmx_lib.h"
 #include "lt_debug.h"
 
-/* Ugh... see comment in destructor for details... */
 #include "video_lib.h"
+/* needed for getSTC... */
 extern cVideo *videoDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
@@ -90,7 +90,6 @@ extern cVideo *videoDecoder;
 
 cDemux *videoDemux = NULL;
 cDemux *audioDemux = NULL;
-//cDemux *pcrDemux = NULL;
 
 static const char *DMX_T[] = {
 	"DMX_INVALID",
@@ -124,10 +123,6 @@ static const char *devname[NUM_DEMUXDEV] = {
 /* did we already DMX_SET_SOURCE on that demux device? */
 static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false };
 
-/* uuuugly */
-static int dmx_tp_count = 0;
-#define MAX_TS_COUNT 1
-
 cDemux::cDemux(int n)
 {
 	if (n < 0 || n >= NUM_DEMUX)
@@ -148,18 +143,6 @@ cDemux::~cDemux()
 {
 	lt_debug("%s #%d fd: %d\n", __FUNCTION__, num, fd);
 	Close();
-	/* in zapit.cpp, videoDemux is deleted after videoDecoder
-	 * in the video watchdog, we access videoDecoder
-	 * the thread still runs after videoDecoder has been deleted
-	 * => set videoDecoder to NULL here to make the check in the
-	 * watchdog thread pick this up.
-	 * This is ugly, but it saves me from changing neutrino
-	 *
-	 * if the delete order in neutrino will ever be changed, this
-	 * will blow up badly :-(
-	 */
-	if (dmx_type == DMX_VIDEO_CHANNEL)
-		videoDecoder = NULL;
 }
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
@@ -242,15 +225,6 @@ void cDemux::Close(void)
 	fd = -1;
 	if (measure)
 		return;
-	if (dmx_type == DMX_TP_CHANNEL)
-	{
-		dmx_tp_count--;
-		if (dmx_tp_count < 0)
-		{
-			lt_info("%s dmx_tp_count < 0!!\n", __func__);
-			dmx_tp_count = 0;
-		}
-	}
 }
 
 bool cDemux::Start(bool)
@@ -483,10 +457,10 @@ bool cDemux::pesFilter(const unsigned short pid)
 	_open();
 
 	memset(&p_flt, 0, sizeof(p_flt));
-	p_flt.pid = pid;
+	p_flt.pid    = pid;
 	p_flt.output = DMX_OUT_DECODER;
 	p_flt.input  = DMX_IN_FRONTEND;
-	p_flt.flags  = DMX_IMMEDIATE_START;
+	p_flt.flags  = 0;
 
 	switch (dmx_type) {
 	case DMX_PCR_ONLY_CHANNEL:

@@ -7,6 +7,8 @@
 #include <unistd.h>
 
 #include <linux/dvb/audio.h>
+
+#include <proc_tools.h>
 #include "audio_lib.h"
 #include "audio_mixer.h"
 #include "lt_debug.h"
@@ -18,19 +20,6 @@
 #include <linux/soundcard.h>
 
 cAudio * audioDecoder = NULL;
-
-static int proc_put(const char *path, const char *value, const int len)
-{
-	int ret, ret2;
-	int pfd = open(path, O_WRONLY);
-	if (pfd < 0)
-		return pfd;
-	ret = write(pfd, value, len);
-	ret2 = close(pfd);
-	if (ret2 < 0)
-		return ret2;
-	return ret;
-}
 
 cAudio::cAudio(void *, void *, void *)
 {
@@ -116,7 +105,6 @@ int map_volume(const int volume)
 	vol = 63 - vol * 63 / 100;
 	return vol;
 }
-
 
 int cAudio::setVolume(unsigned int left, unsigned int right)
 {
@@ -281,7 +269,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	usable = devmask & stereo;
 	if (usable == 0) {
 		lt_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
-				__func__, devmask, stereo);
+			__func__, devmask, stereo);
 		close(mixer_fd);
 		mixer_fd = -1;
 		return 0; /* TODO: should we treat this as error? */
@@ -290,13 +278,13 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if (__builtin_popcount (usable) != 1) {
 		/* TODO: this code is not yet tested as I have only single-mixer devices... */
 		lt_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
-				"%s: querying MIX_NUMBER environment variable...\n",
-				__func__, devmask, stereo, __func__);
+			"%s: querying MIX_NUMBER environment variable...\n",
+			__func__, devmask, stereo, __func__);
 		const char *tmp = getenv("MIX_NUMBER");
 		if (tmp)
 			mixer_num = atoi(tmp);
 		lt_info("%s: mixer_num is %d -> device %08x\n",
-				__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
+			__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
 	} else {
 		mixer_num = 0;

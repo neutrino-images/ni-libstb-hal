@@ -5,6 +5,11 @@
 #include "../common/cs_types.h"
 #include "dmx_lib.h"
 
+typedef struct cs_vs_format_t
+{
+	char format[16];
+} cs_vs_format_struct_t;
+
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
 	ANALOG_SD_YPRPB_CINCH,
@@ -144,7 +149,6 @@ class cVideo
 		video_play_state_t playstate;
 		int /*vidDispMode_t*/ croppingMode;
 		int /*vidOutFmt_t*/ outputformat;
-		int scartvoltage;
 
 		VIDEO_FORMAT StreamType;
 		VIDEO_DEFINITION VideoDefinition;
@@ -155,14 +159,20 @@ class cVideo
 		DISPLAY_AR PictureAR;
 		VIDEO_FRAME_RATE FrameRate;
 		int video_standby;
+		int brightness;
+		int contrast;
+		int saturation;
+		int hue;
+
+		/* used internally by dmx */
 		int64_t GetPTS(void);
 
-		int brightness, contrast, saturation, hue;
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
+		/* used internally by playback */
 		void openDevice(void);
 		void closeDevice(void);
 
@@ -190,7 +200,9 @@ class cVideo
 		bool Pause(void);
 
 		/* get video system infos */
-		int GetVideoSystem();
+		int GetVideoSystem(void);
+		/* when system = -1 then use current video system */
+		void GetVideoSystemFormatName(cs_vs_format_t* format, int system);
 
 		/* set video_system */
 		int SetVideoSystem(int video_system, bool remember = true);
@@ -204,7 +216,6 @@ class cVideo
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600, int startx = 0, int starty = 0, int endx = 1279, int endy = 719);
 		void SetControl(int, int);
-		void VideoParamWatchdog(void);
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
 		void SetDBDR(int) { return; };

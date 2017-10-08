@@ -66,11 +66,13 @@
 #include <cstring>
 #include <cstdio>
 #include <string>
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
 #include "dmx_lib.h"
 #include "lt_debug.h"
 
-/* Ugh... see comment in destructor for details... */
 #include "video_lib.h"
+/* needed for getSTC... */
 extern cVideo *videoDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
@@ -119,9 +121,11 @@ static const char *devname[NUM_DEMUXDEV] = {
 /* did we already DMX_SET_SOURCE on that demux device? */
 static bool init[NUM_DEMUXDEV] = { false, false, false };
 
-/* uuuugly */
-static int dmx_tp_count = 0;
-#define MAX_TS_COUNT 1
+typedef struct dmx_pdata {
+	int last_source;
+	OpenThreads::Mutex *mutex;
+} dmx_pdata;
+#define P ((dmx_pdata *)pdata)
 
 cDemux::cDemux(int n)
 {
@@ -137,24 +141,23 @@ cDemux::cDemux(int n)
 	last_measure = 0;
 	last_data = 0;
 	last_source = -1;
+
+	pdata = (void *)calloc(1, sizeof(dmx_pdata));
+	P->last_source = -1;
+	P->mutex = new OpenThreads::Mutex;
+	dmx_type = DMX_INVALID;
 }
 
 cDemux::~cDemux()
 {
 	lt_debug("%s #%d fd: %d\n", __FUNCTION__, num, fd);
 	Close();
-	/* in zapit.cpp, videoDemux is deleted after videoDecoder
-	 * in the video watchdog, we access videoDecoder
-	 * the thread still runs after videoDecoder has been deleted
-	 * => set videoDecoder to NULL here to make the check in the
-	 * watchdog thread pick this up.
-	 * This is ugly, but it saves me from changing neutrino
-	 *
-	 * if the delete order in neutrino will ever be changed, this
-	 * will blow up badly :-(
-	 */
-	if (dmx_type == DMX_VIDEO_CHANNEL)
-		videoDecoder = NULL;
+	/* wait until Read() has released the mutex */
+	(*P->mutex).lock();
+	(*P->mutex).unlock();
+	free(P->mutex);
+	free(pdata);
+	pdata = NULL;
 }
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
@@ -237,19 +240,11 @@ void cDemux::Close(void)
 	fd = -1;
 	if (measure)
 		return;
-	if (dmx_type == DMX_TP_CHANNEL)
-	{
-		dmx_tp_count--;
-		if (dmx_tp_count < 0)
-		{
-			lt_info("%s dmx_tp_count < 0!!\n", __func__);
-			dmx_tp_count = 0;
-		}
-	}
 }
 
 bool cDemux::Start(bool)
 {
+	lt_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
 	if (fd < 0)
 	{
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
@@ -261,6 +256,7 @@ bool cDemux::Start(bool)
 
 bool cDemux::Stop(void)
 {
+	lt_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
 	if (fd < 0)
 	{
 		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
@@ -282,6 +278,8 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 		lt_info("%s #%d: not open!\n", __func__, num);
 		return -1;
 	}
+	/* avoid race in destructor: ~cDemux needs to wait until Read() returns */
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(*P->mutex);
 	int rc;
 	int to = timeout;
 	struct pollfd ufds;
@@ -299,6 +297,12 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	{
  retry:
 		rc = ::poll(&ufds, 1, to);
+		if (ufds.fd != fd)
+		{
+			/* Close() will set fd to -1, this is normal. Everything else is not. */
+			lt_info("%s:1 ========== fd has changed, %d->%d ==========\n", __func__, ufds.fd, fd);
+			return -1;
+		}
 		if (!rc)
 		{
 			if (timeout == 0) /* we took the emergency exit */
@@ -335,6 +339,11 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 			dmx_err("received %s, please report!", "POLLIN", ufds.revents);
 			return 0;
 		}
+	}
+	if (ufds.fd != fd)	/* does this ever happen? and if, is it harmful? */
+	{			/* read(-1,...) will just return EBADF anyway... */
+		lt_info("%s:2 ========== fd has changed, %d->%d ==========\n", __func__, ufds.fd, fd);
+		return -1;
 	}
 
 	rc = ::read(fd, buff, len);

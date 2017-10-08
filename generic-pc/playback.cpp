@@ -131,11 +131,6 @@ void cPlayback::SetTitle(int /*title*/)
 {
 }
 
-uint64_t cPlayback::GetReadCount()
-{
-	return 0;
-}
-
 cPlayback::cPlayback(int /*num*/)
 {
 	printf("%s:%s\n", FILENAME, __func__);

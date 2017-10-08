@@ -52,7 +52,7 @@ class cPlayback
 
 	public:
 		playstate_t playstate;
-		
+
 		cPlayback(int);
 		bool Open(playmode_t PlayMode);
 		void Close(void);
@@ -60,13 +60,13 @@ class cPlayback
 		bool Start(std::string filename, std::string headers = "");
 		bool Play(void);
 		bool SyncAV(void);
-		
+
 		bool Stop(void);
 		bool SetAPid(int pid, bool ac3);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
 
-		void trickSeek(int ratio);	
+		void trickSeek(int ratio);
 		bool SetSpeed(int speed);
 		bool SetSlow(int slow);
 		bool GetSpeed(int &speed) const;
@@ -90,7 +90,7 @@ class cPlayback
 
 		//
 		~cPlayback();
-		void getMeta();		
+		void getMeta();	
 };
 
 #endif

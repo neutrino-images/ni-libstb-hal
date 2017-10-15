@@ -43,6 +43,10 @@
 #define lt_info_c(args...) _lt_info(HAL_DEBUG_PLAYBACK, NULL, args)
 
 static const char * FILENAME = "[playback.cpp]";
+extern cVideo * videoDecoder;
+extern cAudio * audioDecoder;
+extern cDemux * audioDemux;
+extern cDemux * videoDemux;
 
 #include <gst/gst.h>
 #include <gst/pbutils/missing-plugins.h>
@@ -430,7 +434,14 @@ void cPlayback::Close(void)
 		lt_info( "%s:%s - GST playbin closed\n", FILENAME, __FUNCTION__);
 
 		m_gst_playbin = NULL;
+
+		videoDecoder->openDevice();
+		audioDecoder->openDevice();
+
+		videoDemux->Start();
+		audioDemux->Start();
 	}
+
 }
 
 // start
@@ -505,6 +516,13 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	if(m_gst_playbin)
 	{
+
+		videoDemux->Stop();
+		audioDemux->Stop();
+
+		videoDecoder->closeDevice();
+		audioDecoder->closeDevice();
+
 		lt_info("%s:%s - m_gst_playbin\n", FILENAME, __FUNCTION__);
 
 		if(isHTTP)

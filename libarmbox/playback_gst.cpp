@@ -573,7 +573,7 @@ void cPlayback::trickSeek(int ratio)
 	if( GetPosition(position, duration) )
 	{
 		validposition = true;
-		pos = position;
+		pos = position*1000000;
 	}
 
 	gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
@@ -711,11 +711,15 @@ bool cPlayback::SetPosition(int position, bool absolute)
 
 	if(m_gst_playbin)
 	{
-		gst_element_query_position(m_gst_playbin, fmt, &pos);
-		time_nanoseconds = pos + (position * 1000000.0);
-		if(time_nanoseconds < 0) 
-			time_nanoseconds = 0;
-
+		if (!absolute) {
+			gst_element_query_position(m_gst_playbin, fmt, &pos);
+			time_nanoseconds = pos + (position * 1000000.0);
+			if(time_nanoseconds < 0) 
+				time_nanoseconds = 0;
+		} else {
+			time_nanoseconds = position * 1000000.0;
+		}
+		
 		gst_element_seek(m_gst_playbin, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, GST_SEEK_TYPE_SET, time_nanoseconds, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
 	}
 
@@ -885,7 +889,7 @@ uint64_t cPlayback::GetReadCount()
 int cPlayback::GetAPid(void)
 {
 	lt_info("%s\n", __func__);
-	return 0;
+	return mAudioStream;
 }
 
 int cPlayback::GetVPid(void)

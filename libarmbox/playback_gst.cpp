@@ -401,6 +401,10 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	{
 		isHTTP = true;
 	}
+	else if(!strncmp("https://", filename, 8))
+	{
+		isHTTP = true;
+	}
 	else if(!strncmp("file://", filename, 7))
 	{
 		isHTTP = false;

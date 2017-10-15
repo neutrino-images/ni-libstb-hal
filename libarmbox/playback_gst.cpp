@@ -70,6 +70,7 @@ GstElement * videoSink = NULL;
 gchar * uri = NULL;
 GstTagList * m_stream_tags = 0;
 static int end_eof = 0;
+#define HTTP_TIMEOUT 30
 
 gint match_sinktype(const GValue *velement, const gchar *type)
 {

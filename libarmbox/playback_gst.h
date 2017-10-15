@@ -89,6 +89,8 @@ public:
 	void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 	AVFormatContext *GetAVFormatContext();
 	void ReleaseAVFormatContext();
+	std::string extra_headers;
+	std::string user_agent;
 
 	//
 	~cPlayback();

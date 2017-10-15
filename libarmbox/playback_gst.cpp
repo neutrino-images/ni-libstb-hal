@@ -78,9 +78,10 @@ gint match_sinktype(const GValue *velement, const gchar *type)
 	return strcmp(g_type_name(G_OBJECT_TYPE(element)), type);
 }
 
-void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer /*user_data*/)
+void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer user_data)
 {
 	GstElement *source = NULL;
+	cPlayback *_this = (cPlayback*)user_data;
 	g_object_get(object, "source", &source, NULL);
 
 	if (source)
@@ -97,12 +98,60 @@ void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer /*user_da
 				}
 			}
 		}
-
 		if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "ssl-strict") != 0)
 		{
 			g_object_set(G_OBJECT(source), "ssl-strict", FALSE, NULL);
 		}
-
+		if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "user-agent") != 0 && !_this->user_agent.empty())
+		{
+			g_object_set(G_OBJECT(source), "user-agent", _this->user_agent.c_str(), NULL);
+		}
+		if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "extra-headers") != 0 && !_this->extra_headers.empty())
+		{
+			GstStructure *extras = gst_structure_new_empty("extras");
+			size_t pos = 0;
+			while (pos != std::string::npos)
+			{
+				std::string name, value;
+				size_t start = pos;
+				size_t len = std::string::npos;
+				pos = _this->extra_headers.find('=', pos);
+				if (pos != std::string::npos)
+				{
+					len = pos - start;
+					pos++;
+					name = _this->extra_headers.substr(start, len);
+					start = pos;
+					len = std::string::npos;
+					pos = _this->extra_headers.find('&', pos);
+					if (pos != std::string::npos)
+					{
+						len = pos - start;
+						pos++;
+					}
+					value = _this->extra_headers.substr(start, len);
+				}
+				if (!name.empty() && !value.empty())
+				{
+					GValue header;
+					lt_info_c( "%s:%s setting extra-header '%s:%s'\n", FILENAME, __FUNCTION__, name.c_str(), value.c_str());
+					memset(&header, 0, sizeof(GValue));
+					g_value_init(&header, G_TYPE_STRING);
+					g_value_set_string(&header, value.c_str());
+					gst_structure_set_value(extras, name.c_str(), &header);
+				}
+				else
+				{
+					lt_info_c( "%s:%s Invalid header format %s\n", FILENAME, __FUNCTION__, _this->extra_headers.c_str());
+					break;
+				}
+			}
+			if (gst_structure_n_fields(extras) > 0)
+			{
+				g_object_set(G_OBJECT(source), "extra-headers", extras, NULL);
+			}
+			gst_structure_free(extras);
+		}
 		gst_object_unref(source);
 	}
 }
@@ -394,6 +443,11 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 
+	if (!headers.empty())
+		extra_headers = headers;
+	else
+		extra_headers.clear();
+
 	mAudioStream = 0;
 
 	//create playback path
@@ -455,7 +509,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 		if(isHTTP)
 		{
-			g_signal_connect (G_OBJECT (m_gst_playbin), "notify::source", G_CALLBACK (playbinNotifySource), NULL);
+			g_signal_connect (G_OBJECT (m_gst_playbin), "notify::source", G_CALLBACK (playbinNotifySource), this);
 
 			// set buffer size
 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-size", m_buffer_size, NULL);

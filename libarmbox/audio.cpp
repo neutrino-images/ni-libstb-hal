@@ -394,8 +394,10 @@ void cAudio::SetHdmiDD(bool enable)
 
 void cAudio::SetSpdifDD(bool enable)
 {
+	//using this function for dts passthrough
+	const char *opt[] = {  "downmix", "passthrough" };
 	lt_debug("%s %d\n", __func__, enable);
-	setBypassMode(!enable);
+	proc_put("/proc/stb/audio/dts", opt[enable], strlen(opt[enable]));
 }
 
 void cAudio::ScheduleMute(bool On)

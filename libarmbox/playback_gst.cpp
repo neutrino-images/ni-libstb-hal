@@ -70,11 +70,41 @@ GstElement * videoSink = NULL;
 gchar * uri = NULL;
 GstTagList * m_stream_tags = 0;
 static int end_eof = 0;
+#define HTTP_TIMEOUT 30
 
 gint match_sinktype(const GValue *velement, const gchar *type)
 {
 	GstElement *element = GST_ELEMENT_CAST(g_value_get_object(velement));
 	return strcmp(g_type_name(G_OBJECT_TYPE(element)), type);
+}
+
+void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer /*user_data*/)
+{
+	GstElement *source = NULL;
+	g_object_get(object, "source", &source, NULL);
+
+	if (source)
+	{
+		if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "timeout") != 0)
+		{
+			GstElementFactory *factory = gst_element_get_factory(source);
+			if (factory)
+			{
+				const gchar *sourcename = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+				if (!strcmp(sourcename, "souphttpsrc"))
+				{
+					g_object_set(G_OBJECT(source), "timeout", HTTP_TIMEOUT, NULL);
+				}
+			}
+		}
+
+		if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "ssl-strict") != 0)
+		{
+			g_object_set(G_OBJECT(source), "ssl-strict", FALSE, NULL);
+		}
+
+		gst_object_unref(source);
+	}
 }
 
 GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
@@ -387,6 +417,10 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	{
 		isHTTP = true;
 	}
+	else if(!strncmp("https://", filename, 8))
+	{
+		isHTTP = true;
+	}
 	else if(!strncmp("file://", filename, 7))
 	{
 		isHTTP = false;
@@ -434,6 +468,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 		if(isHTTP)
 		{
+			g_signal_connect (G_OBJECT (m_gst_playbin), "notify::source", G_CALLBACK (playbinNotifySource), NULL);
+
 			// set buffer size
 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-size", m_buffer_size, NULL);
 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-duration", 5LL * GST_SECOND, NULL);

@@ -305,7 +305,7 @@ elif test "$BOXTYPE" = "generic"; then
 elif test "$BOXTYPE" = "duckbox"; then
 	AC_DEFINE(HAVE_DUCKBOX_HARDWARE, 1, [building for a duckbox])
 elif test "$BOXTYPE" = "armbox"; then
-	AC_DEFINE(HAVE_ARM_HARDWARE, 1, [building for a armbox])
+	AC_DEFINE(HAVE_ARM_HARDWARE, 1, [building for an armbox])
 
 fi
 

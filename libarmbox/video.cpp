@@ -178,7 +178,7 @@ void cVideo::openDevice(void)
 	if (fd != -1) /* already open */
 		return;
 retry:
-	if ((fd = open(VDEV[devnum], O_RDWR|O_CLOEXEC|O_NONBLOCK)) < 0)
+	if ((fd = open(VDEV[devnum], O_RDWR|O_CLOEXEC)) < 0)
 	{
 		if (errno == EBUSY)
 		{

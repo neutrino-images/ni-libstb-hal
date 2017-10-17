@@ -401,10 +401,32 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
+ssize_t write_all(int fd, const void *buf, size_t count)
+{
+	int retval;
+	char *ptr = (char*)buf;
+	size_t handledcount = 0;
+	while (handledcount < count)
+	{
+		retval = write(fd, &ptr[handledcount], count - handledcount);
+		if (retval == 0)
+			return -1;
+		if (retval < 0)
+		{
+			if (errno == EINTR)
+				continue;
+			return retval;
+		}
+		handledcount += retval;
+	}
+	return handledcount;
+}
+
 void cVideo::ShowPicture(const char * fname, const char *_destname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
-	static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+	//static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
 	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 	char destname[512];
 	char cmd[512];
@@ -448,7 +470,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			u.actime = time(NULL);
 			u.modtime = st2.st_mtime;
 			/* it does not exist or has a different date, so call ffmpeg... */
-			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 -aspect 16:9 '%s' </dev/null",
+			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 -aspect 16:9 '%s' >/dev/null",
 								fname, destname);
 			system(cmd); /* TODO: use libavcodec to directly convert it */
 			utime(destname, &u);
@@ -469,17 +491,19 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 	{
 		stillpicture = true;
 
-		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
-			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
 		bool seq_end_avail = false;
 		off_t pos=0;
-		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
+		unsigned char iframe[st.st_size];
 		if (! iframe)
 		{
 			lt_info("%s: malloc failed (%m)\n", __func__);
 			goto out;
 		}
 		read(mfd, iframe, st.st_size);
+		if(iframe[0] == 0x00 && iframe[1] == 0x00 && iframe[2] == 0x00 && iframe[3] == 0x01 && (iframe[4] & 0x0f) == 0x07)
+			ioctl(fd, VIDEO_SET_STREAMTYPE, 1); // set to mpeg4
+		else
+			ioctl(fd, VIDEO_SET_STREAMTYPE, 0); // set to mpeg2
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
 		ioctl(fd, VIDEO_PLAY);
 		ioctl(fd, VIDEO_CONTINUE);
@@ -488,14 +512,17 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			++pos;
 
 		if ((iframe[3] >> 4) != 0xE) // no pes header
-			write(fd, pes_header, sizeof(pes_header));
-		write(fd, iframe, st.st_size);
+			write_all(fd, pes_header, sizeof(pes_header));
+		else
+			iframe[4] = iframe[5] = 0x00;
+		write_all(fd, iframe, st.st_size);
 		if (!seq_end_avail)
 			write(fd, seq_end, sizeof(seq_end));
 		memset(iframe, 0, 8192);
-		write(fd, iframe, 8192);
+		write_all(fd, iframe, 8192);
+		usleep(150000);
+		ioctl(fd, VIDEO_STOP, 0);
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
-		free(iframe);
 	}
  out:
 	close(mfd);
@@ -956,12 +983,13 @@ void cVideo::SetCECState(bool state)
 	if ((standby_cec_activ) && state){
 		message.data[0] = CEC_MSG_STANDBY;
 		message.data[1] = 1;
+		sendCECMessage(message);
 	}
 
 	if ((autoview_cec_activ) && !state){
 		message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
 		message.data[1] = 1;
+		sendCECMessage(message);
 	}
 
-	sendCECMessage(message);
 }

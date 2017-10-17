@@ -438,8 +438,8 @@ void cPlayback::Close(void)
 		videoDecoder->openDevice();
 		audioDecoder->openDevice();
 
-		videoDemux->Start();
-		audioDemux->Start();
+		//videoDemux->Start();
+		//audioDemux->Start();
 	}
 
 }
@@ -517,8 +517,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	if(m_gst_playbin)
 	{
 
-		videoDemux->Stop();
-		audioDemux->Stop();
+		//videoDemux->Stop();
+		//audioDemux->Stop();
 
 		videoDecoder->closeDevice();
 		audioDecoder->closeDevice();

@@ -692,14 +692,20 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 		for (int j = 0; j < CI_MAX_MULTI; j++)
 		{
 			if ((*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source)
+			{
+				(*it)->scrambled = scrambled;
 				return it;
+			}
 		}
 	}
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->multi && (*it)->TP == TP && (*it)->source == source && (*it)->ci_use_count < CI_MAX_MULTI)
-				return it;
+		{
+			(*it)->scrambled = scrambled;
+			return it;
+		}
 	}
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)

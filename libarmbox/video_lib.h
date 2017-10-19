@@ -118,11 +118,10 @@ typedef enum {
 	VIDEO_STD_MAX = VIDEO_STD_AUTO
 } VIDEO_STD;
 
-/* not used, for dummy functions */
 typedef enum {
 	VIDEO_HDMI_CEC_MODE_OFF	= 0,
-	VIDEO_HDMI_CEC_MODE_TUNER,
-	VIDEO_HDMI_CEC_MODE_RECORDER
+	VIDEO_HDMI_CEC_MODE_TUNER = 3,
+	VIDEO_HDMI_CEC_MODE_RECORDER = 1
 } VIDEO_HDMI_CEC_MODE;
 
 typedef enum

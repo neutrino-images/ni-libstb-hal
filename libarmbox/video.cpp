@@ -820,7 +820,7 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
 		if (hdmiFd >= 0) {
-			close hdmiFd;
+			close(hdmiFd);
 			hdmiFd = -1;
 		}
 		return false;

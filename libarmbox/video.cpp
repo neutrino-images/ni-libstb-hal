@@ -889,11 +889,11 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 
 	}
 
-	getCECAddressInfo();
+	GetCECAddressInfo();
 
 }
 
-void cVideo::getCECAddressInfo()
+void cVideo::GetCECAddressInfo()
 {
 	if (hdmiFd >= 0)
 	{
@@ -932,27 +932,32 @@ void cVideo::getCECAddressInfo()
 			addressinfo.type = CEC_LOG_ADDR_UNREGISTERED;
 			break;
 		}
-		hasdata = true;
 
-		if (hasdata)
+		deviceType = addressinfo.type;
+		logicalAddress = addressinfo.logical;
+		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
 		{
-			deviceType = addressinfo.type;
-			logicalAddress = addressinfo.logical;
-			if (!fixedAddress)
-			{
-				if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
-				{
-					lt_info("%s: detected physical address change: %02X%02X --> %02X%02X", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
-					memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
-					//reportPhysicalAddress();
-					// addressChanged((physicalAddress[0] << 8) | physicalAddress[1]);
-				}
-			}
+			lt_info("%s: detected physical address change: %02X%02X --> %02X%02X", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
+			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
+			ReportPhysicalAddress();
+			// addressChanged((physicalAddress[0] << 8) | physicalAddress[1]);
 		}
 	}
 }
 
-void cVideo::sendCECMessage(struct cec_message &message)
+void cVideo::ReportPhysicalAddress()
+{
+	struct cec_message txmessage;
+	txmessage.address = 0x0f; /* broadcast */
+	txmessage.data[0] = CEC_MSG_REPORT_PHYSICAL_ADDR;
+	txmessage.data[1] = physicalAddress[0];
+	txmessage.data[2] = physicalAddress[1];
+	txmessage.data[3] = deviceType;
+	txmessage.length = 4;
+	SendCECMessage(txmessage);
+}
+
+void cVideo::SendCECMessage(struct cec_message &message)
 {
 	if (hdmiFd >= 0)
 	{
@@ -983,19 +988,26 @@ void cVideo::SetCECAutoView(bool state)
 void cVideo::SetCECState(bool state)
 {
 	struct cec_message message;
-	message.address = 0x0f;
-	message.length = 2;
 
 	if ((standby_cec_activ) && state){
+		message.address = CEC_OP_PRIM_DEVTYPE_TV;
 		message.data[0] = CEC_MSG_STANDBY;
-		message.data[1] = 1;
-		sendCECMessage(message);
+		message.length = 1;
+		SendCECMessage(message);
 	}
 
 	if ((autoview_cec_activ) && !state){
+		message.address = CEC_OP_PRIM_DEVTYPE_TV;
 		message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
-		message.data[1] = 1;
-		sendCECMessage(message);
+		message.length = 1;
+		SendCECMessage(message);
+		usleep(10000);
+		message.address = 0x0f; /* broadcast */
+		message.data[0] = CEC_MSG_ACTIVE_SOURCE;
+		message.data[1] = ((((int)physicalAddress >> 12) & 0xf) << 4) + (((int)physicalAddress >> 8) & 0xf);
+		message.data[2] = ((((int)physicalAddress >> 4) & 0xf) << 4)  + (((int)physicalAddress >> 0) & 0xf);
+		message.length = 3;
+		SendCECMessage(message);
 	}
 
 }

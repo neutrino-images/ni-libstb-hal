@@ -181,7 +181,7 @@ class cVideo
 		int64_t GetPTS(void);
 
 		unsigned char physicalAddress[2];
-		bool fixedAddress,standby_cec_activ,autoview_cec_activ;
+		bool standby_cec_activ,autoview_cec_activ;
 		unsigned char deviceType, logicalAddress;
 		int hdmiFd;
 
@@ -229,9 +229,10 @@ class cVideo
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE);
 		void SetCECAutoView(bool);
 		void SetCECAutoStandby(bool);
-		void getCECAddressInfo();
-		void sendCECMessage(struct cec_message &message);
+		void GetCECAddressInfo();
+		void SendCECMessage(struct cec_message &message);
 		void SetCECState(bool state);
+		void ReportPhysicalAddress();
 		void ShowPicture(const char * fname, const char *_destname = NULL);
 		void StopPicture();
 		void Standby(unsigned int bOn);

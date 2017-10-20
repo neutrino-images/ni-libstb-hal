@@ -161,6 +161,7 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	} else
 		devnum = unit;
 	fd = -1;
+	hdmiFd = -1;
 	standby_cec_activ = autoview_cec_activ = false;
 	openDevice();
 }
@@ -787,9 +788,21 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	physicalAddress[0] = 0x10;
 	physicalAddress[1] = 0x00;
 	logicalAddress = 1;
-	deviceType = 1; /* default: recorder */
+	
+	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
+	{
+		if (hdmiFd >= 0) {
+			close(hdmiFd);
+			hdmiFd = -1;
+		}
+		return false;
+	}
+	else
+		deviceType = _deviceType;
 
-	hdmiFd = open("/dev/cec0", O_RDWR | O_CLOEXEC);
+	if (hdmiFd == -1)
+		hdmiFd = open("/dev/cec0", O_RDWR | O_CLOEXEC);
+
 	if (hdmiFd >= 0)
 	{
 		__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
@@ -863,6 +876,7 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 
 	GetCECAddressInfo();
 
+	return true;
 }
 
 void cVideo::GetCECAddressInfo()

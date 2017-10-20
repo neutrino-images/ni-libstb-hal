@@ -462,7 +462,6 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	mAudioStream = 0;
 
 	//create playback path
-	char file[400] = {""};
 	bool isHTTP = false;
 
 	if(!strncmp("http://", filename, 7))
@@ -493,10 +492,6 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	{
 		isHTTP = true;
 	}
-	else
-		strcat(file, "file://");
-
-	strcat(file, filename);
 
 	if (isHTTP)
 		uri = g_uri_escape_string(filename, G_URI_RESERVED_CHARS_GENERIC_DELIMITERS, true);

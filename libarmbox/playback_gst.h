@@ -48,9 +48,11 @@ class cPlayback
 {
 private:
 	bool playing;
+	bool decoders_closed;
 
 	int mSpeed;
 	int mAudioStream;
+	int init_jump;
 
 public:
 	playstate_t playstate;

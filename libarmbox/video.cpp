@@ -190,8 +190,6 @@ retry:
 		}
 		lt_info("#%d: %s cannot open %s: %m, retries %d\n", devnum, __func__, VDEV[devnum], n);
 	}
-	ioctl(fd, VIDEO_STOP, 0);
-	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	playstate = VIDEO_STOPPED;
 }
 
@@ -200,10 +198,6 @@ void cVideo::closeDevice(void)
 	lt_debug("%s\n", __func__);
 	/* looks like sometimes close is unhappy about non-empty buffers */
 	Start();
-	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
-	ioctl(fd, VIDEO_PLAY);
-	ioctl(fd, VIDEO_CONTINUE);
-	ioctl(fd, VIDEO_CLEAR_BUFFER);
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -280,6 +274,12 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 	if (playstate == VIDEO_FREEZED)  /* in theory better, but not in practice :-) */
 		fop(ioctl, MPEG_VID_CONTINUE);
 #endif
+	/* implicitly do StopPicture() on video->Start() */
+	if (stillpicture) {
+		lt_info("%s: stillpicture == true, doing implicit StopPicture()\n", __func__);
+		stillpicture = false;
+		Stop(1);
+	}
 	playstate = VIDEO_PLAYING;
 	fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	int res = fop(ioctl, VIDEO_PLAY);

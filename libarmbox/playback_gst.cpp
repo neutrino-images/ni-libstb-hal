@@ -375,6 +375,7 @@ cPlayback::cPlayback(int num)
 
 	playing = false;
 	playstate = STATE_STOP;
+	decoders_closed = false;
 }
 
 cPlayback::~cPlayback()
@@ -387,6 +388,15 @@ cPlayback::~cPlayback()
 bool cPlayback::Open(playmode_t PlayMode)
 {
 	lt_info("%s: PlayMode %d\n", __func__, PlayMode);
+
+	if (PlayMode != PLAYMODE_TS)
+	{
+		audioDecoder->closeDevice();
+		videoDecoder->closeDevice();
+		decoders_closed = true;
+	}
+
+	init_jump = -1;
 	return true;
 }
 
@@ -435,11 +445,12 @@ void cPlayback::Close(void)
 
 		m_gst_playbin = NULL;
 
-		videoDecoder->openDevice();
-		audioDecoder->openDevice();
-
-		//videoDemux->Start();
-		//audioDemux->Start();
+		if (decoders_closed)
+		{
+			audioDecoder->openDevice();
+			videoDecoder->openDevice();
+			decoders_closed = false;
+		}
 	}
 
 }
@@ -460,6 +471,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		extra_headers.clear();
 
 	mAudioStream = 0;
+	init_jump = -1;
 
 	//create playback path
 	bool isHTTP = false;
@@ -511,13 +523,6 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	if(m_gst_playbin)
 	{
-
-		//videoDemux->Stop();
-		//audioDemux->Stop();
-
-		videoDecoder->closeDevice();
-		audioDecoder->closeDevice();
-
 		lt_info("%s:%s - m_gst_playbin\n", FILENAME, __FUNCTION__);
 
 		if(isHTTP)
@@ -540,10 +545,18 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		gst_object_unref(bus);
 
 		// state playing
-		gst_element_set_state(GST_ELEMENT(m_gst_playbin), GST_STATE_PLAYING);
+		if(isHTTP)
+		{
+			gst_element_set_state(GST_ELEMENT(m_gst_playbin), GST_STATE_PLAYING);
+			playstate = STATE_PLAY;
+		}
+		else
+		{
+			gst_element_set_state(GST_ELEMENT(m_gst_playbin), GST_STATE_PAUSED);
+			playstate = STATE_PAUSE;
+		}
 
 		playing = true;
-		playstate = STATE_PLAY;
 	}
 	else
 	{
@@ -642,6 +655,14 @@ bool cPlayback::SetSpeed(int speed)
 {
 	lt_info( "%s:%s speed %d\n", FILENAME, __FUNCTION__, speed);
 
+	if (!decoders_closed)
+	{
+		audioDecoder->closeDevice();
+		videoDecoder->closeDevice();
+		decoders_closed = true;
+		usleep(500000);
+	}
+
 	if(playing == false)
 		return false;
 
@@ -675,6 +696,12 @@ bool cPlayback::SetSpeed(int speed)
 			trickSeek(speed);
 			//
 			playstate = STATE_REW;
+		}
+
+		if (init_jump > -1)
+		{
+			SetPosition(init_jump,true);
+			init_jump = -1;
 		}
 	}
 
@@ -753,15 +780,20 @@ bool cPlayback::SetPosition(int position, bool absolute)
 {
 	lt_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
 
-	if(playing == false)
-		return false;
-
 	gint64 time_nanoseconds;
 	gint64 pos;
 	GstFormat fmt = GST_FORMAT_TIME;
+	GstState state;
 
 	if(m_gst_playbin)
 	{
+		gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
+
+		if ( state == GST_STATE_PAUSED )
+		{
+			init_jump = position;
+			return false;
+		}
 		if (!absolute)
 		{
 			gst_element_query_position(m_gst_playbin, fmt, &pos);

@@ -47,7 +47,7 @@ struct AVFormatContext;
 class cPlayback
 {
 private:
-	bool playing;
+	bool playing, first;
 	bool decoders_closed;
 
 	int mSpeed;

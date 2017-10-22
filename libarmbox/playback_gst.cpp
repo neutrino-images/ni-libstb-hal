@@ -376,6 +376,7 @@ cPlayback::cPlayback(int num)
 	playing = false;
 	playstate = STATE_STOP;
 	decoders_closed = false;
+	first = false;
 }
 
 cPlayback::~cPlayback()
@@ -544,6 +545,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		gst_bus_set_sync_handler(bus, Gst_bus_call, NULL, NULL);
 		gst_object_unref(bus);
 
+		first = true;
+
 		// state playing
 		if(isHTTP)
 		{
@@ -629,25 +632,17 @@ bool cPlayback::SetAPid(int pid, bool /*ac3*/)
 
 void cPlayback::trickSeek(int ratio)
 {
-	bool validposition = false;
+	GstFormat fmt = GST_FORMAT_TIME;
 	gint64 pos = 0;
-	int position;
-	int duration;
-
-	if( GetPosition(position, duration) )
-	{
-		validposition = true;
-		pos = position*1000000;
-	}
 
 	gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
 
-	if (validposition)
+	if (gst_element_query_position(m_gst_playbin, fmt, &pos))
 	{
 		if(ratio >= 0.0)
-			gst_element_seek(m_gst_playbin, ratio, GST_FORMAT_TIME, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, pos, GST_SEEK_TYPE_SET, -1);
+			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, pos, GST_SEEK_TYPE_SET, -1);
 		else
-			gst_element_seek(m_gst_playbin, ratio, GST_FORMAT_TIME, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, pos);
+			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, pos);
 	}
 }
 
@@ -789,9 +784,10 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	{
 		gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
 
-		if ( state == GST_STATE_PAUSED )
+		if ( (state == GST_STATE_PAUSED) && first)
 		{
 			init_jump = position;
+			first = false;
 			return false;
 		}
 		if (!absolute)

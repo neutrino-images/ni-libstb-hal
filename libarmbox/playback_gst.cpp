@@ -640,9 +640,9 @@ void cPlayback::trickSeek(int ratio)
 	if (gst_element_query_position(m_gst_playbin, fmt, &pos))
 	{
 		if(ratio >= 0.0)
-			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP | GST_SEEK_FLAG_ACCURATE), GST_SEEK_TYPE_SET, pos, GST_SEEK_TYPE_SET, -1);
+			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, pos, GST_SEEK_TYPE_SET, -1);
 		else
-			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP | GST_SEEK_FLAG_ACCURATE), GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, pos);
+			gst_element_seek(m_gst_playbin, ratio, fmt, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_SKIP), GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, pos);
 	}
 }
 

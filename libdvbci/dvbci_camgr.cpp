@@ -1,12 +1,11 @@
 /* DVB CI CA Manager */
 #include <stdio.h>
 #include <stdint.h>
+#include <algorithm>
 
 #include "dvbci_camgr.h"
 
-#include <algorithm>
-
-eDVBCICAManagerSession::eDVBCICAManagerSession(tSlot *tslot)
+eDVBCICAManagerSession::eDVBCICAManagerSession(eDVBCISlot *tslot)
 {
 	slot = tslot;
 }
@@ -19,7 +18,7 @@ eDVBCICAManagerSession::~eDVBCICAManagerSession()
 
 int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d)/CA %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
+	printf("[CI CA] SESSION(%d)/CA %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
 	printf("\n");
@@ -30,7 +29,7 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 		{
 			case 0x31:
 			{
-				printf("ca info:\n");
+				printf("[CI CA] ca info:\n");
 				for (int i = 0; i < len; i += 2)
 				{
 					printf("%04x ", (((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
@@ -51,7 +50,7 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 			}
 			break;
 			default:
-				printf("unknown APDU tag 9F 80 %02x\n", tag[2]);
+				printf("[CI CA] unknown APDU tag 9F 80 %02x\n", tag[2]);
 				break;
 		}
 	}
@@ -70,7 +69,7 @@ int eDVBCICAManagerSession::doAction()
 			return 0;
 		}
 		case stateFinal:
-			printf("stateFinal und action! kann doch garnicht sein ;)\n");
+			printf("[CI CA] stateFinal and action should not happen\n");
 		default:
 			return 0;
 	}

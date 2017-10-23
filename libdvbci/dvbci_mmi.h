@@ -11,9 +11,9 @@ class eDVBCIMMISession: public eDVBCISession
 
 	int receivedAPDU(const unsigned char *tag, const void *data, int len);
 	int doAction();
-	tSlot *slot;
+	eDVBCISlot *slot;
 public:
-	eDVBCIMMISession(tSlot *tslot);
+	eDVBCIMMISession(eDVBCISlot *tslot);
 	~eDVBCIMMISession();
 	int stopMMI();
 	int answerText(int answer);

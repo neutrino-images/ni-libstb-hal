@@ -333,7 +333,7 @@ struct element {
 struct cc_ctrl_data {
 	/* parent */
 	//struct ci_session *session;
-	tSlot *slot;
+	eDVBCISlot *slot;
 
 	/* ci+ credentials */
 	struct element elements[MAX_ELEMENTS];
@@ -1039,7 +1039,7 @@ static int data_req_loop(struct cc_ctrl_data *cc_data, unsigned char *dest, cons
 	return pos;
 }
 
-bool eDVBCIContentControlManagerSession::data_initialize(tSlot *tslot)
+bool eDVBCIContentControlManagerSession::data_initialize(eDVBCISlot *tslot)
 {
 	struct cc_ctrl_data *data;
 	uint8_t buf[32], host_id[8];
@@ -1093,7 +1093,7 @@ bool eDVBCIContentControlManagerSession::data_initialize(tSlot *tslot)
 	return true;
 }
 
-void eDVBCIContentControlManagerSession::ci_ccmgr_cc_open_cnf(tSlot *tslot)
+void eDVBCIContentControlManagerSession::ci_ccmgr_cc_open_cnf(eDVBCISlot *tslot)
 {
 	const uint8_t tag[3] = { 0x9f, 0x90, 0x02 };
 	const uint8_t bitmap = 0x01;
@@ -1104,7 +1104,7 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_cc_open_cnf(tSlot *tslot)
 	sendAPDU(tag, &bitmap, 1);
 }
 
-bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(tSlot *tslot, const uint8_t *data, unsigned int len)
+bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len)
 {
 	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
 	uint8_t cc_data_cnf_tag[3] = { 0x9f, 0x90, 0x04 };
@@ -1147,7 +1147,7 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(tSlot *tslot, cons
 	return true;
 }
 
-void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(tSlot *tslot, const uint8_t *data, unsigned int
+void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int
 #if y_debug
  len
 #endif
@@ -1183,7 +1183,7 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sync_req()
 	sendAPDU(tag, &sync_req_status, 1);
 }
 
-bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(tSlot *tslot, const uint8_t *tag, uint8_t *data, unsigned int pos)
+bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(eDVBCISlot *tslot, const uint8_t *tag, uint8_t *data, unsigned int pos)
 {
 	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
 	printf("%s -> %s (%02X%02X%02X) \n", FILENAME, __FUNCTION__, tag[0], tag[1], tag[2]);
@@ -1207,7 +1207,7 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(tSlot *tslot, cons
 	return true;
 }
 
-bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(tSlot *tslot, const uint8_t *data, unsigned int len)
+bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len)
 {
 	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
 	const uint8_t data_cnf_tag[3] = { 0x9f, 0x90, 0x08 };
@@ -1270,7 +1270,7 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(tSlot *tslot, 
 	return ci_ccmgr_cc_sac_send(tslot, data_cnf_tag, dest, pos);
 }
 
-eDVBCIContentControlManagerSession::eDVBCIContentControlManagerSession(tSlot *tslot)
+eDVBCIContentControlManagerSession::eDVBCIContentControlManagerSession(eDVBCISlot *tslot)
 {
 	slot = tslot;
 	slot->hasCCManager = true;
@@ -1284,7 +1284,7 @@ eDVBCIContentControlManagerSession::~eDVBCIContentControlManagerSession()
 	slot->ccmgrSession = NULL;
 }
 
-void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(tSlot *tslot)
+void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(eDVBCISlot *tslot)
 {
 	struct cc_ctrl_data *data = (struct cc_ctrl_data*)(tslot->private_data);
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
@@ -1339,12 +1339,13 @@ int eDVBCIContentControlManagerSession::doAction()
 	}
 }
 
-void eDVBCIContentControlManagerSession::resendKey(tSlot *tslot)
+void eDVBCIContentControlManagerSession::resendKey(eDVBCISlot *tslot)
 {
 	/* Fix me ! no ci* cam with multi decrypt is known
 	 * therefore for now it is OK to use element [0]
-	 * in bool arrays									*/
-	 
+	 * in bool arrays
+	*/
+
 	if (!tslot->SidBlackListed && (tslot->recordUse[0] || tslot->liveUse[0]))
 		descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
 }

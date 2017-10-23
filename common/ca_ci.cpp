@@ -57,7 +57,7 @@ void cs_register_messenger(cs_messenger messenger)
 	return;
 }
 
-bool cCA::checkQueueSize(tSlot* slot)
+bool cCA::checkQueueSize(eDVBCISlot* slot)
 {
 	return (slot->sendqueue.size() > 0);
 }
@@ -100,14 +100,15 @@ void cCA::DelTest(int slot)
 /* helper function to call the cpp thread loop */
 void* execute_thread(void *c)
 {
-	tSlot* slot = (tSlot*) c;
+	eDVBCISlot* slot = (eDVBCISlot*) c;
 	cCA *obj = (cCA*)slot->pClass;
 	obj->slot_pollthread(c);
 	return NULL;
 }
 
 /* from dvb-apps */
-int asn_1_decode(uint16_t * length, unsigned char * asn_1_array, uint32_t asn_1_array_len)
+int asn_1_decode(uint16_t * length, unsigned char * asn_1_array,
+		 uint32_t asn_1_array_len)
 {
 	uint8_t length_field;
 
@@ -183,7 +184,7 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 	return eDataError;
 }
 
-static bool transmitData(tSlot* slot, unsigned char* d, int len)
+static bool transmitData(eDVBCISlot* slot, unsigned char* d, int len)
 {
 	printf("%s -> %s len(%d)\n", FILENAME, __func__, len);
 
@@ -207,7 +208,7 @@ static bool transmitData(tSlot* slot, unsigned char* d, int len)
 	return true;
 }
 
-static bool sendDataLast(tSlot* slot)
+static bool sendDataLast(eDVBCISlot* slot)
 {
 	unsigned char data[5];
 	slot->pollConnection = false;
@@ -227,7 +228,7 @@ static bool sendDataLast(tSlot* slot)
 	return true;
 }
 
-static bool sendRCV(tSlot* slot)
+static bool sendRCV(eDVBCISlot* slot)
 {
 	unsigned char send_data[5];
 	slot->pollConnection = false;
@@ -295,7 +296,7 @@ eData sendData(tSlot* slot, unsigned char* data, int len)
 }
 
 //send a transport connection create request
-bool sendCreateTC(tSlot* slot)
+bool sendCreateTC(eDVBCISlot* slot)
 {
 	unsigned char data[5];
 	data[0] = slot->slot;
@@ -311,7 +312,7 @@ bool sendCreateTC(tSlot* slot)
 	return true;
 }
 
-void cCA::process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int /*con_id*/)
+void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int /*con_id*/)
 {
 	switch (tpdu_tag)
 	{
@@ -432,7 +433,7 @@ void cCA::MenuEnter(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -460,7 +461,7 @@ void cCA::MenuAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint32_t choice)
 {
 	printf("%s -> %s Slot(%d) choice(%d)\n", FILENAME, __func__, bSlotIndex, choice);
 
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -476,7 +477,7 @@ void cCA::InputAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint8_t * pBuffer,
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -493,7 +494,7 @@ void cCA::MenuClose(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -520,7 +521,7 @@ uint32_t cCA::GetNumberSmartCardSlots(void)
 
 void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t slot, char * Name)
 {
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->slot == slot)
@@ -533,7 +534,7 @@ void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t slot, char * Name)
 
 bool cCA::ModulePresent(enum CA_SLOT_TYPE, uint32_t slot)
 {
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -550,7 +551,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	bool haveFound = false;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -566,8 +567,8 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->status = eStatusReset;
 		usleep(200000);
 		if ((*it)->hasCCManager)
-			(*it)->ccmgrSession->ci_ccmgr_doClose((tSlot*)(*it));
-		eDVBCISession::deleteSessions((tSlot*)(*it));
+			(*it)->ccmgrSession->ci_ccmgr_doClose((eDVBCISlot*)(*it));
+		eDVBCISession::deleteSessions((eDVBCISlot*)(*it));
 		(*it)->mmiSession = NULL;
 		(*it)->hasMMIManager = false;
 		(*it)->hasCAManager = false;
@@ -619,7 +620,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 
 int cCA::GetCAIDS(CaIdVector &Caids)
 {
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->camIsReady)
@@ -634,7 +635,7 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -652,7 +653,7 @@ bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
 bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -670,7 +671,7 @@ bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
 SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned char scrambled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	ca_map_iterator_t caIt;
 	unsigned int i;
 	int count = 0;
@@ -741,7 +742,7 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, unsigned ch
 			{
 				if ((*it)->source == source && (!checkLiveSlot || !liveUse_found))
 				{
-					SendNullPMT((tSlot*)(*it));
+					SendNullPMT((eDVBCISlot*)(*it));
 					(*it)->SidBlackListed = true;
 					for (int j = 0; j < CI_MAX_MULTI; j++)
 						(*it)->SID[j] = 0;
@@ -844,7 +845,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 				else
 				{
-					SendNullPMT((tSlot*)(*It2));
+					SendNullPMT((eDVBCISlot*)(*It2));
 					(*It2)->scrambled = 0;
 					(*It2)->TP = 0;
 					for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -911,7 +912,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 		}
 
 		if (!(*It)->newCapmt && (*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
-			(*It)->ccmgrSession->resendKey((tSlot*)(*It));
+			(*It)->ccmgrSession->resendKey((eDVBCISlot*)(*It));
 
 	}
 	else
@@ -952,7 +953,7 @@ cCA::cCA(int Slots)
 		{
 			printf("failed to open %s ->%m", filename);
 		}
-		tSlot* slot = (tSlot*) malloc(sizeof(tSlot));
+		eDVBCISlot* slot = (eDVBCISlot*) malloc(sizeof(eDVBCISlot));
 		slot->slot = i;
 		slot->fd = fd;
 		slot->connection_id = 0;
@@ -1034,7 +1035,7 @@ cCA::cCA(void)
 	printf("%s -> %s\n", FILENAME, __func__);
 }
 
-void cCA::setSource(tSlot* slot)
+void cCA::setSource(eDVBCISlot* slot)
 {
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_input", slot->slot);
@@ -1065,7 +1066,7 @@ void cCA::slot_pollthread(void *c)
 {
 	ca_slot_info_t info;
 	unsigned char data[1024 * 4];
-	tSlot* slot = (tSlot*) c;
+	eDVBCISlot* slot = (eDVBCISlot*) c;
 
 	while (1)
 	{
@@ -1373,7 +1374,7 @@ void cCA::slot_pollthread(void *c)
 
 cCA *CA = cCA::GetInstance();
 
-bool cCA::SendCaPMT(tSlot* slot)
+bool cCA::SendCaPMT(eDVBCISlot* slot)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	if ((slot->fd > 0) && (slot->camIsReady))
@@ -1434,14 +1435,14 @@ void cCA::SetInitMask(enum CA_INIT_MASK p)
 
 SlotIt cCA::GetSlot(unsigned int slot)
 {
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 		if ((*it)->slot == slot && (*it)->init)
 			return it;
 	return it;
 }
 
-bool cCA::SendNullPMT(tSlot* slot)
+bool cCA::SendNullPMT(eDVBCISlot* slot)
 {
 	printf("%s > %s >**\n", FILENAME, __func__);
 	if ((slot->fd > 0) && (slot->camIsReady) && (slot->hasCAManager))
@@ -1464,7 +1465,7 @@ bool cCA::CheckCerts(void)
 
 bool cCA::checkChannelID(u64 chanID)
 {
-	std::list<tSlot*>::iterator it;
+	std::list<eDVBCISlot*>::iterator it;
 	u16 SID = (u16)(chanID & 0xFFFF);
 	u64 TP = chanID >> 16;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)

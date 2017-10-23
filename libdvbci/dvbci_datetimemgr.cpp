@@ -6,9 +6,7 @@
 
 #include "dvbci_datetimemgr.h"
 
-static const char * FILENAME = "[dvbci_datetimemgr]";
-
-eDVBCIDateTimeSession::eDVBCIDateTimeSession(tSlot *tslot)
+eDVBCIDateTimeSession::eDVBCIDateTimeSession(eDVBCISlot *tslot)
 {
 	slot = tslot;
 	slot->hasDateTime = true;
@@ -22,7 +20,7 @@ eDVBCIDateTimeSession::~eDVBCIDateTimeSession()
 
 int eDVBCIDateTimeSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d)/DATETIME %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
+	printf("[CI DT] SESSION(%d)/DATETIME %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
 	printf("\n");
@@ -36,7 +34,7 @@ int eDVBCIDateTimeSession::receivedAPDU(const unsigned char *tag, const void *da
 				return 1;
 				break;
 			default:
-				printf("unknown APDU tag 9F 84 %02x\n", tag[2]);
+				printf("[CI DT] unknown APDU tag 9F 84 %02x\n", tag[2]);
 				break;
 		}
 	}

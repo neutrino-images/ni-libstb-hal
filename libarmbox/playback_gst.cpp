@@ -507,7 +507,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	}
 
 	if (isHTTP)
-		uri = g_uri_escape_string(filename, G_URI_RESERVED_CHARS_GENERIC_DELIMITERS, true);
+		uri = g_strdup_printf ("%s", filename);
 	else
 		uri = g_filename_to_uri(filename, NULL, NULL);
 

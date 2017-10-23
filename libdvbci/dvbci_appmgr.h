@@ -9,7 +9,7 @@ class eDVBCIApplicationManagerSession: public eDVBCISession
 		stateFinal=statePrivate
 	};
 
-	tSlot *slot;
+	eDVBCISlot *slot;
 
 	int wantmenu;
 	int receivedAPDU(const unsigned char *tag, const void *data, int len);
@@ -17,7 +17,7 @@ class eDVBCIApplicationManagerSession: public eDVBCISession
 	bool readBlist();
 	int checkBlist();
 public:
-	eDVBCIApplicationManagerSession(tSlot *tslot);
+	eDVBCIApplicationManagerSession(eDVBCISlot *tslot);
 	~eDVBCIApplicationManagerSession();
 	int enterMenu();
 	int startMMI();

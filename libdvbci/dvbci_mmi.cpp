@@ -7,11 +7,8 @@
 #include "dvbci_mmi.h"
 #include <ca_cs.h>
 
-static const char * FILENAME = "[dvbci_mmi]";
-
-eDVBCIMMISession::eDVBCIMMISession(tSlot *tslot)
+eDVBCIMMISession::eDVBCIMMISession(eDVBCISlot *tslot)
 {
-	printf("%s -> %s\n", FILENAME, __func__);
 	slot = tslot;
 	slot->hasMMIManager = true;
 	slot->mmiSession = this;
@@ -35,7 +32,7 @@ eDVBCIMMISession::~eDVBCIMMISession()
 
 int eDVBCIMMISession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d)/MMI %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
+	printf("[CI MMI] SESSION(%d)/MMI %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
 	printf("\n");
@@ -235,7 +232,7 @@ int eDVBCIMMISession::doAction()
 
 int eDVBCIMMISession::stopMMI()
 {
-	printf("%s -> %s\n", FILENAME, __func__);
+	printf("[CI MMI] eDVBCIMMISession::stopMMI()\n");
 
 	unsigned char tag[] = {0x9f, 0x88, 0x00};
 	unsigned char data[] = {0x00};
@@ -247,7 +244,7 @@ int eDVBCIMMISession::stopMMI()
 
 int eDVBCIMMISession::answerText(int answer)
 {
-	printf("%s -> %s(%d)\n", FILENAME, __func__, answer);
+	printf("[CI MMI] eDVBCIMMISession::answerText(%d)\n",answer);
 
 	unsigned char tag[] = {0x9f, 0x88, 0x0B};
 	unsigned char data[] = {0x00};
@@ -257,9 +254,9 @@ int eDVBCIMMISession::answerText(int answer)
 	return 0;
 }
 
-int eDVBCIMMISession::answerEnq(char * answer, int len)
+int eDVBCIMMISession::answerEnq(char *answer, int len)
 {
-	printf("%s -> %s(%d bytes)\n", FILENAME, __func__, len);
+	printf("[CI MMI] eDVBCIMMISession::answerEnq(%d bytes)\n", len);
 
 	unsigned char data[len + 1];
 	data[0] = 0x01; // answer ok
@@ -273,7 +270,7 @@ int eDVBCIMMISession::answerEnq(char * answer, int len)
 
 int eDVBCIMMISession::cancelEnq()
 {
-	printf("%s -> %s\n", FILENAME, __func__);
+	printf("[CI MMI] eDVBCIMMISession::cancelEnq()\n");
 
 	unsigned char tag[] = {0x9f, 0x88, 0x08};
 	unsigned char data[] = {0x00}; // canceled

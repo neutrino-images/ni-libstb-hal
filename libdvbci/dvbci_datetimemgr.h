@@ -11,8 +11,9 @@ class eDVBCIDateTimeSession: public eDVBCISession
 	int receivedAPDU(const unsigned char *tag, const void *data, int len);
 	int doAction();
 public:
-	eDVBCIDateTimeSession(tSlot *tslot);
+	eDVBCIDateTimeSession(eDVBCISlot *tslot);
 	~eDVBCIDateTimeSession();
+	void sendDateTime();
 };
 
 #endif

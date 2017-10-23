@@ -249,7 +249,7 @@ static bool sendRCV(eDVBCISlot* slot)
 }
 
 //send some data on an fd, for a special slot and connection_id
-eData sendData(tSlot* slot, unsigned char* data, int len)
+eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
 {
 	// only poll connection if we are not awaiting an answer
 	slot->pollConnection = false;

@@ -13,6 +13,7 @@ class eDVBCIDateTimeSession: public eDVBCISession
 public:
 	eDVBCIDateTimeSession(eDVBCISlot *tslot);
 	~eDVBCIDateTimeSession();
+	void sendDateTime();
 };
 
 #endif

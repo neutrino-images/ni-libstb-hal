@@ -222,11 +222,11 @@ typedef struct
 	/* private data */
 	void *private_data;
 
-} tSlot;
+} eDVBCISlot;
 
-eData sendData(tSlot *slot, unsigned char* data, int len);
+eData sendData(eDVBCISlot *slot, unsigned char* data, int len);
 
-typedef std::list<tSlot*>::iterator SlotIt;
+typedef std::list<eDVBCISlot*>::iterator SlotIt;
 
 /// CA module class
 class cCA {
@@ -242,7 +242,7 @@ private:
 	bool init;
 	void SendPMT();
 	pthread_mutex_t ciMutex;
-	std::list<tSlot*> slot_data;
+	std::list<eDVBCISlot*> slot_data;
 	pthread_t slot_thread;
 
 public:
@@ -296,15 +296,15 @@ public:
 	SlotIt FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled);
 	SlotIt GetSlot(unsigned int slot);
 	bool SendDateTime(void);
-	bool SendCaPMT(tSlot* slot);
+	bool SendCaPMT(eDVBCISlot* slot);
 	void slot_pollthread(void *c);
-	void setSource(tSlot* slot);
-	bool checkQueueSize(tSlot* slot);
-	void process_tpdu(tSlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
+	void setSource(eDVBCISlot* slot);
+	bool checkQueueSize(eDVBCISlot* slot);
+	void process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
 
 	bool checkChannelID(u64 chanID);
 	void setCheckLiveSlot(int check);
-	bool SendNullPMT(tSlot* slot);
+	bool SendNullPMT(eDVBCISlot* slot);
 	bool CheckCerts(void);
 	void Test(int slot, CaIdVector caids);
 	void DelTest(int slot);

@@ -7,11 +7,9 @@
 #include "dvbci_appmgr.h"
 
 /* prevent possibly segfaults: read at end of this file */ 
-#define yy_debug	0
+#define yy_debug 0
 
-static const char * FILENAME = "[dvbci_appmgr]";
-
-eDVBCIApplicationManagerSession::eDVBCIApplicationManagerSession(tSlot *tslot)
+eDVBCIApplicationManagerSession::eDVBCIApplicationManagerSession(eDVBCISlot *tslot)
 {
 	slot = tslot;
 	slot->hasAppManager = true;
@@ -26,7 +24,7 @@ eDVBCIApplicationManagerSession::~eDVBCIApplicationManagerSession()
 
 int eDVBCIApplicationManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d)/APP %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
+	printf("[CI AM] SESSION(%d)/APP %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
 		printf("%02x ", ((const unsigned char*)data)[i]);
 	printf("\n");
@@ -38,16 +36,16 @@ int eDVBCIApplicationManagerSession::receivedAPDU(const unsigned char *tag, cons
 			case 0x21:
 			{
 				int dl;
-				printf("application info:\n");
-				printf("  len: %d\n", len);
-				printf("  application_type: %d\n", ((unsigned char*)data)[0]);
-				printf("  application_manufacturer: %02x %02x\n", ((unsigned char*)data)[2], ((unsigned char*)data)[1]);
-				printf("  manufacturer_code: %02x %02x\n", ((unsigned char*)data)[4], ((unsigned char*)data)[3]);
+				printf("[CI AM] application info:\n");
+				printf("[CI AM]   len: %d\n", len);
+				printf("[CI AM]   application_type: %d\n", ((unsigned char*)data)[0]);
+				printf("[CI AM]   application_manufacturer: %02x %02x\n", ((unsigned char*)data)[2], ((unsigned char*)data)[1]);
+				printf("[CI AM]   manufacturer_code: %02x %02x\n", ((unsigned char*)data)[4], ((unsigned char*)data)[3]);
 				printf("  menu string: ");
 				dl = ((unsigned char*)data)[5];
 				if ((dl + 6) > len)
 				{
-					printf("warning, invalid length (%d vs %d)\n", dl + 6, len);
+					printf("[CI AM] warning, invalid length (%d vs %d)\n", dl + 6, len);
 					dl = len - 6;
 				}
 				char str[dl + 1];
@@ -60,11 +58,11 @@ int eDVBCIApplicationManagerSession::receivedAPDU(const unsigned char *tag, cons
 				strcpy(slot->name, str);
 				if (!strcmp(slot->name, "AlphaCrypt"))
 					slot->multi = true;
-				printf("%s set cam name %s on slot(%d)\n", FILENAME, slot->name, slot->slot);
+				printf("[CI AM] set cam name %s on slot(%d)\n", slot->name, slot->slot);
 				break;
 			}
 			default:
-				printf("%s unknown APDU tag 9F 80 %02x\n", FILENAME, tag[2]);
+				printf("[CI AM] unknown APDU tag 9F 80 %02x\n", tag[2]);
 				break;
 		}
 	}
@@ -77,19 +75,19 @@ int eDVBCIApplicationManagerSession::doAction()
 	{
 		case stateStarted:
 		{
-			const unsigned char tag[3] = {0x9F, 0x80, 0x20};
+			const unsigned char tag[3] = {0x9F, 0x80, 0x20}; // application manager info e sendAPDU(tag);
 			sendAPDU(tag);
 			state = stateFinal;
 			checkBlist();
 			return 1;
 		}
 		case stateFinal:
-			printf("%s -> in final state\n", FILENAME);
+			printf("[CI AM] in final state.");
 			wantmenu = 0;
 			if (wantmenu)
 			{
-				printf("%s wantmenu: sending Tenter_menu\n", FILENAME);
-				const unsigned char tag[3] = {0x9F, 0x80, 0x22};
+				printf("[CI AM] wantmenu: sending Tenter_menu");
+				const unsigned char tag[3] = {0x9F, 0x80, 0x22}; // Tenter_menu
 				sendAPDU(tag);
 				wantmenu = 0;
 				return 0;
@@ -103,8 +101,8 @@ int eDVBCIApplicationManagerSession::doAction()
 
 int eDVBCIApplicationManagerSession::startMMI()
 {
-	printf("%s -> %s\n", FILENAME, __func__);
-	const unsigned char tag[3] = {0x9F, 0x80, 0x22};
+	printf("[CI AM] in appmanager -> startmmi()");
+	const unsigned char tag[3] = {0x9F, 0x80, 0x22}; // Tenter_menu
 	sendAPDU(tag);
 	slot->mmiOpened = true;
 	return 0;

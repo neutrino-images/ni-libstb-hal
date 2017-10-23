@@ -73,7 +73,7 @@ void eDVBCISession::sendSPDU(unsigned char tag, const void *data, int len, const
 	sendSPDU(slot, tag, data, len, session_nb, apdu, alen);
 }
 
-void eDVBCISession::sendSPDU(tSlot *slot, unsigned char tag, const void *data, int len, unsigned short session_nb, const void *apdu, int alen)
+void eDVBCISession::sendSPDU(eDVBCISlot *slot, unsigned char tag, const void *data, int len, unsigned short session_nb, const void *apdu, int alen)
 {
 	unsigned char pkt[4096];
 	unsigned char *ptr = pkt;

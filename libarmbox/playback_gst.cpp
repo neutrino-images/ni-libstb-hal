@@ -383,6 +383,8 @@ cPlayback::~cPlayback()
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
+	if (m_stream_tags)
+		gst_tag_list_free(m_stream_tags);
 }
 
 //Used by Fileplay
@@ -417,9 +419,6 @@ void cPlayback::Close(void)
 		gst_object_unref(bus);
 		lt_info( "%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
 	}
-
-	if (m_stream_tags)
-		gst_tag_list_free(m_stream_tags);
 
 	// close gst
 	if (m_gst_playbin)

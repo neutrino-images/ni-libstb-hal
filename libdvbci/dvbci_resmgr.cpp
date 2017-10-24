@@ -1,12 +1,11 @@
 /* DVB CI Resource Manager */
+
 #include <stdio.h>
 #include "dvbci_resmgr.h"
 
-static const char * FILENAME = "[dvbci_resmgr]";
-
 int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
-	printf("SESSION(%d)RES %02x %02x %02x (len = %d): \n", session_nb, tag[0], tag[1], tag[2], len);
+	printf("[CI RM] SESSION(%d)RES %02x %02x %02x (len = %d): \n", session_nb, tag[0], tag[1], tag[2], len);
 	if (len)
 	{
 		for (int i = 0; i < len; i++)
@@ -18,12 +17,12 @@ int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const v
 		switch (tag[2])
 		{
 			case 0x10:  // profile enquiry
-				printf("%s -> cam asks what I'm able to\n", FILENAME);
+				printf("[CI RM] cam profile inquiry\n");
 				state = stateProfileEnquiry;
 				return 1;
 				break;
 			case 0x11: // Tprofile
-				printf("%s -> my cam can do: ", FILENAME);
+				printf("[CI RM] -> my cam can do: ");
 				if (!len)
 					printf("nothing");
 				else
@@ -39,9 +38,10 @@ int eDVBCIResourceManagerSession::receivedAPDU(const unsigned char *tag, const v
 				state = stateFinal;
 				break;
 			default:
-				printf("%s %s unknown APDU tag 9F 80 %02x\n", FILENAME, __FUNCTION__, tag[2]);
+				printf("[CI RM] unknown APDU tag 9F 80 %02x\n", tag[2]);
 		}
 	}
+
 	return 0;
 }
 
@@ -66,7 +66,7 @@ int eDVBCIResourceManagerSession::doAction()
 		}
 		case stateProfileChange:
 		{
-			printf("bla kaputt\n");
+			printf("[CI RM] cannot deal with statProfileChange\n");
 			break;
 		}
 		case stateProfileEnquiry:
@@ -108,7 +108,7 @@ int eDVBCIResourceManagerSession::doAction()
 			return 0;
 		}
 		case stateFinal:
-			printf("stateFinal und action! kann doch garnicht sein ;)\n");
+			printf("[CI RM] Should not happen: action on stateFinal\n");
 		default:
 			break;
 	}

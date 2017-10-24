@@ -1,4 +1,5 @@
 /* DVB CI Transport Connection */
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -10,8 +11,6 @@
 #include "dvbci_datetimemgr.h"
 #include "dvbci_mmi.h"
 #include "dvbci_ccmgr.h"
-
-static const char * FILENAME = "[dvbci_session]";
 
 eDVBCISession* eDVBCISession::sessions[SLMS];
 
@@ -74,7 +73,7 @@ void eDVBCISession::sendSPDU(unsigned char tag, const void *data, int len, const
 	sendSPDU(slot, tag, data, len, session_nb, apdu, alen);
 }
 
-void eDVBCISession::sendSPDU(tSlot *slot, unsigned char tag, const void *data, int len, unsigned short session_nb, const void *apdu, int alen)
+void eDVBCISession::sendSPDU(eDVBCISlot *slot, unsigned char tag, const void *data, int len, unsigned short session_nb, const void *apdu, int alen)
 {
 	unsigned char pkt[4096];
 	unsigned char *ptr = pkt;
@@ -94,10 +93,11 @@ void eDVBCISession::sendSPDU(tSlot *slot, unsigned char tag, const void *data, i
 	sendData(slot, pkt, ptr - pkt);
 }
 
-void eDVBCISession::sendOpenSessionResponse(tSlot *slot, unsigned char session_status, const unsigned char *resource_identifier, unsigned short session_nb)
+void eDVBCISession::sendOpenSessionResponse(eDVBCISlot *slot, unsigned char session_status, const unsigned char *resource_identifier, unsigned short session_nb)
 {
 	char pkt[6];
 	pkt[0] = session_status;
+	printf("[CI SESS] sendOpenSessionResponse");
 	memcpy(pkt + 1, resource_identifier, 4);
 	sendSPDU(slot, 0x92, pkt, 5, session_nb);
 }
@@ -107,7 +107,7 @@ void eDVBCISession::recvCreateSessionResponse(const unsigned char *data)
 	status = data[0];
 	state = stateStarted;
 	action = 1;
-	printf("%s -> %s status(%x)\n", FILENAME, __func__, status);
+	printf("[CI SESS] create Session Response, status %x\n", status);
 }
 
 void eDVBCISession::recvCloseSessionRequest(const unsigned char *data)
@@ -115,13 +115,11 @@ void eDVBCISession::recvCloseSessionRequest(const unsigned char *data)
 	status = data[0];
 	state = stateInDeletion;
 	action = 1;
-	printf("%s -> %s\n", FILENAME, __func__);
+	printf("[CI SESS] close Session Request\n");
 }
 
-void eDVBCISession::deleteSessions(const tSlot *slot)
+void eDVBCISession::deleteSessions(const eDVBCISlot *slot)
 {
-	printf("%s -> %s\n", FILENAME, __func__);
-
 	for (unsigned short session_nb = 0; session_nb < SLMS; ++session_nb)
 	{
 		if (sessions[session_nb] && sessions[session_nb]->slot == slot)
@@ -129,18 +127,16 @@ void eDVBCISession::deleteSessions(const tSlot *slot)
 	}
 }
 
-eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *resource_identifier, unsigned char &status)
+eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned char *resource_identifier, unsigned char &status)
 {
 	unsigned long tag;
 	unsigned short session_nb;
-
-	printf("%s -> %s\n", FILENAME, __func__);
 
 	for (session_nb = 1; session_nb < SLMS; ++session_nb)
 		if (!sessions[session_nb - 1])
 			break;
 
-	printf("%s -> use session_nb = %d\n", FILENAME, session_nb);
+	printf("[CI SESS] -> use session_nb = %d\n", session_nb);
 	if (session_nb == SLMS)
 	{
 		status = 0xF3;
@@ -152,56 +148,56 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 	tag |= resource_identifier[2] << 8;
 	tag |= resource_identifier[3];
 
-	printf("Tag: %08lx > ", tag);
+	printf("[CI SESS] Tag: %08lx > ", tag);
 
 	switch (tag)
 	{
 		case 0x00010041:
 			sessions[session_nb - 1] = new eDVBCIResourceManagerSession;
-			printf("RESOURCE MANAGER\n");
+			printf("[CI SESS] RESOURCE MANAGER\n");
 			break;
 		case 0x00020041:
 		case 0x00020043:
 			sessions[session_nb - 1] = new eDVBCIApplicationManagerSession(slot);
-			printf("APPLICATION MANAGER\n");
+			printf("[CI SESS] APPLICATION MANAGER\n");
 			break;
 		case 0x00030041:
 			sessions[session_nb - 1] = new eDVBCICAManagerSession(slot);
-			printf("CA MANAGER\n");
+			printf("[CI SESS] CA MANAGER\n");
 			break;
 		case 0x00240041:
 			sessions[session_nb - 1] = new eDVBCIDateTimeSession(slot);
-			printf("DATE-TIME\n");
+			printf("[CI SESS] DATE-TIME\n");
 			break;
 		case 0x00400041:
-			printf("MMI\n");
 			sessions[session_nb - 1] = new eDVBCIMMISession(slot);
+			printf("[CI SESS] MMI - create session\n");
 			break;
 		if (cCA::GetInstance()->CheckCerts())
 		{
 			case 0x008c1001:
-				printf("CC MANAGER\n");
+				printf("[CI SESS] CC MANAGER\n");
 				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				break;
 		}
 		case 0x00100041:
 //			session=new eDVBCIAuthSession;
-			printf("AuthSession\n");
+			printf("[CI SESS] AuthSession\n");
 //			break;
 		case 0x00200041:
 		default:
-			printf("unknown resource type %02x %02x %02x %02x\n", resource_identifier[0], resource_identifier[1], resource_identifier[2], resource_identifier[3]);
+			printf("[CI SESS] unknown resource type %02x %02x %02x %02x\n", resource_identifier[0], resource_identifier[1], resource_identifier[2], resource_identifier[3]);
 			sessions[session_nb - 1] = 0;
 			status = 0xF0;
 	}
 
 	if (!sessions[session_nb - 1])
 	{
-		printf("unknown session.. expect crash\n");
+		printf("[CI SESS] unknown session.. expect crash\n");
 		return NULL;
 	}
 
-	printf("%s -> new session nb %d %p\n", FILENAME, session_nb, sessions[session_nb - 1]);
+	printf("[CI SESS] new session nb %d %p\n", session_nb, sessions[session_nb - 1]);
 	sessions[session_nb - 1]->session_nb = session_nb;
 
 	if (sessions[session_nb - 1])
@@ -215,7 +211,7 @@ eDVBCISession* eDVBCISession::createSession(tSlot *slot, const unsigned char *re
 
 void eDVBCISession::handleClose()
 {
-	printf("%s %s\n", FILENAME, __FUNCTION__);
+	printf("%s\n", __FUNCTION__);
 
 	unsigned char data[1] = {0x00};
 	sendSPDU(0x96, data, 1, 0, 0);
@@ -228,6 +224,7 @@ int eDVBCISession::pollAll()
 		if (sessions[session_nb - 1])
 		{
 			int r;
+
 			if (sessions[session_nb - 1]->state == stateInDeletion)
 			{
 				sessions[session_nb - 1]->handleClose();
@@ -246,22 +243,23 @@ int eDVBCISession::pollAll()
 	return 0;
 }
 
-void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t len)
+void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size_t len)
 {
-	printf("%s -> %s\n",FILENAME, __FUNCTION__);
-#if 0
-	for(unsigned int i = 0; i < len; i++)
-		printf("%02x ", ptr[i]);
-	printf("\n");
-#endif
 	if ((ptr[0] == 0x90 || ptr[0] == 0x95) && (ptr[3] == 0 ))
 	{
-		printf("****Mist: %02x %02x %02x %02x\n", ptr[0], ptr[1], ptr[2], ptr[3]);
+		printf("[CI SESS] ****Mist: %02x %02x %02x %02x\n", ptr[0], ptr[1], ptr[2], ptr[3]);
 	}
 	const unsigned char *pkt = (const unsigned char*)ptr;
 	unsigned char tag = *pkt++;
 	int llen, hlen;
 
+	printf("[CI SESS] slot: %p",slot);
+
+#if 0
+	for(unsigned int i = 0; i < len; i++)
+		printf("%02x ", ptr[i]);
+	printf("\n");
+#endif
 
 	llen = parseLengthField(pkt, hlen);
 	pkt += llen;
@@ -290,14 +288,14 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 
 		if ((!session_nb) || (session_nb >= SLMS))
 		{
-			printf("PROTOCOL: illegal session number %x\n", session_nb);
+			printf("[CI SESS] PROTOCOL: illegal session number %x\n", session_nb);
 			return;
 		}
 
 		session = sessions[session_nb - 1];
 		if (!session)
 		{
-			printf("PROTOCOL: data on closed session %x\n", session_nb);
+			printf("[CI SESS] PROTOCOL: data on closed session %x\n", session_nb);
 			return;
 		}
 
@@ -309,10 +307,11 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 				session->recvCreateSessionResponse(pkt);
 				break;
 			case 0x95:
+				printf("[CI SESS] recvCloseSessionRequest");
 				session->recvCloseSessionRequest(pkt);
 				break;
 			default:
-				printf("INTERNAL: nyi, tag %02x.\n", tag);
+				printf("[CI SESS] INTERNAL: nyi, tag %02x.\n", tag);
 				return;
 		}
 	}
@@ -324,7 +323,6 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 
 	if (session)
 	{
-		//printf("len %d\n", len);
 		while (len > 0)
 		{
 			int alen;
@@ -339,7 +337,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 
 			if (((len - alen) > 0) && ((len - alen) < 3))
 			{
-				printf("WORKAROUND: applying work around MagicAPDULength\n");
+				printf("[CI SESS] WORKAROUND: applying work around MagicAPDULength\n");
 				alen = len;
 			}
 
@@ -352,7 +350,7 @@ void eDVBCISession::receiveData(tSlot *slot, const unsigned char *ptr, size_t le
 		}
 	}
 	if (len)
-		printf("PROTOCOL: warning, TL-Data has invalid length\n");
+		printf("[CI SESS] PROTOCOL: warning, TL-Data has invalid length\n");
 }
 
 eDVBCISession::~eDVBCISession()

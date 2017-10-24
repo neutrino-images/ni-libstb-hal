@@ -5,13 +5,13 @@
 
 class eDVBCIContentControlManagerSession: public eDVBCISession
 {
-	bool data_initialize(tSlot *tslot);
-	bool ci_ccmgr_cc_data_req(tSlot *tslot, const uint8_t *data, unsigned int len);
-	bool ci_ccmgr_cc_sac_data_req(tSlot *tslot, const uint8_t *data, unsigned int len);
-	bool ci_ccmgr_cc_sac_send(tSlot *tslot, const uint8_t *tag, uint8_t *data, unsigned int pos);
-	void ci_ccmgr_cc_sac_sync_req(tSlot *tslot, const uint8_t *data, unsigned int len);
+	bool data_initialize(eDVBCISlot *tslot);
+	bool ci_ccmgr_cc_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len);
+	bool ci_ccmgr_cc_sac_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len);
+	bool ci_ccmgr_cc_sac_send(eDVBCISlot *tslot, const uint8_t *tag, uint8_t *data, unsigned int pos);
+	void ci_ccmgr_cc_sac_sync_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len);
 	void ci_ccmgr_cc_sync_req();
-	void ci_ccmgr_cc_open_cnf(tSlot *slot);
+	void ci_ccmgr_cc_open_cnf(eDVBCISlot *slot);
 
 	enum {
 		stateFinal=statePrivate
@@ -19,9 +19,9 @@ class eDVBCIContentControlManagerSession: public eDVBCISession
 	int receivedAPDU(const unsigned char *tag, const void *data, int len);
 	int doAction();
 public:
-	eDVBCIContentControlManagerSession(tSlot *tslot);
+	eDVBCIContentControlManagerSession(eDVBCISlot *tslot);
 	~eDVBCIContentControlManagerSession();
-	void ci_ccmgr_doClose(tSlot *tslot);
-	void resendKey(tSlot *tslot);
+	void ci_ccmgr_doClose(eDVBCISlot *tslot);
+	void resendKey(eDVBCISlot *tslot);
 };
 #endif

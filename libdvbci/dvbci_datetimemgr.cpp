@@ -63,7 +63,7 @@ void eDVBCIDateTimeSession::sendDateTime()
 	struct tm tm_loc;
 	unsigned char tag[3] = {0x9f, 0x84, 0x41}; // date_time_response
 	unsigned char msg[7] = {0, 0, 0, 0, 0, 0, 0};
-	printf("%s -> %s\n", FILENAME, __FUNCTION__);
+	printf("[CI DT] -> %s\n", __FUNCTION__);
 	time_t t = time(NULL);
 	if ( gmtime_r(&t, &tm_gmt) && localtime_r(&t, &tm_loc) )
 	{

@@ -47,6 +47,12 @@ if test "$enable_gstreamer_10" = "yes"; then
        PKG_CHECK_MODULES([GSTREAMER_VIDEO], [gstreamer-video-1.0])
 fi
 
+if test x$BOXTYPE = xarmbox ; then
+       PKG_CHECK_MODULES([GSTREAMER], [gstreamer-1.0])
+       PKG_CHECK_MODULES([GSTREAMER_AUDIO], [gstreamer-audio-1.0])
+       PKG_CHECK_MODULES([GSTREAMER_VIDEO], [gstreamer-video-1.0])
+fi
+
 if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
 	PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1])
 	PKG_CHECK_MODULES([AVCODEC], [libavcodec >= 54.28.0])
@@ -67,6 +73,7 @@ libduckbox/Makefile
 libdvbci/Makefile
 libtriple/Makefile
 libspark/Makefile
+libarmbox/Makefile
 raspi/Makefile
 tools/Makefile
 ])

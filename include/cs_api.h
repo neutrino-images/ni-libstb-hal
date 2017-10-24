@@ -5,6 +5,8 @@
 #include "../libduckbox/cs_api.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/cs_api.h"
+#elif HAVE_ARM_HARDWARE
+#include "../libarmbox/cs_api.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/cs_api.h"
 #elif HAVE_GENERIC_HARDWARE

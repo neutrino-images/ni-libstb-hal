@@ -457,7 +457,7 @@ cPlayback::~cPlayback()
 	//FIXME: all deleting stuff is done in Close()
 	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
-		gst_tag_list_unref(m_stream_tags);
+		gst_tag_list_free(m_stream_tags);
 	pthread_mutex_unlock (&mutex_tag_ist);
 }
 

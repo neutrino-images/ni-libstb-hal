@@ -432,7 +432,7 @@ cPlayback::~cPlayback()
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
 	if (m_stream_tags)
-		gst_tag_list_unref(m_stream_tags);
+		gst_tag_list_free(m_stream_tags);
 }
 
 //Used by Fileplay

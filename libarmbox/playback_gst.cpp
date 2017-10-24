@@ -383,6 +383,8 @@ cPlayback::~cPlayback()
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
+	if (m_stream_tags)
+		gst_tag_list_free(m_stream_tags);
 }
 
 //Used by Fileplay
@@ -417,9 +419,6 @@ void cPlayback::Close(void)
 		gst_object_unref(bus);
 		lt_info( "%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
 	}
-
-	if (m_stream_tags)
-		gst_tag_list_free(m_stream_tags);
 
 	// close gst
 	if (m_gst_playbin)
@@ -748,13 +747,18 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	{
 		//position
 		GstFormat fmt = GST_FORMAT_TIME; //Returns time in nanosecs
-
 		gint64 pts = 0;
-		unsigned long long int sec = 0;
-
-		gst_element_query_position(m_gst_playbin, fmt, &pts);
+		if (audioSink || videoSink)
+		{
+			g_signal_emit_by_name(audioSink ? audioSink : videoSink, "get-decoder-time", &pts);
+			if (!GST_CLOCK_TIME_IS_VALID(pts)){
+				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+			}
+		}else{
+			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
+				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+		}
 		position = pts /  1000000.0;
-
 		// duration
 		GstFormat fmt_d = GST_FORMAT_TIME; //Returns time in nanosecs
 		double length = 0;

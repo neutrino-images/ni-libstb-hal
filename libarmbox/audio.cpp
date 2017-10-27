@@ -229,6 +229,12 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 					" fall back to /dev/dsp\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp";
 	}
+	if ((!mix_dev) || (access(mix_dev, W_OK))) {
+		if (mix_dev)
+			lt_info("%s: MIX_DEVICE is set (%s) but cannot be opened,"
+					" fall back to /dev/mixer\n", __func__, dsp_dev);
+		mix_dev = "/dev/mixer";
+	}
 	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
 	clipfd = open(dsp_dev, O_WRONLY);

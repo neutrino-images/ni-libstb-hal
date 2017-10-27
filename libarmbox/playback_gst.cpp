@@ -239,18 +239,23 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 		if ( gv_image )
 		{
 			GstBuffer *buf_image;
-			buf_image = gst_value_get_buffer (gv_image);
+			GstSample *sample;
+			sample = (GstSample *)g_value_get_boxed(gv_image);
+			buf_image = gst_sample_get_buffer(sample);
 			int fd = open("/tmp/.id3coverart", O_CREAT|O_WRONLY|O_TRUNC, 0644);
-			if(fd >= 0)
+			if (fd >= 0)
 			{
-				GstMapInfo Info;
-				gst_buffer_map(buf_image, &Info,(GstMapFlags)( GST_MAP_READ));
-				int ret = write(fd, Info.data, Info.size);
+				guint8 *data;
+				gsize size;
+				GstMapInfo map;
+				gst_buffer_map(buf_image, &map, GST_MAP_READ);
+				data = map.data;
+				size = map.size;
+				int ret = write(fd, data, size);
+				gst_buffer_unmap(buf_image, &map);
 				close(fd);
-				gst_buffer_unmap(buf_image, &Info);
-				lt_info_c( "%s:%s - GST_MESSAGE_INFO: cPlayback::state /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
+				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written ", FILENAME, __FUNCTION__, ret);
 			}
-			//FIXME: how shall playback handle this event???
 		}
 		gst_tag_list_free(tags);
 		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
@@ -751,10 +756,13 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		if (audioSink || videoSink)
 		{
 			g_signal_emit_by_name(audioSink ? audioSink : videoSink, "get-decoder-time", &pts);
-			if (!GST_CLOCK_TIME_IS_VALID(pts)){
+			if (!GST_CLOCK_TIME_IS_VALID(pts))
+			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
 			}
-		}else{
+		}
+		else
+		{
 			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
 		}
@@ -974,13 +982,18 @@ uint64_t cPlayback::GetReadCount()
 
 int cPlayback::GetAPid(void)
 {
-	lt_info("%s\n", __func__);
-	return mAudioStream;
+	gint current_audio = 0;
+	g_object_get (m_gst_playbin, "current-audio", &current_audio, NULL);
+	lt_info("%s: %d audio\n", __FUNCTION__, current_audio);
+	return current_audio;
 }
 
 int cPlayback::GetVPid(void)
 {
-	return 0;
+	gint current_video = 0;
+	g_object_get (m_gst_playbin, "current-video", &current_video, NULL);
+	lt_info("%s: %d video\n", __FUNCTION__, current_video);
+	return current_video;
 }
 
 int cPlayback::GetSubtitlePid(void)

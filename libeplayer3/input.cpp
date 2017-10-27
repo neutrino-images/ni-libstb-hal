@@ -758,7 +758,7 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 		for(unsigned int i = 0; i < avfc->nb_streams; i++) {
 			if (avfc->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC) {
 			AVPacket *pkt = &avfc->streams[i]->attached_pic;
-			FILE *cover_art = fopen("/tmp/cover.jpg", "wb");
+			FILE *cover_art = fopen("/tmp/.id3coverart", "wb");
 			if (cover_art) {
 				fwrite(pkt->data, pkt->size, 1, cover_art);
 				fclose(cover_art);

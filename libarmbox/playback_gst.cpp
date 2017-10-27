@@ -974,13 +974,18 @@ uint64_t cPlayback::GetReadCount()
 
 int cPlayback::GetAPid(void)
 {
-	lt_info("%s\n", __func__);
-	return mAudioStream;
+	gint current_audio = 0;
+	g_object_get (m_gst_playbin, "current-audio", &current_audio, NULL);
+	lt_info("%s: %d audio\n", __FUNCTION__, current_audio);
+	return current_audio;
 }
 
 int cPlayback::GetVPid(void)
 {
-	return 0;
+	gint current_video = 0;
+	g_object_get (m_gst_playbin, "current-video", &current_video, NULL);
+	lt_info("%s: %d video\n", __FUNCTION__, current_video);
+	return current_video;
 }
 
 int cPlayback::GetSubtitlePid(void)

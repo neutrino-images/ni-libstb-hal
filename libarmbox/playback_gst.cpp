@@ -72,7 +72,7 @@ GstElement * m_gst_playbin = NULL;
 GstElement * audioSink = NULL;
 GstElement * videoSink = NULL;
 gchar * uri = NULL;
-GstTagList * m_stream_tags = 0;
+GstTagList * m_stream_tags = NULL;
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
 
@@ -232,13 +232,14 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 		{
 			if (m_stream_tags && gst_tag_list_is_equal(m_stream_tags, result))
 			{
-				gst_tag_list_free(tags);
-				gst_tag_list_free(result);
+				gst_tag_list_unref(tags);
+				gst_tag_list_unref(result);
 				break;
 			}
 			if (m_stream_tags)
-				gst_tag_list_free(m_stream_tags);
-			m_stream_tags = result;
+				gst_tag_list_unref(m_stream_tags);
+			m_stream_tags = gst_tag_list_copy(result);
+			gst_tag_list_unref(result);
 		}
 
 		const GValue *gv_image = gst_tag_list_get_value_index(tags, GST_TAG_IMAGE, 0);
@@ -260,10 +261,10 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 				int ret = write(fd, data, size);
 				gst_buffer_unmap(buf_image, &map);
 				close(fd);
-				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written ", FILENAME, __FUNCTION__, ret);
+				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
 			}
 		}
-		gst_tag_list_free(tags);
+		gst_tag_list_unref(tags);
 		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 		break;
 	}
@@ -395,7 +396,7 @@ cPlayback::~cPlayback()
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
 	if (m_stream_tags)
-		gst_tag_list_free(m_stream_tags);
+		gst_tag_list_unref(m_stream_tags);
 }
 
 //Used by Fileplay
@@ -483,6 +484,11 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	mAudioStream = 0;
 	init_jump = -1;
+
+	gst_tag_list_unref(m_stream_tags);
+	m_stream_tags = NULL;
+
+	unlink("/tmp/.id3coverart");
 
 	//create playback path
 	bool isHTTP = false;

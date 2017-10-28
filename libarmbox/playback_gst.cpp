@@ -72,7 +72,7 @@ GstElement * m_gst_playbin = NULL;
 GstElement * audioSink = NULL;
 GstElement * videoSink = NULL;
 gchar * uri = NULL;
-GstTagList * m_stream_tags = 0;
+GstTagList * m_stream_tags = NULL;
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
 
@@ -230,9 +230,16 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 		result = gst_tag_list_merge(m_stream_tags, tags, GST_TAG_MERGE_REPLACE);
 		if (result)
 		{
+			if (m_stream_tags && gst_tag_list_is_equal(m_stream_tags, result))
+			{
+				gst_tag_list_unref(tags);
+				gst_tag_list_unref(result);
+				break;
+			}
 			if (m_stream_tags)
-				gst_tag_list_free(m_stream_tags);
-			m_stream_tags = result;
+				gst_tag_list_unref(m_stream_tags);
+			m_stream_tags = gst_tag_list_copy(result);
+			gst_tag_list_unref(result);
 		}
 
 		const GValue *gv_image = gst_tag_list_get_value_index(tags, GST_TAG_IMAGE, 0);
@@ -254,10 +261,10 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 				int ret = write(fd, data, size);
 				gst_buffer_unmap(buf_image, &map);
 				close(fd);
-				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written ", FILENAME, __FUNCTION__, ret);
+				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
 			}
 		}
-		gst_tag_list_free(tags);
+		gst_tag_list_unref(tags);
 		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 		break;
 	}
@@ -389,7 +396,7 @@ cPlayback::~cPlayback()
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
 	if (m_stream_tags)
-		gst_tag_list_free(m_stream_tags);
+		gst_tag_list_unref(m_stream_tags);
 }
 
 //Used by Fileplay
@@ -477,6 +484,11 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	mAudioStream = 0;
 	init_jump = -1;
+
+	gst_tag_list_unref(m_stream_tags);
+	m_stream_tags = NULL;
+
+	unlink("/tmp/.id3coverart");
 
 	//create playback path
 	bool isHTTP = false;
@@ -949,6 +961,62 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 {
 	keys.clear();
 	values.clear();
+	if (gst_tag_list_is_empty (m_stream_tags))
+		return;
+
+	for (guint i = 0, icnt = gst_tag_list_n_tags(m_stream_tags); i < icnt; i++)
+	{
+		const gchar *name = gst_tag_list_nth_tag_name(m_stream_tags, i);
+		if (!name)
+		{
+			continue;
+		}
+
+		for (guint j = 0, jcnt = gst_tag_list_get_tag_size(m_stream_tags, name); j < jcnt; j++)
+		{
+			const GValue *val;
+
+			val = gst_tag_list_get_value_index(m_stream_tags, name, j);
+
+			if (G_VALUE_HOLDS_STRING(val))
+			{
+				keys.push_back(name);
+				values.push_back(g_value_get_string(val));
+			}
+			else if (G_VALUE_HOLDS_UINT(val))
+			{
+				char buffer [50];
+				keys.push_back(name);
+				sprintf (buffer, "%u", g_value_get_uint(val));
+				values.push_back(buffer);
+			}
+			else if (G_VALUE_HOLDS_DOUBLE(val))
+			{
+				char buffer [50];
+				keys.push_back(name);
+				sprintf (buffer, "%f", g_value_get_double(val));
+				values.push_back(buffer);
+			}
+			else if (G_VALUE_HOLDS_BOOLEAN(val))
+			{
+				keys.push_back(name);
+				values.push_back(g_value_get_boolean(val) ? "true" : "false");
+			}
+			else if (GST_VALUE_HOLDS_DATE_TIME(val))
+			{
+				GstDateTime *dt = (GstDateTime *) g_value_get_boxed(val);
+				keys.push_back(name);
+				values.push_back(gst_date_time_to_iso8601_string(dt));
+			}
+			else if (G_VALUE_HOLDS(val, G_TYPE_DATE))
+			{
+				keys.push_back(name);
+				values.push_back(gst_value_serialize(val));
+			}
+
+		}
+	}
+	printf("%s:%s %d tags found\n", FILENAME, __func__, (int)keys.size());
 }
 
 void cPlayback::FindAllTeletextsubtitlePids(int *, unsigned int *numpids, std::string *, int *, int *)

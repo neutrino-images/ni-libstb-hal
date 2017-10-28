@@ -67,6 +67,8 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 
 	init_jump = -1;
 
+	unlink("/tmp/.id3coverart");
+
 	std::string file;
 	if (*filename == '/')
 		file = "file://";

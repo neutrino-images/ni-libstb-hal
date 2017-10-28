@@ -316,6 +316,10 @@ int cVideo::Stop(bool blank)
 
 int cVideo::setBlank(int)
 {
+	fop(ioctl, VIDEO_PLAY);
+	fop(ioctl, VIDEO_CONTINUE);
+	video_still_picture sp = { NULL, 0 };
+	fop(ioctl, VIDEO_STILLPICTURE, &sp);
 	return Stop(1);
 }
 
@@ -556,7 +560,7 @@ void cVideo::Standby(unsigned int bOn)
 
 int cVideo::getBlank(void)
 {
-	int ret = proc_get_hex("/proc/stb/vmpeg/0/xres");
+	int ret = proc_get_hex(VMPEG_xres[devnum]);
 	lt_debug("%s => %d\n", __func__, !ret);
 	return !ret;
 }

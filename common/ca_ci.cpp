@@ -863,7 +863,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 		if ((*It)->multi && (*It)->TP == TP && (*It)->source == source && !sid_found && (*It)->ci_use_count < CI_MAX_MULTI)
 		{
 			int pos = 3;
-			
+
 			(*It)->SID[(*It)->ci_use_count] = SID;
 			(*It)->ci_use_count++;
 

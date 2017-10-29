@@ -82,11 +82,11 @@ int eDVBCIApplicationManagerSession::doAction()
 			return 1;
 		}
 		case stateFinal:
-			printf("[CI AM] in final state.");
+			printf("[CI AM] in final state.\n");
 			wantmenu = 0;
 			if (wantmenu)
 			{
-				printf("[CI AM] wantmenu: sending Tenter_menu");
+				printf("[CI AM] wantmenu: sending Tenter_menu\n");
 				const unsigned char tag[3] = {0x9F, 0x80, 0x22}; // Tenter_menu
 				sendAPDU(tag);
 				wantmenu = 0;
@@ -101,7 +101,7 @@ int eDVBCIApplicationManagerSession::doAction()
 
 int eDVBCIApplicationManagerSession::startMMI()
 {
-	printf("[CI AM] in appmanager -> startmmi()");
+	printf("[CI AM] in appmanager -> startmmi()\n");
 	const unsigned char tag[3] = {0x9F, 0x80, 0x22}; // Tenter_menu
 	sendAPDU(tag);
 	slot->mmiOpened = true;

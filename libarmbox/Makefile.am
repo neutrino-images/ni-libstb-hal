@@ -14,7 +14,8 @@ AM_LDFLAGS = \
 	@AVCODEC_LIBS@ \
 	@SWRESAMPLE_LIBS@ \
 	-lpthread -lasound -lrt \
-	-lgstreamer-1.0
+	-lgstreamer-1.0 \
+	-lgsttag-1.0
 
 libarmbox_la_SOURCES = \
 	hardware_caps.c \

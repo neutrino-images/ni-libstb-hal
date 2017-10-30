@@ -49,6 +49,7 @@ extern cDemux * audioDemux;
 extern cDemux * videoDemux;
 
 #include <gst/gst.h>
+#include <gst/tag/tag.h>
 #include <gst/pbutils/missing-plugins.h>
 
 typedef enum
@@ -839,14 +840,15 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 	if(m_gst_playbin)
 	{
 		gint i, n_audio = 0;
-		//GstStructure * structure = NULL;
 
 		// get audio
 		g_object_get (m_gst_playbin, "n-audio", &n_audio, NULL);
-		printf("%s: %d audio\n", __FUNCTION__, n_audio);
+		lt_info("%s: %d audio\n", __FUNCTION__, n_audio);
 
 		if(n_audio == 0)
 			return;
+
+		language->clear();
 
 		for (i = 0; i < n_audio; i++)
 		{
@@ -855,16 +857,17 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 
 			GstPad * pad = 0;
 			g_signal_emit_by_name (m_gst_playbin, "get-audio-pad", i, &pad);
+
 			GstCaps * caps = gst_pad_get_current_caps(pad);
+			gst_object_unref(pad);
+
 			if (!caps)
 				continue;
 
 			GstStructure * structure = gst_caps_get_structure(caps, 0);
-			//const gchar *g_type = gst_structure_get_name(structure);
-
-			//if (!structure)
-			//return atUnknown;
-			//ac3flags[0] = 0;
+			GstTagList * tags = NULL;
+			gchar * g_lang = NULL;
+			gchar * g_codec = NULL;
 
 			// ac3flags
 			if ( gst_structure_has_name (structure, "audio/mpeg"))
@@ -872,23 +875,11 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 				gint mpegversion, layer = -1;
 
 				if (!gst_structure_get_int (structure, "mpegversion", &mpegversion))
-					//return atUnknown;
 					ac3flags[i] = 0;
 
 				switch (mpegversion)
 				{
 				case 1:
-					/*
-					{
-						gst_structure_get_int (structure, "layer", &layer);
-						if ( layer == 3 )
-							return atMP3;
-						else
-							return atMPEG;
-							ac3flags[0] = 4;
-						break;
-					}
-					*/
 					ac3flags[i] = 4;
 				case 2:
 					//return atAAC;
@@ -912,9 +903,21 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 				ac3flags[i] = 0;
 
 			gst_caps_unref(caps);
-		}
 
-		// numpids
+			//(ac3flags[i] > 2) ?	ac3flags[i] = 1 : ac3flags[i] = 0;
+
+			g_signal_emit_by_name (m_gst_playbin, "get-audio-tags", i, &tags);
+			if (tags && GST_IS_TAG_LIST(tags))
+			{
+				if (gst_tag_list_get_string(tags, GST_TAG_LANGUAGE_CODE, &g_lang))
+				{
+					language[i] = std::string(gst_tag_get_language_name(g_lang)).c_str();
+					lt_info("%s: language:%s\n", __FUNCTION__, language[i].c_str());
+					g_free(g_lang);
+				}
+				gst_tag_list_free(tags);
+			}
+		}
 		*numpida=i;
 	}
 }

@@ -36,7 +36,7 @@ int eDVBCISession::buildLengthField(unsigned char *pkt, int len)
 	}
 	else
 	{
-		printf("too big length\n");
+		printf("[CI SESS] too big length\n");
 		exit(0);
 	}
 }
@@ -97,7 +97,7 @@ void eDVBCISession::sendOpenSessionResponse(eDVBCISlot *slot, unsigned char sess
 {
 	char pkt[6];
 	pkt[0] = session_status;
-	printf("[CI SESS] sendOpenSessionResponse");
+	printf("[CI SESS] sendOpenSessionResponse\n");
 	memcpy(pkt + 1, resource_identifier, 4);
 	sendSPDU(slot, 0x92, pkt, 5, session_nb);
 }
@@ -148,7 +148,7 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 	tag |= resource_identifier[2] << 8;
 	tag |= resource_identifier[3];
 
-	printf("[CI SESS] Tag: %08lx > ", tag);
+	printf("[CI SESS] Tag: %08lx >\n", tag);
 
 	switch (tag)
 	{
@@ -211,7 +211,7 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 
 void eDVBCISession::handleClose()
 {
-	printf("%s\n", __FUNCTION__);
+	printf("[CI SESS] %s\n", __FUNCTION__);
 
 	unsigned char data[1] = {0x00};
 	sendSPDU(0x96, data, 1, 0, 0);
@@ -253,13 +253,13 @@ void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size
 	unsigned char tag = *pkt++;
 	int llen, hlen;
 
-	printf("[CI SESS] slot: %p",slot);
+	printf("[CI SESS] receiveData slot: %p > ",slot);
 
 #if 0
 	for(unsigned int i = 0; i < len; i++)
 		printf("%02x ", ptr[i]);
-	printf("\n");
 #endif
+	printf("\n");
 
 	llen = parseLengthField(pkt, hlen);
 	pkt += llen;
@@ -307,7 +307,7 @@ void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size
 				session->recvCreateSessionResponse(pkt);
 				break;
 			case 0x95:
-				printf("[CI SESS] recvCloseSessionRequest");
+				printf("[CI SESS] recvCloseSessionRequest\n");
 				session->recvCloseSessionRequest(pkt);
 				break;
 			default:

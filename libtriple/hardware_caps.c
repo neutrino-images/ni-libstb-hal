@@ -20,6 +20,7 @@ static hw_caps_t caps = {
 	.display_type = HW_DISPLAY_GFX,
 	.display_xres = 128,
 	.display_yres = 64,
+	.display_can_deepstandby = 0;
 	.boxvendor = "Armas",
 	.boxname = "TripleDragon"
 };

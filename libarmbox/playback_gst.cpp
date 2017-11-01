@@ -87,11 +87,16 @@ gint match_sinktype(const GValue *velement, const gchar *type)
 	return strcmp(g_type_name(G_OBJECT_TYPE(element)), type);
 }
 
-void processMpegTsSection(GstMpegtsSection* section)
+void resetPids()
 {
 	for (unsigned int i = 0; i < REC_MAX_APIDS; i++) {
 		real_apids[i] = 0;
 	}
+}
+
+void processMpegTsSection(GstMpegtsSection* section)
+{
+	resetPids();
 	int cnt = 0;
     if (section->section_type == GST_MPEGTS_SECTION_PMT) {
         const GstMpegtsPMT* pmt = gst_mpegts_section_get_pmt(section);
@@ -512,6 +517,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		extra_headers = headers;
 	else
 		extra_headers.clear();
+
+	resetPids();
 
 	mAudioStream = 0;
 	init_jump = -1;

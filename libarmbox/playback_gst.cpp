@@ -50,6 +50,7 @@ extern cDemux * videoDemux;
 
 #include <gst/gst.h>
 #include <gst/tag/tag.h>
+#include <gst/mpegts/mpegts.h>
 #include <gst/pbutils/missing-plugins.h>
 
 typedef enum
@@ -76,11 +77,33 @@ gchar * uri = NULL;
 GstTagList * m_stream_tags = NULL;
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
+// taken from record.h
+#define REC_MAX_APIDS 20
+int real_apids[REC_MAX_APIDS];
 
 gint match_sinktype(const GValue *velement, const gchar *type)
 {
 	GstElement *element = GST_ELEMENT_CAST(g_value_get_object(velement));
 	return strcmp(g_type_name(G_OBJECT_TYPE(element)), type);
+}
+
+void processMpegTsSection(GstMpegtsSection* section)
+{
+	for (unsigned int i = 0; i < REC_MAX_APIDS; i++) {
+		real_apids[i] = 0;
+	}
+	int cnt = 0;
+    if (section->section_type == GST_MPEGTS_SECTION_PMT) {
+        const GstMpegtsPMT* pmt = gst_mpegts_section_get_pmt(section);
+        for (guint i = 0; i < pmt->streams->len; ++i) {
+            const GstMpegtsPMTStream* stream = static_cast<const GstMpegtsPMTStream*>(g_ptr_array_index(pmt->streams, i));
+			if (stream->stream_type == 0x05 || stream->stream_type >= 0x80) {
+				lt_info_c( "%s:%s Audio Stream pid: %d\n", FILENAME, __FUNCTION__, stream->pid);
+				real_apids[cnt] = stream->pid;
+				cnt++;
+			}
+		}
+	}
 }
 
 void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer user_data)
@@ -269,7 +292,14 @@ GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
 		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 		break;
 	}
-
+    case GST_MESSAGE_ELEMENT:
+	{
+		GstMpegtsSection* section = gst_message_parse_mpegts_section(msg);
+		if (section) {
+			processMpegTsSection(section);
+			gst_mpegts_section_unref(section);
+		}
+	}
 	case GST_MESSAGE_STATE_CHANGED:
 	{
 		if(GST_MESSAGE_SRC(msg) != GST_OBJECT(m_gst_playbin))
@@ -853,7 +883,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 		for (i = 0; i < n_audio; i++)
 		{
 			// apids
-			apids[i]=i;
+			apids[i]= real_apids[i] ? real_apids[i] : i;
 
 			GstPad * pad = 0;
 			g_signal_emit_by_name (m_gst_playbin, "get-audio-pad", i, &pad);

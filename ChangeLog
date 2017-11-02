@@ -1,0 +1,3035 @@
+2017-11-02  Thilo Graf  <dbt@novatux.de>
+
+	version 1.0.0-mpx
+	hd51 support
+
+	adjust .gitignore for untracked files
+
+	add default files
+
+	add update script
+
+2017-11-02  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- rename can_set_display_brightness => display_can_set_brightness
+
+	- add display_can_deepstandby member
+
+2017-11-02  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix null list
+
+	fix get play position
+
+2017-11-01  TangoCash  <eric@loxat.de>
+
+	gstreamer: reset pids at start
+
+	gstreamer playback - get real apid from TS
+
+2017-10-31  TangoCash  <eric@loxat.de>
+
+	armbox: fullscreen osd ;)
+
+2017-10-30  TangoCash  <eric@loxat.de>
+
+	gstreamer: fix lang detection
+
+2017-10-29  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-10-28  max_10  <max_10@gmx.de>
+
+	libdvbci: log cosmetic
+
+2017-10-28  TangoCash  <eric@loxat.de>
+
+	armbox: fix get blank
+
+	fixup gstreamer tags
+
+	armbox: gstreamer tags support
+
+2017-10-27  TangoCash  <eric@loxat.de>
+
+	fix coverart
+
+	armbox: fix audio playback #2
+
+	armbox: fix audio playback
+
+	armbox: add video/audio pid
+
+2017-10-24  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-10-24  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix get play position
+
+	fix null list
+
+2017-10-24  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+	eDVBCISlot forgotten
+
+2017-10-23  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-10-23  max_10  <max_10@gmx.de>
+
+	rename tSlot -> eDVBCISlot
+
+2017-10-23  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-10-23  max_10  <max_10@gmx.de>
+
+	modification sendDateTime
+
+	rename tSlot -> eDVBCISlot
+
+2017-10-23  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix uri for http
+
+2017-10-22  TangoCash  <eric@loxat.de>
+
+	partly revert last commit
+
+	armbox: fix gst playback
+
+2017-10-21  TangoCash  <eric@loxat.de>
+
+	armbox: gstreamer - fix init jump, cleanup
+
+2017-10-20  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	rmove unused code
+
+2017-10-19  TangoCash  <eric@loxat.de>
+
+	fix typo
+
+	armbox: improve cec
+
+	armbox: tryfix cec
+
+2017-10-18  TangoCash  <eric@loxat.de>
+
+	armbox: tryfix lost of video device after playing something with gst
+
+2017-10-18  max_10  <max_10@gmx.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	ca_ci: in some situations missing scambled flag (thx DboxOldie)
+
+2017-10-18  TangoCash  <eric@loxat.de>
+
+	ca_ci: in some situations missing scambled flag (thx dbo)
+
+	ca_ci: in some situations missing scambled flag (thx dbo)
+
+2017-10-17  TangoCash  <eric@loxat.de>
+
+	armbox: fix still image
+
+	armbox: fix devices
+
+	armbox add missing header file
+
+	armbox: start implementing cec support
+
+2017-10-15  TangoCash  <eric@loxat.de>
+
+	partly revert last commit
+
+	armbox: let gst playback handle devices
+
+	armbox: adding header and user_agent to gst playback
+
+	armbox: gst-playback reformat code
+
+	armbox: fix gst seeking
+
+	fix last commit
+
+	fix last commit
+
+	fix gst playback
+
+2017-10-11  TangoCash  <eric@loxat.de>
+
+	armbox: enable DTS passthrough
+
+2017-10-08  TangoCash  <eric@loxat.de>
+
+	Revert "libeplayer3: switch off the teletext sub"
+	This reverts commit 1356d700be203d3107f32dafdf2c22e675898f09.
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	Merge pull request #3 from MaxWiesel/master
+	:)
+
+2017-10-08  max_10  <max_10@gmx.de>
+
+	armbox: modification GetVideoSystem
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+2017-10-07  TangoCash  <eric@loxat.de>
+
+	HMDI ac3 passthrough/downmix
+
+	armbox: remove audiomixers
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	armbox: delete parts of sh4 code
+
+	armbox: remove dead code from cDemux
+
+	armbox: remove videodecoder hack from dmx destructor
+
+	armbox: use proc_tools
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: remove dead code from cDemux
+
+	spark: remove videodecoder hack from dmx destructor
+
+	spark: fix race condition in cDemux
+	cDemux destructor was racing with Read() which did lead to all
+	sorts of nasty crashes because after poll returned, the dmx object
+	could be gone and its memory replaced with totally different things.
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	fix cherry-pick
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libspark: implement cVideo::GetVideoSystemFormatName()
+
+	libspark: implement cVideo::GetVideoSystem()
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	Revert "implement GetVideoSystem"
+	This reverts commit 23afdef65c2442eeabb4760c274372d86fd065ed.
+
+	Revert "align videomodes"
+	This reverts commit b66a63553b50b3b0acb79898854e54ab63c7ab21.
+
+	Revert "align videomodes"
+	This reverts commit 7f9a31d29c903df9913ec5d656c65be424867a17.
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark/video: add missing O_CLOEXEC to memory fd
+
+	spark/video: implicitly do StopPicture() on CVideo::Start()
+	This seems to be what the coolstream code does.
+	TODO: look out for side effects (in radio mode etc...)
+
+	spark: use proc_tools
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	add video_cs.h header to reduce number of #ifdefs needed
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: remove dead code from cDemux
+
+	spark: remove videodecoder hack from dmx destructor
+
+	spark: fix race condition in cDemux
+	cDemux destructor was racing with Read() which did lead to all
+	sorts of nasty crashes because after poll returned, the dmx object
+	could be gone and its memory replaced with totally different things.
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	fix cherry-pick
+
+	acinclude: remove unused TUXBOX_APPS_* stuff
+
+	acinclude: remove unused boxtypes
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libspark: implement cVideo::GetVideoSystemFormatName()
+
+	libspark: implement cVideo::GetVideoSystem()
+
+2017-10-07  max_10  <max_10@gmx.de>
+
+	Revert "implement GetVideoSystem"
+	This reverts commit 23afdef65c2442eeabb4760c274372d86fd065ed.
+
+	Revert "align videomodes"
+	This reverts commit b66a63553b50b3b0acb79898854e54ab63c7ab21.
+
+	Revert "align videomodes"
+	This reverts commit 7f9a31d29c903df9913ec5d656c65be424867a17.
+
+2017-10-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark/video: add missing O_CLOEXEC to memory fd
+
+	spark/video: implicitly do StopPicture() on CVideo::Start()
+	This seems to be what the coolstream code does.
+	TODO: look out for side effects (in radio mode etc...)
+
+	spark: use proc_tools
+
+2017-10-06  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+2017-10-06  TangoCash  <eric@loxat.de>
+
+	armbox: make open/close device public
+
+2017-10-05  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+2017-10-05  TangoCash  <eric@loxat.de>
+
+	re-arrange gstreamer code
+
+	fix audio/video devices
+
+	fix armbox realname
+
+2017-10-01  TangoCash  <eric@loxat.de>
+
+	adding 4k video settings for armbox
+
+	fix generic compile
+
+	adding 4k video settings for armbox
+
+2017-09-26  max_10  <max_10@gmx.de>
+
+	libarmbox: adjustments
+
+	libarmbox: del libass LDFLAGS
+
+2017-09-25  max_10  <max_10@gmx.de>
+
+	libarmbox delete unnecessary code
+
+2017-09-19  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+	duplicate entry removed
+
+	libeplayer3: switch off the teletext sub
+
+2017-09-18  TangoCash  <eric@loxat.de>
+
+	fix armbox vfd
+
+2017-09-17  max_10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'tangocash/master'
+
+2017-09-17  TangoCash  <eric@loxat.de>
+
+	armbox: align to demuxes
+
+	armbox: fix PIG
+
+	fix gst flags
+
+2017-09-15  max_10  <max_10@gmx.de>
+
+	cs_api.h: add missing cs_get_chip_type() dummy
+
+	add video_cs.h header to reduce number of #ifdefs needed
+
+2017-09-14  max_10  <max_10@gmx.de>
+
+	acinclude: add arm boxtypes
+
+	acinclude: remove unused TUXBOX_APPS_* stuff
+
+	acinclude: remove unused boxtypes
+
+2017-09-12  TangoCash  <eric@loxat.de>
+
+	fix armbox frontpanel
+
+	adding armbox
+
+	Merge branch 'master' of github.com:TangoCash/libstb-hal-cst-next
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-09-01  max_10  <max_10@gmx.de>
+
+	avoid segfault when ci handler uses the cs_messenger until neutrino has not register it (thx DboxOldie)
+
+2017-07-28  TangoCash  <eric@loxat.de>
+
+	modify ac3flags
+
+2017-07-28  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix compile
+
+	generic-pc/video.cpp dont set output format with negative height size
+
+2017-07-28  TangoCash  <eric@loxat.de>
+
+	small fix for gstreamer 1.0 playback
+
+	small fix for gstreamer 1.0 playback
+
+	adding initial support for gstreamer 1.0
+
+2017-07-15  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix compile
+
+	generic-pc/video.cpp dont set output format with negative height size
+
+2017-06-20  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	fix indents and brackets
+
+2017-06-20  j00zek  <zdzislaw22@windowslive.com>
+
+	correct info for dsi87
+
+	update tuners info
+
+2017-06-18  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+2017-06-17  TangoCash  <eric@loxat.de>
+
+	re-enabled Display Brightness (thx dbo)
+
+2017-06-09  TangoCash  <eric@loxat.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	align videomodes
+
+	align videomodes
+
+	implement GetVideoSystem
+
+2017-05-31  TangoCash  <eric@loxat.de>
+
+	small fix for gstreamer 1.0 playback
+
+	small fix for gstreamer 1.0 playback
+
+	adding initial support for gstreamer 1.0
+
+2017-05-04  TangoCash  <eric@loxat.de>
+
+	-playback: fix compiling generic pc
+
+2017-04-04  TangoCash  <eric@loxat.de>
+
+	fix generic compile
+
+2017-03-10  TangoCash  <eric@loxat.de>
+
+	Merge pull request #2 from Duckbox-Developers/master
+	fix generic
+
+	fix generic
+
+	Merge pull request #1 from Duckbox-Developers/master
+	adopt hw_caps
+
+	adopt hw_caps
+
+2016-11-18  TangoCash  <eric@loxat.de>
+
+	modify ac3flags
+
+2016-10-31  max  <max_10@gmx.de>
+
+	Merge pull request #5 from OpenAR-P/duckbox
+	Enable aac writer and use resmpling for some AAC streams thx Taapat  …
+
+2016-10-31  schpuntik  <schpuntik@freenet.de>
+
+	Enable aac writer and use resmpling for some AAC streams thx Taapat  and technik
+
+2016-09-29  max10  <max_10@gmx.de>
+
+	no-stream-info
+
+2016-09-18  max10  <max_10@gmx.de>
+
+	Improve CI handling (thx DboxOldie)
+
+2016-08-13  max10  <max_10@gmx.de>
+
+	fix ci-logic (thx DboxOldie)
+
+2016-08-11  max10  <max_10@gmx.de>
+
+	ci-change-service-bug (thx DboxOldie)
+
+2016-08-05  max10  <max_10@gmx.de>
+
+	ci-alc automatically Multi-Decrypt
+
+2016-07-24  TangoCash  <eric@loxat.de>
+
+	add support for H265 supplemental #2
+
+	add support for H265 supplemental
+
+	add support for H265
+
+2016-07-11  max10  <max_10@gmx.de>
+
+	simplyfi-c* (thx DboxOldie)
+
+2016-07-08  max10  <max_10@gmx.de>
+
+	add two-same-cip (thx DboxOldie)
+
+2016-06-30  max10  <max_10@gmx.de>
+
+	LocalTV and Entertain-TV streaming
+
+2016-06-25  max10  <max_10@gmx.de>
+
+	fix local-tv
+
+2016-06-20  max10  <max_10@gmx.de>
+
+	fix ci* **04
+
+2016-06-15  max10  <max_10@gmx.de>
+
+	add channelid-check (thx DboxOldie)
+
+2016-06-12  max10  <max_10@gmx.de>
+
+	update for spark uinput
+
+2016-06-05  max10  <max_10@gmx.de>
+
+	fix commit 8d6a7f8c3e5cb5c05bf97d603f8f7bf0bf5792b8
+
+2016-05-14  TangoCash  <eric@loxat.de>
+
+	Merge pull request #4 from sid8796/master
+	add boxmodel hl101
+
+2016-05-14  sid8796  <sid8796@gmail.com>
+
+	add boxmodel hl101
+
+2016-04-22  j00zek  <zdzislaw22@windowslive.com>
+
+	fix compilation with ffmpeg 3.0.1
+
+2016-04-15  max10  <max_10@gmx.de>
+
+	re add old calcPts
+
+2016-04-05  max10  <max_10@gmx.de>
+
+	fix input avlog thx DboxOldie
+
+2016-04-03  max10  <max_10@gmx.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal
+
+	eplayer fix init tectime aac thx DboxOldie
+
+2016-04-03  TangoCash  <eric@loxat.de>
+
+	porting cookie.patch to generic
+
+2016-04-03  max10  <max_10@gmx.de>
+
+	add cookie.patch thx DboxOldie
+
+2016-03-26  TangoCash  <eric@loxat.de>
+
+	fix generic compile
+
+	fix char conversion
+
+	fix last commit
+
+	fix header
+
+2016-02-24  max10  <max_10@gmx.de>
+
+	fix spark ca (thx DboxOldie)
+
+2015-12-05  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-12-02  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-21  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-20  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-18  max10  <max_10@gmx.de>
+
+	test c**
+
+	test c**
+
+2015-11-16  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-15  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-14  TangoCash  <eric@loxat.de>
+
+	compile fix
+
+2015-11-13  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-12  max10  <max_10@gmx.de>
+
+	test c**
+
+2015-11-11  max10  <max_10@gmx.de>
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal
+
+	add cuberevo_3000hd (Thx to jaro44)
+
+2015-11-10  TangoCash  <eric@loxat.de>
+
+	fix build neutrino without c**
+
+2015-11-10  max10  <max_10@gmx.de>
+
+	Adjustment Neutrino
+
+	test c**
+
+	test c**
+
+	test c**
+
+2015-07-03  TangoCash  <eric@loxat.de>
+
+	silence debug
+
+2015-05-08  max10  <max_10@gmx.de>
+
+	acinclude.m4: fix spark
+
+2015-05-04  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: try to fix dynamic linking
+	Conflicts:
+		libeplayer3/Makefile.am
+		libspark/Makefile.am
+
+	Conflicts:
+		libeplayer3/Makefile.am
+
+2015-05-04  max10  <max_10@gmx.de>
+
+	fix libspark/playback_libeplayer3: switch to lt_info/lt_debug
+
+2015-05-04  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: do not freeze/continue in GetScreenImage()
+
+	fix wrong libtool initialization order
+	allow to build dynamic libraries (but keep static as default)
+
+	spark: implement GetScreenImage for video and audio
+	Conflicts:
+		libspark/video.cpp
+
+	includes: remove *_td.h, we use is *_hal.h now
+
+	libspark/playback_libeplayer3: fix EOF signalling
+	Conflicts:
+		libspark/playback_libeplayer3.cpp
+
+	libspark/playback_libeplayer3: switch to lt_info/lt_debug
+	Conflicts:
+		libspark/playback_libeplayer3.cpp
+
+	libeplayer3: remove absolute file names
+	this makes debug output nicer to read for out-of-tree builds
+
+2015-04-24  max10  <max_10@gmx.de>
+
+	spark7162 without evremote2
+
+2015-04-22  max10  <max_10@gmx.de>
+
+	fix generic-pc: ffmpeg is deprecated
+
+2015-04-07  j00zek  <j00zek@ubuntu.(none)>
+
+	[cuberevo] fix query model logic
+
+2015-03-31  TangoCash  <eric@loxat.de>
+
+	stop message flooding
+
+2015-03-21  j00zek  <j00zek@ubuntu.(none)>
+
+	[ariva@link200] include in libst-hal
+
+	fix last commit
+
+2015-03-20  j00zek  <j00zek@ubuntu.(none)>
+
+	add arvia@link200 & co.
+
+2015-03-20  max10  <max_10@gmx.de>
+
+	Revert "AM_SILENT_RULES on"
+	This reverts commit 8aa0af7e18c166e6224cbfd44bc83e3b9799b843.
+
+2015-03-17  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: clear video in StopPicture()
+	this fixes video playback after audioplayer or upnp browser
+
+	Conflicts:
+		libspark/video.cpp
+
+2015-03-11  zukon  <zukon@tlen.pl>
+
+	add ipbox 9900, 99, 55
+
+2015-01-30  max10  <max_10@gmx.de>
+
+	remove aac is only required with gcc 4.8.3
+
+2015-01-27  max10  <max_10@gmx.de>
+
+	AM_SILENT_RULES on
+
+	add cuberevo mini/250hd
+
+2015-01-13  max10  <max_10@gmx.de>
+
+	fix libspark
+
+2015-01-12  smogm  <smogm@vh0st.me>
+
+	fix missing compiler include
+
+	changed raspi to own thread class
+
+	change libeplayer3 to own thread class
+
+	remove unnecessary Makefile.in
+
+	move libthread to libstb-hal
+
+	fix thread namespace
+
+2015-01-11  smogm  <smogm@vh0st.me>
+
+	add changed files
+
+	add mutex and thread abstraction to common files
+
+	add mutex and thread abstraction
+
+2015-01-03  TangoCash  <eric@loxat.de>
+
+	implement simple gstreamer_plackback
+
+2014-12-04  max10  <max_10@gmx.de>
+
+	fix compiler warning
+
+	fix compiler warning
+
+2014-12-03  max10  <max_10@gmx.de>
+
+	Revert "so it is better thx DboxOldie"
+	This reverts commit 8c7441e14b51e12da19b1a29991554b22800f4c2.
+
+2014-11-28  max10  <max_10@gmx.de>
+
+	include/cs_frontpanel.h: fix fp_icon OCTAGON1008
+
+2014-11-24  max10  <max_10@gmx.de>
+
+	test aac
+
+	Revert "test old calcPts"
+	This reverts commit 3d4245d76df9bb23d2b13c7a01f10b594f81459f.
+
+	Revert "fix commit 3d4245d76df9bb23d2b13c7a01f10b594f81459f"
+	This reverts commit 3ac6db3b5a929ee515b7046778c2db10e9c2fb8b.
+
+	Revert "disable logging"
+	This reverts commit 4798ce2517c516868858c1a8db1469be05f19923.
+
+	Revert "so it is better thx DboxOldie"
+	This reverts commit 4539ca99376335c730701fe46df612e0dc3a47de.
+
+	Revert "test"
+	This reverts commit 0072b84bcb535283f59d6c8ac883dbbec7d949f6.
+
+2014-11-20  max10  <max_10@gmx.de>
+
+	test
+
+2014-11-12  max10  <max_10@gmx.de>
+
+	fix include/cs_frontpanel.h
+
+2014-11-11  max10  <max_10@gmx.de>
+
+	update include/cs_frontpanel.h
+
+2014-11-05  max10  <max_10@gmx.de>
+
+	Revert "Revert "Revert "libspark/record: Implement writer thread. May or may not improve anything."""
+	This reverts commit a3ba152ccf0e40eab303a018fb2c7ead7b987556.
+
+2014-11-02  max10  <max_10@gmx.de>
+
+	Revert "Revert "libspark/record: Implement writer thread. May or may not improve anything.""
+	This reverts commit 677776e03a5efc70727838a0bd7b19c09831d5ec.
+
+	Conflicts:
+		libspark/record.cpp
+
+2014-10-15  max10  <max_10@gmx.de>
+
+	update cs_frontpanel.h ufs922
+
+	update cs_frontpanel.h thx DboxOldie
+
+2014-10-14  max10  <max_10@gmx.de>
+
+	so it is better thx DboxOldie
+
+2014-10-12  max10  <max_10@gmx.de>
+
+	record bs_dmx = 2mb / bs = 4mb
+
+	disable logging
+
+2014-10-08  max10  <max_10@gmx.de>
+
+	fix commit 3d4245d76df9bb23d2b13c7a01f10b594f81459f
+
+	test old calcPts
+
+	add aac.cpp THX DboxOldie
+
+2014-10-07  TangoCash  <eric@loxat.de>
+
+	small fix
+
+2014-10-05  max10  <max_10@gmx.de>
+
+	update gitignore
+
+2014-09-29  max10  <max_10@gmx.de>
+
+	update boxtype
+
+2014-09-21  TangoCash  <eric@loxat.de>
+
+	cover support for getmetainfo
+
+	fix timeshift (thx dbo)
+
+2014-09-16  max10  <max_10@gmx.de>
+
+	fix include
+
+2014-09-04  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-08-31  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-08-31  martii  <m4rtii@gmx.de>
+
+	libspark/playback_libeplayer3: fix multi-program handling
+
+	libeplayer3/manager: use AVDISCARD_NONE instead of AVDISCARD_DEFAULT to disable programs
+
+2014-08-25  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-08-25  martii  <m4rtii@gmx.de>
+
+	libeplayer3/h264: partially revert 9112c4d16d05cb96a0ccd39c8fde7b2fa9ba23e9
+
+	libspark/playback: don't show program selection dialog if audio or video pid is already selected
+
+2014-08-22  max10  <max_10@gmx.de>
+
+	fix typo
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+	Conflicts:
+		libspark/playback_libeplayer3.h
+
+2014-08-22  martii  <m4rtii@gmx.de>
+
+	libeplayer3: implement multi-program support
+
+	libeplayer3/h264: simplify
+
+2014-07-29  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-07-28  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: amend 545732a12b5bec6d93ffe1889a6b169c91d47d3d
+
+2014-07-27  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: disable avformat logging
+
+	libeplayer3/input: don't modify avformat stream id
+
+2014-07-21  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-07-21  martii  <m4rtii@gmx.de>
+
+	fix generic compile
+
+2014-07-19  martii  <m4rtii@gmx.de>
+
+	libeplayer3/Makefile.am: set AUTOMAKE_OPTIONS = subdir-objects
+
+2014-07-16  martii  <m4rtii@gmx.de>
+
+	libeplayer3/writer: minor cleanup, no binary change
+
+2014-07-07  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-neutrino-mp/master'
+
+	Revert "libspark/record: Implement writer thread. May or may not improve anything."
+	This reverts commit ada3f5e24ae0df499b53f69d761b9ddfcd16aef9.
+
+	Revert "libspark/record: remove debugging output accidently left in"
+	This reverts commit 55f742271534b6877a7d34630effd6bf2a372cc2.
+
+	Revert "libspark/record: always fill read buffer"
+	This reverts commit f77184cb685c61a3f91f4c1d017b75231277b709.
+
+2014-06-29  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-06-29  martii  <m4rtii@gmx.de>
+
+	libspark/audio: add mixer access methods
+
+2014-06-28  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-06-28  martii  <m4rtii@gmx.de>
+
+	libspark/record: always fill read buffer
+
+2014-06-19  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-06-19  martii  <m4rtii@gmx.de>
+
+	libeplayer3/player: support bluray urls
+
+2014-06-08  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+	Conflicts:
+		libspark/record.cpp
+
+2014-06-08  martii  <m4rtii@gmx.de>
+
+	libspark/record: remove debugging output accidently left in
+
+	libspark/record: Implement writer thread. May or may not improve anything.
+
+2014-06-05  max10  <max_10@gmx.de>
+
+	.
+
+2014-06-04  max10  <max_10@gmx.de>
+
+	.
+
+	.
+
+2014-05-29  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-05-29  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: allow access to AVFormatContext
+
+2014-05-24  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-05-24  martii  <m4rtii@gmx.de>
+
+	libeplayer3/writer/pcm.cpp: break potential infinite loop
+
+	libeplayer3/input.cpp: filter duplicated messages
+
+	.gitignore: add 'compile'
+
+2014-05-19  max10  <max_10@gmx.de>
+
+	update cs_frontpanel.h
+
+2014-05-03  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-05-03  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: no need for alloca()
+
+	libeplayer3/input: fix SwitchVideo (unused, but anyway)
+
+	libspark/hardware_caps: set has_SCART unconditionally
+
+2014-05-02  martii  <m4rtii@gmx.de>
+
+	libeplayer3: limit video frame skipping to network streams
+
+	libeplayer3: skip video until first audio frame was found
+
+	libeplayer3: minor adjustments
+
+2014-05-01  max10  <max_10@gmx.de>
+
+	[init.cpp] fix spark
+
+2014-05-01  martii  <m4rtii@gmx.de>
+
+	libspark: complement vendor ids
+
+	libeplayer3: fix audio switching on already terminated playback
+
+	libeplayer3/writer: add fd to writer class
+
+	libeplayer3/writer: add fd to writer class
+
+	libeplayer3: cleanup AVFormatContext propagation to writers
+
+	libeplayer3/input: fix audio flush packet initialization
+
+2014-04-30  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: stream duration fix
+
+2014-04-27  max10  <max_10@gmx.de>
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-04-27  martii  <m4rtii@gmx.de>
+
+	libspark/init: simplify
+
+	libeplayer3: remove flac writer (now handled by mp3 writer)
+
+	libeplayer3: remove flac writer (now handled by mp3 writer)
+
+	libeplayer3/writer: implement decoder flushing
+
+2014-04-27  max10  <max_10@gmx.de>
+
+	add libduckbox
+
+	Merge remote-tracking branch 'martiis-libstb-hal/master'
+
+2014-04-27  MaxWiesel  <max_10@gmx.de>
+
+	Initial commit
+
+2014-04-26  martii  <m4rtii@gmx.de>
+
+	libeplayer3/writer/pcm: remove debug output
+
+	libeplayer3/writer/pcm: move reinit code out of packet loop
+
+	libeplayer3/writer: remove constructors/destructors from writer class
+
+	libeplayer3/Makefile: minor rewrite
+
+	libeplayer3: move calcPts to Input class
+
+	libeplayer3/output: unbreak GetFrameCount()
+
+	libeplayer3/writer/pcm: simplify
+
+	libeplayer3/input: unbreak dvbsub pts calculation
+
+2014-04-21  martii  <m4rtii@gmx.de>
+
+	libeplayer3/writer/pcm: cleanup
+
+	libeplayer3/writer/pcm: simplify pts handling
+
+	libeplayer3/writer/pcm: minor adjustments
+
+2014-04-18  martii  <m4rtii@gmx.de>
+
+	libeplayer3: minimize debug output
+
+	libeplayer3: fix backward mode
+
+	libeplayer3: use av_rescale for pts calulations
+
+	libeplayer3/input: disable noprobe and retry if probing fails
+
+2014-04-16  martii  <m4rtii@gmx.de>
+
+	libeplayer3: minor adjustments
+
+2014-04-15  martii  <m4rtii@gmx.de>
+
+	libeplayer3/writer/pcm: unbreak
+
+	libeplayer3/input: don't segv in deconstructor
+
+	libeplayer3: optimizations (untested)
+
+2014-04-14  martii  <m4rtii@gmx.de>
+
+	libeplayer3: use uint64_t instead of float/double for position calculations
+
+2014-04-13  martii  <m4rtii@gmx.de>
+
+	libeplayer3/output: reset stream variables after Close()
+
+	libeplayer3: minor optimization
+
+	libeplayer3/input: increase probesize
+
+	unbreak generic build
+
+2014-04-12  martii  <m4rtii@gmx.de>
+
+	libeplayer3/input: fix AV_CODEC_ID_MP2 usage
+
+	libspark/playback_libeplayer3: no need to check for player
+
+2014-04-11  martii  <m4rtii@gmx.de>
+
+	libspark: unbreak timeshift
+
+	libeplayer3 adjustments
+
+	libeplayer3: cast away compiler warning
+
+	libeplayer3: cleanup
+
+	libeplayer3: ffmpeg now provides teletext details in codec->extradata
+
+2014-04-10  martii  <m4rtii@gmx.de>
+
+	libeplayer3: cleanup
+
+	libeplayer3: work around duplicate ffmpeg stream ids by comparing stream addresses instead of pids (plus a couple of optimizations)
+
+	libeplayer3/input: rename some variables
+
+	libeplayer3/output: remove redundant videofd check
+
+	libeplayer3/writer: unsigned char => uint8_t
+
+2014-04-09  martii  <m4rtii@gmx.de>
+
+	libeplayer3/Makefile: disable debugging flags
+
+	libeplayer3: extend API
+
+2014-04-08  martii  <m4rtii@gmx.de>
+
+	libeplayer is now C++, no more need for extern "C" to access Neutrino functions
+
+	libeplayer3: rename player thread
+
+	libeplayer3: change compile options
+
+	libeplayer3: track update: remove redundant teletext pid from return string
+
+	libeplayer3: continue refresh
+
+2014-04-07  martii  <m4rtii@gmx.de>
+
+	libeplayer3: cleanups
+
+	libeplayer3: rename files
+
+	libeplayer3: remove debug.h
+
+	libeplayer3: merge Playback to Player class
+
+	libeplayer3: implement Playback and Input classes
+
+	libeplayer3: implement Playback and Input classes
+
+2014-04-06  martii  <m4rtii@gmx.de>
+
+	libeplayer3: implement Manager class
+
+	libeplayer3: rename linuxdvb.cpp => output.cpp
+
+	libeplayer3: implement Output class
+
+	libeplayer3: eliminate intermediate output layer
+
+	libeplayer3: rename common.h => player.h
+
+	libeplayer3: rename common.h => player.h
+
+	libeplayer3: rename Content_t => Player
+
+	libeplayer3: remove unused code
+
+	libeplayer3: implement Writer class
+
+2014-04-05  martii  <m4rtii@gmx.de>
+
+	libeplayer: simplify writer/pcm
+
+	libeplayer3: remove writeReverseData (unused)
+
+	libeplayer3: cleanup pcm writer
+
+	libeplayer: cleanup writers
+
+	libeplayer3: unbreak ipcm
+
+	libeplayer3: let writers use AVPacket
+
+	libeplayer3: c++ adjustments
+
+	libeplayer3: rename to c++
+
+	libeplayer3: delete include/aac.h (unused)
+
+	libeplayer3: remove wmv version (unused)
+
+	libeplayer: remove inject_raw_pcm (unused)
+
+	libeplayer3: move audio resampling to dedicated ipcm writer
+
+	libeplayer3: move width/height/framerate/timescale calculation to writers
+
+	libeplayer3: change extradata handling
+
+	libeplayer3: remove writer/wma.c and writer/aac.c (handled by ffmpeg instead)
+
+	libeplayer3: make ffmpeg data available to manager, output and writer
+
+	libeplayer3: cleanup types
+
+	libeplayer3: remove tools
+
+	libeplayer3: remove tools
+
+2014-04-03  martii  <m4rtii@gmx.de>
+
+	libeplayer/container_ffmpeg: switch to ffmpeg 2.0 API
+
+2014-03-26  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: remove latestPts variable
+
+2014-03-23  martii  <m4rtii@gmx.de>
+
+	libeplayer3: more cleanups
+
+	libeplayer3: remove no longer needed teletext output handling
+
+	libeplayer3: change teletext handling to directly inject packets in tuxtext
+
+	libeplayer3: cleanup unused code
+
+	libeplayer3/container_ffmpeg: fix seek bitrate calculation
+
+2014-03-22  martii  <m4rtii@gmx.de>
+
+	libspark/hardware_caps: recognize dvfd [untested]
+
+	libeplayer3/container_ffmpeg: don't set pts if audio-only
+
+	libeplayer3: initalize AVSubtitle
+
+	libeplayer3: remove debugging output; abort if neither an audio nor a video stream is available
+
+2014-03-21  martii  <m4rtii@gmx.de>
+
+	cleanup
+
+	libeplayer3: remove subtitle.h
+
+	libeplayer3/container_ffmpeg: drop subtitle.h include
+
+	libeplayer3: cleanup
+
+	libeplayer3: subtitles will now be displayed by neutrino
+
+2014-03-16  martii  <m4rtii@gmx.de>
+
+	fix generic-pc
+
+	libeplayer3: let neutrino handle bitmap subtitles
+
+2014-03-09  martii  <m4rtii@gmx.de>
+
+	eplayer3: fix playback termination handling
+
+	eplayer3: fix playback termination handling
+
+2014-02-28  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	update ca.h to currently used interface
+
+	include/mmi: fix spelling (but keep compatibility)
+
+2014-01-20  martii  <m4rtii@gmx.de>
+
+	[spark] video: change psi settings on demand only
+
+2014-01-19  martii  <m4rtii@gmx.de>
+
+	[spark] fix setting psi controls
+
+	libeplayer3/libspark: cPlayback: implement retrieval of metadata
+
+2014-01-18  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: fix metadata access
+
+2014-01-12  martii  <m4rtii@gmx.de>
+
+	rename cPlayback::isPlaying() => cPlayback::IsPlaying()
+
+2014-01-11  martii  <m4rtii@gmx.de>
+
+	libspark/video: indent, no binary change
+
+2013-12-28  martii  <m4rtii@gmx.de>
+
+	libeplayer3/playback: fix seeking/neutrino bookmarks
+
+2013-12-28  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	sync seife
+
+	libspark: add missing unistd.h includes for gcc 4.7+
+
+2013-12-23  martii  <m4rtii@gmx.de>
+
+	libeplayer3, libspark/playback_libeplayer3: chapter support
+
+2013-12-17  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: only log ffmpeg errors at debug_level > 10
+
+2013-12-15  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: don't modify AVPacket internals (I don't believe this actually hurts, but better safe than sorry)
+
+	libeplayer3/linuxdvb: reduce debug spam
+
+2013-12-11  martii  <m4rtii@gmx.de>
+
+	libspark/playback: speed up abort
+
+2013-12-09  martii  <m4rtii@gmx.de>
+
+	libeplayer3: cleanup, indent
+
+	libeplayer3: fix audio recoding, yt aac stuttering should be gone now
+
+2013-11-28  martii  <m4rtii@gmx.de>
+
+	tools/spark_fp: add flashing period option
+
+2013-11-23  martii  <m4rtii@gmx.de>
+
+	libeplayer3/playback: disable debugging output
+
+2013-11-22  martii  <m4rtii@gmx.de>
+
+	libeplayer3/ffmpeg: minor cleanup
+
+2013-11-21  martii  <m4rtii@gmx.de>
+
+	fix last commits
+
+	libeplayer3: run through indent, no binary change
+
+	libeplayer3/container: fix compiler warning
+
+	libeplayer3/ffmpeg: rearrange seeking code
+
+	libeplayer3/ffmpeg: don't initialize container if context already exists
+
+2013-11-19  martii  <m4rtii@gmx.de>
+
+	libeplayer3: fix seeking
+
+	libeplayer3/ffmpeg: add 3gp and ogm extensions
+
+2013-11-17  martii  <m4rtii@gmx.de>
+
+	libeplayer3: modify fast-backward
+
+2013-11-13  martii  <m4rtii@gmx.de>
+
+	tools/spark_fp: add option for enabling/disabling icons
+
+2013-11-11  martii  <m4rtii@gmx.de>
+
+	libspark/audio, libeplayer3: audio type adjustments
+
+2013-11-04  martii  <m4rtii@gmx.de>
+
+	libstb-hal/libspark/playback: add method for retrieving read-count
+
+2013-11-03  martii  <m4rtii@gmx.de>
+
+	libspark/playback: add more player checks
+
+	libspark/playback: SuspendSubtitle: check for player being valid
+
+2013-11-02  martii  <m4rtii@gmx.de>
+
+	libeplayer3: speed up termination
+
+	unbreak generic-pc build
+
+	libspark/player, libeplayer3/ffmpeg: improve termination handling
+
+2013-10-31  martii  <m4rtii@gmx.de>
+
+	libspark/player: use int instead of short in some places
+
+2013-10-30  martii  <m4rtii@gmx.de>
+
+	libspark/audio: align to player2
+
+2013-10-29  martii  <m4rtii@gmx.de>
+
+	libspark/audio: add EAC3 support
+
+2013-10-21  martii  <m4rtii@gmx.de>
+
+	Revert "libspark/video: enable/disable analogue output when leaving/entering standby mode (experimental and untested)"
+	This reverts commit 8062db23873d0dd4035cfed8b84592390effc26a.
+
+2013-10-20  martii  <m4rtii@gmx.de>
+
+	libspark/video: enable/disable analogue output when leaving/entering standby mode (experimental and untested)
+
+2013-10-12  martii  <m4rtii@gmx.de>
+
+	libeplayer3/ffmpeg: minor cleanup
+
+2013-10-06  martii  <m4rtii@gmx.de>
+
+	Merge remote-tracking branch 'seife/master'
+
+	sync with seife
+
+2013-10-05  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	add skeleton for Raspberry Pi support
+	no audio / video decoding, yet :-(
+
+	add set_threadname function
+
+2013-10-05  martii  <m4rtii@gmx.de>
+
+	libspark/playback_libeplayer3: fix GetPts()
+
+2013-10-03  martii  <m4rtii@gmx.de>
+
+	libspark/audio: always use /proc/stb/avs/0/volume to set volume
+
+2013-09-28  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: implement stuff needed for PIP
+	note that this does now work well at least on st7162 and thus is not
+	really tested.
+
+	cVideo: add dummy functions for PIP stuff
+
+2013-09-22  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: remove unneeded hacks from cVideo
+
+	azbox: add cDemux hack to avoid segfaults/corruption
+
+	azbox: adapt cDemux to latest drivers
+
+	azbox: adapt cAudio to latest drivers
+
+2013-09-21  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: add O_CLOEXEC to open()
+
+2013-09-15  martii  <m4rtii@gmx.de>
+
+	unbreak generic-pc build
+
+2013-09-06  martii  <m4rtii@gmx.de>
+
+	[SPARK] cVideo::ShowPicture: add optional argument for destination m2v
+
+2013-08-18  martii  <m4rtii@gmx.de>
+
+	libspark/playback_libeplayer3: assume that libeplayer3 can handle arbitrary URLs
+
+	libeplayer3/playback: convert mms urls to mmst instead of rtsp
+
+	libspark/hw_caps: check vfd version first (needed to discriminate between Pingulux and Pingulux Plus)
+
+2013-08-16  martii  <m4rtii@gmx.de>
+
+	libeplayer3/manager: initialize track IDs
+
+	libeplayer3: tracks update is now lock-free
+
+	libeplayer3/container_ffmpeg: mutex fix
+
+2013-08-15  martii  <m4rtii@gmx.de>
+
+	libeplayer3/wmv: revert to (almost) original version
+
+2013-08-14  martii  <m4rtii@gmx.de>
+
+	libspark/audio_mixer: don't try to free() stack-allocated snd_mixer_selem_id
+
+2013-08-11  martii  <m4rtii@gmx.de>
+
+	libspark: implement SetColorFormat()
+
+2013-08-06  martii  <m4rtii@gmx.de>
+
+	libspark/dmx.cpp: print pid if addPid fails
+
+2013-08-04  martii  <m4rtii@gmx.de>
+
+	libeplayer/text_srt: minor optimization
+
+	libeplayer3: drop non-shared framebuffer support
+
+	libeplayer3: unbreak srt subs
+
+2013-08-02  martii  <m4rtii@gmx.de>
+
+	revert 286675f430d530108eed8a3b6051895618ae4e06
+
+	libeplayer3: divx fix
+
+	libeplayer3: cleanup
+
+	libeplayer3: vc1, wmv: use InsertPesHeader for initial PES headers, too
+
+2013-08-01  martii  <m4rtii@gmx.de>
+
+	libeplayer3/output/writer/: remove PesHeader memset (both wrong and unneeded)
+
+2013-07-29  martii  <m4rtii@gmx.de>
+
+	libeplayer3 optimizations
+
+2013-07-28  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ass: cosmetics
+
+	libeplayer3/container_ffmpeg: cleanup
+
+	libeplayer3/writer/framebuffer: small optimization
+
+	generic-pc build fix
+
+	libeplayer3/container_ass: set thread name
+
+	libeplayer3/pcm: cleanup
+
+	libeplayer3/pcm: minor clean-up, no code change
+
+	Fix libeplayer3's broken PCM injection implementation. Jumps in movieplayer now works without losing a/v sync.
+
+2013-07-27  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: don't flush instead of clear
+
+	libeplayer3: use uint32_t for frame buffer access
+
+	libeplayer3/continer_ass: crude hack to improve subtitle readability
+
+	libeplayer3/subtitles/spark: use backbuffer and blit
+
+2013-07-26  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ass: font size adjusted
+
+	libeplayer/playback: disable subtitle init hack
+
+	libeplayer3/subtitle: reduce debugging level
+
+	libeplayer3: initial attempt to unbreak ass/ssa subtitles
+
+2013-07-24  martii  <m4rtii@gmx.de>
+
+	libeplayer/linuxdvb: cleanup
+
+	libeplayer3/containter_ffmpeg: fix track update
+
+2013-07-23  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: no need for copying the input packet
+
+	libeplayer/container_ffmpeg: subtitle fix
+
+2013-07-22  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg.c: re-order packet.data check (not sure whether this is needed at all)
+
+2013-07-21  martii  <m4rtii@gmx.de>
+
+	libeplayer/container_ffmpeg: correct misplaced brackets
+
+	libeplayer3/container_ffmpeg: initialize stream ids, if unset
+
+	libeplayer3/container_ffmpeg: av_samples_alloc: use actual number for channels
+
+	libeplayer3/container_ffmpeg: align av_samples_alloc buffer
+
+	libeplayer3/container_ffmpeg: fix mono->stereo conversion
+
+	libeplayer/container_ffmpeg: audio pts fix
+
+2013-07-20  martii  <m4rtii@gmx.de>
+
+	libeplayer3: remove outdated include/stm_ioctl.h
+
+	container_ffmpeg: flush streams immediately after seek
+
+2013-07-19  martii  <m4rtii@gmx.de>
+
+	libeplayer3: cleanup
+
+	libeplayer: reduce debugging output
+
+	h264: don't mess with packet length
+
+2013-07-14  martii  <m4rtii@gmx.de>
+
+	libeplayer3/h264: unbreak
+
+	libeplayer3/container_ffmpeg: No attributes needed for mutex init
+
+	libeplayer3 cleanup
+
+	libeplayer3/h264 cleanup
+
+	libeplayer3: experimental h.264 playback fix
+
+	libeplayer3: cleanup
+
+2013-07-12  martii  <m4rtii@gmx.de>
+
+	libeplayer3: use actual pids instead of indexes
+
+2013-07-10  martii  <m4rtii@gmx.de>
+
+	ffmpeg-2.0
+
+2013-07-07  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: revert swr_next_pts call
+
+	libeplayer3: minor changes
+
+	libeplayer3: re-enable audio after seeking (still broken)
+
+2013-07-06  martii  <m4rtii@gmx.de>
+
+	libeplayer3: need to call avcodec_free_frame after swresample, too
+
+2013-06-27  martii  <m4rtii@gmx.de>
+
+	libspark/hardware_caps: lie for Pingulux SCART support
+
+2013-06-26  martii  <m4rtii@gmx.de>
+
+	libspark/playback_libeplayer3: no need for alloca()
+
+2013-06-20  martii  <m4rtii@gmx.de>
+
+	libspark: experimental pip changes (doesn't work; needs driver support)
+
+2013-06-19  martii  <m4rtii@gmx.de>
+
+	sync with seife
+
+2013-06-16  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	modernize configure.ac and Makefile.am
+	autoconf-1.13 has new warnings, silence them by updating
+	the buildsystem
+
+	cPlayback: add new API functions for DVD chapter/subtitles
+	right now these are mostly dummies...
+
+2013-06-13  martii  <m4rtii@gmx.de>
+
+	libeplayer3: the mp3 handler can easily take care of vorbis data, too.
+
+2013-06-10  martii  <m4rtii@gmx.de>
+
+	libeplayer3: vorbis can easily be handled by the mp3 writer
+
+	libeplayer3/h264: disable debugging
+
+	libeplayer3: get rid of compiler warnings
+
+	libeplayer3: drop legacy ffmpeg support
+
+	libeplayer/h264: Fix playback.
+
+2013-06-08  martii  <m4rtii@gmx.de>
+
+	cleanup
+
+	libeplayer3: deactivate debugging
+
+	libeplayer3: cleanup
+
+	libeplayer3: further malloc-memcpy-write -> writev replacements; not fully regression tested
+
+	libeplayer3/h264: replace malloc/memcpy/write with writev
+
+2013-06-07  martii  <m4rtii@gmx.de>
+
+	ShowPicture: revert API change
+
+	libeplayer3: drop buffering code due to crashes
+
+	libspark/playback: youtube URLs are easily longer than 400 bytes
+
+2013-06-01  martii  <m4rtii@gmx.de>
+
+	sync
+
+2013-06-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	generic-pc: implement cDemux::getSTC()
+
+	generic-pc: increase video and audio demux buffer
+
+	cDemux: fix error reporting vor video, audio, ... channels
+
+	generic-pc: help finding missing blit() calls
+
+	generic-pc: improve decoder info messages
+
+	generic-pc: silence decoder threads output
+
+	generic-pc: implement cAudio::getAudioInfo()
+
+2013-06-01  martii  <m4rtii@gmx.de>
+
+	replace libavresample with libswresample
+
+2013-06-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	generic-pc: add audio sample conversion
+	ffmpeg audiodecoders after version 1.1 deliver audio samples in planar
+	formats by default instead of packed as before. Additionally, the AC3
+	decoder delivers now in planar float.
+	Use libswresample for sample format conversion, this will work with old
+	(where it hopefully does nothing) and new ffmpeg versions.
+	Later on, also sample rate and channel layout conversion could be
+	implemented if desired.
+	Tested with ffmpeg versions 1.0.6 and 1.2.1.
+
+2013-06-01  martii  <m4rtii@gmx.de>
+
+	generic-pc/glfb: use r/g/y/b keys as additional color keys
+
+2013-06-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	fix library declarations for libtool
+
+2013-06-01  martii  <m4rtii@gmx.de>
+
+	generic-pc: fix audio (2nd try)
+
+2013-05-31  martii  <m4rtii@gmx.de>
+
+	generic-pc: fix audio
+
+	copy api changes from spark to generic
+
+2013-05-27  martii  <m4rtii@gmx.de>
+
+	Merge remote-tracking branch 'seife/master'
+
+2013-05-27  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	configure: specify the needed ffmpeg versions
+
+	generic-pc: add Pig function to cVideo / GLFB
+
+	generic/glfb: add a few keys to F5-F8
+
+2013-05-26  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	generic-pc/video: implement getScreenImage (experimental)
+
+	generic-pc/video: reuse swscale context
+
+2013-05-26  martii  <m4rtii@gmx.de>
+
+	revert audio_mixer changes
+
+	libspark/audio_mixer: load alsa-lib temporarily only (fix)
+
+	libspark/audio_mixer: load alsa-lib temporarily only
+
+	Merge remote-tracking branch 'seife/master'
+
+2013-05-25  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: fix compile breakage in video.h
+
+	video: ensure VIDEO_STD_MAX is big enough
+
+2013-05-25  martii  <m4rtii@gmx.de>
+
+	libspark/video: use VIDEO_STILLPICTURE with NULL pointer to blank screen
+
+	libspark/video: ShowPicture: fix malloc size
+
+	Merge remote-tracking branch 'seife/master'
+
+	libspark/video: add missing newline
+
+	libspark/video: ShowPicture: use VIDEO_STILLPICTURE
+
+2013-05-24  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	generic-pc: add audiplayer support to cAudio
+
+	generic-pc: implement cVideo::ShowPicture()
+
+	generic-pc: without decoding, no PCR demux is needed
+
+2013-05-18  martii  <m4rtii@gmx.de>
+
+	libspark/video: ShowPicture: add flag to indicate that input file is already m2v and doesn't need to be converted
+
+2013-05-10  martii  <m4rtii@gmx.de>
+
+	cleanup
+
+2013-05-10  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	generic-pc: allow to disable softdecoder for debugging
+
+	demux: define MAX_DMX_UNITS (not yet used)
+
+	acinclude: fix variable expansion issues
+
+	configure: silence automake warnings
+
+2013-05-06  martii  <m4rtii@gmx.de>
+
+	sync
+
+2013-05-06  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	GLFB: remove unused 3D cube code
+
+	GLFB: slightly better fullscreen handling
+
+	GLFB: hide mouse cursor
+
+2013-05-05  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	cRecord: fix compiler warning (type mismatch)
+
+	generic-pc: use HD framebuffer resolution
+	Use 1280x720 instead of 720x576 as default. The resolution
+	can be changed via the environment variable GLFB_RESOLUTION.
+
+	generic/cVideo: implement setAspectRatio / setVideoSystem
+
+	GLFB: implement missing functions
+	* output format (screen size) setting
+	* aspect ratio setting
+	* cropping, scaling (letterbox/panscan)
+	* full screen mode (experimental, hit "f" key)
+	* add EPG key ("e")
+
+2013-05-04  martii  <m4rtii@gmx.de>
+
+	Merge remote-tracking branch 'seife/master'
+
+2013-05-04  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	GLFB: add a few sanity checks for sleep interval
+
+	GLFB: fix X window at 16:9 aspect ratio
+
+	GLFB: add video aspect ratio handling
+
+	generic-pc/video: improve video decoder
+	* add aspect ratio reporting
+	* "correct" buffer PTS by 300ms for better AV-Sync with MPEG2
+	* remove unneeded stuff
+
+	generic-pc/glfb: add some sort of A/V synchronization
+
+	generic-pc/audio: initialize curr_pts
+
+	generic-pc/dmx: route audio and video to the SW decoders
+
+	generic-pc: initialize GL framebuffer in init()
+
+	generic-pc: add openGL based framebuffer implementation
+
+	generic-pc: add somewhat working video decoder
+
+	generic-pc: add somewhat working audio decoder
+
+	acinclude: fix for pkg-config 0.28 behaviour
+	Old pkg-config always retured a non-empty string for --cflags.
+	It always contained at least one bogus space. New pkg-config
+	does not do that. Do not rely on --cflags being non-empty.
+
+2013-04-11  martii  <m4rtii@gmx.de>
+
+	libeplayer reverse play: experimental adjustment to find previous I-frame
+
+2013-04-10  martii  <m4rtii@gmx.de>
+
+	libeplayer3: fix segv
+
+2013-04-01  martii  <m4rtii@gmx.de>
+
+	eplayer3: subtitle fixes
+
+2013-03-31  martii  <m4rtii@gmx.de>
+
+	crude hack for movieplayer tuxtxt integration
+
+2013-03-30  martii  <m4rtii@gmx.de>
+
+	libspark: drop irmp
+
+	libspark/playback_libeplayer3: initialize return values
+
+2013-03-29  martii  <m4rtii@gmx.de>
+
+	teletext handling changes
+
+2013-03-25  martii  <m4rtii@gmx.de>
+
+	libeplayer3: dynamically update pid list
+
+	Merge remote-tracking branch 'seife/master'
+
+2013-03-24  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: tone down two dmx messages to debug
+
+2013-03-22  martii  <m4rtii@gmx.de>
+
+	adapt Pig() to blitter-based OSD border
+
+2013-03-18  martii  <m4rtii@gmx.de>
+
+	libeplayer3/playback_libeplayer3: change noprobe handling
+
+2013-03-17  martii  <m4rtii@gmx.de>
+
+	libeplayer/container_ffmpeg: use injected PCM for raw PCM, too
+
+2013-03-16  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: handle .wtv extensions, too
+
+	libeplayer3/container_ffmpeg: fix WMA playback
+
+2013-03-10  martii  <m4rtii@gmx.de>
+
+	libeplayer3: add callback to abort avformat_open_input
+
+2013-03-09  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: cleanup
+
+	libeplayer3/container_ffmpeg: cleanup
+
+	libeplayer3: merge buffered IO code from TDT; implement proper audio resampling
+
+2013-03-04  martii  <m4rtii@gmx.de>
+
+	libeplayer3/container_ffmpeg: minor cleanup
+
+	Merge remote-tracking branch 'seife/master'
+
+	libeplayer3/container_ffmpeg: no need to scale the buffer
+
+2013-03-03  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: avoid a crash in cPlayback destructor
+
+2013-03-03  martii  <m4rtii@gmx.de>
+
+	libeplayer3: this may improve recovery from broken streams
+
+	Merge remote-tracking branch 'seife/master'
+
+	libeplayer3: switch back to software decoding for AAC; crude fix for PCM injection (newer ffmpeg versions return floats instead of shorts), injected PCM streams (OGG, for example), will now work again. I'd be grateful if anybody with a deeper understanding of the FFMPEG API would supply a cleaner fix ...
+
+2013-03-02  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: fix wrong length in cDemux::sectionFilter()
+
+2013-02-26  martii  <m4rtii@gmx.de>
+
+	libeplayer: set 65535 as maximum PES length
+
+	libeplayer: assume unlimited PES length for too large packets
+
+	libspark/playback: let GetPosition return false on EOF
+
+2013-02-24  martii  <m4rtii@gmx.de>
+
+	sync with seife
+
+2013-02-24  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: fix compiler warning in cVideo
+
+	implement cDemux::GetSource()
+
+	cDemux: fix removePid / pesfds usage
+
+	cDemux: add copyright header
+
+	cDemux::sectionFilter: fix invalid length calculation
+
+	spark_fp: add options for setting led status
+	from git://gitorious.org/~martii/neutrino-hd/martiis-libstb-hal.git
+
+	libspark/hw_caps: add more stb ids
+	from git://gitorious.org/~martii/neutrino-hd/martiis-libstb-hal.git
+
+2013-02-24  martii  <m4rtii@gmx.de>
+
+	libspark/hw caps: add 7111 stb ids
+
+	libspark/hw_caps: add more stb ids, add boxtype
+
+	pic2m2v: remove verbosity level from ffmpeg due to incompatibility with the 0.8 branch
+
+2013-02-22  martii  <m4rtii@gmx.de>
+
+	remove untested code for 7162 support
+
+2013-02-12  martii  <m4rtii@gmx.de>
+
+	hardware_caps: set CEC flag for SPARK
+
+2013-02-11  martii  <m4rtii@gmx.de>
+
+	hwcaps: add fe_offset_max for spark
+
+2013-02-08  martii  <m4rtii@gmx.de>
+
+	spark_fp: augment usage output
+
+	spark_fp: add support for setting aotom hotkeys
+
+2013-02-03  martii  <m4rtii@gmx.de>
+
+	spark_fp: small fix
+
+2013-01-30  martii  <m4rtii@gmx.de>
+
+	sync with seife
+
+2013-01-28  martii  <m4rtii@gmx.de>
+
+	fix spark_fp usage
+
+2013-01-27  martii  <m4rtii@gmx.de>
+
+	spark_fp: fix last patch, no binary change
+
+	spark_fp: re-added disabled code, no binary change
+
+	add support for sane aotom power-off from graugans, see http://www.dbox2-tuning.net/forum/viewtopic.php?f=69&t=50261 and corresponding driver/kernel patches
+
+2013-01-25  graugans  <k4230r6@gmail.com>
+
+	fixed the debug output to match the correct device
+
+2013-01-23  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: fix measurement demux speed
+
+	libtriple: fix neutrino streamdev
+
+2013-01-17  martii  <m4rtii@gmx.de>
+
+	libeplayer3: experimental fixes
+
+2013-01-13  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	video_td.h: add compat define for SCREENSHOT
+
+2013-01-13  martii  <m4rtii@gmx.de>
+
+	rename hwcap variable
+
+2013-01-13  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: add a sanity check to cVideo::GetScreenImage
+
+2013-01-12  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: implement cVideo::GetScreenImage
+
+2012-12-26  martii  <m4rtii@gmx.de>
+
+	hwcaps: use FE_OFFSET environment variable
+
+2012-12-17  martii  <m4rtii@gmx.de>
+
+	revert volume calculation to original implementation
+
+2012-12-16  martii  <m4rtii@gmx.de>
+
+	libspark: work around driver bug
+
+2012-12-09  martii  <m4rtii@gmx.de>
+
+	libspark/pwrmngr: don't fall-back to default cpu frequency
+
+2012-12-08  martii  <m4rtii@gmx.de>
+
+	add dmx offset to hw-caps
+
+2012-12-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	deuglify library build
+	* build intermediate libraries for each subdirectory
+	* link those libs in main directory instead of single objects
+	* ugly hack in configure.ac to disable dynamic lib for now
+
+2012-11-24  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: handle rmfp_player failures/features more graceful
+
+2012-11-21  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: disable video output on standby
+
+	atbox: make cDemux more robust
+	* workaround hanging Read() if frontend loses and regains lock
+	* set DMX_ONESHOT for TDT and TOT sections
+	(this is the same as commit fe7b385660 for spark)
+
+2012-11-18  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: mostly rewrite cPlayback rmfp_player wrapper
+	* use the file based /tmp/rmfp.{cmd2,in2,out2} interface instead
+	  of the previously used FIFOs, this seems more reliable
+	* convert code to lt_debug/lt_info infrastructure
+
+2012-11-16  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: rework cPlayback rmfp_player wrapper
+	it now actually plays something, but will need more love
+
+	lt_debug: add HAL_* constants to allow renaming
+
+2012-11-14  martii  <m4rtii@gmx.de>
+
+	libspark/playback_libeplayer3: treat rtmp/mms as http stream
+
+2012-11-12  martii  <m4rtii@gmx.de>
+
+	libeplayer/playback: initialize length to -1
+
+2012-11-11  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	add pic2m2v for bulk-creating the still-mpegs
+
+2012-11-10  martii  <m4rtii@gmx.de>
+
+	libeplayer3 fix
+
+2012-11-09  martii  <m4rtii@gmx.de>
+
+	libeplayer3: check for valid avContext pointer
+
+2012-11-06  martii  <m4rtii@gmx.de>
+
+	improve subtitle handling
+
+2012-11-04  martii  <m4rtii@gmx.de>
+
+	sync
+
+	libspark/libeplayer: rudimentary subtitle support, probably unstable
+
+2012-11-03  martii  <m4rtii@gmx.de>
+
+	fix red led recording state
+
+2012-11-03  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: sync with tdt git commit 06fe782fd6
+	This ports this commit:
+	    Author: Matthias <matthias@Build-VM.(none)>
+	    Date:   Fri Oct 26 19:54:46 2012 +0200
+
+	        [libeplayer3] enable wav payback (16 bit le)
+
+2012-11-01  martii  <m4rtii@gmx.de>
+
+	libspark: fix volume-to-/proc/stb/avs/0/volume mapping
+
+2012-10-27  martii  <m4rtii@gmx.de>
+
+	get rid of most compiler warnings
+
+	enable wav payback (16 bit le) (from TDT, thanks hellmaster1024)
+
+2012-10-12  martii  <m4rtii@gmx.de>
+
+	sync
+
+2012-10-12  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	cRecord: fix last commit
+
+	adapt cRecord API to coolstream changes
+
+2012-10-09  martii  <m4rtii@gmx.de>
+
+	Merge remote-tracking branch 'seife/master'
+
+2012-10-08  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	add implementation for boxtype "generic"
+	This is mostly a dummy implementation except for the dmx class which
+	should be working. It is intended for testing on PCs with budget
+	DVB cards which don't have a decoder anyway.
+
+2012-10-04  martii  <m4rtii@gmx.de>
+
+	libeplayer3: disable noprobe hack
+
+	sync
+
+2012-10-04  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: speed up playback start for PLAYMODE_TS
+
+	libeplayer3: fix invalid free()
+	according to the man pages....
+	* dirname() can not return NULL
+	* the pointer returned by dirname must not be free()d
+	* strdup() can return NULL
+
+2012-10-03  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: sync with tdt git commit fed2a419dc
+
+	libeplayer3: add hack to decrease libavcodec probe size
+	almost disable the libavcodec format probing when using
+	"myts://" instead of "file://" urls to improve startup speed
+	for timeshift etc
+
+2012-10-01  martii  <m4rtii@gmx.de>
+
+	sync
+
+2012-09-29  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: add demuxer init hack
+
+2012-09-22  martii  <you@example.com>
+
+	merge
+
+2012-09-22  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: make cDemux more robust
+	* workaround hanging Read() if frontend loses and regains lock
+	* set DMX_ONESHOT for TDT and TOT sections
+
+	spark: let cRecord use the demux passed as parameter
+
+	spark: make cDemux multi-tuner compatible
+	...which is more complicated than it seems at first glance, due
+	to the restrictions of the sh4 pti driver...
+
+2012-09-18  martii  <you@example.com>
+
+	spark input device handling: add function for reopening
+
+	Merge remote-tracking branch 'seife/master'
+
+2012-09-16  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: improve hardware_caps detection
+
+2012-09-15  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	add hardware_caps header
+	First version of a "hardware capabilites information" struct.
+	This is intended to help clean up the mess in the neutrino GUI.
+	Surely needs some more work and ongoing changes
+
+2012-09-12  martii  <you@example.com>
+
+	add VFDGETVERSION support
+
+2012-09-11  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark_fp: add option to find out the frontpanel type
+	this needs my latest patched aotom driver again...
+
+2012-09-05  martii  <you@example.com>
+
+	audio_mixer: correct conversion
+
+	spark: add volume control for alsa mixer
+
+2012-08-31  martii  <you@example.com>
+
+	eplayer3 h263 fix
+
+2012-08-16  martii  <you@example.com>
+
+	cast sizeof to signed to avoid compiler warning
+
+	Merge remote-tracking branch 'seife/master'
+
+2012-08-13  martii  <you@example.com>
+
+	fix indent
+
+2012-08-12  martii  <you@example.com>
+
+	libspark/video.cpp: I tend to believe that comparing signed and unsigned would break for st.st_size < 4
+
+2012-08-04  martii  <you@example.com>
+
+	libeplayer3: add support for teletext and dvbsubtitle streams
+
+2012-07-29  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	cDemux: add dummy SetSource() for coolstream compatibiliy
+
+	ca.h: add dummy functions to sync up with libcoolstream
+	libcoolstream has added the functions SendCAPMT(), GetCAIDS() and
+	SetTSClock(). Add stubs to get compatibility.
+
+2012-07-28  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	correctly declare AVSYNC_TYPE
+
+2012-07-27  martii  <you@example.com>
+
+	fix some movieplayer issues
+
+2012-07-21  martii  <you@example.com>
+
+	libeplayer3: sync with tdt
+
+	libspark/record.cpp: user configurable buffer sizes
+
+2012-07-15  martii  <you@example.com>
+
+	Merge remote-tracking branch 'seife/master'
+
+2012-07-15  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark,azbox: make demux FD nonblocking
+	...except for DMX_PSI_CHANNEL, which does not seem to expect that.
+
+2012-07-14  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: reset PIG during videodecoder init
+
+	triple: implement cVideo::getBlank()
+	another hack :-) make the "blank" still-mpg 24fps and then check in
+	getBlank() if the framerate is still 24fps, which means that no video
+	has been decoded since blanking
+
+2012-07-14  martii  <you@example.com>
+
+	spark_fp: add options for setting led status
+
+	spark_fp: add options for setting led status
+
+2012-07-14  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: add necessary locking for inbuf_pos in cPlayback
+
+2012-07-13  martii  <you@example.com>
+
+	spark record: set dmx to non-blocking mode, change buffer size
+
+	video_lib.h header adapted to match one of the previous changes
+
+	input handling: copy input data from secondary devices to the main rc device
+
+	spark powermanager: SetCpuFreq now actually does what its name says
+
+	spark video: implement SetControl
+
+	spark dmx: less debugging output; set buffer size
+
+	spark audio: add support for channel specific volume
+
+	spark_fp: don't touch LEDs on shutdown
+
+	support newer ffmpeg versions
+
+2012-07-05  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: implement cVideo::getBlank()
+	this is a hack: the "mailbox" irq count does not increase if the
+	decoders are not decoding, so we use this to determine if the
+	video is in really playing.
+
+2012-06-24  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: fix values in cVideo::SetVideoSystem
+
+	azbox: fix cVideo::setBlank
+	the (VIDEO_STOP,1) ioctl does not blank video, so write a
+	black still-mpeg into the decoder to blank the display,
+	(similar to the tripledragon code)
+
+	azbox: split up cVideo::ShowPicture
+	create a new show_iframe function which just gets the
+	still-mpeg data passed from ShowPicture
+
+	azbox: fix cAudio::do_mute
+
+	create common proc_tools
+	proc_put, proc_get and proc_get_hex are used in many files.
+	Avoid duplication by moving them to common/proc_tools.c.
+	Convert azbox's cVideo to use proc_tools.h
+
+	azbox: fix cVideo::ShowPicture
+
+2012-06-23  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	azbox: implement cVideo::getBlank
+
+	azbox: improve cVideo::setAspectRatio
+
+	azbox: terminate string in video/proc_get
+
+2012-06-18  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	first preliminary AZzbox ME support
+	TODO: some code is very similar to SPARK (record and pwrmngr
+	are just symlinked, dmx is almost identical). Reduce duplication
+	by factoring out DVBAPI code into an extra directory.
+	* what works: audio, video, demux
+	* what probably doesn't work or is untested: record
+	* what very likely doesn't work: playback
+	Playback is just copied over from aztrino and made to compile.
+	If you are lucky, it just segfaults :-)
+
+	fix build after cCA move...
+
+	move dummy cCA implementation to commmon/ directory
+
+2012-06-08  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: fix framerate from cVideo::getPictureInfo()
+
+	spark: implement cVideo::SetSyncMode()
+	inspired by evolux, but much simpler
+
+	spark: fix invalid initialization order in cVideo
+	(how could this ever work? no idea). Found in evolux patches.
+
+	spark: implement AC3 passthrough on SPDIF and HDMI
+	Note: untested (no hardware). AC3 on HDMI will only work if
+	AC3 on SPDIF is also selected.
+
+	spark: fix invalid debug in cAudio::PrepareClipPlay
+
+	spark: add (and use) proc_put() to audio.cpp
+
+2012-05-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark_fp: improve wakeup time for short timeouts
+
+2012-04-15  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: add spark_fp tool
+	this needs my patched aotom driver to work
+
+	use crosscompile-friendly AC_PATH_TOOL to find pkg-config
+
+2012-04-14  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: add 1080p50 videomode (needs neutrino fix)
+
+2012-04-08  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: silence a seemingly harmless warning
+
+	spark: improve libeplayer3 playback for timeshift
+	* open output only when really starting playback, just pause
+	  videodecoder before, so that still picture on timeshift works
+	* adapt to strange neutrino calling conventions, so that jump-on-
+	  start works for pause -> play -> stop (live) -> pause again
+	  sequence for timeshift works
+	TODO: the startup for H264 timeshifting is too slow, needs
+	      improvement
+
+	spark: add hack to simulate the timeshift file length
+
+	spark: make cRecord more error resilient
+	* use aio to improve things for slow recording media (heavily loaded
+	  NFS server for example)
+	* in case of a buffer overflow, don't stop the recording but simply
+	  drop a buffer
+	A proper aio implementation would involve multiple buffers that could
+	be queued in paralled, but that's much more complex, so let's see if
+	the current code works out well enough.
+
+2012-04-05  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: temporary (for testing) map "auto" video mode to 1080p50
+
+2012-04-01  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: return true for EOF in cPlayback::GetPosition
+
+	spark: set new videomode only if it differs from current
+
+	spark: fix getAspectRatio and getPictureInfo in MP mode
+
+2012-03-30  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: fix TODO in cVideo::ShowPicture()
+	rebuild the MPEG stillpicture if the source jpeg has changed
+	additionally check for zero sized m2v from broken ffmpeg versions
+	(the same as commit ee1a408f9b on spark)
+
+2012-03-25  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: improve DFB->uinput routines
+	* use kernel input device repeat instead of generating selfmade
+	  repeat events, this allows using input device rate settings
+	* add frontpanel left/right buttons, their keycodes differ from
+	  the rc buttons
+
+2012-03-17  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: do not start IRMP thread if lircd is running
+	This will provide a smooth switchover to using LIRC instead of IRMP: if
+	the lircd is running (pidfile present), don't start the input thread.
+	Neutrino will use the LIRC-created uinput device instead.
+
+2012-03-08  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	audio: add new enums for HDMI
+
+2012-03-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	dmx: fix web streaming by allowing PID 0 for pesFilter()
+
+	spark: compensate for differing AC3/MPEG volume
+	Maybe the 30/53 formula neeeds some tuning, we'll find out...
+
+2012-03-06  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	triple: fix audio mute state after fast-forwarding in playback
+
+	libtriple: implement option to keep LCD backlight on in standby
+	Based on an idea by Kim Danielmeier, keep the backlight on if
+	TRIPLE_LCDBACKLIGHT environment variable is set.
+
+2012-02-26  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: get rid of __FILE__ for shorter logmessages
+
+	spark: work around neutrino's sectionFilter() usage
+	It seems like most of the times, timeout == 0 means "use the default
+	timeout". However, at least with the sectionsd eit update filter and
+	the PMT version update filter, timeout == 0 means really "no timeout"
+	alas "infinite". Work around this by using the default timeout only
+	if no negative filtermask is given.
+	This fixes the "EPG on program change" (and PMT update probably, too).
+
+2012-02-25  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: more workaround for driver bugs in cVideo
+
+	spark: use ioctls instead of procfs in cVideo::getPictureInfo
+
+	spark: improve cVideo::Pig()
+
+	spark: improve cVideo::ShowPicture()
+	* don't clear stillpicture on radio channel change
+	* don't show stillpicture in standby
+
+	spark: make cVideo::openDevice() more robust
+	we sometimes seem to get EBUSY when opening the video device
+	directly after close() - retry for half a second to get it opened
+
+	libspark: fix cAudio::do_mute()
+
+	spark: fix TODO in cVideo::ShowPicture()
+	rebuild the MPEG stillpicture if the source jpeg has changed
+	additionally check for zero sized m2v from broken ffmpeg versions
+
+	spark: implement cAudio::SetSyncMode
+
+	spark: make cVideo::Standby more robust
+	There are a few glitches in the framebuffer driver we need to work
+	around. For now, let's:
+	 * close and reopen the video device when going in / out of standby
+	 * only enable HDMI when coming out of standby
+	Additionally, don't call Standby() when shutting down neutrino.
+
+	spark: only reopen decoders in cPlayback::Close if we closed them
+
+	spark: make cVideo::SetVideoSystem more robust
+	in order to not run into driver locking issues, stop video decoding
+	before setting the video system and restart afterwards
+
+	spark: cVideo::SetVideoMode ignore irrelevant modes
+
+	spark: make cVideo::openDevice ignorem ultiple calls
+
+	spark: fix invalid debug calls
+
+	debug: enable printf format checking for lt_debug
+
+2012-02-23  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: partly implement cVideo::Standby()
+
+	spark: implement cVideo::SetVideoMode
+	this should add rudimentary support to get SCART output working
+
+	spark: use ioctl instead of /proc to get video format
+
+	spark: disable HDMI before switching mode in cVideo::SetVideoSystem
+	this seems to greatly improve reliability - it looks like there is
+	a locking problem somewhere in the framebuffer driver :-(
+
+	spark: remove unused cVideo() functions
+
+2012-02-22  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: implement cVideo::SetVideoSystem()
+
+	spark: silence irmp debugging messages after last merge
+
+2012-02-21  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: fix IR remote address after IRMP update
+
+	spark: update IRMP code from upstream
+	This updates the IRMP code to version Version 2.1.1 (SVN rev 89).
+	Important changes are:
+	 * added GRUNDIG2 protocol
+	 * fixed bug when switching from nec42 to nec protocol
+	 * corrected timing for samsung/samsung32 protocol
+	 * added genre bits for kaseikyo
+	Especially the NEC protocol fix affects us since it changes the
+	decoded address!
+
+2012-02-18  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libeplayer3: silence many warnings
+
+	build static libeplayer3 and link eplayer3 and meta against it
+
+	spark: fix cAudio::PrepareClipPlay
+	this makes the neutrino audioplayer work fine ;-)
+
+	spark: add cVideo::ShowPicture()
+
+2012-02-15  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: remove unused cPlayback() stuff
+
+	spark: use libeplayer3 for playback
+
+	spark: add cPlayback code from TDT git
+	This imports cplayback as of commit 12d2c15d0e (2011-12-13)
+	git://gitorious.org/open-duckbox-project-sh4/tdt.git
+	Needs some adjustment to make it build...
+
+	spark: build libeplayer3 statically into libstb-hal
+
+2012-02-14  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	add libeplayer3 from tdt git
+	This imports libeplayer3 as of commit 9160371ccc6 (2012-02-02)
+	git://gitorious.org/open-duckbox-project-sh4/tdt.git
+	It would be better to use the original repo, but I need too many
+	changes for now :-(
+
+	spark: remove unused blank and zoom code from cVideo
+
+	spark: add {open,close}Device() to cVideo
+
+2012-02-12  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	spark: increase record demux buffer size
+
+	spark: rename lt_dfbinput to lirmp_input
+
+	spark: convert the input thread to use lt_debug
+
+	spark: add more keys to the input converter
+
+	spark: use TSDEMUX_TAP for TS demux in cDemux()
+
+	debug: rename from TRIPLE_DEBUG to HAL_DEBUG
+	the old variable is still usable as a fallback
+
+	spark: cVideo::Pig()
+
+	spark: cVideo::setAspectRatio()
+
+	spark: cVideo::getPictureInfo/getAspectRatio
+	simplify both function by using proc_{get,put}
+
+	spark cVideo: add proc_{get,put} helper functions
+
+	libspark: stub out unused stuff in cDemux, fix getSTC
+
+	libspark: add cVideo::getPTS for cDemux::getSTC
+
+	spark: DirectFB is not used
+
+	include config.h everywhere (for LFS etc)
+
+	add a trivial test application for libstb-hal
+
+	libspark: add remaining misc stuff
+	Now the standalone lib can be built :-)
+
+	libspark: make init.cpp build
+
+	libspark: use IRMP for converting /dev/lirc to input device
+
+	libspark: add IRMP infrared decoder
+	This is based on git://gitorious.org/arduino-addons/irmp-arduino.git
+
+	libspark: make cDemux build
+	This might actually even work, but is untested.
+
+	libspark: make cPlayback build... by disabling playback ;)
+
+	libspark: make cVideo build
+	Again, make it build -- not work. Lots of stuff simply stubbed out.
+
+	libspark: make cAudio build
+	This does just build, it probably does not yet work.
+
+2012-02-11  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	move lt_debug to common/ subdirectory
+
+	rename to libstb-hal
+
+	first try at building "libneutrino-hal" standalone
+
+2012-02-02  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libspark: rename files to common names
+
+	start libspark y copying libtriple
+
+2012-01-22  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: improve and shorten cDemux debug messages
+
+	libtriple: use AVS mute to avoid audio pop during boot
+
+2012-01-15  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: improve cPlayback performance
+	avoid unnecessary memcpy in read_mpeg(), significantly improving performance
+
+2012-01-14  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: add video parameter watchdog
+	Add the video parameter watchdog to the (already existing) input
+	thread, so we can remove it from zapit.
+	Unfortunately, we need an ugly hack in cDemux for making sure we
+	do not crash on exit... :-(
+
+	make lt_dfbinput a c++ file
+	this allows to put the videowatchdog into the same thread later
+
+2012-01-09  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: load td-dvb-frontend.ko in init_td_api()
+
+	libtriple: convert tripledragon remote to uinput
+	Instead of patching neutrino to read the Tripledragon remote, use a
+	converter thread in libtriple to convert the TD remote to a real input
+	device via uinput.
+
+2012-01-08  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: add documentation on libtriple options
+
+	libtriple: avoid audio noise when going to standby
+
+	libtriple: add support for alternate sound devices to cAudio
+	This allows to use different audio devices (USB Audio for example)
+	with internet radio and audioplayer.
+
+2011-12-04  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: try to make all filedescriptors O_CLOEXEC
+
+2011-11-07  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: fix cDemux::pesFilter for teletext
+
+2011-11-06  Stefan Seyfried  <seife@tuxbox-git.slipkontur.de>
+
+	libtriple: add measure mode to cDemux to fix streaminfo
+	since the TD drivers apparently only allow each PID to be captured
+	once, cheat and implement the measure mode for streaminfo with
+	special ioctls. now streaminfo no longer breaks recordings
+
+	libtriple: convert cRecord to lt_debug()
+
+	libtriple: improve lt_debug
+	* add current instance
+	* shorten lt_debug messages
+
+	libtriple: Tripledragon can only do one TS at a time :-(
+
+	libtriple: add cRecord::AddPid
+
+	libtriple: bring cRecord::Open in line with CS code
+
+	libtriple: bring cDemux::Start in line with CS code
+
+	libtriple: change cDemux::addPid to type bool
+
+	libtriple: add dmx_cs.h to reduce code differences in neutrino
+
+	libtriple: improve audio stream handling in cPlayback()
+	use a c++ map instead of arrays to store audio stream data
+	Side effect: audio streams as returned by findAllPids() are now
+	sorted by pid, helping default selection for MPEG and VDR streams
+
+	libtriple: implement cVideo::SetSyncMode()
+
+	libtriple: implement cAudio::SetSyncMode()
+
+	libtriple: cVideo enabled SCART during record in standby
+
+	libtriple: fix seeking in cPlayback if there's a PTS overflow
+
+	libtriple: sync cPlayback with libcoolstream changes
+
+	libtriple: fix compiler warning in cs_get_revision()
+
+	libtriple: convert cDemux to lt_info
+
+	libtriple: add workaround for 'odd filter length' problem in cDemux
+
+	libtriple: convert cAudio to lt_info, improve debug output
+
+	libtriple: add debug flag to disable SCART switching (debug)
+
+	libtriple: remove unneeded includes, disable strict aliasing
+
+	libtriple: convert cVideo to lt_debug/lt_info, don't use zapit debug
+
+	libtriple: convert cPlayback to lt_debug/lt_info
+
+	libtriple: improve debug architecture
+	every libtriple module can have its debug output enabled separately
+	by exporting the TRIPLE_DEBUG variable
+
+	libtriple: implement PCM playback in cAudio()
+
+	libtriple: add ChangePids() to cRecord
+	This is pretty much untested for now, handle with care!
+
+	libtriple: add getPesPids() and removePid() to cDemux
+
+	libtriple: remember the filedescriptor belonging to each pid in cDemux()
+
+	libtriple: improve cPlayback()
+	* avoid race conditions by using a mutex to protect curr_pos, fixing
+	  artefacts during timeshift playback
+	* make GetPosition() cheaper by interpolating end_pts and only fetching
+	  the "real" end_pts after the file has grown by 10MB
+
+	libtriple: fix filedescriptor leak in cVideo::routeVideo()
+
+	libtriple: fix up cVideo::setAspectRatio()
+
+	libtriple: add cVideo::VideoParamWatchdog()
+
+	libtriple/framebuffer: use DirectFB acceleration
+	Use a hack, almost as ugly as the original Coolstream code ;),
+	to accelerate drawing of boxes and blitting with DirectFB functions.
+
+	libtriple: add usable dummy cCA class
+
+	libtriple: add support for MPEG1 files to cPlayback
+	Now we can play the "Warriors of the Net" clip :-)
+	http://ftp.sunet.se/pub/tv+movies/warriors/warriors-700-VBR.mpg
+
+	libtriple: add debug messages to cDemux and cVideo functions
+
+	libtriple: reduce some messages to debug, consolidate scart messages
+
+	libtriple: hack different notify sizes for subs and ttx into cDemux
+
+	libtriple: fix compiler warnings in playback_td
+
+	libtriple: cPlayback: improve get_pts
+	* add the buffer size to the call to avoid overflows
+	* extract PTS also from MPEG1 packets
+
+	libtriple: implement mpeg/vdr playback
+
+	libtriple: implement fast forward in cPlayback()
+	First try at implementing fast forward. Needs more love.
+	Reverse does not work yet, setting speed to negative values
+	right now simply resets to "play" mode.
+
+	libtriple: make most of libtriple use lt_debug
+
+	libtriple: implement pwrmngr cpufreq classes (mostly dummies)
+
+	libtriple: implement working cPlayback class
+	no fast forward, no mpeg playback (yet ;)
+
+	libtriple: implement cRecord class
+	TS recording now somewhat works ;)
+	this version does not need ringbuffer code and only one thread
+
+	libtriple: implement cAudio class
+
+	libtriple: implement ShowPicture() in cVideo
+	this needs the ffmpeg binary with support for mjpeg decoder
+	and mpeg2video encoder to recode the jpgs to m2v
+
+	libtriple: implement working cVideo class
+
+	libtriple: implement working cDemux class
+
+	libtriple: add lt_debug() for controllable debug output
+
+2010-12-25  seife  <seife@e54a6e83-5905-42d5-8d5c-058d10e6a962>
+
+	add generic dispatcher headers for frontend etc
+	add generic audio, video and demux headers in zapit/include (TODO: put them
+	into a better place, or put wrappers into lib directories) that automatically
+	dispatch to the hardware specific functions and use them in the code
+
+	git-svn-id: http://www.coolstreamtech.de/coolstream_public_svn/THIRDPARTY/applications/neutrino-experimental@962 e54a6e83-5905-42d5-8d5c-058d10e6a962
+
+2010-12-25  seife  <seife@e54a6e83-5905-42d5-8d5c-058d10e6a962>
+
+	libtriple: implement init_td_api and shutdown_td_api
+	provide compatibility with cs_api_init() and cs_api_exit()
+	This contains a DirectFB wrapper, needed to make the framebuffer
+	transparent. The framebuffer itself is usable without DFB.
+	Additionally it sets up the system for a changed RC address in "BIOS".
+
+	git-svn-id: http://www.coolstreamtech.de/coolstream_public_svn/THIRDPARTY/applications/neutrino-experimental@961 e54a6e83-5905-42d5-8d5c-058d10e6a962
+
+2010-12-25  seife  <seife@e54a6e83-5905-42d5-8d5c-058d10e6a962>
+
+	add "libtriple" skeleton
+	This should provide the same functionality as libcoolstream does,
+	but for the TripleDragon
+	Add td-compat directory with includes to convert values from
+	TD api to DVB api and back.
+
+	git-svn-id: http://www.coolstreamtech.de/coolstream_public_svn/THIRDPARTY/applications/neutrino-experimental@960 e54a6e83-5905-42d5-8d5c-058d10e6a962

@@ -948,7 +948,12 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 			{
 				if (gst_tag_list_get_string(tags, GST_TAG_LANGUAGE_CODE, &g_lang))
 				{
-					language[i] = std::string(gst_tag_get_language_name(g_lang)).c_str();
+					std::string slang;
+					slang = gst_tag_get_language_name(g_lang);
+					if (slang.empty())
+						language[i] = "unk";
+					else
+						language[i] = slang.c_str();
 					lt_info("%s: language:%s\n", __FUNCTION__, language[i].c_str());
 					g_free(g_lang);
 				}

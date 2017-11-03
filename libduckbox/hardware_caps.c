@@ -29,7 +29,7 @@ hw_caps_t *get_hwcaps(void)
 	char buf[64];
 	int len = -1;
 	int fd = open("/proc/stb/info/model", O_RDONLY);
-	caps.can_set_display_brightness = 0;
+	caps.display_can_set_brightness = 0;
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);
@@ -55,7 +55,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
-			caps.can_set_display_brightness = 1;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs913", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -66,7 +66,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
-			caps.can_set_display_brightness = 1;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs922", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -87,7 +87,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
-			caps.can_set_display_brightness = 1;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "hdbox", 5)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -273,7 +273,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
-			caps.can_set_display_brightness = 0;
+			caps.display_can_set_brightness = 0;
 		}
 		else if ((!strncasecmp(buf, "nbox", 4)) ||
 				(!strncasecmp(buf, "adb_box", 7))) {
@@ -285,7 +285,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 1;
 			caps.has_CI = 2;
-			caps.can_set_display_brightness = 1;
+			caps.display_can_set_brightness = 1;
 		}
 		else if ((!strncasecmp(buf, "sagemcom88", 10)) ||
 			(!strncasecmp(buf, "esi_88", 6)) ||
@@ -299,7 +299,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 1;
 			caps.has_CI = 0;
-			caps.can_set_display_brightness = 1;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncasecmp(buf, "dsi87", 5)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -310,7 +310,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 0;
-			caps.can_set_display_brightness = 0;
+			caps.display_can_set_brightness = 0;
 		}
 		else {
 			strcpy(caps.boxvendor, "unknown");

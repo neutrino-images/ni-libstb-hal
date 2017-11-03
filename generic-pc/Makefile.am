@@ -36,7 +36,9 @@ if ENABLE_GSTREAMER_10
 libgeneric_la_SOURCES += \
 	playback_gst_10.cpp
 AM_LDFLAGS += \
-	-lgstreamer-1.0
+	-lgstreamer-1.0 \
+	-lgsttag-1.0 \
+	-lgstmpegts-1.0
 else
 libgeneric_la_SOURCES += \
 	playback.cpp

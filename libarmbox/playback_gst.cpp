@@ -30,7 +30,6 @@
 #include <pthread.h>
 #include <syscall.h>
 
-#include "dmx_lib.h"
 #include "audio_lib.h"
 #include "video_lib.h"
 
@@ -42,11 +41,9 @@
 #define lt_debug_c(args...) _lt_debug(HAL_DEBUG_PLAYBACK, NULL, args)
 #define lt_info_c(args...) _lt_info(HAL_DEBUG_PLAYBACK, NULL, args)
 
-static const char * FILENAME = "[playback.cpp]";
+static const char * FILENAME = "[playback_gst.cpp]";
 extern cVideo * videoDecoder;
 extern cAudio * audioDecoder;
-extern cDemux * audioDemux;
-extern cDemux * videoDemux;
 
 #include <gst/gst.h>
 #include <gst/tag/tag.h>
@@ -111,7 +108,7 @@ void processMpegTsSection(GstMpegtsSection* section)
 	}
 }
 
-void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer user_data)
+void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_data)
 {
 	GstElement *source = NULL;
 	cPlayback *_this = (cPlayback*)user_data;
@@ -189,7 +186,7 @@ void playbinNotifySource(GObject *object, GParamSpec *unused, gpointer user_data
 	}
 }
 
-GstBusSyncReply Gst_bus_call(GstBus * bus, GstMessage *msg, gpointer user_data)
+GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 {
 	gchar * sourceName;
 
@@ -672,13 +669,19 @@ bool cPlayback::SetAPid(int pid, bool /*ac3*/)
 {
 	lt_info("%s: pid %i\n", __func__, pid);
 
-	int current_audio;
+	int to_audio = pid;
 
-	if(pid != mAudioStream)
+	for (unsigned int i = 0; i < REC_MAX_APIDS; i++) {
+		if (real_apids[i])
+			if (real_apids[i] == pid)
+				to_audio = i;
+	}
+
+	if(to_audio != mAudioStream)
 	{
-		g_object_set (G_OBJECT (m_gst_playbin), "current-audio", pid, NULL);
-		printf("%s: switched to audio stream %i\n", __FUNCTION__, pid);
-		mAudioStream = pid;
+		g_object_set (G_OBJECT (m_gst_playbin), "current-audio", to_audio, NULL);
+		printf("%s: switched to audio stream %i\n", __FUNCTION__, to_audio);
+		mAudioStream = to_audio;
 	}
 
 	return true;
@@ -904,12 +907,11 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 			GstStructure * structure = gst_caps_get_structure(caps, 0);
 			GstTagList * tags = NULL;
 			gchar * g_lang = NULL;
-			gchar * g_codec = NULL;
 
 			// ac3flags
 			if ( gst_structure_has_name (structure, "audio/mpeg"))
 			{
-				gint mpegversion, layer = -1;
+				gint mpegversion;
 
 				if (!gst_structure_get_int (structure, "mpegversion", &mpegversion))
 					ac3flags[i] = 0;
@@ -1101,7 +1103,7 @@ int cPlayback::GetAPid(void)
 	gint current_audio = 0;
 	g_object_get (m_gst_playbin, "current-audio", &current_audio, NULL);
 	lt_info("%s: %d audio\n", __FUNCTION__, current_audio);
-	return current_audio;
+	return real_apids[current_audio] ? real_apids[current_audio] : current_audio;
 }
 
 int cPlayback::GetVPid(void)

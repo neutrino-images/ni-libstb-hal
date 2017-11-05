@@ -54,7 +54,8 @@ libstb_hal_la_LIBADD += \
 endif
 if BOXTYPE_ARMBOX
 libstb_hal_test_LDADD += -lasound
-SUBDIRS += libarmbox
+SUBDIRS += libarmbox libdvbci
 libstb_hal_la_LIBADD += \
-	libarmbox/libarmbox.la
+	libarmbox/libarmbox.la \
+	libdvbci/libdvbci.la
 endif

@@ -1347,6 +1347,38 @@ void eDVBCIContentControlManagerSession::resendKey(eDVBCISlot *tslot)
 	*/
 
 	if (!tslot->SidBlackListed && (tslot->recordUse[0] || tslot->liveUse[0]))
+	{
+#if HAVE_ARM_HARDWARE
+		if (slot->newPids)
+		{
+			if (slot->pids.size())
+			{
+				if (descrambler_open())
+				{
+					for (unsigned int i = 0; i < slot->pids.size(); i++)
+						descrambler_set_pid((int)tslot->slot, 1, (int) slot->pids[i]);
+					descrambler_close();
+				}
+			}
+			slot->newPids = false;
+		}
+		descrambler_set_key((int)tslot->slot, tslot->lastParity, tslot->lastKey);
+#else
+		if (slot->newPids)
+		{
+			if (slot->pids.size())
+			{
+				if (descrambler_open())
+				{
+					for (unsigned int i = 0; i < slot->pids.size(); i++)
+						descrambler_set_pid((int)tslot->slot, 1, (int) slot->pids[i]);
+					descrambler_close();
+				}
+			}
+			slot->newPids = false;
+		}
 		descrambler_set_key((int)tslot->source, tslot->lastParity, tslot->lastKey);
+#endif
+	}
 }
 

@@ -40,7 +40,7 @@ inline void cs_api_exit()
 #define cs_free_uncached	free
 
 // Callback function helpers
-static inline void cs_register_messenger(cs_messenger) { return; };
+void cs_register_messenger(cs_messenger messenger);
 static inline void cs_deregister_messenger(void) { return; };
 //cs_messenger cs_get_messenger(void);
 

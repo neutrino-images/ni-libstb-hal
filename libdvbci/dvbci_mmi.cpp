@@ -51,6 +51,7 @@ int eDVBCIMMISession::receivedAPDU(const unsigned char *tag, const void *data, i
 				pMsg->MsgId = CA_MESSAGE_MSG_MMI_CLOSE;
 				pMsg->SlotType = CA_SLOT_TYPE_CI;
 				pMsg->Slot = slot->slot;
+				stopMMI();
 				cCA::GetInstance()->SendMessage(pMsg);
 			}
 			break;

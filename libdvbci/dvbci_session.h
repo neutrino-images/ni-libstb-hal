@@ -5,9 +5,9 @@
 
 #define SLMS 256
 
-#define ROOT_CERT     "/etc/pem/root.pem"
-#define CUSTOMER_CERT "/etc/pem/customer.pem"
-#define DEVICE_CERT   "/etc/pem/device.pem"
+#define ROOT_CERT     "/etc/ssl/certs/root.pem"
+#define CUSTOMER_CERT "/etc/ssl/certs/customer.pem"
+#define DEVICE_CERT   "/etc/ssl/certs/device.pem"
 
 class eDVBCISession
 {

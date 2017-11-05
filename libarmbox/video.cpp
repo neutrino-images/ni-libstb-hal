@@ -994,8 +994,10 @@ void cVideo::SetCECState(bool state)
 		usleep(10000);
 		message.address = 0x0f; /* broadcast */
 		message.data[0] = CEC_MSG_ACTIVE_SOURCE;
-		message.data[1] = ((((int)physicalAddress >> 12) & 0xf) << 4) + (((int)physicalAddress >> 8) & 0xf);
-		message.data[2] = ((((int)physicalAddress >> 4) & 0xf) << 4)  + (((int)physicalAddress >> 0) & 0xf);
+		//message.data[1] = ((((int)physicalAddress >> 12) & 0xf) << 4) + (((int)physicalAddress >> 8) & 0xf);
+		//message.data[2] = ((((int)physicalAddress >> 4) & 0xf) << 4)  + (((int)physicalAddress >> 0) & 0xf);
+		message.data[1] = physicalAddress[0];
+		message.data[2] = physicalAddress[1];
 		message.length = 3;
 		SendCECMessage(message);
 	}

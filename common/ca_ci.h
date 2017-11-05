@@ -194,8 +194,10 @@ typedef struct
 
 	bool ccmgr_ready;
 
+	char ci_dev[32];
 	char name[512];
 
+	bool newPids;
 	bool newCapmt;
 	bool multi;
 	bool recordUse[CI_MAX_MULTI];
@@ -211,6 +213,8 @@ typedef struct
 	int counter;
 	CaIdVector cam_caids;
 	std::priority_queue<queueData> sendqueue;
+
+	std::vector<u16> pids;
 
 	bSIDVector bsids;
 	unsigned char lastKey[32];
@@ -237,6 +241,38 @@ private:
 	cCA(void);
 	/// Private data for the CA module
 	CS_CA_PDATA *privateData;
+	/// set inputs with tuner letter in tsmux
+	void setInputs();
+	/// write ci info file to /tmp
+	void write_ci_info(int slot, CaIdVector caids);
+	/// delete ci info file
+	void del_ci_info(int slot);
+	/// extract audio / video pids from capmt 
+	void extractPids(eDVBCISlot* slot);
+	/// ci module is detected
+	void ci_inserted(eDVBCISlot* slot);
+	/// ci module is removed
+	void ci_removed(eDVBCISlot* slot);
+	/// decode the tpdu tag
+	void process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
+	/// set flag of running ci record to false
+	bool StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen);
+	/// set flag of running ci live-tv to false
+	bool StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen);
+	/// find an unused ci slot for use with service
+	SlotIt FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, u8 scrambled);
+	/// get slot iterator by slot number
+	SlotIt GetSlot(unsigned int slot);
+	/// send buffered capmt to ci modul
+	bool SendCaPMT(eDVBCISlot* slot);
+	/// send a dummy capmt to ci for deactivating
+	bool SendNullPMT(eDVBCISlot* slot);
+	/// set ci source
+	void setSource(eDVBCISlot* slot);
+	/// set demux source
+	void setInputSource(eDVBCISlot* slot, bool ci);
+	/// check if data in queue
+	bool checkQueueSize(eDVBCISlot* slot);
 	enum CA_INIT_MASK initMask;
 	int num_slots;
 	bool init;
@@ -246,7 +282,9 @@ private:
 	pthread_t slot_thread;
 
 public:
+	/// sh4 unused
 	bool Init(void);
+	/// init ci and start the loop
 	cCA(int Slots);
 	/// Returns the number of CI slots
 	uint32_t GetNumberCISlots(void);
@@ -260,17 +298,23 @@ public:
 	bool SendMessage(const CA_MESSAGE *Msg);
 	/// Sets which modules to initialize. It is only
 	/// possible to change this once!
+	/// sh4 unused
 	void SetInitMask(enum CA_INIT_MASK InitMask);
 	/// Sets the frequency (in Hz) of the TS stream input (only valid for CI)
-	void SetTSClock(u32 /*Speed*/) { return; };
+	/// sh4 unused
+	void SetTSClock(u32 Speed);
 	/// Start the CA module
+	/// sh4 unused
 	bool Start(void);
 	/// Stops the CA module
+	/// sh4 unused
 	void Stop(void);
 	/// Notify that the GUI is ready to receive messages
 	/// (CA messages coming from a module)
+	/// sh4 unused
 	void Ready(bool Set);
 	/// Resets a module (if possible)
+	/// sh4 unused
 	void ModuleReset(enum CA_SLOT_TYPE, uint32_t Slot);
 	/// Checks if a module is present
 	bool ModulePresent(enum CA_SLOT_TYPE, uint32_t Slot);
@@ -285,29 +329,20 @@ public:
 	/// Notify the module we closed the menu
 	void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
 	/// Get the supported CAIDs
-//	int GetCAIDS(CaIdVector & /*Caids*/) { return 0; };
 	int GetCAIDS(CaIdVector &Caids);
 	/// Send a CA-PMT object and Raw unparsed PMT to the CA layer
 	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/, enum CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL,
 		unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
-
-	bool StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen);
-	bool StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen);
-	SlotIt FindFreeSlot(u64 tpid, u8 source, u16 sid, ca_map_t camap, unsigned char scrambled);
-	SlotIt GetSlot(unsigned int slot);
+	/// sh4 unused
 	bool SendDateTime(void);
-	bool SendCaPMT(eDVBCISlot* slot);
+	/// the main loop
 	void slot_pollthread(void *c);
-	void setSource(eDVBCISlot* slot);
-	bool checkQueueSize(eDVBCISlot* slot);
-	void process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int con_id);
-
+	/// check if current channel uses any ci module
 	bool checkChannelID(u64 chanID);
+	/// set checking for live-tv use ci to true
 	void setCheckLiveSlot(int check);
-	bool SendNullPMT(eDVBCISlot* slot);
+	/// as the name says
 	bool CheckCerts(void);
-	void Test(int slot, CaIdVector caids);
-	void DelTest(int slot);
 	/// Virtual destructor
 	virtual ~cCA();
 };

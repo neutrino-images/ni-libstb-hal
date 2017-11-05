@@ -29,7 +29,7 @@ hw_caps_t *get_hwcaps(void)
 	memset(&caps, 0, sizeof(hw_caps_t));
 
 	initialized = 1;
-	caps.has_CI = 0;
+	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
 	caps.display_xres = 16;

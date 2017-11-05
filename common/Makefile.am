@@ -9,12 +9,23 @@ AM_CXXFLAGS += \
 	-I $(top_srcdir)/libdvbci
 endif
 
+if BOXTYPE_ARMBOX
+AM_CXXFLAGS += \
+	-I $(top_srcdir)/include \
+	-I $(top_srcdir)/libdvbci
+endif
+
 if BOXTYPE_DUCKBOX
+libcommon_la_SOURCES = \
+	ca_ci.cpp
+else
+if BOXTYPE_ARMBOX
 libcommon_la_SOURCES = \
 	ca_ci.cpp
 else
 libcommon_la_SOURCES = \
 	ca.cpp
+endif
 endif
 
 libcommon_la_SOURCES += \

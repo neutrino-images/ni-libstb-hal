@@ -1346,6 +1346,9 @@ void cCA::slot_pollthread(void *c)
 	while (1)
 	{
 #if HAVE_ARM_HARDWARE		/* Armbox */
+		if (slot->init && !slot->mmiOpened)
+			sleep(1);
+
 		int len = 1024 *4;
 		eData status;
 

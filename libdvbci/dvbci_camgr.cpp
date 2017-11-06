@@ -36,11 +36,19 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 					caids.push_back((((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
 				}
 				if (!caids.empty())
-					if ((caids[0] & 0xFF00) == 0x1800)
+				{
+					for (u32 i = 0; i < caids.size(); i++)
 					{
-						caids.push_back(0x186A);
-						printf("%04x", 0x186A);
+						if (caids[i] == 0x1830)
+						{
+							caids.push_back(0x186A);
+							printf("%04x ", 0x186A);
+							caids.push_back(0x186D);
+							printf("%04x ", 0x186D);
+							break;
+						}
 					}
+				}
 				std::sort(caids.begin(), caids.end());
 				printf("\n");
 

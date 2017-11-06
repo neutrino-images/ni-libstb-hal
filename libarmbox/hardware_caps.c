@@ -29,12 +29,11 @@ hw_caps_t *get_hwcaps(void)
 	memset(&caps, 0, sizeof(hw_caps_t));
 
 	initialized = 1;
-	caps.has_CI = 0;
+	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
 	caps.display_xres = 16;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
-	caps.display_can_deepstandby = 0;
 	caps.display_can_set_brightness = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "AX-Technologies");

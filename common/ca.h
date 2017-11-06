@@ -1,7 +1,7 @@
 /*
  * dummy functions to implement ca_cs.h interface
  */
-#if HAVE_DUCKBOX_HARDWARE
+#if HAVE_DUCKBOX_HARDWARE || HAVE_ARM_HARDWARE
 #include "ca_ci.h"
 #else
 #ifndef __CA_LIBTRIPLE_H_

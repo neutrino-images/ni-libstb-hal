@@ -1,3 +1,54 @@
+2017-11-06  Thilo Graf  <dbt@novatux.de>
+
+	Merge branch 'master' of https://github.com/TangoCash/libstb-hal-cst-next.git into mpx
+	update version 1.0.1
+
+	 Conflicts:
+		include/hardware_caps.h
+		libarmbox/hardware_caps.c
+		libduckbox/hardware_caps.c
+		libspark/hardware_caps.c
+
+2017-11-06  max_10  <max_10@gmx.de>
+
+	ci: armbox fix cpu load
+
+2017-11-05  TangoCash  <eric@loxat.de>
+
+	fix compile #2
+
+	fix compile
+
+2017-11-05  max_10  <max_10@gmx.de>
+
+	armbox: add dvbci (thx DboxOldie)
+
+2017-11-05  TangoCash  <eric@loxat.de>
+
+	armbox: tryfix cec
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	ci: let stbhal handle close
+
+2017-11-04  TangoCash  <eric@loxat.de>
+
+	gstreamer playback, cleanup, fix real pid handling
+
+2017-11-03  TangoCash  <eric@loxat.de>
+
+	gstreamer playback, avoid segfault
+
+	gstreamer playback, fix possible segfault #2
+
+	gstreamer playback, fix possible segfault
+
+	update generic gstreamer
+
+	Merge branch 'master' of github.com:Duckbox-Developers/libstb-hal-cst-next
+
+	align
+
 2017-11-02  Thilo Graf  <dbt@novatux.de>
 
 	version 1.0.0-mpx

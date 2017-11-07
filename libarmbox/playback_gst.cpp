@@ -290,7 +290,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
 			}
 		}
-		gst_tag_list_unref(tags);
+		if (tags)
+			gst_tag_list_unref(tags);
 		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 		break;
 	}
@@ -461,7 +462,8 @@ void cPlayback::Close(void)
 		// disconnect sync handler callback
 		GstBus * bus = gst_pipeline_get_bus(GST_PIPELINE (m_gst_playbin));
 		gst_bus_set_sync_handler(bus, NULL, NULL, NULL);
-		gst_object_unref(bus);
+		if (bus)
+			gst_object_unref(bus);
 		lt_info( "%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
 	}
 
@@ -520,7 +522,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	mAudioStream = 0;
 	init_jump = -1;
 
-	gst_tag_list_unref(m_stream_tags);
+	if (m_stream_tags)
+		gst_tag_list_unref(m_stream_tags);
 	m_stream_tags = NULL;
 
 	unlink("/tmp/.id3coverart");
@@ -594,7 +597,8 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 		//gstbus handler
 		GstBus * bus = gst_pipeline_get_bus( GST_PIPELINE(m_gst_playbin) );
 		gst_bus_set_sync_handler(bus, Gst_bus_call, NULL, NULL);
-		gst_object_unref(bus);
+		if (bus)
+			gst_object_unref(bus);
 
 		first = true;
 
@@ -899,7 +903,8 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 			g_signal_emit_by_name (m_gst_playbin, "get-audio-pad", i, &pad);
 
 			GstCaps * caps = gst_pad_get_current_caps(pad);
-			gst_object_unref(pad);
+			if (pad)
+				gst_object_unref(pad);
 
 			if (!caps)
 				continue;
@@ -941,7 +946,8 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 				//return atPCM;
 				ac3flags[i] = 0;
 
-			gst_caps_unref(caps);
+			if (caps)
+				gst_caps_unref(caps);
 
 			//(ac3flags[i] > 2) ?	ac3flags[i] = 1 : ac3flags[i] = 0;
 

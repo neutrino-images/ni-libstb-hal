@@ -325,7 +325,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		case GST_STATE_CHANGE_READY_TO_PAUSED:
 		{
 			GstIterator *children;
-			GValue r = { 0, };
+			GValue r = G_VALUE_INIT;
 
 			if (audioSink)
 			{
@@ -390,6 +390,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	default:
 		break;
 	}
+	if(sourceName)
+		g_free(sourceName);
 
 	return GST_BUS_DROP;
 }

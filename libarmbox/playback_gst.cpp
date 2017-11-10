@@ -948,9 +948,9 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 			//(ac3flags[i] > 2) ?	ac3flags[i] = 1 : ac3flags[i] = 0;
 
 			g_signal_emit_by_name (m_gst_playbin, "get-audio-tags", i, &tags);
-			if (tags && GST_IS_TAG_LIST(tags))
+			if (tags)
 			{
-				if (gst_tag_list_get_string(tags, GST_TAG_LANGUAGE_CODE, &g_lang))
+				if (GST_IS_TAG_LIST(tags) && gst_tag_list_get_string(tags, GST_TAG_LANGUAGE_CODE, &g_lang))
 				{
 					std::string slang;
 					if (gst_tag_check_language_code(g_lang))
@@ -1029,6 +1029,9 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 			const GValue *val;
 
 			val = gst_tag_list_get_value_index(m_stream_tags, name, j);
+
+			if (val == NULL)
+				continue;
 
 			if (G_VALUE_HOLDS_STRING(val))
 			{

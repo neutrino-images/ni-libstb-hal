@@ -1013,22 +1013,28 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 {
 	keys.clear();
 	values.clear();
-	if (gst_tag_list_is_empty (m_stream_tags))
+
+	GstTagList *meta_list = gst_tag_list_copy(m_stream_tags);
+
+	if (meta_list == NULL)
 		return;
 
-	for (guint i = 0, icnt = gst_tag_list_n_tags(m_stream_tags); i < icnt; i++)
+	if (gst_tag_list_is_empty(meta_list))
+		return;
+
+	for (guint i = 0, icnt = gst_tag_list_n_tags(meta_list); i < icnt; i++)
 	{
-		const gchar *name = gst_tag_list_nth_tag_name(m_stream_tags, i);
+		const gchar *name = gst_tag_list_nth_tag_name(meta_list, i);
 		if (!name)
 		{
 			continue;
 		}
 
-		for (guint j = 0, jcnt = gst_tag_list_get_tag_size(m_stream_tags, name); j < jcnt; j++)
+		for (guint j = 0, jcnt = gst_tag_list_get_tag_size(meta_list, name); j < jcnt; j++)
 		{
 			const GValue *val;
 
-			val = gst_tag_list_get_value_index(m_stream_tags, name, j);
+			val = gst_tag_list_get_value_index(meta_list, name, j);
 
 			if (val == NULL)
 				continue;
@@ -1071,6 +1077,7 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 
 		}
 	}
+	gst_tag_list_unref(meta_list);
 	printf("%s:%s %d tags found\n", FILENAME, __func__, (int)keys.size());
 }
 

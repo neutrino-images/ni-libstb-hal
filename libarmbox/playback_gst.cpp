@@ -339,8 +339,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				videoSink = NULL;
 			}
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-
-			if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
+			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
 			{
 				audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);
@@ -349,8 +348,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 			gst_iterator_free(children);
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-
-			if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
+			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
 			{
 				videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);

@@ -1014,7 +1014,9 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 	keys.clear();
 	values.clear();
 
-	GstTagList *meta_list = gst_tag_list_copy(m_stream_tags);
+	GstTagList *meta_list = NULL;
+	if(m_stream_tags)
+		meta_list = gst_tag_list_copy(m_stream_tags);
 
 	if (meta_list == NULL)
 		return;

@@ -188,16 +188,12 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 
 GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 {
-	gchar * sourceName;
-
 	// source
 	GstObject * source;
 	source = GST_MESSAGE_SRC(msg);
 
 	if (!GST_IS_OBJECT(source))
 		return GST_BUS_DROP;
-
-	sourceName = gst_object_get_name(source);
 
 	switch (GST_MESSAGE_TYPE(msg))
 	{
@@ -214,6 +210,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		GError *err;
 		gst_message_parse_error(msg, &err, &debug);
 		g_free (debug);
+		gchar * sourceName = gst_object_get_name(source);
 		lt_info_c( "%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName );
 		if ( err->domain == GST_STREAM_ERROR )
 		{
@@ -226,6 +223,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			}
 		}
 		g_error_free(err);
+		if(sourceName)
+			g_free(sourceName);
 
 		end_eof = 1; 		// NOTE: just to exit
 
@@ -241,8 +240,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		g_free (debug);
 		if ( inf->domain == GST_STREAM_ERROR && inf->code == GST_STREAM_ERROR_DECODE )
 		{
+			gchar * sourceName = gst_object_get_name(source);
 			if ( g_strrstr(sourceName, "videosink") )
 				lt_info_c( "%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+			if(sourceName)
+				g_free(sourceName);
+
 		}
 		g_error_free(inf);
 		break;
@@ -388,8 +391,6 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	default:
 		break;
 	}
-	if(sourceName)
-		g_free(sourceName);
 
 	return GST_BUS_DROP;
 }

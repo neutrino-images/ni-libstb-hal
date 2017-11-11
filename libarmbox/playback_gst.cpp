@@ -841,21 +841,23 @@ bool cPlayback::SetPosition(int position, bool absolute)
 {
 	lt_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
 
-	gint64 time_nanoseconds;
-	gint64 pos;
-	GstFormat fmt = GST_FORMAT_TIME;
-	GstState state;
 
 	if(m_gst_playbin)
 	{
-		gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
-
-		if ( (state == GST_STATE_PAUSED) && first)
-		{
-			init_jump = position;
-			first = false;
-			return false;
+		if(first){
+			GstState state;
+			gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
+			if ( (state == GST_STATE_PAUSED) && first)
+			{
+				init_jump = position;
+				first = false;
+				return false;
+			}
 		}
+
+		gint64 time_nanoseconds;
+		gint64 pos;
+		GstFormat fmt = GST_FORMAT_TIME;
 		if (!absolute)
 		{
 			gst_element_query_position(m_gst_playbin, fmt, &pos);

@@ -253,7 +253,9 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		GstTagList *tags = NULL, *result = NULL;
 		gst_message_parse_tag(msg, &tags);
 
-		if(tags != NULL || !GST_IS_TAG_LIST(tags))
+		if(tags == NULL)
+			break;
+		if(!GST_IS_TAG_LIST(tags))
 			break;
 
 		result = gst_tag_list_merge(m_stream_tags, tags, GST_TAG_MERGE_REPLACE);

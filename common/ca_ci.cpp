@@ -1038,6 +1038,7 @@ void cCA::setInputs()
 		{
 			printf("set input%d to tuner %s\n", number, getTunerLetter(number).c_str());
 			fprintf(fd,"%s", getTunerLetter(number).c_str());
+			fclose(fd);
 		}
 		else
 		{

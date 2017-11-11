@@ -325,7 +325,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		case GST_STATE_CHANGE_READY_TO_PAUSED:
 		{
 			GstIterator *children;
-			GValue r = { 0, };
+			GValue r = G_VALUE_INIT;
 
 			if (audioSink)
 			{
@@ -339,8 +339,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				videoSink = NULL;
 			}
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-
-			if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
+			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBAudioSink"))
 			{
 				audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);
@@ -349,8 +348,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 			gst_iterator_free(children);
 			children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
-
-			if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
+			if (children && gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &r, (gpointer)"GstDVBVideoSink"))
 			{
 				videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);
@@ -390,6 +388,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	default:
 		break;
 	}
+	if(sourceName)
+		g_free(sourceName);
 
 	return GST_BUS_DROP;
 }
@@ -1017,7 +1017,9 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 	keys.clear();
 	values.clear();
 
-	GstTagList *meta_list = gst_tag_list_copy(m_stream_tags);
+	GstTagList *meta_list = NULL;
+	if(m_stream_tags)
+		meta_list = gst_tag_list_copy(m_stream_tags);
 
 	if (meta_list == NULL)
 		return;

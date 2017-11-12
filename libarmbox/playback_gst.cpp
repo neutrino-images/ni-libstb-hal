@@ -411,6 +411,8 @@ cPlayback::cPlayback(int num)
 
 	gst_version (&major, &minor, &micro, &nano);
 
+	gst_mpegts_initialize();
+
 	if (nano == 1)
 		nano_str = "(CVS)";
 	else if (nano == 2)

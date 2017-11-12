@@ -821,7 +821,6 @@ bool cPlayback::GetPosition(int &position, int &duration)
 			if (!GST_CLOCK_TIME_IS_VALID(pts))
 			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
-				return false;
 			}
 		}
 		else
@@ -829,7 +828,6 @@ bool cPlayback::GetPosition(int &position, int &duration)
 			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
 			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
-				return false;
 			}
 		}
 		position = pts /  1000000.0;

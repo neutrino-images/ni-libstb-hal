@@ -188,16 +188,12 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 
 GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 {
-	gchar * sourceName;
-
 	// source
 	GstObject * source;
 	source = GST_MESSAGE_SRC(msg);
 
 	if (!GST_IS_OBJECT(source))
 		return GST_BUS_DROP;
-
-	sourceName = gst_object_get_name(source);
 
 	switch (GST_MESSAGE_TYPE(msg))
 	{
@@ -214,6 +210,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		GError *err;
 		gst_message_parse_error(msg, &err, &debug);
 		g_free (debug);
+		gchar * sourceName = gst_object_get_name(source);
 		lt_info_c( "%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName );
 		if ( err->domain == GST_STREAM_ERROR )
 		{
@@ -226,6 +223,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			}
 		}
 		g_error_free(err);
+		if(sourceName)
+			g_free(sourceName);
 
 		end_eof = 1; 		// NOTE: just to exit
 
@@ -241,8 +240,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		g_free (debug);
 		if ( inf->domain == GST_STREAM_ERROR && inf->code == GST_STREAM_ERROR_DECODE )
 		{
+			gchar * sourceName = gst_object_get_name(source);
 			if ( g_strrstr(sourceName, "videosink") )
 				lt_info_c( "%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+			if(sourceName)
+				g_free(sourceName);
+
 		}
 		g_error_free(inf);
 		break;
@@ -250,8 +253,13 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 	case GST_MESSAGE_TAG:
 	{
-		GstTagList *tags, *result;
+		GstTagList *tags = NULL, *result = NULL;
 		gst_message_parse_tag(msg, &tags);
+
+		if(tags == NULL)
+			break;
+		if(!GST_IS_TAG_LIST(tags))
+			break;
 
 		result = gst_tag_list_merge(m_stream_tags, tags, GST_TAG_MERGE_REPLACE);
 		if (result)
@@ -388,8 +396,6 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	default:
 		break;
 	}
-	if(sourceName)
-		g_free(sourceName);
 
 	return GST_BUS_DROP;
 }
@@ -815,12 +821,16 @@ bool cPlayback::GetPosition(int &position, int &duration)
 			if (!GST_CLOCK_TIME_IS_VALID(pts))
 			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+				return false;
 			}
 		}
 		else
 		{
 			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
+			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+				return false;
+			}
 		}
 		position = pts /  1000000.0;
 		// duration
@@ -843,21 +853,23 @@ bool cPlayback::SetPosition(int position, bool absolute)
 {
 	lt_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
 
-	gint64 time_nanoseconds;
-	gint64 pos;
-	GstFormat fmt = GST_FORMAT_TIME;
-	GstState state;
 
 	if(m_gst_playbin)
 	{
-		gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
-
-		if ( (state == GST_STATE_PAUSED) && first)
-		{
-			init_jump = position;
-			first = false;
-			return false;
+		if(first){
+			GstState state;
+			gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
+			if ( (state == GST_STATE_PAUSED) && first)
+			{
+				init_jump = position;
+				first = false;
+				return false;
+			}
 		}
+
+		gint64 time_nanoseconds;
+		gint64 pos;
+		GstFormat fmt = GST_FORMAT_TIME;
 		if (!absolute)
 		{
 			gst_element_query_position(m_gst_playbin, fmt, &pos);

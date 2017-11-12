@@ -820,13 +820,10 @@ bool cPlayback::GetPosition(int &position, int &duration)
 			g_signal_emit_by_name(audioSink ? audioSink : videoSink, "get-decoder-time", &pts);
 			if (!GST_CLOCK_TIME_IS_VALID(pts)){
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
-				return false;
 			}
 		}else{
-			if(!gst_element_query_position(m_gst_playbin, fmt, &pts)){
+			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
-				return false;
-			}
 		}
 		position = pts /  1000000.0;
 		// duration

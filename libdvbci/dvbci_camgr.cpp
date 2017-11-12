@@ -47,6 +47,13 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 							printf("%04x ", 0x186D);
 							break;
 						}
+
+						if (caids[i] == 0x0648)
+						{
+							caids.push_back(0x0650);
+							printf("%04x ", 0x0650);
+							break;
+						}
 					}
 				}
 				std::sort(caids.begin(), caids.end());

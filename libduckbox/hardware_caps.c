@@ -31,6 +31,7 @@ hw_caps_t *get_hwcaps(void)
 	int fd = open("/proc/stb/info/model", O_RDONLY);
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);

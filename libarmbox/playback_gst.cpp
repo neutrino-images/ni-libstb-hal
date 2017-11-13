@@ -72,6 +72,8 @@ GstElement * audioSink = NULL;
 GstElement * videoSink = NULL;
 gchar * uri = NULL;
 GstTagList * m_stream_tags = NULL;
+pthread_mutex_t mutex_tag_ist;
+
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
 // taken from record.h
@@ -261,6 +263,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		if(!GST_IS_TAG_LIST(tags))
 			break;
 
+		pthread_mutex_lock (&mutex_tag_ist);
+
 		result = gst_tag_list_merge(m_stream_tags, tags, GST_TAG_MERGE_REPLACE);
 		if (result)
 		{
@@ -268,6 +272,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				gst_tag_list_unref(tags);
 				gst_tag_list_unref(result);
+
+				pthread_mutex_unlock (&mutex_tag_ist);
 				break;
 			}
 			if (m_stream_tags)
@@ -275,6 +281,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			m_stream_tags = gst_tag_list_copy(result);
 			gst_tag_list_unref(result);
 		}
+
+		pthread_mutex_unlock (&mutex_tag_ist);
 
 		const GValue *gv_image = gst_tag_list_get_value_index(tags, GST_TAG_IMAGE, 0);
 		if ( gv_image )
@@ -413,6 +421,8 @@ cPlayback::cPlayback(int num)
 
 	gst_mpegts_initialize();
 
+	pthread_mutex_init (&mutex_tag_ist, NULL);
+
 	if (nano == 1)
 		nano_str = "(CVS)";
 	else if (nano == 2)
@@ -437,8 +447,10 @@ cPlayback::~cPlayback()
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
+	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
 		gst_tag_list_unref(m_stream_tags);
+	pthread_mutex_unlock (&mutex_tag_ist);
 }
 
 //Used by Fileplay
@@ -530,9 +542,11 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	mAudioStream = 0;
 	init_jump = -1;
 
+	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
 		gst_tag_list_unref(m_stream_tags);
 	m_stream_tags = NULL;
+	pthread_mutex_unlock (&mutex_tag_ist);
 
 	unlink("/tmp/.id3coverart");
 
@@ -1030,14 +1044,21 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 	values.clear();
 
 	GstTagList *meta_list = NULL;
-	if(m_stream_tags)
+	pthread_mutex_lock (&mutex_tag_ist);
+
+	if(m_stream_tags){
 		meta_list = gst_tag_list_copy(m_stream_tags);
+	}
+
+	pthread_mutex_unlock (&mutex_tag_ist);
 
 	if (meta_list == NULL)
 		return;
 
-	if (gst_tag_list_is_empty(meta_list))
+	if (gst_tag_list_is_empty(meta_list)){
+		gst_tag_list_unref(meta_list);
 		return;
+	}
 
 	for (guint i = 0, icnt = gst_tag_list_n_tags(meta_list); i < icnt; i++)
 	{

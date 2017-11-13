@@ -36,6 +36,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_type = HW_DISPLAY_LED_NUM;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
 	caps.display_xres = 4;

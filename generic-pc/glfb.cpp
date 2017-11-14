@@ -127,11 +127,6 @@ void GLFramebuffer::initKeys()
 	mSpecialMap[GLUT_KEY_F7]  = KEY_PAUSE;
 	mSpecialMap[GLUT_KEY_F8]  = KEY_STOP;
 
-	mSpecialMap[GLUT_KEY_F9]  = KEY_FORWARD;
-	mSpecialMap[GLUT_KEY_F10] = KEY_REWIND;
-	mSpecialMap[GLUT_KEY_F11] = KEY_NEXT;
-	mSpecialMap[GLUT_KEY_F12] = KEY_PREVIOUS;
-
 	mSpecialMap[GLUT_KEY_F9]	= KEY_RECORD;
 	mSpecialMap[GLUT_KEY_F10]	= KEY_PAUSE;
 

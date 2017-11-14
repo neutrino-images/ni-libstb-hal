@@ -80,7 +80,7 @@ extern void dvbsub_write(AVSubtitle *, int64_t);
 extern void dvbsub_ass_write(AVCodecContext *c, AVSubtitle *sub, int pid);
 extern void dvbsub_ass_clear(void);
 // from neutrino-mp/lib/lib/libtuxtxt/tuxtxt_common.h
-extern void teletext_write(int pid, uint8_t *data, int size);
+//extern void teletext_write(int pid, uint8_t *data, int size);
 
 static std::string lastlog_message;
 static unsigned int lastlog_repeats;
@@ -253,10 +253,11 @@ bool Input::Play()
 					}
 				}
 			}
-		} else if (_teletextTrack && (_teletextTrack->stream == stream)) {
-			if (packet.data && packet.size > 1)
-				teletext_write(_teletextTrack->pid, packet.data + 1, packet.size - 1);
 		}
+//		else if (_teletextTrack && (_teletextTrack->stream == stream)) {
+//			if (packet.data && packet.size > 1)
+//				teletext_write(_teletextTrack->pid, packet.data + 1, packet.size - 1);
+//		}
 
 #if (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
 		av_packet_unref(&packet);

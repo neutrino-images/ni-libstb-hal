@@ -132,12 +132,6 @@ void GLFramebuffer::initKeys()
 	mSpecialMap[GLUT_KEY_F11] = KEY_NEXT;
 	mSpecialMap[GLUT_KEY_F12] = KEY_PREVIOUS;
 
-	mSpecialMap[GLUT_KEY_F9]	= KEY_RECORD;
-	mSpecialMap[GLUT_KEY_F10]	= KEY_PAUSE;
-
-	mSpecialMap[GLUT_KEY_F11]	= KEY_NEXT;
-	mSpecialMap[GLUT_KEY_F12]	= KEY_PREVIOUS;
-
 	mSpecialMap[GLUT_KEY_PAGE_UP]	= KEY_PAGEUP;
 	mSpecialMap[GLUT_KEY_PAGE_DOWN]	= KEY_PAGEDOWN;
 

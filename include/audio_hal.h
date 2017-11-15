@@ -9,7 +9,6 @@
 #include "../libspark/audio_mixer.h"
 #elif HAVE_ARM_HARDWARE
 #include "../libarmbox/audio_lib.h"
-#include "../libarmbox/audio_mixer.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/audio_lib.h"
 #elif HAVE_GENERIC_HARDWARE

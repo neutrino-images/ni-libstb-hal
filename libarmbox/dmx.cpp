@@ -1,6 +1,6 @@
 /*
- * cDemux implementation for SH4 receivers (tested on fulan spark and
- * fulan spark7162 hardware)
+ * cDemux implementation for arm receivers (tested on mutant hd51
+ * hardware)
  *
  * derived from libtriple/dmx_td.cpp
  *
@@ -18,41 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * Theory of operation (or "why is this dmx_source thing so strange and
- * what is the _open() good for?")
- *
- * the sh4 pti driver, driving the /dev/dvb/adapter0/dmxN devices, can
- * apparently only map one input to on demux device at a time, so e.g.
- * 	DMX_SOURCE_FRONT1 -> demux0
- * 	DMX_SOURCE_FRONT2 -> demux0
- * 	DMX_SOURCE_FRONT1 -> demux1
- * does not work. The driver makes sure that a one-to-one mapping of
- * DMX_SOURCE_FRONTn to demuxM is maintained, and it does by e.g changing
- * the default of
- * 	FRONT0 -> demux0
- * 	FRONT1 -> demux1
- * 	FRONT2 -> demux2
- * to
- * 	FRONT1 -> demux0
- * 	FRONT0 -> demux1
- * 	FRONT2 -> demux2
- * if you do a DMX_SET_SOURCE(FRONT1) ioctl on demux0.
- * This means, it also changes demux1's source on the SET_SOURCE ioctl on
- * demux0, potentially disturbing any operation on demux1 (e.g. recording).
- *
- * In order to avoid this, I do not change the source->demuxdev mapping
- * but instead just always use the demux device that is attached to the
- * correct source.
- *
- * The tricky part is, that the source might actually be changed after
- * Open() has been called, so Open() gets a dummy placeholder that just
- * sets some variables while the real device open is put into _open().
- * _open() gets called later, whenever the device is actually used or
- * configured and -- if the source has changed -- closes the old and
- * opens the correct new device node.
  */
 
 #include <sys/types.h>

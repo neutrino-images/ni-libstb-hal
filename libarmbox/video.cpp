@@ -225,14 +225,10 @@ AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext
 	}
 	AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
 	AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
-	if (!codec){
+	if (codec && (avcodec_open2(codecContext, codec, NULL)) != 0){
 		return NULL;
 	}
-	if ((avcodec_open2(codecContext, codec, NULL)) != 0){
-		return NULL;
-	}
-
-    return codecContext;
+	return codecContext;
 }
 
 int image_to_mpeg2(const char *image_name, const char *encode_name)
@@ -242,7 +238,7 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 	avcodec_register_all();
 
 	AVFormatContext *formatContext = avformat_alloc_context();
-	if ((ret = avformat_open_input(&formatContext, image_name, NULL, NULL)) == 0){
+	if (formatContext && (ret = avformat_open_input(&formatContext, path, NULL, NULL)) == 0){
 		AVCodecContext *codecContext = open_codec(AVMEDIA_TYPE_VIDEO, formatContext);
 		if(codecContext){
 			AVPacket packet;

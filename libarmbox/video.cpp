@@ -83,11 +83,6 @@ static const char *VMPEG_yres[] = {
 	"/proc/stb/vmpeg/1/yres"
 };
 
-static const char *VMPEG_dst_all[] = {
-	"/proc/stb/vmpeg/0/dst_all",
-	"/proc/stb/vmpeg/1/dst_all"
-};
-
 static const char *VMPEG_dst_height[] = {
 	"/proc/stb/vmpeg/0/dst_height",
 	"/proc/stb/vmpeg/1/dst_height"

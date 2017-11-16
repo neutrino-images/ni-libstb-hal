@@ -254,8 +254,8 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 						/* add sequence end code to have a real mpeg file */
 						uint8_t endcode[] = { 0, 0, 1, 0xb7 };
 						fwrite(endcode, 1, sizeof(endcode), fp);
-						fclose(fp);
 					}
+					fclose(fp);
 				}
 				avcodec_close(codecContext);
 				av_free_packet(&packet);

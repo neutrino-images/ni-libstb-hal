@@ -72,6 +72,8 @@ GstElement * audioSink = NULL;
 GstElement * videoSink = NULL;
 gchar * uri = NULL;
 GstTagList * m_stream_tags = NULL;
+pthread_mutex_t mutex_tag_ist;
+
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
 // taken from record.h
@@ -188,16 +190,12 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 
 GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 {
-	gchar * sourceName;
-
 	// source
 	GstObject * source;
 	source = GST_MESSAGE_SRC(msg);
 
 	if (!GST_IS_OBJECT(source))
 		return GST_BUS_DROP;
-
-	sourceName = gst_object_get_name(source);
 
 	switch (GST_MESSAGE_TYPE(msg))
 	{
@@ -214,6 +212,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		GError *err;
 		gst_message_parse_error(msg, &err, &debug);
 		g_free (debug);
+		gchar * sourceName = gst_object_get_name(source);
 		lt_info_c( "%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName );
 		if ( err->domain == GST_STREAM_ERROR )
 		{
@@ -226,6 +225,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			}
 		}
 		g_error_free(err);
+		if(sourceName)
+			g_free(sourceName);
 
 		end_eof = 1; 		// NOTE: just to exit
 
@@ -241,8 +242,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		g_free (debug);
 		if ( inf->domain == GST_STREAM_ERROR && inf->code == GST_STREAM_ERROR_DECODE )
 		{
+			gchar * sourceName = gst_object_get_name(source);
 			if ( g_strrstr(sourceName, "videosink") )
 				lt_info_c( "%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+			if(sourceName)
+				g_free(sourceName);
+
 		}
 		g_error_free(inf);
 		break;
@@ -250,8 +255,15 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 	case GST_MESSAGE_TAG:
 	{
-		GstTagList *tags, *result;
+		GstTagList *tags = NULL, *result = NULL;
 		gst_message_parse_tag(msg, &tags);
+
+		if(tags == NULL)
+			break;
+		if(!GST_IS_TAG_LIST(tags))
+			break;
+
+		pthread_mutex_lock (&mutex_tag_ist);
 
 		result = gst_tag_list_merge(m_stream_tags, tags, GST_TAG_MERGE_REPLACE);
 		if (result)
@@ -260,6 +272,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				gst_tag_list_unref(tags);
 				gst_tag_list_unref(result);
+
+				pthread_mutex_unlock (&mutex_tag_ist);
 				break;
 			}
 			if (m_stream_tags)
@@ -267,6 +281,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			m_stream_tags = gst_tag_list_copy(result);
 			gst_tag_list_unref(result);
 		}
+
+		pthread_mutex_unlock (&mutex_tag_ist);
 
 		const GValue *gv_image = gst_tag_list_get_value_index(tags, GST_TAG_IMAGE, 0);
 		if ( gv_image )
@@ -388,8 +404,6 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 	default:
 		break;
 	}
-	if(sourceName)
-		g_free(sourceName);
 
 	return GST_BUS_DROP;
 }
@@ -404,6 +418,10 @@ cPlayback::cPlayback(int num)
 	gst_init(NULL, NULL);
 
 	gst_version (&major, &minor, &micro, &nano);
+
+	gst_mpegts_initialize();
+
+	pthread_mutex_init (&mutex_tag_ist, NULL);
 
 	if (nano == 1)
 		nano_str = "(CVS)";
@@ -429,8 +447,10 @@ cPlayback::~cPlayback()
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
+	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
 		gst_tag_list_unref(m_stream_tags);
+	pthread_mutex_unlock (&mutex_tag_ist);
 }
 
 //Used by Fileplay
@@ -522,9 +542,11 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	mAudioStream = 0;
 	init_jump = -1;
 
+	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
 		gst_tag_list_unref(m_stream_tags);
 	m_stream_tags = NULL;
+	pthread_mutex_unlock (&mutex_tag_ist);
 
 	unlink("/tmp/.id3coverart");
 
@@ -820,7 +842,9 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		else
 		{
 			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
+			{
 				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+			}
 		}
 		position = pts /  1000000.0;
 		// duration
@@ -843,21 +867,23 @@ bool cPlayback::SetPosition(int position, bool absolute)
 {
 	lt_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
 
-	gint64 time_nanoseconds;
-	gint64 pos;
-	GstFormat fmt = GST_FORMAT_TIME;
-	GstState state;
 
 	if(m_gst_playbin)
 	{
-		gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
-
-		if ( (state == GST_STATE_PAUSED) && first)
-		{
-			init_jump = position;
-			first = false;
-			return false;
+		if(first){
+			GstState state;
+			gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
+			if ( (state == GST_STATE_PAUSED) && first)
+			{
+				init_jump = position;
+				first = false;
+				return false;
+			}
 		}
+
+		gint64 time_nanoseconds;
+		gint64 pos;
+		GstFormat fmt = GST_FORMAT_TIME;
 		if (!absolute)
 		{
 			gst_element_query_position(m_gst_playbin, fmt, &pos);
@@ -1018,14 +1044,21 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 	values.clear();
 
 	GstTagList *meta_list = NULL;
-	if(m_stream_tags)
+	pthread_mutex_lock (&mutex_tag_ist);
+
+	if(m_stream_tags){
 		meta_list = gst_tag_list_copy(m_stream_tags);
+	}
+
+	pthread_mutex_unlock (&mutex_tag_ist);
 
 	if (meta_list == NULL)
 		return;
 
-	if (gst_tag_list_is_empty(meta_list))
+	if (gst_tag_list_is_empty(meta_list)){
+		gst_tag_list_unref(meta_list);
 		return;
+	}
 
 	for (guint i = 0, icnt = gst_tag_list_n_tags(meta_list); i < icnt; i++)
 	{

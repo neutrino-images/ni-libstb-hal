@@ -27,26 +27,17 @@ cAudio::cAudio(void *, void *, void *)
 	clipfd = -1;
 	mixer_fd = -1;
 
-/*
-	mixerAnalog = mixerHDMI = mixerSPDIF = NULL;
-	volumeAnalog = volumeHDMI = volumeSPDIF = 0;
-	mixersMuted = false
-*/
-
 	openDevice();
 	Muted = false;
 }
 
 cAudio::~cAudio(void)
 {
-	//closeMixers();
 	closeDevice();
 }
 
 void cAudio::openDevice(void)
 {
-	//openMixers();
-
 	if (fd < 0)
 	{
 		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
@@ -60,8 +51,6 @@ void cAudio::openDevice(void)
 
 void cAudio::closeDevice(void)
 {
-	//closeMixers();
-
 	if (fd > -1) {
 		close(fd);
 		fd = -1;
@@ -424,57 +413,3 @@ void cAudio::setBypassMode(bool disable)
 	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, mode) < 0)
 		lt_info("%s AUDIO_SET_BYPASS_MODE %d: %m\n", __func__, mode);
 }
-
-#if 0
-void cAudio::openMixers(void)
-{
-	if (!mixerAnalog)
-		mixerAnalog = new mixerVolume("Analog", "1");
-	if (!mixerHDMI)
-		mixerHDMI = new mixerVolume("HDMI", "1");
-	if (!mixerSPDIF)
-		mixerSPDIF = new mixerVolume("SPDIF", "1");
-}
-
-void cAudio::closeMixers(void)
-{
-	delete mixerAnalog;
-	delete mixerHDMI;
-	delete mixerSPDIF;
-	mixerAnalog = mixerHDMI = mixerSPDIF = NULL;
-}
-
-void cAudio::setMixerVolume(const char *name, long value, bool remember)
-{
-	if (!strcmp(name, "Analog")) {
-		mixerAnalog->setVolume(value);
-		if (remember)
-			volumeAnalog = value;
-	}
-	if (!strcmp(name, "HDMI")) {
-		mixerHDMI->setVolume(value);
-		if (remember)
-			volumeHDMI = value;
-	}
-	if (!strcmp(name, "SPDIF")) {
-		mixerSPDIF->setVolume(value);
-		if (remember)
-			volumeSPDIF = value;
-	}
-}
-
-void cAudio::muteMixers(bool m)
-{
-	if (m && !mixersMuted) {
-		mixersMuted = true;
-		setMixerVolume("Analog", 0, false);
-		setMixerVolume("HDMI", 0, false);
-		setMixerVolume("SPDIF", 0, false);
-	} else if (!m && mixersMuted) {
-		mixersMuted = false;
-		setMixerVolume("Analog", volumeAnalog, false);
-		setMixerVolume("HDMI", volumeHDMI, false);
-		setMixerVolume("SPDIF", volumeSPDIF, false);
-	}
-}
-#endif

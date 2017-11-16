@@ -40,6 +40,12 @@
 
 #include <proc_tools.h>
 
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+}
+
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
@@ -81,11 +87,6 @@ static const char *VMPEG_xres[] = {
 static const char *VMPEG_yres[] = {
 	"/proc/stb/vmpeg/0/yres",
 	"/proc/stb/vmpeg/1/yres"
-};
-
-static const char *VMPEG_dst_all[] = {
-	"/proc/stb/vmpeg/0/dst_all",
-	"/proc/stb/vmpeg/1/dst_all"
 };
 
 static const char *VMPEG_dst_height[] = {
@@ -145,6 +146,122 @@ static const char *vid_modes[] = {
 #define VIDEO_STREAMTYPE_MPEG1 6
 #define VIDEO_STREAMTYPE_H265_HEVC 7
 #define VIDEO_STREAMTYPE_AVS 16
+
+void init_parameters(AVFrame* in_frame, AVCodecContext *codec_context)
+{
+	/* put sample parameters */
+	codec_context->bit_rate = 400000;
+	/* resolution must be a multiple of two */
+	codec_context->width = (in_frame->width/2)*2;
+	codec_context->height = (in_frame->height/2)*2;
+	/* frames per second */
+	codec_context->time_base = (AVRational ) { 1, 60 };
+	codec_context->gop_size = 10; /* emit one intra frame every ten frames */
+	codec_context->max_b_frames = 1;
+	codec_context->pix_fmt = AV_PIX_FMT_YUV420P;
+}
+
+void write_frame(AVFrame* in_frame, FILE* fp)
+{
+	if(in_frame == NULL || fp == NULL)
+		return;
+	AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_MPEG2VIDEO);
+	if (codec)
+	{
+		AVCodecContext *codec_context = avcodec_alloc_context3(codec);
+		if (codec_context)
+		{
+			init_parameters(in_frame, codec_context);
+			if (avcodec_open2(codec_context, codec, 0) != -1){
+				AVPacket pkt;
+				av_init_packet(&pkt);
+				/* encode the image */
+				int got_output = 0;
+				int ret = avcodec_encode_video2(codec_context, &pkt, in_frame, &got_output);
+				if (ret != -1){
+					if (got_output){
+						fwrite(pkt.data, 1, pkt.size, fp);
+						av_packet_unref(&pkt);
+					}
+					int i =1;
+					for (got_output = 1; got_output; i++){
+					/* get the delayed frames */
+						in_frame->pts = i;
+						ret = avcodec_encode_video2(codec_context, &pkt, 0, &got_output);
+						if (ret != -1 && got_output){
+							fwrite(pkt.data, 1, pkt.size, fp);
+							av_packet_unref(&pkt);
+						}
+					}
+					avcodec_close(codec_context);
+					av_free(codec_context);
+				}
+			}
+		}
+	}
+}
+
+int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
+{
+	int decode_ok = 0;
+	AVFrame *frame = av_frame_alloc();
+	if(frame){
+		if ((avcodec_decode_video2(codecContext, frame, &decode_ok, &packet)) < 0 || !decode_ok){
+			av_frame_free(&frame);
+			return -1;
+		}
+		write_frame(frame, fp);
+		av_frame_free(&frame);
+	}
+	return 0;
+
+}
+
+AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext)
+{
+	int stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
+	if (stream_index < 0){
+		return NULL;
+	}
+	AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
+	AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
+	if (codec && (avcodec_open2(codecContext, codec, NULL)) != 0){
+		return NULL;
+	}
+	return codecContext;
+}
+
+int image_to_mpeg2(const char *image_name, const char *encode_name)
+{
+	int ret = 0;
+	av_register_all();
+	avcodec_register_all();
+
+	AVFormatContext *formatContext = avformat_alloc_context();
+	if (formatContext && (ret = avformat_open_input(&formatContext, image_name, NULL, NULL)) == 0){
+		AVCodecContext *codecContext = open_codec(AVMEDIA_TYPE_VIDEO, formatContext);
+		if(codecContext){
+			AVPacket packet;
+			av_init_packet(&packet);
+			if ((ret = av_read_frame(formatContext, &packet)) !=-1){
+				FILE* fp = fopen(encode_name, "wb");
+				if(fp){
+					if(decode_frame(codecContext, packet, fp) != 1){
+						/* add sequence end code to have a real mpeg file */
+						uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+						fwrite(endcode, 1, sizeof(endcode), fp);
+					}
+					fclose(fp);
+				}
+				avcodec_close(codecContext);
+				av_free_packet(&packet);
+			}
+			avformat_close_input(&formatContext);
+		}
+	}
+	av_free(formatContext);
+	return 0;
+}
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
@@ -436,7 +553,6 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
 	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 	char destname[512];
-	char cmd[512];
 	char *p;
 	int mfd;
 	struct stat st, st2;
@@ -477,9 +593,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			u.actime = time(NULL);
 			u.modtime = st2.st_mtime;
 			/* it does not exist or has a different date, so call ffmpeg... */
-			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s 1280x720 -aspect 16:9 '%s' >/dev/null",
-								fname, destname);
-			system(cmd); /* TODO: use libavcodec to directly convert it */
+			image_to_mpeg2(fname, destname);
 			utime(destname, &u);
 		}
 	}

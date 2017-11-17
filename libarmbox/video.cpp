@@ -220,15 +220,19 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext)
 {
 	int stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
-	if (stream_index < 0){
-		return NULL;
+	if (stream_index >=0 ){
+		AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
+		if(codecContext){
+			AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
+			if(codec){
+				if ((avcodec_open2(codecContext, codec, NULL)) != 0){
+					return NULL;
+				}
+			}
+			return codecContext;
+		}
 	}
-	AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
-	AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
-	if (codec && (avcodec_open2(codecContext, codec, NULL)) != 0){
-		return NULL;
-	}
-	return codecContext;
+	return NULL;
 }
 
 int image_to_mpeg2(const char *image_name, const char *encode_name)
@@ -253,11 +257,11 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 					}
 					fclose(fp);
 				}
-				avcodec_close(codecContext);
 				av_free_packet(&packet);
 			}
-			avformat_close_input(&formatContext);
+			avcodec_close(codecContext);
 		}
+		avformat_close_input(&formatContext);
 	}
 	av_free(formatContext);
 	return 0;

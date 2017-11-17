@@ -44,6 +44,7 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
 }
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
@@ -193,10 +194,10 @@ void write_frame(AVFrame* in_frame, FILE* fp)
 							av_packet_unref(&pkt);
 						}
 					}
-					avcodec_close(codec_context);
-					av_free(codec_context);
 				}
 			}
+			avcodec_close(codec_context);
+			av_free(codec_context);
 		}
 	}
 }
@@ -210,7 +211,21 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 			av_frame_free(&frame);
 			return -1;
 		}
-		write_frame(frame, fp);
+		AVFrame *dest_frame = av_frame_alloc();
+		if(dest_frame){
+			dest_frame->height = (frame->height/2)*2;
+			dest_frame->width = (frame->width/2)*2;
+			dest_frame->format = AV_PIX_FMT_YUV420P;
+			av_frame_get_buffer(dest_frame, 32);
+			struct SwsContext *convert = NULL;
+			convert = sws_getContext(frame->width, frame->height, (AVPixelFormat)frame->format, dest_frame->width, dest_frame->height, AV_PIX_FMT_YUVJ420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+			if(convert){
+				sws_scale(convert, frame->data, frame->linesize, 0, frame->height, dest_frame->data, dest_frame->linesize);
+				sws_freeContext(convert);
+			}
+			write_frame(dest_frame, fp);
+			av_frame_free(&dest_frame);
+		}
 		av_frame_free(&frame);
 	}
 	return 0;

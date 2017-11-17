@@ -224,9 +224,9 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 				sws_freeContext(convert);
 			}
 			write_frame(dest_frame, fp);
-			av_frame_free(&frame);
 			av_frame_free(&dest_frame);
 		}
+		av_frame_free(&frame);
 	}
 	return 0;
 

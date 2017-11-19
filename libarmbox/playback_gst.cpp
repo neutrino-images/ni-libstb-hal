@@ -919,7 +919,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 
 		language->clear();
 
-		for (i = 0; i < n_audio; i++)
+		for (i = 0; i < n_audio && i < *numpida; i++)
 		{
 			// apids
 			apids[i]= real_apids[i] ? real_apids[i] : i;

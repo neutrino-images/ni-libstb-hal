@@ -77,7 +77,7 @@ pthread_mutex_t mutex_tag_ist;
 static int end_eof = 0;
 #define HTTP_TIMEOUT 30
 // taken from record.h
-#define REC_MAX_APIDS 20
+#define REC_MAX_APIDS 10
 int real_apids[REC_MAX_APIDS];
 
 gint match_sinktype(const GValue *velement, const gchar *type)
@@ -906,6 +906,9 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 {
 	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
 
+	language->clear();
+	*numpida = 0;
+
 	if(m_gst_playbin)
 	{
 		gint i, n_audio = 0;
@@ -917,9 +920,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 		if(n_audio == 0)
 			return;
 
-		language->clear();
-
-		for (i = 0; i < n_audio && i < *numpida; i++)
+		for (i = 0; i < n_audio && i < REC_MAX_APIDS; i++)
 		{
 			// apids
 			apids[i]= real_apids[i] ? real_apids[i] : i;

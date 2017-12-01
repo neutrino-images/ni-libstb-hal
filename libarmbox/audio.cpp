@@ -200,10 +200,11 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	const char *mix_dev = getenv("MIX_DEVICE");
 	lt_debug("%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
 	if (clipfd > -1) {
-		lt_info("%s: clipfd already opened (%d)\n", __FUNCTION__, clipfd);
+		lt_info("%s: clipfd already opened (%d)\n", __func__, clipfd);
 		return -1;
 	}
 	mixer_num = -1;
+	mixer_fd = -1;
 	/* a different DSP device can be given with DSP_DEVICE and MIX_DEVICE
 	 * if this device cannot be opened, we fall back to the internal OSS device
 	 * Example:
@@ -215,7 +216,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
 		if (dsp_dev)
 			lt_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-					" fall back to /dev/dsp\n", __func__, dsp_dev);
+				" fall back to /dev/dsp\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp";
 	}
 	if ((!mix_dev) || (access(mix_dev, W_OK))) {

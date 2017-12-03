@@ -876,7 +876,7 @@ void cVideo::SetControl(int control, int value) {
 	}
 	if (p) {
 		char buf[20];
-		int len = snprintf(buf, sizeof(buf), "%d", value);
+		int len = snprintf(buf, sizeof(buf), "%x00\n", value);
 		if (len < (int) sizeof(buf))
 			proc_put(p, buf, len);
 	}

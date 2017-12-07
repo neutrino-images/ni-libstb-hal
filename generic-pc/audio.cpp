@@ -392,8 +392,9 @@ void cAudio::run()
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ai = ao_driver_info(driver);
 		lt_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
-			__func__, o_ch, o_sr, 16, adevice);;
-		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
+			__func__, o_ch, o_sr, 16, adevice);
+		if(ai)
+			lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
 				driver, ai->name, ai->short_name, ai->author);
 	}
 #if 0

@@ -474,13 +474,6 @@ bool cPlayback::Open(playmode_t PlayMode)
 {
 	lt_info("%s: PlayMode %d\n", __func__, PlayMode);
 
-	if (PlayMode != PLAYMODE_TS)
-	{
-		audioDecoder->closeDevice();
-		videoDecoder->closeDevice();
-		decoders_closed = true;
-	}
-
 	init_jump = -1;
 	return true;
 }
@@ -528,12 +521,6 @@ void cPlayback::Close(void)
 
 		m_gst_playbin = NULL;
 
-		if (decoders_closed)
-		{
-			audioDecoder->openDevice();
-			videoDecoder->openDevice();
-			decoders_closed = false;
-		}
 	}
 
 }
@@ -747,14 +734,6 @@ void cPlayback::trickSeek(int ratio)
 bool cPlayback::SetSpeed(int speed)
 {
 	lt_info( "%s:%s speed %d\n", FILENAME, __FUNCTION__, speed);
-
-	if (!decoders_closed)
-	{
-		audioDecoder->closeDevice();
-		videoDecoder->closeDevice();
-		decoders_closed = true;
-		usleep(500000);
-	}
 
 	if(playing == false)
 		return false;

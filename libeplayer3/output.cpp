@@ -311,7 +311,7 @@ bool Output::SwitchAudio(Track *track)
 	}
 	audioTrack = track;
 	if (track->stream) {
-        AVCodecContext *avcc = track->stream->codec;
+		AVCodecContext *avcc = track->stream->codec;
 		if (!avcc)
 			return false;
 			audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type, audioTrack->ac3flags);

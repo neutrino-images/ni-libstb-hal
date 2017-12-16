@@ -6,7 +6,11 @@
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/playback_libeplayer3.h"
 #elif HAVE_ARM_HARDWARE
+#if ENABLE_GSTREAMER_10
 #include "../libarmbox/playback_gst.h"
+#else
+#include "../libarmbox/playback_libeplayer3.h"
+#endif
 #elif HAVE_AZBOX_HARDWARE
 #include "../azbox/playback.h"
 #elif HAVE_GENERIC_HARDWARE

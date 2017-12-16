@@ -58,4 +58,12 @@ SUBDIRS += libarmbox libdvbci
 libstb_hal_la_LIBADD += \
 	libarmbox/libarmbox.la \
 	libdvbci/libdvbci.la
+
+if !ENABLE_GSTREAMER_10
+SUBDIRS += libeplayer3-arm
+
+libstb_hal_la_LIBADD += \
+	libeplayer3-arm/libeplayer3_arm.la
+endif
+
 endif

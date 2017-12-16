@@ -13,10 +13,7 @@ AM_LDFLAGS = \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
 	@SWRESAMPLE_LIBS@ \
-	-lpthread -lasound -lrt \
-	-lgstreamer-1.0 \
-	-lgsttag-1.0 \
-	-lgstmpegts-1.0
+	-lpthread -lasound -lrt
 
 libarmbox_la_SOURCES = \
 	hardware_caps.c \
@@ -24,6 +21,24 @@ libarmbox_la_SOURCES = \
 	video.cpp \
 	audio.cpp \
 	init.cpp \
-	playback_gst.cpp \
 	pwrmngr.cpp \
 	record.cpp
+
+if ENABLE_GSTREAMER_10
+libarmbox_la_SOURCES += \
+	playback_gst.cpp
+
+AM_LDFLAGS += \
+	-lgstreamer-1.0 \
+	-lgsttag-1.0 \
+	-lgstmpegts-1.0
+else
+libarmbox_la_SOURCES += \
+	playback_libeplayer3.cpp
+
+AM_CPPFLAGS += \
+	-I$(top_srcdir)/libeplayer3-arm/include
+
+AM_LDFLAGS += \
+	-lass
+endif

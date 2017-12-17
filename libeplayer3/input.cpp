@@ -544,7 +544,7 @@ bool Input::UpdateTracks()
 			}
 
 		track.pid = use_index_as_pid ? n + 1: stream->id;
-			track.ac3flags = 0;
+		track.ac3flags = 0;
 
 		switch (stream->codec->codec_type) {
 			case AVMEDIA_TYPE_VIDEO:
@@ -554,43 +554,43 @@ bool Input::UpdateTracks()
 				break;
 			case AVMEDIA_TYPE_AUDIO:
 				switch(stream->codec->codec_id) {
-			case AV_CODEC_ID_MP2:
-				track.ac3flags = 1;
-				break;
-			case AV_CODEC_ID_MP3:
-				track.ac3flags = 2;
-				break;
-			case AV_CODEC_ID_AC3:
-				track.ac3flags = 3;
-				break;
-			case AV_CODEC_ID_DTS:
-				track.ac3flags = 4;
-				break;
-			case AV_CODEC_ID_AAC: {
-				unsigned int extradata_size = stream->codec->extradata_size;
-				unsigned int object_type = 2;
-                        if(extradata_size >= 2)
-				object_type = stream->codec->extradata[0] >> 3;
-                        if (extradata_size <= 1 || object_type == 1 || object_type == 5) {
-				fprintf(stderr, "use resampling for AAC\n");
-				track.ac3flags = 6;
-			}
-			else
-				track.ac3flags = 5;
-				break;
-                    }
-			case AV_CODEC_ID_FLAC:
-				track.ac3flags = 8;
-				break;
-			case AV_CODEC_ID_WMAV1:
-			case AV_CODEC_ID_WMAV2:
-			case AV_CODEC_ID_WMAVOICE:
-			case AV_CODEC_ID_WMAPRO:
-			case AV_CODEC_ID_WMALOSSLESS:
-				track.ac3flags = 9;
-				break;
+					case AV_CODEC_ID_MP2:
+						track.ac3flags = 1;
+						break;
+					case AV_CODEC_ID_MP3:
+						track.ac3flags = 2;
+						break;
+					case AV_CODEC_ID_AC3:
+						track.ac3flags = 3;
+						break;
+					case AV_CODEC_ID_DTS:
+						track.ac3flags = 4;
+						break;
+					case AV_CODEC_ID_AAC: {
+						unsigned int extradata_size = stream->codec->extradata_size;
+						unsigned int object_type = 2;
+						if(extradata_size >= 2)
+							object_type = stream->codec->extradata[0] >> 3;
+						if (extradata_size <= 1 || object_type == 1 || object_type == 5) {
+							fprintf(stderr, "use resampling for AAC\n");
+							track.ac3flags = 6;
+						}
+						else
+							track.ac3flags = 5;
+						break;
+					}
+					case AV_CODEC_ID_FLAC:
+						track.ac3flags = 8;
+						break;
+					case AV_CODEC_ID_WMAV1:
+					case AV_CODEC_ID_WMAV2:
+					case AV_CODEC_ID_WMAVOICE:
+					case AV_CODEC_ID_WMAPRO:
+					case AV_CODEC_ID_WMALOSSLESS:
+						track.ac3flags = 9;
+						break;
 					default:
-				track.ac3flags = 0;
+						track.ac3flags = 0;
 				}
 				player->manager.addAudioTrack(track);
 				if (!audioTrack)

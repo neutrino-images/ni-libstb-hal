@@ -47,7 +47,7 @@ if test "$enable_gstreamer_10" = "yes"; then
 	PKG_CHECK_MODULES([GSTREAMER_VIDEO], [gstreamer-video-1.0])
 fi
 
-if test x$BOXTYPE = xarmbox && "$enable_gstreamer_10" = "yes"; then
+if test x$BOXTYPE = xarmbox -a "$enable_gstreamer_10" = "yes"; then
 	PKG_CHECK_MODULES([GSTREAMER], [gstreamer-1.0])
 	PKG_CHECK_MODULES([GSTREAMER_AUDIO], [gstreamer-audio-1.0])
 	PKG_CHECK_MODULES([GSTREAMER_VIDEO], [gstreamer-video-1.0])

@@ -2240,6 +2240,7 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 				 * avformat_close_input do not expect custom io, so it try
 				 * to release incorrectly
 				 */
+				fclose(avContextTab[i]->pb->opaque);
 				av_freep(&(avContextTab[i]->pb->buffer));
 				av_freep(&(avContextTab[i]->pb));
 				use_custom_io[i] = 0;

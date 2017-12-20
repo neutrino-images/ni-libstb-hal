@@ -123,7 +123,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		}
 		else
 		{
-			/*
 			        //AUDIO
 			        if(player && player->manager && player->manager->audio) {
 			            char ** TrackList = NULL;
@@ -139,7 +138,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			                free(TrackList);
 			            }
 			        }
-
 			        //SUB
 			        if(player && player->manager && player->manager->subtitle) {
 			            char ** TrackList = NULL;
@@ -155,6 +153,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			                free(TrackList);
 			            }
 			        }
+			/*
 			        //Teletext
 			        if(player && player->manager && player->manager->teletext) {
 			            char ** TrackList = NULL;
@@ -170,6 +169,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			                free(TrackList);
 			            }
 			        }
+			*/
 			        //Chapters
 			        if(player && player->manager && player->manager->chapter) {
 			            char ** TrackList = NULL;
@@ -185,7 +185,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			                free(TrackList);
 			            }
 			        }
-			*/
 			playing = true;
 			player->output->Command(player, OUTPUT_OPEN, NULL);
 			ret = (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0);

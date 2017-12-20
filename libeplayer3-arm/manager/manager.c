@@ -40,13 +40,15 @@
 extern Manager_t AudioManager;
 extern Manager_t VideoManager;
 extern Manager_t SubtitleManager;
+extern Manager_t ChapterManager;
 
 ManagerHandler_t ManagerHandler =
 {
 	"ManagerHandler",
 	&AudioManager,
 	&VideoManager,
-	&SubtitleManager
+	&SubtitleManager,
+	&ChapterManager
 };
 
 /* ***************************** */

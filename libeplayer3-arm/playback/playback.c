@@ -75,9 +75,13 @@ static int32_t PlaybackTerminate(Context_t  *context);
 int8_t PlaybackDieNow(int8_t val)
 {
 	static int8_t dieNow = 0;
-	if (val)
+	if (val == 1)
 	{
 		dieNow = 1;
+	}
+	else if (val == 2)
+	{
+		dieNow = 0;
 	}
 	return dieNow;
 }
@@ -194,6 +198,7 @@ static int PlaybackClose(Context_t  *context)
 		free(context->playback->uri);
 		context->playback->uri = NULL;
 	}
+	PlaybackDieNow(2);
 	playback_printf(10, "exiting with value %d\n", ret);
 	return ret;
 }

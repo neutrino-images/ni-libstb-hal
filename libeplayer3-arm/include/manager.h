@@ -71,6 +71,8 @@ typedef struct Track_s
 	int                   inject_raw_pcm;
 
 	int                   pending;
+	long long int         chapter_start;
+	long long int         chapter_end;
 } Track_t;
 
 typedef struct TrackDescription_s
@@ -101,6 +103,7 @@ typedef struct ManagerHandler_s
 	Manager_t *audio;
 	Manager_t *video;
 	Manager_t *subtitle;
+    Manager_t *chapter;
 } ManagerHandler_t;
 
 void freeTrack(Track_t *track);

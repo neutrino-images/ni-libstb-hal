@@ -427,7 +427,6 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 	lt_info("%s\n", __func__);
 	int max_numpida = *numpida;
 	*numpida = 0;
-	/*
 	if(player && player->manager && player->manager->audio) {
 	    char ** TrackList = NULL;
 	    player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
@@ -471,7 +470,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 	        free(TrackList);
 	        *numpida=j;
 	    }
-	}*/
+	}
 }
 
 void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language)
@@ -621,7 +620,7 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 	char **metadata = NULL;
 	if (player && player->playback)
 	{
-		//player->playback->Command(player, PLAYBACK_METADATA, &metadata);
+		player->playback->Command(player, PLAYBACK_METADATA, &metadata);
 		if (metadata)
 		{
 			for (char **m = metadata; *m;)

@@ -15,6 +15,7 @@ libeplayer3_arm_la_SOURCES = \
 	manager/audio.c \
 	manager/video.c \
 	manager/subtitle.c \
+	manager/chapter.c \
 	output/linuxdvb_mipsel.c \
 	output/output_subtitle.c \
 	output/output.c \

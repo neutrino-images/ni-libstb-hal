@@ -75,9 +75,13 @@ static int32_t PlaybackTerminate(Context_t  *context);
 int8_t PlaybackDieNow(int8_t val)
 {
 	static int8_t dieNow = 0;
-	if (val)
+	if (val == 1)
 	{
 		dieNow = 1;
+	}
+	else if (val == 2)
+	{
+		dieNow = 0;
 	}
 	return dieNow;
 }
@@ -194,6 +198,7 @@ static int PlaybackClose(Context_t  *context)
 		free(context->playback->uri);
 		context->playback->uri = NULL;
 	}
+	PlaybackDieNow(2);
 	playback_printf(10, "exiting with value %d\n", ret);
 	return ret;
 }
@@ -578,6 +583,17 @@ static int32_t PlaybackInfo(Context_t  *context, char **infoString)
 	return ret;
 }
 
+static int PlaybackMetadata(Context_t * context, char ***metadata)
+{
+	int ret = cERR_PLAYBACK_NO_ERROR;
+
+	if (context->container && context->container->selectedContainer)
+	context->container->selectedContainer->Command(context,
+								CONTAINER_GET_METADATA,
+								metadata);
+    return ret;
+}
+
 static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)
 {
 	Context_t *context = (Context_t *) _context; /* to satisfy compiler */
@@ -658,6 +674,11 @@ static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)
 		case PLAYBACK_GET_FRAME_COUNT:
 		{
 			ret = PlaybackGetFrameCount(context, (uint64_t *)argument);
+			break;
+		}
+		case PLAYBACK_METADATA:
+		{
+			ret = PlaybackMetadata(context, (char ***) argument);
 			break;
 		}
 		default:

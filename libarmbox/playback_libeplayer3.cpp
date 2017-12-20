@@ -512,9 +512,9 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, std::string *language, int *mags, int *pages)
 {
 	lt_info("%s\n", __func__);
-	/*
 	int max_numpids = *numpids;
 	*numpids = 0;
+	/*
 	if(player && player->manager && player->manager->teletext) {
 	    char ** TrackList = NULL;
 	    player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);

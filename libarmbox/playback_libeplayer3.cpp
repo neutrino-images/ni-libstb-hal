@@ -591,7 +591,6 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 {
 	positions.clear();
 	titles.clear();
-	/*
 	    if(player && player->manager && player->manager->chapter) {
 	        char ** TrackList = NULL;
 	        player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
@@ -610,7 +609,6 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 	            free(TrackList);
 	        }
 	    }
-	*/
 }
 
 void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)

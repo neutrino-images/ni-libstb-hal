@@ -2580,6 +2580,67 @@ static int32_t container_ffmpeg_get_info(Context_t *context, char **infoString)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
+static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
+{
+	Track_t *videoTrack = NULL;
+	Track_t *audioTrack = NULL;
+	AVDictionaryEntry *tag = NULL;
+	size_t psize = 1;
+	char **pp;
+
+	if (!context) {
+		fprintf(stderr, "BUG %s:%d\n", __func__, __LINE__);
+		return cERR_CONTAINER_FFMPEG_ERR;
+	}
+
+	if (!p || *p) {
+		fprintf(stderr, "BUG %s:%d\n", __func__, __LINE__);
+		return cERR_CONTAINER_FFMPEG_ERR;
+	}
+
+	context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
+	context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
+
+	if (avContextTab[0]->metadata)
+		psize += av_dict_count(avContextTab[0]->metadata);
+	if (videoTrack)
+		psize += av_dict_count(((AVStream *)(videoTrack->stream))->metadata);
+	if (audioTrack)
+		psize += av_dict_count(((AVStream *)(audioTrack->stream))->metadata);
+
+	*p = malloc(sizeof(char *) * psize * 2);
+	if (!*p) {
+		fprintf(stderr, "MALLOC %s:%d\n", __func__, __LINE__);
+		return cERR_CONTAINER_FFMPEG_ERR;
+	}
+	pp = *p;
+
+	if (avContextTab[0]->metadata)
+		while ((tag = av_dict_get(avContextTab[0]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+			*pp++ = strdup(tag->key);
+			*pp++ = strdup(tag->value);
+		}
+
+	if (videoTrack) {
+		tag = NULL;
+		while ((tag = av_dict_get(((AVStream *)(videoTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+			*pp++ = strdup(tag->key);
+			*pp++ = strdup(tag->value);
+		}
+	}
+	if (audioTrack) {
+		tag = NULL;
+		while ((tag = av_dict_get(((AVStream *)(audioTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+			*pp++ = strdup(tag->key);
+			*pp++ = strdup(tag->value);
+		}
+	}
+	*pp++ = NULL;
+	*pp = NULL;
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
 static int32_t Command(void  *_context, ContainerCmd_t command, void *argument)
 {
 	Context_t  *context = (Context_t *) _context;
@@ -2664,6 +2725,11 @@ static int32_t Command(void  *_context, ContainerCmd_t command, void *argument)
 			int32_t size = 0;
 			ret = container_get_ffmpeg_buf_size(&size);
 			*((int32_t *)argument) = size;
+			break;
+		}
+		case CONTAINER_GET_METADATA:
+		{
+			ret = container_ffmpeg_get_metadata(context, (char ***) argument);
 			break;
 		}
 		default:

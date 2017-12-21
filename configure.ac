@@ -1,4 +1,4 @@
-AC_INIT([libstb-hal], [1.0.1])
+AC_INIT([libstb-hal], [1.0.2])
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_MACRO_DIR([m4])

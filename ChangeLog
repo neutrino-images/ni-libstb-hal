@@ -1,3 +1,170 @@
+2017-12-21  TangoCash  <eric@loxat.de>
+
+	armbox eplayer: reactivate audio, subtitle and chapters
+
+	armbox eplayer: add chapter.c
+
+	armbox eplayer: add chapters
+
+	armbox eplayer: align to last commits
+
+	armbox eplayer: use other tracklist
+
+	armbox eplayer: add metadata
+
+	armbox eplayer: small fix TTX
+
+2017-12-21  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: fix playback (thx DboxOldie)
+
+	fix video policy
+
+2017-12-21  TangoCash  <eric@loxat.de>
+
+	fix close files
+
+2017-12-21  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- Makefile: disable libstb_hal_test stuff; this completes 188f10dd8644c30f64b04c99447c165193fb9790
+
+2017-12-21  TangoCash  <eric@loxat.de>
+
+	generic gestreamer align to armbox
+
+	gstreamer: increase seek accuracy
+
+2017-12-18  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- generic-pc/audio: fix segfault in getAudioInfo() function
+
+2017-12-18  TangoCash  <eric@loxat.de>
+
+	fix compile
+
+2017-12-18  max_10  <max_10@gmx.de>
+
+	add libeplayer3-arm test
+
+	acinclude: some more minor format changes
+
+	libeplayer3: code format
+
+2017-12-04  max_10  <max_10@gmx.de>
+
+	armbox: fix write value hex
+
+	ax needs hex
+
+2017-11-23  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix max apids
+
+	disable test
+
+2017-11-22  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	write m2v direct to device
+
+2017-11-21  TangoCash  <eric@loxat.de>
+
+	align gststreamer findallpids to eplayers logic
+
+	porting av converter to sh4
+
+2017-11-17  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix possible memleak
+
+	convert pix fmt
+
+	fix logic and possible memleak
+
+2017-11-16  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix last commit
+
+	check alloc AVFormatContext
+
+	fix close fp
+
+	convert jpg to m2v with libavcodec, need --enable-demuxer=image2
+
+2017-11-16  TangoCash  <eric@loxat.de>
+
+	cleanup
+
+	cleanup
+
+2017-11-14  TangoCash  <eric@loxat.de>
+
+	fix 0648 caid issue (dbo!!!)
+
+2017-11-14  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	sync with oher repo
+
+	fix merge error
+
+	fix last commit
+
+	remove double keys
+
+2017-11-14  vanhofen  <vanhofen@gmx.de>
+
+	- add display_has_statusline member
+
+	- generic-pc: add our proven keymap to glfb
+
+2017-11-13  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	try to fix possible race condition
+
+2017-11-12  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	init mpegts
+
+	Revert "return false in decoder have no time"
+	This reverts commit 6f006f1ce9026cccddfe87a88fb3ebaa1f6a9e98.
+
+2017-11-11  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix last commit, broken check logic
+
+	check if tag is gst list
+
+	return false in decoder have no time
+
+	try to fix freeze with subtitle file , use gst_element_get_state only if need
+
+2017-11-11  TangoCash  <eric@loxat.de>
+
+	fix missing close fd (thx dbo)
+
+2017-11-10  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	move gchar * sourceName = gst_object_get_name(source);
+
+	check m_stream_tags if not NULL
+
+	add check if children not NULL
+
+	fix memleak, init and compil
+
+2017-11-10  TangoCash  <eric@loxat.de>
+
+	gstreamer playback: fix possible race condition
+
+	gstreamer playback: fix possible segfault
+
+2017-11-08  TangoCash  <eric@loxat.de>
+
+	gstreamer playback: remove subtitles until fully supported
+
+	gstreamer playback: fix possible segfaults
+
+	CI: fix some caid issues (thx dboxoldie)
+
 2017-11-06  Thilo Graf  <dbt@novatux.de>
 
 	Merge branch 'master' of https://github.com/TangoCash/libstb-hal-cst-next.git into mpx

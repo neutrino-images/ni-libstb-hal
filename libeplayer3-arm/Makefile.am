@@ -46,5 +46,8 @@ libeplayer3_arm_la_SOURCES = \
 
 
 LIBEPLAYER3_LIBS = libeplayer3_arm.la
-# -lpthread -lavformat -lavcodec -lavutil -lswresample -lm
 
+bin_PROGRAMS = eplayer3
+eplayer3_SOURCES = main/exteplayer.c
+eplayer3_LDADD = -leplayer3_arm -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lm
+eplayer3_DEPENDENCIES = libeplayer3_arm.la

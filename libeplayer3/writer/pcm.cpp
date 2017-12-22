@@ -242,24 +242,24 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 		restart_audio_resampling = false;
 		initialHeader = true;
 
-	if (swr) {
-		swr_free(&swr);
-		swr = NULL;
+		if (swr) {
+			swr_free(&swr);
+			swr = NULL;
 		}
-	if (decoded_frame) {
-		av_frame_free(&decoded_frame);
-		decoded_frame = NULL;
+		if (decoded_frame) {
+			av_frame_free(&decoded_frame);
+			decoded_frame = NULL;
 		}
 
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
-	if (!codec) {
-		fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
-		return false;
+		if (!codec) {
+			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
+			return false;
 		}
 		avcodec_close(c);
-	if (avcodec_open2(c, codec, NULL)) {
-		fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
-		return false;
+		if (avcodec_open2(c, codec, NULL)) {
+			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
+			return false;
 		}
 	}
 
@@ -315,13 +315,13 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 	while (packet_size > 0 || (!packet_size && !packet->data)) {
 		int got_frame = 0;
 
-        if (!decoded_frame) {
-            if (!(decoded_frame = av_frame_alloc())) {
-                fprintf(stderr, "out of memory\n");
-                exit(1);
-            }
-        } else
-            av_frame_unref(decoded_frame);
+		if (!decoded_frame) {
+			if (!(decoded_frame = av_frame_alloc())) {
+				fprintf(stderr, "out of memory\n");
+				exit(1);
+			}
+		} else
+			av_frame_unref(decoded_frame);
 
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {

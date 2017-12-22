@@ -896,7 +896,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 			time_nanoseconds = position * 1000000.0;
 		}
 
-		gst_element_seek(m_gst_playbin, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, GST_SEEK_TYPE_SET, time_nanoseconds, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+		gst_element_seek(m_gst_playbin, 1.0, GST_FORMAT_TIME, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE), GST_SEEK_TYPE_SET, time_nanoseconds, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
 	}
 
 	return true;
@@ -919,7 +919,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 
 		language->clear();
 
-		for (i = 0; i < n_audio; i++)
+		for (i = 0; i < n_audio && i < *numpida; i++)
 		{
 			// apids
 			apids[i]= real_apids[i] ? real_apids[i] : i;

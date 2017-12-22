@@ -44,6 +44,7 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
 }
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
@@ -193,10 +194,10 @@ void write_frame(AVFrame* in_frame, FILE* fp)
 							av_packet_unref(&pkt);
 						}
 					}
-					avcodec_close(codec_context);
-					av_free(codec_context);
 				}
 			}
+			avcodec_close(codec_context);
+			av_free(codec_context);
 		}
 	}
 }
@@ -210,7 +211,21 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 			av_frame_free(&frame);
 			return -1;
 		}
-		write_frame(frame, fp);
+		AVFrame *dest_frame = av_frame_alloc();
+		if(dest_frame){
+			dest_frame->height = (frame->height/2)*2;
+			dest_frame->width = (frame->width/2)*2;
+			dest_frame->format = AV_PIX_FMT_YUV420P;
+			av_frame_get_buffer(dest_frame, 32);
+			struct SwsContext *convert = NULL;
+			convert = sws_getContext(frame->width, frame->height, (AVPixelFormat)frame->format, dest_frame->width, dest_frame->height, AV_PIX_FMT_YUVJ420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+			if(convert){
+				sws_scale(convert, frame->data, frame->linesize, 0, frame->height, dest_frame->data, dest_frame->linesize);
+				sws_freeContext(convert);
+			}
+			write_frame(dest_frame, fp);
+			av_frame_free(&dest_frame);
+		}
 		av_frame_free(&frame);
 	}
 	return 0;
@@ -220,15 +235,19 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext)
 {
 	int stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
-	if (stream_index < 0){
-		return NULL;
+	if (stream_index >=0 ){
+		AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
+		if(codecContext){
+			AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
+			if(codec){
+				if ((avcodec_open2(codecContext, codec, NULL)) != 0){
+					return NULL;
+				}
+			}
+			return codecContext;
+		}
 	}
-	AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
-	AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
-	if (codec && (avcodec_open2(codecContext, codec, NULL)) != 0){
-		return NULL;
-	}
-	return codecContext;
+	return NULL;
 }
 
 int image_to_mpeg2(const char *image_name, const char *encode_name)
@@ -253,11 +272,11 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 					}
 					fclose(fp);
 				}
-				avcodec_close(codecContext);
 				av_free_packet(&packet);
 			}
-			avformat_close_input(&formatContext);
+			avcodec_close(codecContext);
 		}
+		avformat_close_input(&formatContext);
 	}
 	av_free(formatContext);
 	return 0;
@@ -324,7 +343,7 @@ void cVideo::closeDevice(void)
 int cVideo::setAspectRatio(int aspect, int mode)
 {
 	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
-	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
+	static const char *m[] = { "panscan", "bestfit", "letterbox", "nonlinear", "(unset)" };
 	int n;
 	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
 
@@ -857,7 +876,7 @@ void cVideo::SetControl(int control, int value) {
 	}
 	if (p) {
 		char buf[20];
-		int len = snprintf(buf, sizeof(buf), "%d", value);
+		int len = snprintf(buf, sizeof(buf), "%x00\n", value);
 		if (len < (int) sizeof(buf))
 			proc_put(p, buf, len);
 	}

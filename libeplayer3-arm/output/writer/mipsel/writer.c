@@ -201,4 +201,3 @@ Writer_t *getDefaultAudioWriter()
 	writer_printf(1, "%s: no writer found\n", __func__);
 	return NULL;
 }
-

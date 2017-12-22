@@ -112,8 +112,7 @@ static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track
 	}
 	else
 	{
-		chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME,
-		                __FUNCTION__, TrackCount, TRACKWRAP);
+		chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
@@ -175,8 +174,7 @@ static int ManagerDel(Context_t * context __attribute__((unused)))
 	}
 	else
 	{
-		chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME,
-		                __FUNCTION__);
+		chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
@@ -222,14 +220,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		break;
 	}
 	default:
-		chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME,
-		                __FUNCTION__, command);
+		chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
 		ret = cERR_CHAPTER_MGR_ERROR;
 		break;
 	}
 
-	chapter_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__,
-	                   ret);
+	chapter_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
 
 	return ret;
 }

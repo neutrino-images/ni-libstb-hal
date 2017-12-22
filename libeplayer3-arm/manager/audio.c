@@ -128,36 +128,35 @@ static int ManagerAdd(Context_t  *context, Track_t track)
 
 static char **ManagerList(Context_t * context __attribute__ ((unused)))
 {
-    int i = 0, j = 0;
-    char **tracklist = NULL;
+	int i = 0, j = 0;
+	char **tracklist = NULL;
 
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
-    if (Tracks != NULL) {
+	if (Tracks != NULL) {
 
-	tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
+		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
 
-	if (tracklist == NULL) {
-	    audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
-	    return NULL;
+		if (tracklist == NULL) {
+			 audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+			return NULL;
+		}
+
+		for (i = 0, j = 0; i < TrackCount; i++, j += 2) {
+			if (Tracks[i].pending)
+				continue;
+			size_t len = strlen(Tracks[i].Name) + 20;
+			char tmp[len];
+			snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
+			tracklist[j] = strdup(tmp);
+			tracklist[j + 1] = strdup(Tracks[i].Encoding);
+		}
+		tracklist[j] = NULL;
 	}
 
-	for (i = 0, j = 0; i < TrackCount; i++, j += 2) {
-	    if (Tracks[i].pending)
-		continue;
-	    size_t len = strlen(Tracks[i].Name) + 20;
-	    char tmp[len];
-	    snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
-	    tracklist[j] = strdup(tmp);
-	    tracklist[j + 1] = strdup(Tracks[i].Encoding);
-	}
-	tracklist[j] = NULL;
-    }
+	audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
 
-    audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME,
-		     __FUNCTION__, tracklist, j, TrackCount);
-
-    return tracklist;
+	return tracklist;
 }
 
 #if 0

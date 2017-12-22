@@ -524,8 +524,8 @@ static void FFMPEGThread(Context_t *context)
 	strncpy(threadname, __func__, sizeof(threadname));
 	threadname[16] = 0;
 	prctl(PR_SET_NAME, (unsigned long)&threadname);
-	AVPacket   packet;
-	off_t   lastSeek = -1;
+	AVPacket packet;
+	off_t lastSeek = -1;
 	int64_t lastPts = -1;
 	int64_t currentVideoPts = -1;
 	int64_t currentAudioPts = -1;
@@ -536,7 +536,7 @@ static void FFMPEGThread(Context_t *context)
 	int64_t lastAudioDts = -1;
 	int64_t showtime = 0;
 	int64_t bofcount = 0;
-	int32_t       err = 0;
+	int32_t err = 0;
 	AudioVideoOut_t avOut;
 	g_context = context;
 	SwrContext *swr = NULL;
@@ -831,8 +831,8 @@ static void FFMPEGThread(Context_t *context)
 				pcmExtradata.bit_rate              = get_codecpar(audioTrack->stream)->bit_rate;
 				pcmExtradata.ffmpeg_codec_id       = get_codecpar(audioTrack->stream)->codec_id;
 				pcmExtradata.bResampling           = restart_audio_resampling;
-				uint8_t *pAudioExtradata    = get_codecpar(audioTrack->stream)->extradata;
-				uint32_t audioExtradataSize = get_codecpar(audioTrack->stream)->extradata_size;
+				uint8_t *pAudioExtradata           = get_codecpar(audioTrack->stream)->extradata;
+				uint32_t audioExtradataSize        = get_codecpar(audioTrack->stream)->extradata_size;
 				ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
 				if (audioTrack->inject_raw_pcm == 1)
 				{
@@ -1034,7 +1034,7 @@ static void FFMPEGThread(Context_t *context)
 				else if (audioTrack->have_aacheader == 1)
 				{
 					ffmpeg_printf(200, "write audio aac\n");
-					ffmpeg_printf(200, ">>>>>>> %x %x %x %x %x %x\n", packet.data[0], packet.data[1], packet.data[2], packet.data[3], packet.data[4], packet.data[5], packet.data[6]);
+					ffmpeg_printf(200, ">>>>>>> %x %x %x %x %x %x %x\n", packet.data[0], packet.data[1], packet.data[2], packet.data[3], packet.data[4], packet.data[5], packet.data[6]);
 					avOut.data       = packet.data;
 					avOut.len        = packet.size;
 					avOut.pts        = pts;
@@ -1105,8 +1105,7 @@ static void FFMPEGThread(Context_t *context)
 				static char errbuf[256];
 				if (0 == av_strerror(ffmpegStatus, errbuf, sizeof(errbuf)))
 				{
-					/* In this way we inform user about error within the core
-					 */
+					/* In this way we inform user about error within the core */
 					printf("{\"log\":\"Frame read error: '%s'\"}\n", errbuf);
 				}
 				/*
@@ -1602,7 +1601,7 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 	avformat_network_init();
 	// SULGE DEBUG ENABLED
 	// make ffmpeg silen
-	//av_log_set_level( AV_LOG_DEBUG );
+	// av_log_set_level( AV_LOG_DEBUG );
 	av_log_set_callback(ffmpeg_silen_callback);
 	context->playback->abortRequested = 0;
 	int32_t res = container_ffmpeg_init_av_context(context, playFilesNames->szFirstFile, 0);

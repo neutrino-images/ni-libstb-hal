@@ -230,8 +230,8 @@ static int32_t writeData(void *_call)
 	}
 	/* AnnexA */
 	if (!avc3 && ((1 < call->private_size && 0 == call->private_data[0]) ||
-				  (call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-									  (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
+			(call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+			(call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
 	{
 		uint32_t PacketLength = 0;
 		uint32_t FakeStartCode = /*(call->Version << 8) | */PES_VERSION_FAKE_START_CODE;
@@ -281,7 +281,7 @@ static int32_t writeData(void *_call)
 			if (private_data != call->private_data)
 			{
 				avc3 = 1;
-				avcCHeader          = (avcC_t *)private_data;
+				avcCHeader = (avcC_t *)private_data;
 			}
 		}
 		HeaderData[ParametersLength++]        = 0x00;                                         // Start code
@@ -292,7 +292,7 @@ static int32_t writeData(void *_call)
 		HeaderData[ParametersLength++]        = CONTAINER_PARAMETERS_VERSION;
 		HeaderData[ParametersLength++]        = 0xff;                                         // Field separator
 		if (TimeDelta == 0xffffffff)
-			TimeDelta       = (TimeScale > 1000) ? 1001 : 1;
+			TimeDelta                     = (TimeScale > 1000) ? 1001 : 1;
 		HeaderData[ParametersLength++]        = (TimeScale >> 24) & 0xff;         // Output the timescale
 		HeaderData[ParametersLength++]        = (TimeScale >> 16) & 0xff;
 		HeaderData[ParametersLength++]        = 0xff;

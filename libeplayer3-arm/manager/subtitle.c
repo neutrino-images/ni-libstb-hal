@@ -42,7 +42,7 @@
 
 #ifdef SUBTITLE_MGR_DEBUG
 
-static short debug_level = 10;
+static short debug_level = 20;
 
 #define subtitle_mgr_printf(level, x...) do { \
 		if (debug_level >= level) printf(x); } while (0)

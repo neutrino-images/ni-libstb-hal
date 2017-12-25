@@ -28,12 +28,18 @@ extern cVideo *videoDecoder;
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
 {
+	const char *aPLAYMODE[] = {
+		"PLAYMODE_TS",
+		"PLAYMODE_FILE"
+	};
+
 	if (PlayMode != PLAYMODE_TS)
 	{
 		audioDecoder->closeDevice();
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 	}
+
 	pm = PlayMode;
 	fn_ts = "";
 	fn_xml = "";
@@ -50,7 +56,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->output      = &OutputHandler;
 		player->container   = &ContainerHandler;
 		player->manager     = &ManagerHandler;
-		lt_info("%s - player output name: %s\n", __func__, player->output->Name);
+		lt_info("%s - player output name: %s PlayMode: %s\n", __func__, player->output->Name, aPLAYMODE[PlayMode]);
 	}
 	//Registration of output devices
 	if (player && player->output)
@@ -65,7 +71,8 @@ void cPlayback::Close(void)
 {
 	lt_info("%s\n", __func__);
 	//Dagobert: movieplayer does not call stop, it calls close ;)
-	Stop();
+	if(playing)
+		Stop();
 	if (decoders_closed)
 	{
 		audioDecoder->openDevice();
@@ -649,9 +656,11 @@ cPlayback::~cPlayback()
 
 void cPlayback::RequestAbort()
 {
-	if (player && player->playback)
+	if (player && player->playback && player->playback->isPlaying)
 	{
-		player->playback->abortRequested = 1;
+		lt_info("%s\n", __func__);
+		Stop();
+		//player->playback->abortRequested = 1;
 		while (player->playback->isPlaying)
 			usleep(100000);
 	}

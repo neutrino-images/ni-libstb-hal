@@ -63,7 +63,6 @@ static Writer_t *AvailableWriter[] =
 {
 	&WriterAudioAAC,
 	&WriterAudioAACLATM,
-	&WriterAudioAACLATM,
 	&WriterAudioAACPLUS,
 	&WriterAudioAC3,
 	&WriterAudioEAC3,

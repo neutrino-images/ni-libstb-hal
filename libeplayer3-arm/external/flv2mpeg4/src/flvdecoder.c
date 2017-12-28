@@ -38,7 +38,6 @@ static const uint8 zig_zag_scan[64] =
 	58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
 };
 
-
 static const VLCtab vlc_table_intra_MCBPC[] = //: table_size=72 table_allocated=128 bits=6
 {
 	{64, -3},
@@ -127,7 +126,6 @@ static const VLCtab vlc_table_rl_inter[] = //: table_size=554 table_allocated=10
 	{27, 3}, {30, 3}, {33, 3}, {41, 3}, {56, 3}, {57, 3}, {94, 3}, {95, 3}, {96, 3}, {97, 3}, {98, 3}, {99, 3},
 	{100, 3}, {101, 3}, {8, 1}, {7, 1}
 };
-
 
 static const VLCtab vlc_table_mv[] = //mv_vlc: table_size=538 table_allocated=1024 bits=9
 {

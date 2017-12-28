@@ -63,7 +63,6 @@ typedef struct
 	char            *type;
 } SubtitleOut_t;
 
-
 typedef struct Output_s
 {
 	char *Name;

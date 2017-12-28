@@ -191,7 +191,6 @@ struct Writer_s WriterVideoMPEG4 =
 	&mpeg4p2_caps
 };
 
-
 struct Writer_s WriterVideoMSCOMP =
 {
 	&reset,

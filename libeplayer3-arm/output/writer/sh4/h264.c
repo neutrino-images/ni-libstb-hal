@@ -91,7 +91,6 @@ typedef struct avcC_s
 	unsigned char       Params[1];              /* {length,params}{length,params}...sequence then picture*/
 } avcC_t;
 
-
 /* ***************************** */
 /* Varaibles                     */
 /* ***************************** */

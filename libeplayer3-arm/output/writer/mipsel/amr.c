@@ -172,5 +172,3 @@ struct Writer_s WriterAudioAMR =
 	NULL,
 	&caps_amr
 };
-
-

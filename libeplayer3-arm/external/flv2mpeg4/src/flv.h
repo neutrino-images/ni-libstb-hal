@@ -65,7 +65,6 @@ typedef struct _PICTURE
 	int width;
 	int height;
 
-
 #define FLV_I_TYPE      0
 #define FLV_P_TYPE      1
 
@@ -156,6 +155,5 @@ static const int8 rl_inter_run[102] =
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static const int rl_inter_n = 102;
 static const int rl_inter_last = 58;
-
 
 #endif // FLV_H

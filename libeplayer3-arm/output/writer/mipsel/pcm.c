@@ -100,7 +100,6 @@ static uint32_t fixed_bufferfilled;
 /* MISC Functions                */
 /* ***************************** */
 
-
 static int32_t reset()
 {
 	initialHeader = 1;

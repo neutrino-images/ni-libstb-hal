@@ -171,7 +171,6 @@ struct Writer_s WriterAudioWMAPRO =
 	&capsWMAPRO
 };
 
-
 static WriterCaps_t capsWMA =
 {
 	"wma",

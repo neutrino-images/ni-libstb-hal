@@ -100,10 +100,8 @@ typedef struct GetBitContext
 	unsigned int name ## _index = (gb)->index;  \
 	unsigned int av_unused name ## _cache
 
-
 #define OPEN_READER(name, gb) OPEN_READER_NOSIZE(name, gb)
 #define BITS_AVAILABLE(name, gb) 1
-
 
 #define CLOSE_READER(name, gb) (gb)->index = name ## _index
 
@@ -125,7 +123,6 @@ typedef struct GetBitContext
 
 #endif
 
-
 #ifdef BITSTREAM_READER_LE
 
 # define UPDATE_CACHE(name, gb) UPDATE_CACHE_LE(name, gb)
@@ -141,7 +138,6 @@ typedef struct GetBitContext
 #endif
 
 #define SKIP_COUNTER(name, gb, num) name ## _index += (num)
-
 
 #define BITS_LEFT(name, gb) ((int)((gb)->size_in_bits - name ## _index))
 
@@ -503,7 +499,6 @@ do {                                                        \
 	run = table[index].run;                                 \
 	SKIP_BITS(name, gb, n);                                 \
 } while (0)
-
 
 static inline int decode012(GetBitContext *gb)
 {

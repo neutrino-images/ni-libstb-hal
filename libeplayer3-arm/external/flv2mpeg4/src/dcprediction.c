@@ -25,7 +25,6 @@
 
 #include "dcprediction.h"
 
-
 // M4V ADDED
 static const uint8 mpeg4_y_dc_scale_table[32] =
 {

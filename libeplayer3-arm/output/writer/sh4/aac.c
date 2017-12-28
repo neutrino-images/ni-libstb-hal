@@ -43,7 +43,6 @@
 #include <libavutil/intreadwrite.h>
 #include "ffmpeg/latmenc.h"
 
-
 #include "common.h"
 #include "output.h"
 #include "debug.h"

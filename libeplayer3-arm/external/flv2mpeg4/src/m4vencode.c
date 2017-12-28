@@ -293,7 +293,6 @@ static void __inline encode_inter_8x8_MCBPC(BW *bw, int cbpc)
 	put_bits(bw, vlce_inter_MCBPC_bits[cbpc + 16], vlce_inter_MCBPC_code[cbpc + 16]);
 }
 
-
 // same as H.263
 static void __inline encode_cbpy(BW *bw, int cbpy)
 {

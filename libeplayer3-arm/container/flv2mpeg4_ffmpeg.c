@@ -5,7 +5,6 @@
 
 #include "flv2mpeg4/flv2mpeg4.h"
 
-
 typedef struct
 {
 	flv2mpeg4_CTX *ctx;
@@ -15,7 +14,6 @@ typedef struct
 	Context_t *out_ctx;
 	Track_t   *track;
 } Flv2Mpeg4Context;
-
 
 static int flv2mpeg4_context_write_packet_cb(void *usr_data, int keyframe, int pts, const uint8_t *buf, int size)
 {
@@ -82,4 +80,3 @@ static int flv2mpeg4_write_packet(Context_t *out_ctx, Flv2Mpeg4Context *mpeg4p2_
 	uint32_t time_ms = (uint32_t)(track->pts / 90);
 	return flv2mpeg4_process_flv_packet(mpeg4p2_ctx->ctx, 0, pkt->data, pkt->size, time_ms);
 }
-

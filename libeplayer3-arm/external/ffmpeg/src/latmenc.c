@@ -38,7 +38,6 @@
 #define latmenc_err(fmt, x...)
 #endif
 
-
 int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size)
 {
 	MPEG4AudioConfig m4ac;
@@ -152,4 +151,3 @@ too_large:
 	latmenc_err("LATM packet size larger than maximum size 0x1fff\n");
 	return AVERROR_INVALIDDATA;
 }
-

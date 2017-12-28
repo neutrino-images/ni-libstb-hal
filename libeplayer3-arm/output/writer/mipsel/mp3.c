@@ -186,4 +186,3 @@ struct Writer_s WriterAudioVORBIS =
 	NULL,
 	&caps_vorbis
 };
-

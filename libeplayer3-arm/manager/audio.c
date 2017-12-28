@@ -146,7 +146,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 				continue;
 			size_t len = strlen(Tracks[i].Name) + 20;
 			char tmp[len];
-			snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
+			snprintf(tmp, len, "%d %s", Tracks[i].Id, Tracks[i].Name);
 			tracklist[j] = strdup(tmp);
 			tracklist[j + 1] = strdup(Tracks[i].Encoding);
 		}

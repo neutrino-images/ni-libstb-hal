@@ -468,7 +468,6 @@ int LinuxDvbAudioMute(Context_t  *context __attribute__((unused)), char *flag)
 	return ret;
 }
 
-
 int LinuxDvbFlush(Context_t  *context __attribute__((unused)), char *type)
 {
 	// unsigned char video = !strcmp("video", type);
@@ -565,7 +564,6 @@ int LinuxDvbFastForward(Context_t  *context, char *type)
 	return ret;
 }
 #endif
-
 
 int LinuxDvbReverse(Context_t  *context __attribute__((unused)), char *type __attribute__((unused)))
 {

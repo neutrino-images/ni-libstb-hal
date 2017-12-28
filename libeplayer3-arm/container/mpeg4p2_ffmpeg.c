@@ -14,7 +14,6 @@ typedef struct
 	AVPacket *second_ip_frame;
 } Mpeg4P2Context;
 
-
 static void set_packet(AVPacket **pkt_dest, AVPacket *pkt_src)
 {
 	if (pkt_dest == NULL)
@@ -207,4 +206,3 @@ static int mpeg4p2_write_packet(Context_t *ctx, Mpeg4P2Context *mpeg4p2_ctx, Tra
 	}
 	return 0;
 }
-

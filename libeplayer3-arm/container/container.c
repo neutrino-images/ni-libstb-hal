@@ -98,7 +98,6 @@ static int32_t selectContainer(Context_t  *context, char *extension)
 	return ret;
 }
 
-
 static int Command(void  *_context, ContainerCmd_t command, void *argument)
 {
 	Context_t *context = (Context_t *) _context;
@@ -127,7 +126,6 @@ static int Command(void  *_context, ContainerCmd_t command, void *argument)
 	}
 	return ret;
 }
-
 
 ContainerHandler_t ContainerHandler =
 {

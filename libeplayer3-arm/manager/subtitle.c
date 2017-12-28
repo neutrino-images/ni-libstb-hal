@@ -39,7 +39,6 @@
 #define SUBTITLE_MGR_SILENT
 #endif
 
-
 #ifdef SUBTITLE_MGR_DEBUG
 
 static short debug_level = 20;
@@ -325,7 +324,6 @@ static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
 	subtitle_mgr_printf(50, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
 	return ret;
 }
-
 
 Manager_t SubtitleManager =
 {

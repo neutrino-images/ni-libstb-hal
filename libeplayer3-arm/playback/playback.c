@@ -685,11 +685,9 @@ static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)
 			break;
 		}
 		default:
-		{
 			playback_err("PlaybackCmd %d not supported!\n", command);
 			ret = cERR_PLAYBACK_ERROR;
 			break;
-		}
 	}
 	playback_printf(20, "exiting with value %d\n", ret);
 	return ret;

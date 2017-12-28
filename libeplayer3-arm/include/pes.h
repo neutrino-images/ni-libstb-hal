@@ -12,9 +12,7 @@
 #define PES_START_CODE_RESERVED_4               0xfd
 #define PES_VERSION_FAKE_START_CODE             0x31
 
-
 #define MAX_PES_PACKET_SIZE                     (65535)
-
 
 /* start codes */
 #define PCM_PES_START_CODE                      0xbd

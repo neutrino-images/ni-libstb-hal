@@ -75,7 +75,6 @@ static short debug_level = 10;
 #define vp_err(fmt, x...)
 #endif
 
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -149,7 +148,6 @@ static int writeDataVP89(void *_call)
 {
 	return writeData(_call, 0);
 }
-
 
 /* ***************************** */
 /* Writer  Definition            */

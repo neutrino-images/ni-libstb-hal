@@ -32,7 +32,6 @@
 /* ***************************** */
 #define TRACKWRAP 20
 
-//#define SAM_WITH_DEBUG
 #ifdef SAM_WITH_DEBUG
 #define SUBTITLE_MGR_DEBUG
 #else
@@ -44,7 +43,7 @@
 static short debug_level = 20;
 
 #define subtitle_mgr_printf(level, x...) do { \
-		if (debug_level >= level) printf(x); } while (0)
+if (debug_level >= level) printf(x); } while (0)
 #else
 #define subtitle_mgr_printf(level, x...)
 #endif
@@ -66,7 +65,7 @@ static const char FILENAME[] = __FILE__;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static Track_t *Tracks = NULL;
@@ -81,24 +80,28 @@ static int CurrentTrack = -1; //no as default.
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t *context, Track_t track)
+static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 {
-	uint32_t i = 0;
 	subtitle_mgr_printf(10, "%s::%s %s %s %d\n", FILENAME, __FUNCTION__, track.Name, track.Encoding, track.Id);
+
 	if (Tracks == NULL)
 	{
 		Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
-		for (i = 0; i < TRACKWRAP; ++i)
+		int i;
+		for (i = 0; i < TRACKWRAP; i++)
 		{
 			Tracks[i].Id = -1;
 		}
 	}
+
 	if (Tracks == NULL)
 	{
 		subtitle_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
-	for (i = 0; i < TRACKWRAP; ++i)
+
+	int i;
+	for (i = 0; i < TRACKWRAP; i++)
 	{
 		if (Tracks[i].Id == track.Id)
 		{
@@ -106,6 +109,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 			return cERR_SUBTITLE_MGR_NO_ERROR;
 		}
 	}
+
 	if (TrackCount < TRACKWRAP)
 	{
 		copyTrack(&Tracks[TrackCount], &track);
@@ -116,77 +120,93 @@ static int ManagerAdd(Context_t *context, Track_t track)
 		subtitle_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
+
 	if (TrackCount > 0)
 	{
-		context->playback->isSubtitle = 1;
+//		context->playback->isSubtitle = 1;
 	}
+
 	subtitle_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+
 	return cERR_SUBTITLE_MGR_NO_ERROR;
 }
 
-static TrackDescription_t *ManagerList(Context_t  *context __attribute__((unused)))
+static char **ManagerList(Context_t *context __attribute__((unused)))
 {
-	int i = 0;
-	TrackDescription_t *tracklist = NULL;
+	char **tracklist = NULL;
+	int i = 0, j = 0;
+
 	subtitle_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+
 	if (Tracks != NULL)
 	{
-		tracklist = malloc(sizeof(TrackDescription_t) * ((TrackCount) + 1));
+		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
+
 		if (tracklist == NULL)
 		{
 			subtitle_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
 			return NULL;
 		}
-		int j = 0;
-		for (i = 0; i < TrackCount; ++i)
+
+		for (i = 0, j = 0; i < TrackCount; i++, j += 2)
 		{
-			if (Tracks[i].pending || Tracks[i].Id < 0)
+			if (Tracks[i].pending)
 			{
 				continue;
 			}
-			tracklist[j].Id = Tracks[i].Id;
-			tracklist[j].Name = strdup(Tracks[i].Name);
-			tracklist[j].Encoding = strdup(Tracks[i].Encoding);
-			++j;
+
+			size_t len = strlen(Tracks[i].Name) + 20;
+			char tmp[len];
+			snprintf(tmp, len, "%d %s", Tracks[i].Id, Tracks[i].Name);
+			tracklist[j] = strdup(tmp);
+			tracklist[j + 1] = strdup(Tracks[i].Encoding);
 		}
-		tracklist[j].Id = -1;
+
+		tracklist[j] = NULL;
 	}
+
+	subtitle_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
+
 	return tracklist;
 }
 
-static int32_t ManagerDel(Context_t *context, int32_t onlycurrent)
+static int ManagerDel(Context_t *context __attribute__((unused)))
 {
-	uint32_t i = 0;
+	int i = 0;
+
 	subtitle_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-	if (onlycurrent == 0)
+
+	if (Tracks != NULL)
 	{
-		if (Tracks != NULL)
+		for (i = 0; i < TrackCount; i++)
 		{
-			for (i = 0; i < TrackCount; i++)
-			{
-				freeTrack(&Tracks[i]);
-			}
-			free(Tracks);
-			Tracks = NULL;
+			freeTrack(&Tracks[i]);
 		}
-		else
-		{
-			subtitle_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
-			return cERR_SUBTITLE_MGR_ERROR;
-		}
-		TrackCount = 0;
-		context->playback->isSubtitle = 0;
+
+		free(Tracks);
+		Tracks = NULL;
 	}
+	else
+	{
+		subtitle_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
+		return cERR_SUBTITLE_MGR_ERROR;
+	}
+
+	TrackCount = 0;
 	CurrentTrack = -1;
+//	context->playback->isSubtitle = 0;
+
 	subtitle_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
+
 	return cERR_SUBTITLE_MGR_NO_ERROR;
 }
 
-static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
+static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
-	int32_t ret = cERR_SUBTITLE_MGR_NO_ERROR;
+	int ret = cERR_SUBTITLE_MGR_NO_ERROR;
+
 	subtitle_mgr_printf(50, "%s::%s %d\n", FILENAME, __FUNCTION__, command);
+
 	switch (command)
 	{
 		case MANAGER_ADD:
@@ -222,9 +242,9 @@ static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
 				if (track)
 				{
 					memset(track, 0, sizeof(TrackDescription_t));
-					track->Id       = Tracks[CurrentTrack].Id;
-					track->Name     = strdup(Tracks[CurrentTrack].Name);
-					track->Encoding = strdup(Tracks[CurrentTrack].Encoding);
+					track->Id               = Tracks[CurrentTrack].Id;
+					track->Name             = strdup(Tracks[CurrentTrack].Name);
+					track->Encoding         = strdup(Tracks[CurrentTrack].Encoding);
 				}
 			}
 			else
@@ -271,23 +291,24 @@ static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_SET:
 		{
-			uint32_t i = 0;
-			int32_t requestedTrackId = *((int *)argument);
+			int i;
 			subtitle_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", FILENAME, __FUNCTION__, *((int *)argument));
-			if (requestedTrackId == -1)
+
+			if (*((int *)argument) < 0)
 			{
-				// track id -1 mean disable subtitle
 				CurrentTrack = -1;
 				break;
 			}
-			for (i = 0; i < TrackCount; ++i)
+
+			for (i = 0; i < TrackCount; i++)
 			{
-				if (Tracks[i].Id == requestedTrackId)
+				if (Tracks[i].Id == *((int *)argument))
 				{
 					CurrentTrack = i;
 					break;
 				}
 			}
+
 			if (i == TrackCount)
 			{
 				subtitle_mgr_err("%s::%s track id %d unknown\n", FILENAME, __FUNCTION__, *((int *)argument));
@@ -297,19 +318,12 @@ static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_DEL:
 		{
-			if (argument == NULL)
-			{
-				ret = ManagerDel(context, 0);
-			}
-			else
-			{
-				ret = ManagerDel(context, *((int *)argument));
-			}
+			ret = ManagerDel(context);
 			break;
 		}
 		case MANAGER_INIT_UPDATE:
 		{
-			uint32_t i;
+			int i;
 			for (i = 0; i < TrackCount; i++)
 			{
 				Tracks[i].pending = 1;
@@ -317,15 +331,17 @@ static int32_t Command(void  *_context, ManagerCmd_t command, void *argument)
 			break;
 		}
 		default:
-			subtitle_mgr_err("%s:%s: ConatinerCmd not supported!", FILENAME, __FUNCTION__);
+			subtitle_mgr_err("%s:%s: ContainerCmd not supported!", FILENAME, __FUNCTION__);
 			ret = cERR_SUBTITLE_MGR_ERROR;
 			break;
 	}
+
 	subtitle_mgr_printf(50, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
+
 	return ret;
 }
 
-Manager_t SubtitleManager =
+struct Manager_s SubtitleManager =
 {
 	"Subtitle",
 	&Command,

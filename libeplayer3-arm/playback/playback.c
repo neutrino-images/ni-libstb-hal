@@ -146,6 +146,10 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
 			playback_err("Wrong extension (%s)\n", context->playback->uri + 7);
 			return cERR_PLAYBACK_ERROR;
 		}
+		else if (!strncmp("ts", extension, 2))
+		{
+			context->playback->noprobe = 1;
+		}
 	}
 	else if (strstr(uri, "://"))
 	{

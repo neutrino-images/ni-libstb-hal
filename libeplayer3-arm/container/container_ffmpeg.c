@@ -2198,7 +2198,11 @@ static int32_t container_ffmpeg_play(Context_t *context)
 static int32_t container_ffmpeg_stop(Context_t *context)
 {
 	int32_t ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
-	int32_t wait_time = 10; // we give 1s to close otherwise we will force close
+	int32_t wait_time = 50;
+	/* we give 5s max. to close otherwise we will force close
+	 * in this case, ffmpeg thread will not be terminated
+	 * and causes in most cases a segfault
+	 */
 	ffmpeg_printf(10, "\n");
 	if (!isContainerRunning)
 	{

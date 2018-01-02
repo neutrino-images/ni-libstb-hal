@@ -606,18 +606,16 @@ int cPlayback::GetTeletextPid(void)
 	return pid;
 }
 
-#if 0
 /* dummy functions for subtitles */
-void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
+void cPlayback::FindAllSubs(int * /*pids*/, unsigned int * /*supp*/, unsigned int *num, std::string * /*lang*/)
 {
 	*num = 0;
 }
 
-bool cPlayback::SelectSubtitles(int /*pid*/)
+bool cPlayback::SelectSubtitles(int /*pid*/, std::string /*charset*/)
 {
 	return false;
 }
-#endif
 
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
 {
@@ -644,6 +642,17 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 			free(TrackList);
 		}
 	}
+}
+
+void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
+{
+	playlists.clear();
+	titles.clear();
+	current = 0;
+}
+
+void cPlayback::SetTitle(int /*title*/)
+{
 }
 
 void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)

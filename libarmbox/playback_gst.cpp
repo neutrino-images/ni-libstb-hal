@@ -1021,10 +1021,10 @@ void cPlayback::RequestAbort()
 {
 }
 
-void cPlayback::FindAllSubs(uint16_t *, unsigned short *, uint16_t *numpida, std::string *)
+void cPlayback::FindAllSubs(int * /*pids*/, unsigned int * /*supp*/, unsigned int *num, std::string * /*lang*/)
 {
 	printf("%s:%s\n", FILENAME, __func__);
-	*numpida = 0;
+	*num = 0;
 }
 
 void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string> &titles)
@@ -1033,7 +1033,18 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 	titles.clear();
 }
 
-bool cPlayback::SelectSubtitles(int pid)
+void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
+{
+	playlists.clear();
+	titles.clear();
+	current = 0;
+}
+
+void cPlayback::SetTitle(int /*title*/)
+{
+}
+
+bool cPlayback::SelectSubtitles(int pid, std::string /*charset*/)
 {
 	printf("%s:%s pid %i\n", FILENAME, __func__, pid);
 	return true;

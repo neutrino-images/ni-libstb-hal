@@ -105,6 +105,7 @@ static int       avc3 = 0;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 // Please see: https://bugzilla.mozilla.org/show_bug.cgi?id=1105771
 static int32_t UpdateExtraData(uint8_t **ppExtraData, uint32_t *pExtraDataSize, uint8_t *pData, uint32_t dataSize)
 {
@@ -434,28 +435,6 @@ static int32_t writeData(void *_call)
 	return len;
 }
 
-static int writeReverseData(void *_call)
-{
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	h264_printf(10, "\n");
-	if (call == NULL)
-	{
-		h264_err("call data is NULL...\n");
-		return 0;
-	}
-	h264_printf(10, "VideoPts %lld\n", call->Pts);
-	if ((call->data == NULL) || (call->len <= 0))
-	{
-		h264_err("NULL Data. ignoring...\n");
-		return 0;
-	}
-	if (call->fd < 0)
-	{
-		h264_err("file pointer < 0. ignoring ...\n");
-		return 0;
-	}
-	return 0;
-}
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
@@ -474,6 +453,5 @@ struct Writer_s WriterVideoH264 =
 {
 	&reset,
 	&writeData,
-	&writeReverseData,
 	&caps
 };

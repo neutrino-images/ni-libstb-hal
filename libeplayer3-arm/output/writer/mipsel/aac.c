@@ -333,7 +333,6 @@ struct Writer_s WriterAudioAAC =
 {
 	&reset,
 	&writeDataADTS,
-	NULL,
 	&caps
 };
 
@@ -351,7 +350,6 @@ struct Writer_s WriterAudioAACLATM =
 {
 	&reset,
 	&writeDataLATM,
-	NULL,
 	&caps_aac_latm
 };
 
@@ -369,6 +367,5 @@ struct Writer_s WriterAudioAACPLUS =
 {
 	&reset,
 	&writeDataADTS,
-	NULL,
 	&caps_aacplus
 };

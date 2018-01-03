@@ -141,6 +141,5 @@ struct Writer_s WriterAudioVORBIS =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_vorbis
 };

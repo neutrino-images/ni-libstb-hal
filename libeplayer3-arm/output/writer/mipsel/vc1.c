@@ -194,6 +194,5 @@ struct Writer_s WriterVideoVC1 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };

@@ -147,7 +147,6 @@ struct Writer_s WriterAudioAC3 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_ac3
 };
 
@@ -165,6 +164,5 @@ struct Writer_s WriterAudioEAC3 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_eac3
 };

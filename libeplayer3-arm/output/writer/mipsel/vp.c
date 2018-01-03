@@ -167,7 +167,6 @@ struct Writer_s WriterVideoVP6 =
 {
 	&reset,
 	&writeDataVP6,
-	NULL,
 	&capsVP6
 };
 
@@ -185,7 +184,6 @@ struct Writer_s WriterVideoVP8 =
 {
 	&reset,
 	&writeDataVP89,
-	NULL,
 	&capsVP8
 };
 
@@ -203,7 +201,6 @@ struct Writer_s WriterVideoVP9 =
 {
 	&reset,
 	&writeDataVP89,
-	NULL,
 	&capsVP9
 };
 
@@ -221,6 +218,5 @@ struct Writer_s WriterVideoSPARK =
 {
 	&reset,
 	&writeDataVP89,
-	NULL,
 	&capsSPARK
 };

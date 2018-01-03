@@ -190,6 +190,5 @@ struct Writer_s WriterVideoDIVX3 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&divix3_caps
 };

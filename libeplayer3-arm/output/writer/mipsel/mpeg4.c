@@ -159,6 +159,5 @@ struct Writer_s WriterVideoMPEG4 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&mpeg4p2_caps
 };

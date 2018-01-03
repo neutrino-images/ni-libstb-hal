@@ -148,7 +148,6 @@ struct Writer_s WriterVideoH263 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_h263
 };
 
@@ -166,6 +165,5 @@ struct Writer_s WriterVideoFLV =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_flv
 };

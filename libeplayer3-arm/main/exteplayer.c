@@ -44,16 +44,16 @@
 #define IPTV_MAX_FILE_PATH 1024
 
 extern int ffmpeg_av_dict_set(const char *key, const char *value, int flags);
-extern void       aac_software_decoder_set(const int32_t val);
-extern void  aac_latm_software_decoder_set(const int32_t val);
-extern void       dts_software_decoder_set(const int32_t val);
-extern void       wma_software_decoder_set(const int32_t val);
-extern void       ac3_software_decoder_set(const int32_t val);
-extern void      eac3_software_decoder_set(const int32_t val);
-extern void       mp3_software_decoder_set(const int32_t val);
-extern void            rtmp_proto_impl_set(const int32_t val);
-extern void        flv2mpeg4_converter_set(const int32_t val);
-extern void        sel_program_id_set(const int32_t val);
+extern void aac_software_decoder_set(const int32_t val);
+extern void aac_latm_software_decoder_set(const int32_t val);
+extern void dts_software_decoder_set(const int32_t val);
+extern void wma_software_decoder_set(const int32_t val);
+extern void ac3_software_decoder_set(const int32_t val);
+extern void eac3_software_decoder_set(const int32_t val);
+extern void mp3_software_decoder_set(const int32_t val);
+extern void rtmp_proto_impl_set(const int32_t val);
+extern void flv2mpeg4_converter_set(const int32_t val);
+extern void sel_program_id_set(const int32_t val);
 
 extern void pcm_resampling_set(int32_t val);
 extern void stereo_software_decoder_set(int32_t val);
@@ -231,6 +231,140 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 	{
 		case 'l':
 		{
+			char **TrackList = NULL;
+			ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
+			if (NULL != TrackList)
+			{
+				int i = 0, Id = -1;
+				char * pch;
+				char Name[] = "          ";
+				fprintf(stderr, "{\"%c_%c\": [", argvBuff[0], argvBuff[1]);
+				for (i = 0; TrackList[i] != NULL; i+=2)
+				{
+					pch = strtok(TrackList[i], " ");
+					if (pch != NULL) {
+						Id = atoi(pch);
+						pch = strtok(NULL, " ");
+						if (pch != NULL) {
+							snprintf(Name, sizeof(Name), "%s", pch);
+						}
+					}
+					if (0 < i)
+					{
+						fprintf(stderr, ", ");
+					}
+					fprintf(stderr, "{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}", Id, TrackList[i+1], Name);
+					free(TrackList[i]);
+					free(TrackList[i+1]);
+				}
+				fprintf(stderr, "]}\n");
+				free(TrackList);
+			}
+			else
+			{
+				// not tracks
+				fprintf(stderr, "{\"%c_%c\": []}\n", argvBuff[0], argvBuff[1]);
+			}
+			break;
+		}
+		case 'c':
+		{
+			TrackDescription_t *track = NULL;
+			ptrManager->Command(g_player, MANAGER_GET_TRACK_DESC, &track);
+			if (NULL != track)
+			{
+				if ('a' == argvBuff[0] || 's' == argvBuff[0])
+				{
+					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}}\n", argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name);
+				}
+				else // video
+				{
+					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\",\"w\":%d,\"h\":%d,\"f\":%u,\"p\":%d,\"an\":%d,\"ad\":%d}}\n", \
+							argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name, track->width, track->height, track->frame_rate, track->progressive, track->aspect_ratio_num, track->aspect_ratio_den);
+				}
+				free(track->Encoding);
+				free(track->Name);
+				free(track);
+			}
+			else
+			{
+				// no tracks
+				if ('a' == argvBuff[0] || 's' == argvBuff[0])
+				{
+					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}}\n", argvBuff[0], argvBuff[1], -1, "", "");
+				}
+				else // video
+				{
+					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\",\"w\":%d,\"h\":%d,\"f\":%u,\"p\":%d}}\n", argvBuff[0], argvBuff[1], -1, "", "", -1, -1, 0, -1);
+				}
+			}
+			break;
+		}
+		default:
+		{
+			/* switch command available only for audio and subtitle tracks */
+			if ('a' == argvBuff[0] || 's' == argvBuff[0])
+			{
+				int ok = 0;
+				int id = -1;
+				if ('i' == argvBuff[1])
+				{
+					int idx = -1;
+					ok = sscanf(argvBuff + 2, "%d", &idx);
+					if (idx >= 0)
+					{
+						char **TrackList = NULL;
+						ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
+						if (NULL != TrackList)
+						{
+							int i = 0;
+							char * pch;
+							for (i = 0; TrackList[i] != NULL; i+=2)
+							{
+								if (idx == i)
+								{
+									pch = strtok(TrackList[i], " ");
+									if (pch != NULL)
+										id = atoi(pch);
+								}
+								free(TrackList[i]);
+								free(TrackList[i+1]);
+							}
+							free(TrackList);
+						}
+					}
+					else
+					{
+						id = idx;
+					}
+				}
+				else
+				{
+					ok = sscanf(argvBuff + 1, "%d", &id);
+				}
+				if (id >= 0 || (1 == ok && id == -1))
+				{
+					commandRetVal = g_player->playback->Command(g_player, playbackSwitchCmd, (void *)&id);
+					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"sts\":%d}}\n", argvBuff[0], 's', id, commandRetVal);
+				}
+			}
+			break;
+		}
+	}
+	return commandRetVal;
+}
+#if 0
+static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbackSwitchCmd, const char *argvBuff)
+{
+	int commandRetVal = 0;
+	if (NULL == ptrManager || NULL == argvBuff || 2 != strnlen(argvBuff, 2))
+	{
+		return -1;
+	}
+	switch (argvBuff[1])
+	{
+		case 'l':
+		{
 			TrackDescription_t *TrackList = NULL;
 			ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
 			if (NULL != TrackList)
@@ -340,7 +474,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 	}
 	return commandRetVal;
 }
-
+#endif
 static void UpdateVideoTrack()
 {
 	HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, "vc");

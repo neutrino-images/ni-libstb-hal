@@ -126,38 +126,33 @@ static int ManagerAdd(Context_t  *context, Track_t track)
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
 
-static char **ManagerList(Context_t * context __attribute__ ((unused)))
+static char **ManagerList(Context_t *context __attribute__((unused)))
 {
-    int i = 0, j = 0;
-    char **tracklist = NULL;
-
-    audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-
-    if (Tracks != NULL) {
-
-	tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
-
-	if (tracklist == NULL) {
-	    audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
-	    return NULL;
+	int i = 0, j = 0;
+	char **tracklist = NULL;
+	audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	if (Tracks != NULL)
+	{
+		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
+		if (tracklist == NULL)
+		{
+			audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+			return NULL;
+		}
+		for (i = 0, j = 0; i < TrackCount; i++, j += 2)
+		{
+			if (Tracks[i].pending)
+				continue;
+			size_t len = strlen(Tracks[i].Name) + 20;
+			char tmp[len];
+			snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
+			tracklist[j] = strdup(tmp);
+			tracklist[j + 1] = strdup(Tracks[i].Encoding);
+		}
+		tracklist[j] = NULL;
 	}
-
-	for (i = 0, j = 0; i < TrackCount; i++, j += 2) {
-	    if (Tracks[i].pending)
-		continue;
-	    size_t len = strlen(Tracks[i].Name) + 20;
-	    char tmp[len];
-	    snprintf(tmp, len, "%d %s\n", Tracks[i].Id, Tracks[i].Name);
-	    tracklist[j] = strdup(tmp);
-	    tracklist[j + 1] = strdup(Tracks[i].Encoding);
-	}
-	tracklist[j] = NULL;
-    }
-
-    audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME,
-		     __FUNCTION__, tracklist, j, TrackCount);
-
-    return tracklist;
+	audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
+	return tracklist;
 }
 
 #if 0
@@ -217,7 +212,6 @@ static int ManagerDel(Context_t *context)
 	audio_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
-
 
 static int Command(void  *_context, ManagerCmd_t command, void *argument)
 {
@@ -349,7 +343,6 @@ static int Command(void  *_context, ManagerCmd_t command, void *argument)
 	audio_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
 	return ret;
 }
-
 
 struct Manager_s AudioManager =
 {

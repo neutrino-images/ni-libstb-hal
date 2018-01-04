@@ -24,8 +24,6 @@ typedef struct
 	unsigned int           InfoFlags;
 } WriterAVCallData_t;
 
-
-
 typedef struct WriterCaps_s
 {
 	char          *name;
@@ -41,7 +39,6 @@ typedef struct Writer_s
 {
 	int (* reset)();
 	int (* writeData)(void *);
-	int (* writeReverseData)(void *);
 	WriterCaps_t *caps;
 } Writer_t;
 

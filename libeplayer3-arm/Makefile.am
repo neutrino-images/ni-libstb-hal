@@ -2,11 +2,13 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 noinst_LTLIBRARIES = libeplayer3_arm.la
 
-AM_CPPFLAGS = -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
-AM_CPPFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
-AM_CPPFLAGS += -I$(srcdir)/include -I$(top_srcdir)/include
+AM_CFLAGS    = -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
+
+AM_CPPFLAGS  = -I$(srcdir)/include
+AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(srcdir)/external
-AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
+
+AM_CXXFLAGS  = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 libeplayer3_arm_la_SOURCES = \
 	container/container.c \
@@ -46,5 +48,8 @@ libeplayer3_arm_la_SOURCES = \
 
 
 LIBEPLAYER3_LIBS = libeplayer3_arm.la
-# -lpthread -lavformat -lavcodec -lavutil -lswresample -lm
 
+bin_PROGRAMS = eplayer3
+eplayer3_SOURCES = main/exteplayer.c
+eplayer3_LDADD = -leplayer3_arm -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lm
+eplayer3_DEPENDENCIES = libeplayer3_arm.la

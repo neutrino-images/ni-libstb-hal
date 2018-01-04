@@ -22,6 +22,7 @@
 /* ***************************** */
 /* Includes                      */
 /* ***************************** */
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -62,7 +63,6 @@ static short debug_level = 0;
 static Writer_t *AvailableWriter[] =
 {
 	&WriterAudioAAC,
-	&WriterAudioAACLATM,
 	&WriterAudioAACLATM,
 	&WriterAudioAACPLUS,
 	&WriterAudioAC3,
@@ -201,4 +201,3 @@ Writer_t *getDefaultAudioWriter()
 	writer_printf(1, "%s: no writer found\n", __func__);
 	return NULL;
 }
-

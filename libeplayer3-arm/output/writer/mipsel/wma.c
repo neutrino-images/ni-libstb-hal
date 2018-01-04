@@ -161,7 +161,7 @@ static int writeData(void *_call)
 }
 
 /* ***************************** */
-/* Writer Definition            */
+/* Writer Definition             */
 /* ***************************** */
 
 static WriterCaps_t capsWMAPRO =
@@ -178,10 +178,8 @@ struct Writer_s WriterAudioWMAPRO =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&capsWMAPRO
 };
-
 
 static WriterCaps_t capsWMA =
 {
@@ -197,6 +195,5 @@ struct Writer_s WriterAudioWMA =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&capsWMA
 };

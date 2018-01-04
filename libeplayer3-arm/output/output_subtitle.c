@@ -84,7 +84,6 @@ Number, Style, Name,, MarginL, MarginR, MarginV, Effect,, Text
 /* Types                         */
 /* ***************************** */
 
-
 /* ***************************** */
 /* Varaibles                     */
 /* ***************************** */
@@ -319,7 +318,6 @@ static int Command(void  *_context, OutputCmd_t command, void *argument)
 	subtitle_printf(50, "exiting with value %d\n", ret);
 	return ret;
 }
-
 
 static char *SubtitleCapabilitis[] = { "subtitle", NULL };
 

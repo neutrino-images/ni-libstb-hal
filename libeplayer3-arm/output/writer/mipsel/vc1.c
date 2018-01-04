@@ -78,7 +78,6 @@ static short debug_level = 10;
 #define vc1_err(fmt, x...)
 #endif
 
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -195,6 +194,5 @@ struct Writer_s WriterVideoVC1 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };

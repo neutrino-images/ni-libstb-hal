@@ -333,7 +333,6 @@ struct Writer_s WriterAudioPCM =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_pcm
 };
 
@@ -349,6 +348,5 @@ struct Writer_s WriterAudioIPCM =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_ipcm
 };

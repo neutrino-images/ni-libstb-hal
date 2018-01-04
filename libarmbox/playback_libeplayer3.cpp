@@ -28,12 +28,19 @@ extern cVideo *videoDecoder;
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
 {
+	const char *aPLAYMODE[] =
+	{
+		"PLAYMODE_TS",
+		"PLAYMODE_FILE"
+	};
+
 	if (PlayMode != PLAYMODE_TS)
 	{
 		audioDecoder->closeDevice();
 		videoDecoder->closeDevice();
 		decoders_closed = true;
 	}
+
 	pm = PlayMode;
 	fn_ts = "";
 	fn_xml = "";
@@ -50,7 +57,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->output      = &OutputHandler;
 		player->container   = &ContainerHandler;
 		player->manager     = &ManagerHandler;
-		lt_info("%s - player output name: %s\n", __func__, player->output->Name);
+		lt_info("%s - player output name: %s PlayMode: %s\n", __func__, player->output->Name, aPLAYMODE[PlayMode]);
 	}
 	//Registration of output devices
 	if (player && player->output)
@@ -65,7 +72,8 @@ void cPlayback::Close(void)
 {
 	lt_info("%s\n", __func__);
 	//Dagobert: movieplayer does not call stop, it calls close ;)
-	Stop();
+	if(playing)
+		Stop();
 	if (decoders_closed)
 	{
 		audioDecoder->openDevice();
@@ -123,68 +131,80 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		}
 		else
 		{
-			        //AUDIO
-			        if(player && player->manager && player->manager->audio) {
-			            char ** TrackList = NULL;
-			            player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
-			            if (TrackList != NULL) {
-			                printf("AudioTrack List\n");
-			                int i = 0;
-			                for (i = 0; TrackList[i] != NULL; i+=2) {
-			                    printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-			                    free(TrackList[i]);
-			                    free(TrackList[i+1]);
-			                }
-			                free(TrackList);
-			            }
-			        }
-			        //SUB
-			        if(player && player->manager && player->manager->subtitle) {
-			            char ** TrackList = NULL;
-			            player->manager->subtitle->Command(player, MANAGER_LIST, &TrackList);
-			            if (TrackList != NULL) {
-			                printf("SubtitleTrack List\n");
-			                int i = 0;
-			                for (i = 0; TrackList[i] != NULL; i+=2) {
-			                    printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-			                    free(TrackList[i]);
-			                    free(TrackList[i+1]);
-			                }
-			                free(TrackList);
-			            }
-			        }
+			//AUDIO
+			if (player && player->manager && player->manager->audio)
+			{
+				char ** TrackList = NULL;
+				player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
+				if (TrackList != NULL)
+				{
+					printf("AudioTrack List\n");
+					int i = 0;
+					for (i = 0; TrackList[i] != NULL; i+=2)
+					{
+						printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+						free(TrackList[i]);
+						free(TrackList[i+1]);
+					}
+					free(TrackList);
+				}
+			}
+			//SUB
+			if (player && player->manager && player->manager->subtitle)
+			{
+				char ** TrackList = NULL;
+				player->manager->subtitle->Command(player, MANAGER_LIST, &TrackList);
+				if (TrackList != NULL)
+				{
+					printf("SubtitleTrack List\n");
+					int i = 0;
+					for (i = 0; TrackList[i] != NULL; i+=2)
+					{
+						printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+						free(TrackList[i]);
+						free(TrackList[i+1]);
+					}
+					free(TrackList);
+				}
+			}
 			/*
-			        //Teletext
-			        if(player && player->manager && player->manager->teletext) {
-			            char ** TrackList = NULL;
-			            player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
-			            if (TrackList != NULL) {
-			                printf("TeletextTrack List\n");
-			                int i = 0;
-			                for (i = 0; TrackList[i] != NULL; i+=2) {
-			                    printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-			                    free(TrackList[i]);
-			                    free(TrackList[i+1]);
-			                }
-			                free(TrackList);
-			            }
-			        }
+			//Teletext
+			if (player && player->manager && player->manager->teletext)
+			{
+				char ** TrackList = NULL;
+				player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+				if (TrackList != NULL)
+				{
+					printf("TeletextTrack List\n");
+					 int i = 0;
+					for (i = 0; TrackList[i] != NULL; i+=2)
+					{
+						printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+						free(TrackList[i]);
+						free(TrackList[i+1]);
+					}
+					free(TrackList);
+				}
+			}
 			*/
-			        //Chapters
-			        if(player && player->manager && player->manager->chapter) {
-			            char ** TrackList = NULL;
-			            player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
-			            if (TrackList != NULL) {
-			                printf("Chapter List\n");
-			                int i = 0;
-			                for (i = 0; TrackList[i] != NULL; i+=2) {
-			                    printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-			                    free(TrackList[i]);
-			                    free(TrackList[i+1]);
-			                }
-			                free(TrackList);
-			            }
-			        }
+			//Chapters
+			if (player && player->manager && player->manager->chapter)
+			{
+				char ** TrackList = NULL;
+				player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
+				if (TrackList != NULL)
+				{
+					printf("Chapter List\n");
+					int i = 0;
+					for (i = 0; TrackList[i] != NULL; i+=2)
+					{
+						printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+						free(TrackList[i]);
+						free(TrackList[i+1]);
+					}
+					free(TrackList);
+				}
+			}
 			playing = true;
 			player->output->Command(player, OUTPUT_OPEN, NULL);
 			ret = (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0);
@@ -426,49 +446,54 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 	lt_info("%s\n", __func__);
 	int max_numpida = *numpida;
 	*numpida = 0;
-	if(player && player->manager && player->manager->audio) {
-	    char ** TrackList = NULL;
-	    player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
-	    if (TrackList != NULL) {
-	        printf("AudioTrack List\n");
-	        int i = 0,j=0;
-	        for (i = 0,j=0; TrackList[i] != NULL; i+=2,j++) {
-	            printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-	            if (j < max_numpida) {
-	                int _pid;
-	                char _lang[strlen(TrackList[i])];
-	                if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang)) {
-	                    apids[j]=_pid;
-	                    // atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
-	                    if(     !strncmp("A_MPEG/L3",   TrackList[i+1], 9))
-	                        ac3flags[j] = 3;
-	                    if(     !strncmp("A_MP3",       TrackList[i+1], 5))
-	                        ac3flags[j] = 4;
-	                    else if(!strncmp("A_AC3",       TrackList[i+1], 5))
-	                        ac3flags[j] = 1;
-	                    else if(!strncmp("A_EAC3",      TrackList[i+1], 6))
-	                        ac3flags[j] = 7;
-	                    else if(!strncmp("A_DTS",       TrackList[i+1], 5))
-	                        ac3flags[j] = 6;
-	                    else if(!strncmp("A_AAC",       TrackList[i+1], 5))
-	                        ac3flags[j] = 5;
-	                    else if(!strncmp("A_PCM",       TrackList[i+1], 5))
-	                        ac3flags[j] = 0;    //todo
-	                    else if(!strncmp("A_VORBIS",    TrackList[i+1], 8))
-	                        ac3flags[j] = 0;    //todo
-	                    else if(!strncmp("A_FLAC",      TrackList[i+1], 6))
-	                        ac3flags[j] = 0;    //todo
-	                    else
-	                        ac3flags[j] = 0;    //todo
-	                    language[j]=std::string(_lang);
-	                }
-	            }
-	            free(TrackList[i]);
-	            free(TrackList[i+1]);
-	        }
-	        free(TrackList);
-	        *numpida=j;
-	    }
+	if (player && player->manager && player->manager->audio)
+	{
+		char **TrackList = NULL;
+		player->manager->audio->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL)
+		{
+			printf("AudioTrack List\n");
+			int i = 0, j = 0;
+			for (i = 0, j = 0; TrackList[i] != NULL; i += 2, j++)
+			{
+				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
+				if (j < max_numpida)
+				{
+					int _pid;
+					char _lang[strlen(TrackList[i])];
+					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang))
+					{
+						apids[j] = _pid;
+						// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
+						if (!strncmp("A_MPEG/L3",   TrackList[i + 1], 9))
+							ac3flags[j] = 3;
+						if (!strncmp("A_MP3",       TrackList[i + 1], 5))
+							ac3flags[j] = 4;
+						else if (!strncmp("A_AC3",       TrackList[i + 1], 5))
+							ac3flags[j] = 1;
+						else if (!strncmp("A_EAC3",      TrackList[i + 1], 6))
+							ac3flags[j] = 7;
+						else if (!strncmp("A_DTS",       TrackList[i + 1], 5))
+							ac3flags[j] = 6;
+						else if (!strncmp("A_AAC",       TrackList[i + 1], 5))
+							ac3flags[j] = 5;
+						else if (!strncmp("A_PCM",       TrackList[i + 1], 5))
+							ac3flags[j] = 0;    //todo
+						else if (!strncmp("A_VORBIS",    TrackList[i + 1], 8))
+							ac3flags[j] = 0;    //todo
+						else if (!strncmp("A_FLAC",      TrackList[i + 1], 6))
+							ac3flags[j] = 0;    //todo
+						else
+							ac3flags[j] = 0;    //todo
+						language[j] = std::string(_lang);
+					}
+				}
+				free(TrackList[i]);
+				free(TrackList[i + 1]);
+			}
+			free(TrackList);
+			*numpida = j;
+		}
 	}
 }
 
@@ -513,31 +538,35 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 	int max_numpids = *numpids;
 	*numpids = 0;
 	/*
-	if(player && player->manager && player->manager->teletext) {
-	    char ** TrackList = NULL;
-	    player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
-	    if (TrackList != NULL) {
-	        printf("Teletext List\n");
-	        int i = 0,j=0;
-	        for (i = 0,j=0; TrackList[i] != NULL; i+=2) {
-	            int type = 0;
-	            printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-	            if (j < max_numpids) {
-	                int _pid;
-	                if (2 != sscanf(TrackList[i], "%*d %d %*s %d %*d %*d", &_pid, &type))
-	                    continue;
-	                if (type != 2 && type != 5) // return subtitles only
-	                    continue;
-	                pids[j]=_pid;
-	                language[j]=std::string(TrackList[i]);
-	                j++;
-	            }
-	            free(TrackList[i]);
-	            free(TrackList[i+1]);
-	        }
-	        free(TrackList);
-	        *numpids=j;
-	    }
+	if (player && player->manager && player->manager->teletext)
+	{
+		char **TrackList = NULL;
+		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL)
+		{
+			printf("Teletext List\n");
+			int i = 0, j = 0;
+			for (i = 0, j = 0; TrackList[i] != NULL; i += 2)
+			{
+				int type = 0;
+				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
+				if (j < max_numpids)
+				{
+					int _pid;
+					if (2 != sscanf(TrackList[i], "%d %*s %d %*d %*d", &_pid, &type))
+						continue;
+					if (type != 2 && type != 5) // return subtitles only
+						continue;
+					pids[j] = _pid;
+					language[j] = std::string(TrackList[i]);
+					j++;
+				}
+				free(TrackList[i]);
+				free(TrackList[i + 1]);
+			}
+			free(TrackList);
+			*numpids = j;
+		}
 	}
 	*/
 }
@@ -547,26 +576,30 @@ int cPlayback::GetTeletextPid(void)
 	lt_info("%s\n", __func__);
 	int pid = -1;
 	/*
-	if(player && player->manager && player->manager->teletext) {
-	    char ** TrackList = NULL;
-	    player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
-	    if (TrackList != NULL) {
-	        printf("Teletext List\n");
-	        int i = 0;
-	        for (i = 0; TrackList[i] != NULL; i+=2) {
-	            int type = 0;
-	            printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-	            if (pid < 0) {
-	                if (2 != sscanf(TrackList[i], "%*d %d %*s %d %*d %*d", &pid, &type))
-	                    continue;
-	                if (type != 1)
-	                    pid = -1;
-	            }
-	            free(TrackList[i]);
-	            free(TrackList[i+1]);
-	        }
-	        free(TrackList);
-	    }
+	if (player && player->manager && player->manager->teletext)
+	{
+		char **TrackList = NULL;
+		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL)
+		{
+			printf("Teletext List\n");
+			int i = 0;
+			for (i = 0; TrackList[i] != NULL; i += 2)
+			{
+				int type = 0;
+				printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
+				if (pid < 0)
+				{
+					if (2 != sscanf(TrackList[i], "%*d %d %*s %d %*d %*d", &pid, &type))
+						continue;
+					if (type != 1)
+						pid = -1;
+				}
+				free(TrackList[i]);
+				free(TrackList[i + 1]);
+			}
+			free(TrackList);
+		}
 	}
 	*/
 	printf("teletext pid id %d (0x%x)\n", pid, pid);
@@ -590,24 +623,27 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 {
 	positions.clear();
 	titles.clear();
-	    if(player && player->manager && player->manager->chapter) {
-	        char ** TrackList = NULL;
-	        player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
-	        if (TrackList != NULL) {
-	            printf("%s: Chapter List\n", __func__);
-	            int i = 0;
-	            for (i = 0; TrackList[i] != NULL; i+=2) {
-	                printf("\t%s - %s\n", TrackList[i], TrackList[i+1]);
-	                int pos = atoi(TrackList[i]);
-	                std::string title(TrackList[i + 1]);
-	                positions.push_back(pos);
-	                titles.push_back(title);
-	                free(TrackList[i]);
-	                free(TrackList[i+1]);
-	            }
-	            free(TrackList);
-	        }
-	    }
+	if (player && player->manager && player->manager->chapter)
+	{
+		char **TrackList = NULL;
+		player->manager->chapter->Command(player, MANAGER_LIST, &TrackList);
+		if (TrackList != NULL)
+		{
+			printf("%s: Chapter List\n", __func__);
+			int i = 0;
+			for (i = 0; TrackList[i] != NULL; i += 2)
+			{
+				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
+				int pos = atoi(TrackList[i]);
+				std::string title(TrackList[i + 1]);
+				positions.push_back(pos);
+				titles.push_back(title);
+				free(TrackList[i]);
+				free(TrackList[i + 1]);
+			}
+			free(TrackList);
+		}
+	}
 }
 
 void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values)
@@ -649,9 +685,11 @@ cPlayback::~cPlayback()
 
 void cPlayback::RequestAbort()
 {
-	if (player && player->playback)
+	if (player && player->playback && player->playback->isPlaying)
 	{
-		player->playback->abortRequested = 1;
+		lt_info("%s\n", __func__);
+		Stop();
+		//player->playback->abortRequested = 1;
 		while (player->playback->isPlaying)
 			usleep(100000);
 	}
@@ -666,8 +704,9 @@ bool cPlayback::IsPlaying()
 
 uint64_t cPlayback::GetReadCount()
 {
-	//if (player && player->playback) {
-	//return player->playback->readCount;
+	//if (player && player->playback)
+	//{
+	//	return player->playback->readCount;
 	//}
 	return 0;
 }

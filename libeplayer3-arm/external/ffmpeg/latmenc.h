@@ -42,4 +42,3 @@ int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size);
 int latmenc_write_packet(LATMContext *ctx, uint8_t *data, int size, uint8_t *extradata, int extradata_size);
 
 #endif /* AVCODEC_LATMENC_H */
-

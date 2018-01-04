@@ -100,7 +100,6 @@ static uint32_t fixed_bufferfilled;
 /* MISC Functions                */
 /* ***************************** */
 
-
 static int32_t reset()
 {
 	initialHeader = 1;
@@ -128,7 +127,7 @@ static int32_t writeData(void *_call)
 		return 0;
 	}
 	static uint8_t  PesHeader[PES_MAX_HEADER_SIZE + 22];
-	pcmPrivateData_t *pcmPrivateData  = (pcmPrivateData_t *)call->private_data;
+	pcmPrivateData_t *pcmPrivateData = (pcmPrivateData_t *)call->private_data;
 	uint8_t *buffer = call->data;
 	uint32_t   size = call->len;
 	if (pcmPrivateData->bResampling || NULL == fixed_buffer)
@@ -148,7 +147,7 @@ static int32_t writeData(void *_call)
 		int32_t channels = (uint8_t) pcmPrivateData->channels;
 		int32_t block_align = 0;
 		int32_t byterate = 0;
-		uint32_t codecID   = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
+		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
 		uint8_t dataPrecision = 0;
 		uint8_t LE = 0;
 		switch (codecID)
@@ -289,7 +288,6 @@ struct Writer_s WriterAudioPCM =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_pcm
 };
 
@@ -307,6 +305,5 @@ struct Writer_s WriterAudioIPCM =
 {
 	&reset,
 	&writeData, /* writeDataIPCM */
-	NULL,
 	&caps_ipcm
 };

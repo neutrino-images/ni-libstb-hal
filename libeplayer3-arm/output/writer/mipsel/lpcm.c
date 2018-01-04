@@ -261,6 +261,5 @@ struct Writer_s WriterAudioLPCM =
 {
 	&reset,
 	&writeData, /* writeDataLPCM */
-	NULL,
 	&caps_lpcm
 };

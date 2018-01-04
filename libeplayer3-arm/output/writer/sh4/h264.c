@@ -91,7 +91,6 @@ typedef struct avcC_s
 	unsigned char       Params[1];              /* {length,params}{length,params}...sequence then picture*/
 } avcC_t;
 
-
 /* ***************************** */
 /* Varaibles                     */
 /* ***************************** */
@@ -106,6 +105,7 @@ static int       avc3 = 0;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 // Please see: https://bugzilla.mozilla.org/show_bug.cgi?id=1105771
 static int32_t UpdateExtraData(uint8_t **ppExtraData, uint32_t *pExtraDataSize, uint8_t *pData, uint32_t dataSize)
 {
@@ -230,8 +230,8 @@ static int32_t writeData(void *_call)
 	}
 	/* AnnexA */
 	if (!avc3 && ((1 < call->private_size && 0 == call->private_data[0]) ||
-				  (call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-									  (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
+			(call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+			(call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
 	{
 		uint32_t PacketLength = 0;
 		uint32_t FakeStartCode = /*(call->Version << 8) | */PES_VERSION_FAKE_START_CODE;
@@ -281,7 +281,7 @@ static int32_t writeData(void *_call)
 			if (private_data != call->private_data)
 			{
 				avc3 = 1;
-				avcCHeader          = (avcC_t *)private_data;
+				avcCHeader = (avcC_t *)private_data;
 			}
 		}
 		HeaderData[ParametersLength++]        = 0x00;                                         // Start code
@@ -292,7 +292,7 @@ static int32_t writeData(void *_call)
 		HeaderData[ParametersLength++]        = CONTAINER_PARAMETERS_VERSION;
 		HeaderData[ParametersLength++]        = 0xff;                                         // Field separator
 		if (TimeDelta == 0xffffffff)
-			TimeDelta       = (TimeScale > 1000) ? 1001 : 1;
+			TimeDelta                     = (TimeScale > 1000) ? 1001 : 1;
 		HeaderData[ParametersLength++]        = (TimeScale >> 24) & 0xff;         // Output the timescale
 		HeaderData[ParametersLength++]        = (TimeScale >> 16) & 0xff;
 		HeaderData[ParametersLength++]        = 0xff;
@@ -435,28 +435,6 @@ static int32_t writeData(void *_call)
 	return len;
 }
 
-static int writeReverseData(void *_call)
-{
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	h264_printf(10, "\n");
-	if (call == NULL)
-	{
-		h264_err("call data is NULL...\n");
-		return 0;
-	}
-	h264_printf(10, "VideoPts %lld\n", call->Pts);
-	if ((call->data == NULL) || (call->len <= 0))
-	{
-		h264_err("NULL Data. ignoring...\n");
-		return 0;
-	}
-	if (call->fd < 0)
-	{
-		h264_err("file pointer < 0. ignoring ...\n");
-		return 0;
-	}
-	return 0;
-}
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
@@ -475,6 +453,5 @@ struct Writer_s WriterVideoH264 =
 {
 	&reset,
 	&writeData,
-	&writeReverseData,
 	&caps
 };

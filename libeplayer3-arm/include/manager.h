@@ -103,7 +103,7 @@ typedef struct ManagerHandler_s
 	Manager_t *audio;
 	Manager_t *video;
 	Manager_t *subtitle;
-    Manager_t *chapter;
+	Manager_t *chapter;
 } ManagerHandler_t;
 
 void freeTrack(Track_t *track);

@@ -127,6 +127,7 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
 	context->playback->uri = strdup(uri);
 	context->playback->isFile = 0;
 	context->playback->isHttp = 0;
+	context->playback->noprobe = 0;
 	if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7))
 	{
 		context->playback->isFile = 1;
@@ -145,6 +146,10 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
 			playback_err("Wrong extension (%s)\n", context->playback->uri + 7);
 			return cERR_PLAYBACK_ERROR;
 		}
+		else if (!strncmp("ts", extension, 2))
+		{
+			context->playback->noprobe = 1;
+		}
 	}
 	else if (strstr(uri, "://"))
 	{
@@ -158,6 +163,10 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
 			strncpy(tUri, "rtsp", 4);
 			free(context->playback->uri);
 			context->playback->uri = tUri;
+		}
+		if (strstr(uri, ":10000") || strstr(uri, ":31339/id="))
+		{
+			context->playback->noprobe = 1;
 		}
 	}
 	else
@@ -588,10 +597,8 @@ static int PlaybackMetadata(Context_t * context, char ***metadata)
 	int ret = cERR_PLAYBACK_NO_ERROR;
 
 	if (context->container && context->container->selectedContainer)
-	context->container->selectedContainer->Command(context,
-								CONTAINER_GET_METADATA,
-								metadata);
-    return ret;
+		context->container->selectedContainer->Command(context, CONTAINER_GET_METADATA, metadata);
+	return ret;
 }
 
 static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)

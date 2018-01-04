@@ -55,7 +55,6 @@
 #define B_GET_BITS(w,e,b)  (((w)>>(b))&(((unsigned)(-1))>>((sizeof(unsigned))*8-(e+1-b))))
 #define B_SET_BITS(name,v,e,b)  (((unsigned)(v))<<(b))
 
-
 #ifdef SAM_WITH_DEBUG
 #define DIVX_DEBUG
 #else
@@ -191,6 +190,5 @@ struct Writer_s WriterVideoDIVX3 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&divix3_caps
 };

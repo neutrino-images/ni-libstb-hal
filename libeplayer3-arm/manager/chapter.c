@@ -112,8 +112,7 @@ static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track
 	}
 	else
 	{
-		chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME,
-		                __FUNCTION__, TrackCount, TRACKWRAP);
+		chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
@@ -175,8 +174,7 @@ static int ManagerDel(Context_t * context __attribute__((unused)))
 	}
 	else
 	{
-		chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME,
-		                __FUNCTION__);
+		chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
@@ -197,43 +195,40 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 
 	switch (command)
 	{
-	case MANAGER_ADD:
-	{
-		Track_t *track = argument;
-		ret = ManagerAdd(context, *track);
-		break;
-	}
-	case MANAGER_LIST:
-	{
-		container_ffmpeg_update_tracks(context, context->playback->uri, 0);
-		*((char ***) argument) = (char **) ManagerList(context);
-		break;
-	}
-	case MANAGER_DEL:
-	{
-		ret = ManagerDel(context);
-		break;
-	}
-	case MANAGER_INIT_UPDATE:
-	{
-		int i;
-		for (i = 0; i < TrackCount; i++)
-			Tracks[i].pending = 1;
-		break;
-	}
-	default:
-		chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME,
-		                __FUNCTION__, command);
-		ret = cERR_CHAPTER_MGR_ERROR;
-		break;
+		case MANAGER_ADD:
+		{
+			Track_t *track = argument;
+			ret = ManagerAdd(context, *track);
+			break;
+		}
+		case MANAGER_LIST:
+		{
+			container_ffmpeg_update_tracks(context, context->playback->uri, 0);
+			*((char ***) argument) = (char **) ManagerList(context);
+			break;
+		}
+		case MANAGER_DEL:
+		{
+			ret = ManagerDel(context);
+			break;
+		}
+		case MANAGER_INIT_UPDATE:
+		{
+			int i;
+			for (i = 0; i < TrackCount; i++)
+				Tracks[i].pending = 1;
+			break;
+		}
+		default:
+			chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
+			ret = cERR_CHAPTER_MGR_ERROR;
+			break;
 	}
 
-	chapter_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__,
-	                   ret);
+	chapter_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
 
 	return ret;
 }
-
 
 struct Manager_s ChapterManager =
 {

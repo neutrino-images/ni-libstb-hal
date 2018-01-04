@@ -312,8 +312,8 @@ static int writeData(void *_call)
 	}
 	/* AnnexA */
 	if (!avc3 && ((1 < call->private_size && 0 == call->private_data[0]) ||
-				  (call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-									  (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
+			(call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+			(call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
 	{
 		uint32_t PacketLength = 0;
 		uint32_t FakeStartCode = (call->Version << 8) | PES_VERSION_FAKE_START_CODE;
@@ -413,11 +413,6 @@ static int writeData(void *_call)
 	return len;
 }
 
-static int writeReverseData(void *_call)
-{
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	return 0;
-}
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
@@ -436,6 +431,5 @@ struct Writer_s WriterVideoH264 =
 {
 	&reset,
 	&writeData,
-	&writeReverseData,
 	&caps
 };

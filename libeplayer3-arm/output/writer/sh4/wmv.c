@@ -80,7 +80,6 @@ static short debug_level = 0;
 #define wmv_err(fmt, x...)
 #endif
 
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -249,6 +248,5 @@ struct Writer_s WriterVideoWMV =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };

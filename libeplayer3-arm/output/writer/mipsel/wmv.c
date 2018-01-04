@@ -20,7 +20,7 @@
  */
 
 /* ***************************** */
-/* Includes           */
+/* Includes                      */
 /* ***************************** */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@
 #include "writer.h"
 
 /* ***************************** */
-/* Makros/Constants       */
+/* Makros/Constants              */
 /* ***************************** */
 
 #define WMV_FRAME_START_CODE 0x0d
@@ -79,7 +79,7 @@ static short debug_level = 10;
 #endif
 
 /* ***************************** */
-/* Types             */
+/* Types                         */
 /* ***************************** */
 
 static const  uint8_t Vc1FrameStartCode[]     = {0, 0, 1, WMV_FRAME_START_CODE};
@@ -201,6 +201,5 @@ struct Writer_s WriterVideoWMV =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };

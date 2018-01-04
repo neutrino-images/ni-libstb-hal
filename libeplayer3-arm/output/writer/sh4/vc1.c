@@ -58,7 +58,6 @@
 #define METADATA_STRUCT_B_FRAMERATE_START   32
 #define METADATA_STRUCT_C_START      8
 
-
 #define VC1_SEQUENCE_LAYER_METADATA_START_CODE    0x80
 #define VC1_FRAME_START_CODE                0x0d
 
@@ -84,13 +83,11 @@ static short debug_level = 0;
 #define vc1_err(fmt, x...)
 #endif
 
-
 /* ***************************** */
-/* Types             */
+/* Types                         */
 /* ***************************** */
 
 static const unsigned char  SequenceLayerStartCode[]      = {0x00,    0x00,   0x01,   VC1_SEQUENCE_LAYER_METADATA_START_CODE};
-
 
 static const unsigned char  Metadata[]    =
 {
@@ -240,7 +237,7 @@ static int writeData(void *_call)
 }
 
 /* ***************************** */
-/* Writer  Definition       */
+/* Writer  Definition            */
 /* ***************************** */
 
 static WriterCaps_t caps =
@@ -257,7 +254,5 @@ struct Writer_s WriterVideoVC1 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };
-

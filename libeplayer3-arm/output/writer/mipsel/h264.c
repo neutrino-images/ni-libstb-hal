@@ -413,11 +413,6 @@ static int writeData(void *_call)
 	return len;
 }
 
-static int writeReverseData(void *_call)
-{
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	return 0;
-}
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
@@ -436,6 +431,5 @@ struct Writer_s WriterVideoH264 =
 {
 	&reset,
 	&writeData,
-	&writeReverseData,
 	&caps
 };

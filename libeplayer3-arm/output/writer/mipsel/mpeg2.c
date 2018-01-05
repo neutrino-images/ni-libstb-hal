@@ -157,7 +157,6 @@ struct Writer_s WriterVideoMPEG2 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };
 
@@ -175,6 +174,5 @@ struct Writer_s WriterVideoMPEG1 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&mpg1_caps
 };

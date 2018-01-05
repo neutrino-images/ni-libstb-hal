@@ -84,7 +84,7 @@ static short debug_level = 0;
 #endif
 
 /* ***************************** */
-/* Types             */
+/* Types                         */
 /* ***************************** */
 
 static const unsigned char  SequenceLayerStartCode[]      = {0x00,    0x00,   0x01,   VC1_SEQUENCE_LAYER_METADATA_START_CODE};
@@ -237,7 +237,7 @@ static int writeData(void *_call)
 }
 
 /* ***************************** */
-/* Writer  Definition       */
+/* Writer  Definition            */
 /* ***************************** */
 
 static WriterCaps_t caps =
@@ -254,6 +254,5 @@ struct Writer_s WriterVideoVC1 =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps
 };

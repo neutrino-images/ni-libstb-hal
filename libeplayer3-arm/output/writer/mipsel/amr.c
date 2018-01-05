@@ -169,6 +169,5 @@ struct Writer_s WriterAudioAMR =
 {
 	&reset,
 	&writeData,
-	NULL,
 	&caps_amr
 };

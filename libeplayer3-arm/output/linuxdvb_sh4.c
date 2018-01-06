@@ -749,7 +749,9 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 				free(Encoding);
 			}
 			else
+			{
 				linuxdvb_printf(20, "no context for Audio\n");
+			}
 		}
 		if (video && videofd != -1)
 		{
@@ -798,7 +800,9 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 				free(Encoding);
 			}
 			else
+			{
 				linuxdvb_printf(20, "no context for Video\n");
+			}
 		}
 		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
 	}
@@ -898,7 +902,7 @@ static int Write(void *_context, void *_out)
 			call.FrameScale   = out->timeScale;
 			call.Width        = out->width;
 			call.Height       = out->height;
-			call.InfoFlags      = out->infoFlags;
+			call.InfoFlags    = out->infoFlags;
 			call.Version      = 0; // is unsingned char
 			if (writer->writeData)
 			{

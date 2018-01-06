@@ -687,7 +687,7 @@ int LinuxDvbPts(Context_t *context __attribute__((unused)), unsigned long long i
 	return ret;
 }
 
-int LinuxDvbGetFrameCount(Context_t  *context __attribute__((unused)), unsigned long long int *frameCount)
+int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned long long int *frameCount)
 {
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	return ret;
@@ -746,7 +746,9 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 				free(Encoding);
 			}
 			else
+			{
 				linuxdvb_printf(20, "no context for Audio\n");
+			}
 		}
 		if (video && videofd != -1)
 		{
@@ -795,7 +797,9 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 				free(Encoding);
 			}
 			else
+			{
 				linuxdvb_printf(20, "no context for Video\n");
+			}
 		}
 		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
 	}

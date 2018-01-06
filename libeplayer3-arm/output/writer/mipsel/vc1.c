@@ -83,7 +83,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 /* Types                         */
 /* ***************************** */
 
-static const unsigned char SequenceLayerStartCode[] = {0x00, 0x00, 0x01, VC1_SEQUENCE_LAYER_METADATA_START_CODE};
+//static const unsigned char SequenceLayerStartCode[] = {0x00, 0x00, 0x01, VC1_SEQUENCE_LAYER_METADATA_START_CODE};
 static const uint8_t Vc1FrameStartCode[] = {0, 0, 1, VC1_FRAME_START_CODE};
 
 /* ***************************** */

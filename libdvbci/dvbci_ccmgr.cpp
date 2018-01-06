@@ -1357,7 +1357,6 @@ void eDVBCIContentControlManagerSession::resendKey(eDVBCISlot *tslot)
 				{
 					for (unsigned int i = 0; i < slot->pids.size(); i++)
 						descrambler_set_pid((int)tslot->slot, 1, (int) slot->pids[i]);
-					descrambler_close();
 				}
 			}
 			slot->newPids = false;
@@ -1372,7 +1371,6 @@ void eDVBCIContentControlManagerSession::resendKey(eDVBCISlot *tslot)
 				{
 					for (unsigned int i = 0; i < slot->pids.size(); i++)
 						descrambler_set_pid((int)tslot->slot, 1, (int) slot->pids[i]);
-					descrambler_close();
 				}
 			}
 			slot->newPids = false;

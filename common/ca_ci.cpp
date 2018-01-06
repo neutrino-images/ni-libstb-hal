@@ -1381,7 +1381,6 @@ void cCA::slot_pollthread(void *c)
 					}
 				}
 				/* slow down the loop, if no CI cam present */
-				printf("***sleep\n");
 				sleep(1);
 			} /* case statusnone */
 			break;

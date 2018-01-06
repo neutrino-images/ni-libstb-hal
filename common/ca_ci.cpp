@@ -190,7 +190,7 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 	else if (retval == 0)
 	{
 #if wd_debug
-		//printf("**** wd DataTimeout\n");
+		printf("**** wd DataTimeout\n");
 #endif
 		return eDataTimeout;
 	}
@@ -214,7 +214,7 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 		else if (fds.revents & POLLOUT)
 		{
 #if wd_debug
-			//printf("**** wd DataWrite\n");
+			printf("**** wd DataWrite\n");
 #endif
 			return eDataWrite;
 		}
@@ -1343,12 +1343,11 @@ void cCA::slot_pollthread(void *c)
 {
 	unsigned char data[1024 * 4];
 	eDVBCISlot* slot = (eDVBCISlot*) c;
+	bool wait = false;
 
 	while (1)
 	{
 #if HAVE_ARM_HARDWARE		/* Armbox */
-		if (slot->init && !slot->mmiOpened)
-			sleep(1);
 
 		int len = 1024 *4;
 		eData status;
@@ -1381,6 +1380,9 @@ void cCA::slot_pollthread(void *c)
 						goto FROM_FIRST;
 					}
 				}
+				/* slow down the loop, if no CI cam present */
+				printf("***sleep\n");
+				sleep(1);
 			} /* case statusnone */
 			break;
 			case eStatusWait:
@@ -1389,6 +1391,7 @@ void cCA::slot_pollthread(void *c)
 FROM_FIRST:
 				if (status == eDataReady)
 				{
+					wait = false;
 					slot->pollConnection = false;
 					if (len)
 					{
@@ -1398,6 +1401,7 @@ FROM_FIRST:
 				} /*if data ready */
 				else if (status == eDataWrite)
 				{
+					wait = true;
 					/* only writing any data here while status = eDataWrite */
 					if (!slot->sendqueue.empty())
 					{
@@ -1619,6 +1623,9 @@ FROM_FIRST:
 			if (slot->ccmgr_ready && slot->hasCCManager && slot->scrambled && !slot->SidBlackListed)
 				slot->ccmgrSession->resendKey(slot);
 		}
+		/* slow down for hd51 to avoid high cpu load */
+		if (wait && slot->init)
+			usleep(300000);
 	}
 }
 

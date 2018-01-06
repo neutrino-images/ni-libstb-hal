@@ -86,4 +86,5 @@ Writer_t *getDefaultVideoWriter();
 Writer_t *getDefaultAudioWriter();
 ssize_t write_with_retry(int fd, const void *buf, size_t size);
 ssize_t writev_with_retry(int fd, const struct iovec *iov, size_t ic);
+
 #endif

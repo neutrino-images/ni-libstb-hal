@@ -50,6 +50,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #ifdef SAM_WITH_DEBUG
 #define MPEG2_DEBUG
 #else
@@ -61,7 +62,7 @@
 static short debug_level = 0;
 
 #define mpeg2_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define mpeg2_printf(level, fmt, x...)
 #endif
@@ -77,7 +78,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */
@@ -96,7 +97,7 @@ static int reset()
 static int writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	unsigned char               PesHeader[PES_MAX_HEADER_SIZE];
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 	int len = 0;
 	unsigned int Position = 0;
 	mpeg2_printf(10, "\n");

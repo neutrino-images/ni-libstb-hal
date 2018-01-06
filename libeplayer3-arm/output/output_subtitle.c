@@ -53,7 +53,7 @@
 static short debug_level = 0;
 
 #define subtitle_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define subtitle_printf(level, fmt, x...)
 #endif
@@ -85,7 +85,7 @@ Number, Style, Name,, MarginL, MarginR, MarginV, Effect,, Text
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static pthread_mutex_t mutex;
@@ -96,8 +96,9 @@ static int isSubtitleOpened = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* MISC Functions                */
+/* Functions                     */
 /* ***************************** */
+
 static void getMutex(int line)
 {
 	subtitle_printf(100, "%d requesting mutex\n", line);
@@ -258,7 +259,7 @@ static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 	return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int Command(void  *_context, OutputCmd_t command, void *argument)
+static int Command(void *_context, OutputCmd_t command, void *argument)
 {
 	Context_t  *context = (Context_t *) _context;
 	int ret = cERR_SUBTITLE_NO_ERROR;

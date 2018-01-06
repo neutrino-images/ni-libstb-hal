@@ -31,6 +31,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #define TRACKWRAP 20
 
 //#define SAM_WITH_DEBUG
@@ -45,7 +46,7 @@
 static short debug_level = 40;
 
 #define audio_mgr_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] \n" fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] \n" fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define audio_mgr_printf(level, x...)
 #endif
@@ -67,7 +68,7 @@ static const char FILENAME[] = __FILE__;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static Track_t *Tracks = NULL;
@@ -82,7 +83,7 @@ static int CurrentTrack = 0; //TRACK[0] as default.
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t  *context, Track_t track)
+static int ManagerAdd(Context_t *context, Track_t track)
 {
 	audio_mgr_printf(10, "%s::%s name=\"%s\" encoding=\"%s\" id=%d\n", FILENAME, __FUNCTION__, track.Name, track.Encoding, track.Id);
 	if (Tracks == NULL)
@@ -213,9 +214,9 @@ static int ManagerDel(Context_t *context)
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
 
-static int Command(void  *_context, ManagerCmd_t command, void *argument)
+static int Command(void *_context, ManagerCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
+	Context_t *context = (Context_t *) _context;
 	int ret = cERR_AUDIO_MGR_NO_ERROR;
 	audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 	switch (command)

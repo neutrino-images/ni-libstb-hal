@@ -61,7 +61,7 @@
 static short debug_level = 0;
 
 #define h264_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define h264_printf(level, fmt, x...)
 #endif
@@ -79,14 +79,16 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static unsigned char           Head[] = {0, 0, 0, 1};
 static int                     initialHeader = 1;
 static unsigned int            NalLengthBytes = 1;
 static unsigned char           *CodecData     = NULL;
 static unsigned int            CodecDataLen   = 0;
 static int                     avc3 = 0;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */

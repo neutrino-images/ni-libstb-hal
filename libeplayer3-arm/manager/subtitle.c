@@ -30,6 +30,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #define TRACKWRAP 20
 
 #ifdef SAM_WITH_DEBUG

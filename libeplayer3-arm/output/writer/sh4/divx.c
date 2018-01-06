@@ -62,7 +62,7 @@
 static short debug_level = 0;
 
 #define divx_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define divx_printf(level, fmt, x...)
 #endif
@@ -78,8 +78,9 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static int initialHeader = 1;
 
 /* ***************************** */
@@ -89,6 +90,7 @@ static int initialHeader = 1;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	initialHeader = 1;

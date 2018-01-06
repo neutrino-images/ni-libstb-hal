@@ -57,7 +57,9 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 //#define SAM_WITH_DEBUG
+
 #ifdef SAM_WITH_DEBUG
 #define LPCM_DEBUG
 #else
@@ -69,7 +71,7 @@
 static uint16_t debug_level = 1;
 
 #define lpcm_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define lpcm_printf(level, fmt, x...)
 #endif
@@ -87,8 +89,9 @@ static uint16_t debug_level = 1;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 static uint8_t initialHeader = 1;
 

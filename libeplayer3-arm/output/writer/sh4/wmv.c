@@ -69,7 +69,7 @@
 static short debug_level = 0;
 
 #define wmv_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define wmv_printf(level, fmt, x...)
 #endif
@@ -106,8 +106,9 @@ static const unsigned char  Metadata[]          =
 };
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static int initialHeader = 1;
 
 /* ***************************** */
@@ -117,6 +118,7 @@ static int initialHeader = 1;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	initialHeader = 1;

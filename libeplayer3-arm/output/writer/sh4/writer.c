@@ -43,7 +43,7 @@
 static short debug_level = 0;
 
 #define writer_printf(level, x...) do { \
-		if (debug_level >= level) printf(x); } while (0)
+if (debug_level >= level) printf(x); } while (0)
 #else
 #define writer_printf(level, x...)
 #endif
@@ -59,7 +59,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static Writer_t *AvailableWriter[] =

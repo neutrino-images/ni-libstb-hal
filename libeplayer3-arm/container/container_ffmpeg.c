@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -40,7 +41,6 @@
 #include <sys/poll.h>
 #include <pthread.h>
 #include <sys/prctl.h>
-#include <stdint.h>
 
 #include <libavutil/avutil.h>
 #include <libavutil/time.h>
@@ -84,7 +84,7 @@
 static short debug_level = 1;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ffmpeg_printf(level, fmt, x...)
 #endif
@@ -115,7 +115,7 @@ static short debug_level = 1;
 typedef enum {RTMP_NATIVE, RTMP_LIBRTMP, RTMP_NONE} eRTMPProtoImplType;
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static pthread_mutex_t mutex;
@@ -439,8 +439,8 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 		case AV_CODEC_ID_MOV_TEXT:
 		case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
 		case AV_CODEC_ID_DVB_TELETEXT:
-//    case CODEC_ID_DVB_TELETEXT:
-//        return "S_TEXT/SRT"; /* fixme */
+//		case CODEC_ID_DVB_TELETEXT:
+//			return "S_TEXT/SRT"; /* fixme */
 		case AV_CODEC_ID_TEXT: ///< raw UTF-8 text
 			return "S_TEXT/UTF-8";
 		case AV_CODEC_ID_SRT:
@@ -2645,9 +2645,9 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int32_t Command(void  *_context, ContainerCmd_t command, void *argument)
+static int32_t Command(void *_context, ContainerCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
+	Context_t *context = (Context_t *) _context;
 	int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 	ffmpeg_printf(50, "Command %d\n", command);
 	if (command != CONTAINER_SET_BUFFER_SEEK_TIME &&

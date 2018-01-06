@@ -60,7 +60,7 @@
 static short debug_level = 0;
 
 #define mpeg2_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define mpeg2_printf(level, fmt, x...)
 #endif
@@ -76,7 +76,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */
@@ -118,7 +118,7 @@ static int writeData(void *_call)
 	while (Position < call->len)
 	{
 		int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-						   (call->len - Position) : MAX_PES_PACKET_SIZE;
+		                   (call->len - Position) : MAX_PES_PACKET_SIZE;
 		int Remaining = call->len - Position - PacketLength;
 		mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 		struct iovec iov[2];

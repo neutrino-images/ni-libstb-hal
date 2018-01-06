@@ -20,8 +20,6 @@ static int desc_user_count = 0;
 
 #if HAVE_ARM_HARDWARE
 
-//static const char *descrambler_filename = "/dev/dvb/adapter0/ca0";
-//static const char *descrambler_filename = "/dev/dvb/adapter0/ca1";
 static const char *descrambler_filename = "/dev/ciplus_ca0";
 
 enum ca_descr_data_type {
@@ -43,19 +41,18 @@ struct ca_descr_data {
 };
 
 #define CA_SET_DESCR_DATA _IOW('o', 137, struct ca_descr_data)
-//#define CA_SET_DESCR_DATA _IOW('o', 10, struct ca_descr_data)
 
 int descrambler_set_key(int index, int parity, unsigned char *data)
 {
 	struct ca_descr_data d;
 	int ret;
 
-	printf("%s -> %s %s\n", FILENAME, __FUNCTION__, descrambler_filename);
+	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
 	if (descrambler_open())
 	{
-		printf("Complete Data-> Index: (%d) Parity: (%d) -> ", index, parity);
-		hexdump(data, 32);
+		//printf("Complete Data-> Index: (%d) Parity: (%d) -> ", index, parity);
+		//hexdump(data, 32);
 
 		d.index = index;
 		d.parity = (ca_descr_parity)parity;
@@ -78,7 +75,7 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 		d.length = 16;
 		d.data = data + 16;
 
-		printf("IV Index: (%d) Parity: (%d) -> ", d.index, d.parity);
+		printf("IV Index:  (%d) Parity: (%d) -> ", d.index, d.parity);
 		hexdump(d.data, 16);
 
 		ret = ioctl(desc_fd, CA_SET_DESCR_DATA, &d);
@@ -87,7 +84,6 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 			printf("CA_SET_DESCR_DATA (IV) index=%d parity=%d (errno=%d %s)\n", index, parity, errno, strerror(errno));
 		}
 
-		descrambler_close();
 	}
 	return 0;
 }
@@ -102,7 +98,7 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 {
 	struct ca_descr_data d;
 
-	printf("%s -> %s %s\n", FILENAME, __FUNCTION__, descrambler_filename);
+	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
 	index |= 0x100;
 
@@ -125,7 +121,6 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 		printf("Index: %d Parity: (%d) -> ", d.index, d.parity);
 		hexdump(d.data, 32);
 
-		descrambler_close();
 	}
 	return 0;
 }
@@ -165,6 +160,8 @@ int descrambler_set_pid(int index, int enable, int pid)
 
 bool descrambler_open(void)
 {
+	if (desc_fd > 0)
+		return true;
 	desc_fd = open(descrambler_filename, O_RDWR | O_NONBLOCK );
 	if (desc_fd <= 0) {
 		printf("cannot open %s\n", descrambler_filename);
@@ -176,6 +173,7 @@ bool descrambler_open(void)
 int descrambler_init(void)
 {
 	desc_user_count++;
+	descrambler_open();
 	printf("%s -> %s %d\n", FILENAME, __FUNCTION__, desc_user_count);
 	return 0;
 }

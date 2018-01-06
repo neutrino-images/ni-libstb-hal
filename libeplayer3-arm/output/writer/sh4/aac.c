@@ -68,7 +68,7 @@
 static short debug_level = 0;
 
 #define aac_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define aac_printf(level, fmt, x...)
 #endif
@@ -84,7 +84,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /// ** AAC ADTS format **
@@ -123,7 +123,7 @@ ADTS = streaming format called Audio Data Transport Stream (ADTS)
 LOAS = Low Overhead Audio Stream (LOAS), a self-synchronizing streaming format
 */
 
-static unsigned char DefaultAACHeader[]    =
+static unsigned char DefaultAACHeader[] =
 {
 	0xff,
 	0xf1,

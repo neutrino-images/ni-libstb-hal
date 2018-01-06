@@ -50,6 +50,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #ifdef SAM_WITH_DEBUG
 #define H263_DEBUG
 #else
@@ -61,7 +62,7 @@ static short debug_level = 0;
 static const char *FILENAME = "h263.c";
 
 #define h263_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, FILENAME, __FUNCTION__, ## x); } while (0)
 #else
 #define h263_printf(level, fmt, x...)
 #endif
@@ -71,12 +72,13 @@ static const char *FILENAME = "h263.c";
 #else
 #define h263_err(fmt, x...)
 #endif
+
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */

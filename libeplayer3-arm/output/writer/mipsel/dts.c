@@ -68,7 +68,7 @@
 static int16_t debug_level = 0;
 
 #define dts_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define dts_printf(level, fmt, x...)
 #endif
@@ -84,7 +84,7 @@ static int16_t debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */
@@ -94,6 +94,7 @@ static int16_t debug_level = 0;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int32_t reset()
 {
 	return 0;

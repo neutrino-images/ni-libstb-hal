@@ -922,9 +922,8 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 					if ((*it)->recordUse[j])
 						recordUse_found = true;
 				}
-				if (!recordUse_found)
+				if (!recordUse_found && (*it)->init)
 				{
-					printf("Slot: %d Change Input to Tuner: %d\n", (*it)->slot, (*it)->source);
 					setInputSource((eDVBCISlot*)(*it), false);
 				}
 			}
@@ -1050,6 +1049,7 @@ void cCA::setInputs()
 void cCA::setInputSource(eDVBCISlot* slot, bool ci)
 {
 	char buf[64];
+	printf("%s set input%d to %s%d\n", FILENAME, slot->source, ci ? "ci" : "tuner", ci ? slot->slot : slot->source);
 	snprintf(buf, 64, "/proc/stb/tsmux/input%d", slot->source);
 	FILE *input = fopen(buf, "wb");
 
@@ -1191,6 +1191,9 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 	{
 		(*it)->status = eStatusReset;
 		usleep(200000);
+#if HAVE_ARM_HARDWARE
+		setInputSource((eDVBCISlot*)(*it), false);
+#endif
 		if ((*it)->hasCCManager)
 			(*it)->ccmgrSession->ci_ccmgr_doClose((eDVBCISlot*)(*it));
 		eDVBCISession::deleteSessions((eDVBCISlot*)(*it));
@@ -1280,6 +1283,9 @@ void cCA::ci_inserted(eDVBCISlot* slot)
 void cCA::ci_removed(eDVBCISlot* slot)
 {
 	printf("cam (%d) status changed ->cam now _not_ present\n", slot->slot);
+#if HAVE_ARM_HARDWARE
+		setInputSource(slot, false);
+#endif
 	if (slot->hasCCManager)
 		slot->ccmgrSession->ci_ccmgr_doClose(slot);
 	eDVBCISession::deleteSessions(slot);
@@ -1377,6 +1383,7 @@ void cCA::slot_pollthread(void *c)
 						}
 #endif
 						ci_inserted(slot);
+						setInputSource(slot, true);
 						goto FROM_FIRST;
 					}
 				}

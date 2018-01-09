@@ -31,9 +31,9 @@ bool cPlayback::SetAPid(int pid, bool /*ac3*/)
 	return true;
 }
 
-bool cPlayback::SelectSubtitles(int pid)
+bool cPlayback::SelectSubtitles(int pid, std::string charset)
 {
-	printf("%s:%s pid %i\n", FILENAME, __func__, pid);
+	printf("%s:%s pid %i, charset: %s\n", FILENAME, __func__, pid, charset.c_str());
 	return true;
 }
 
@@ -105,7 +105,7 @@ int cPlayback::GetTeletextPid(void)
 	return -1;
 }
 
-void cPlayback::FindAllSubs(uint16_t * /*pids*/, unsigned short * /*supp*/, uint16_t *num, std::string * /*lang*/)
+void cPlayback::FindAllSubs(int * /*pids*/, unsigned int * /*supp*/, unsigned int *num, std::string * /*lang*/)
 {
 	printf("%s:%s\n", FILENAME, __func__);
 	*num = 0;
@@ -125,6 +125,9 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 
 void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
 {
+	playlists.clear();
+	titles.clear();
+	current = 0;
 }
 
 void cPlayback::SetTitle(int /*title*/)

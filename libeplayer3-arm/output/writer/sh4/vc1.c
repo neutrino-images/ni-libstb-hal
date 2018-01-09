@@ -20,7 +20,7 @@
  */
 
 /* ***************************** */
-/* Includes           */
+/* Includes                      */
 /* ***************************** */
 
 #include <stdio.h>
@@ -48,7 +48,7 @@
 #include "writer.h"
 
 /* ***************************** */
-/* Makros/Constants       */
+/* Makros/Constants              */
 /* ***************************** */
 
 #define WMV3_PRIVATE_DATA_LENGTH            4
@@ -72,7 +72,7 @@
 static short debug_level = 0;
 
 #define vc1_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vc1_printf(level, fmt, x...)
 #endif
@@ -105,6 +105,7 @@ static const unsigned char  Metadata[]    =
 /* ***************************** */
 /* Varaibles                     */
 /* ***************************** */
+
 static int initialHeader = 1;
 static unsigned char FrameHeaderSeen = 0;
 
@@ -115,6 +116,7 @@ static unsigned char FrameHeaderSeen = 0;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	initialHeader = 1;

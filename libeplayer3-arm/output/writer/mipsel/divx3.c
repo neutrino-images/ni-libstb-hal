@@ -52,6 +52,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #define B_GET_BITS(w,e,b)  (((w)>>(b))&(((unsigned)(-1))>>((sizeof(unsigned))*8-(e+1-b))))
 #define B_SET_BITS(name,v,e,b)  (((unsigned)(v))<<(b))
 
@@ -66,7 +67,7 @@
 static short debug_level = 0;
 
 #define divx_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define divx_printf(level, fmt, x...)
 #endif
@@ -82,8 +83,9 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static uint8_t initialHeader = 1;
 static uint8_t brcm_divx311_sequence_header[] =
 {
@@ -115,7 +117,7 @@ static int writeData(void *_call)
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	unsigned char  PesHeader[PES_MAX_HEADER_SIZE + 4];
 	unsigned char  Version = 5;
-	unsigned int   FakeStartCode       = (Version << 8) | PES_VERSION_FAKE_START_CODE;
+//	unsigned int   FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
 	divx_printf(10, "\n");
 	if (call == NULL)
 	{

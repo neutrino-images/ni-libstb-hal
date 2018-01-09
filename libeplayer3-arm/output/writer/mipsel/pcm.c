@@ -55,6 +55,9 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
+//#define SAM_WITH_DEBUG
+
 #ifdef SAM_WITH_DEBUG
 #define PCM_DEBUG
 #else
@@ -66,7 +69,7 @@
 static uint16_t debug_level = 0;
 
 #define pcm_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define pcm_printf(level, fmt, x...)
 #endif
@@ -82,8 +85,9 @@ static uint16_t debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static uint8_t initialHeader = 1;
 static uint8_t codec_data[18];
 static uint64_t fixed_buffertimestamp;

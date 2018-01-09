@@ -34,8 +34,8 @@ typedef struct Track_s
 	int32_t               AVIdx;
 
 	/* new field for ffmpeg - add at the end so no problem
-	* can occur with not changed srt saa container
-	*/
+	 * can occur with not changed srt saa container
+	 */
 	char                  *language;
 
 	/* length of track */

@@ -63,7 +63,7 @@
 static short debug_level = 0;
 
 #define h264_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define h264_printf(level, fmt, x...)
 #endif
@@ -92,12 +92,14 @@ typedef struct avcC_s
 } avcC_t;
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 const  uint8_t   Head[] = {0, 0, 0, 1};
 static int32_t   initialHeader = 1;
 static uint32_t  NalLengthBytes = 1;
 static int       avc3 = 0;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */

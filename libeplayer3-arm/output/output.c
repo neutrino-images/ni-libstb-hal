@@ -42,7 +42,7 @@
 static short debug_level = 0;
 
 #define output_printf(level, x...) do { \
-		if (debug_level >= level) fprintf(stderr, x); } while (0)
+if (debug_level >= level) fprintf(stderr, x); } while (0)
 #else
 #define output_printf(level, x...)
 #endif
@@ -64,7 +64,7 @@ static const char *FILENAME = "output.c";
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static Output_t *AvailableOutput[] =
@@ -79,7 +79,7 @@ static Output_t *AvailableOutput[] =
 /* ***************************** */
 
 /* ***************************** */
-/* MISC Functions                */
+/* Functions                     */
 /* ***************************** */
 
 static void printOutputCapabilities()
@@ -102,7 +102,7 @@ static void printOutputCapabilities()
 /* Output Functions              */
 /* ***************************** */
 
-static void OutputAdd(Context_t  *context, char *port)
+static void OutputAdd(Context_t *context, char *port)
 {
 	int i, j;
 	output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
@@ -132,7 +132,7 @@ static void OutputAdd(Context_t  *context, char *port)
 	}
 }
 
-static void OutputDel(Context_t  *context, char *port)
+static void OutputDel(Context_t *context, char *port)
 {
 	output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 	if (!strcmp("audio", port))
@@ -149,7 +149,7 @@ static void OutputDel(Context_t  *context, char *port)
 	}
 }
 
-static int Command(void  *_context, OutputCmd_t command, void *argument)
+static int Command(void *_context, OutputCmd_t command, void *argument)
 {
 	Context_t  *context = (Context_t *) _context;
 	int ret = cERR_OUTPUT_NO_ERROR;

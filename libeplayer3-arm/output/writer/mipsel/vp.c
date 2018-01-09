@@ -20,7 +20,7 @@
  */
 
 /* ***************************** */
-/* Includes           */
+/* Includes                      */
 /* ***************************** */
 
 #include <stdio.h>
@@ -50,9 +50,11 @@
 #include "writer.h"
 
 /* ***************************** */
-/* Makros/Constants       */
+/* Makros/Constants              */
 /* ***************************** */
+
 //#define SAM_WITH_DEBUG
+
 #ifdef SAM_WITH_DEBUG
 #define VP_DEBUG
 #else
@@ -64,7 +66,7 @@
 static short debug_level = 10;
 
 #define vp_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vp_printf(level, fmt, x...)
 #endif
@@ -80,7 +82,7 @@ static short debug_level = 10;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */
@@ -90,6 +92,7 @@ static short debug_level = 10;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	return 0;

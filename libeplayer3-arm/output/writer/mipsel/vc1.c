@@ -20,7 +20,7 @@
  */
 
 /* ***************************** */
-/* Includes           */
+/* Includes                      */
 /* ***************************** */
 
 #include <stdio.h>
@@ -50,9 +50,10 @@
 #include "writer.h"
 
 /* ***************************** */
-/* Makros/Constants       */
+/* Makros/Constants              */
 /* ***************************** */
-#define VC1_SEQUENCE_LAYER_METADATA_START_CODE  0x80
+
+#define VC1_SEQUENCE_LAYER_METADATA_START_CODE 0x80
 #define VC1_FRAME_START_CODE 0x0d
 
 #define SAM_WITH_DEBUG
@@ -67,7 +68,7 @@
 static short debug_level = 10;
 
 #define vc1_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define vc1_printf(level, fmt, x...)
 #endif
@@ -82,12 +83,13 @@ static short debug_level = 10;
 /* Types                         */
 /* ***************************** */
 
-static const unsigned char  SequenceLayerStartCode[] = {0x00,    0x00,   0x01,   VC1_SEQUENCE_LAYER_METADATA_START_CODE};
-static const  uint8_t Vc1FrameStartCode[]     = {0, 0, 1, VC1_FRAME_START_CODE};
+//static const unsigned char SequenceLayerStartCode[] = {0x00, 0x00, 0x01, VC1_SEQUENCE_LAYER_METADATA_START_CODE};
+static const uint8_t Vc1FrameStartCode[] = {0, 0, 1, VC1_FRAME_START_CODE};
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static int initialHeader = 1;
 static video_codec_data_t videocodecdata = {0, 0};
 

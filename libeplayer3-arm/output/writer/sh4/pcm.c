@@ -53,6 +53,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #ifdef SAM_WITH_DEBUG
 #define PCM_DEBUG
 #else
@@ -64,7 +65,7 @@
 static short debug_level = 0;
 
 #define pcm_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define pcm_printf(level, fmt, x...)
 #endif
@@ -80,7 +81,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static int32_t  initialHeader = 1;

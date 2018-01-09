@@ -40,7 +40,7 @@ static short debug_level = 20;
 
 #ifdef PLAYBACK_DEBUG
 #define playback_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define playback_printf(level, fmt, x...)
 #endif
@@ -67,7 +67,7 @@ static int hasThreadStarted = 0;
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
-static int32_t PlaybackTerminate(Context_t  *context);
+static int32_t PlaybackTerminate(Context_t *context);
 
 /* ***************************** */
 /* MISC Functions                */
@@ -107,9 +107,9 @@ static void SupervisorThread(Context_t *context)
 /* Functions                     */
 /* ***************************** */
 
-static int PlaybackStop(Context_t  *context);
+static int PlaybackStop(Context_t *context);
 
-static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
+static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 {
 	if (context->playback->isPlaying)
 	{
@@ -186,7 +186,7 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
 	return cERR_PLAYBACK_NO_ERROR;
 }
 
-static int PlaybackClose(Context_t  *context)
+static int PlaybackClose(Context_t *context)
 {
 	int ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
@@ -212,7 +212,7 @@ static int PlaybackClose(Context_t  *context)
 	return ret;
 }
 
-static int PlaybackPlay(Context_t  *context)
+static int PlaybackPlay(Context_t *context)
 {
 	pthread_attr_t attr;
 	int ret = cERR_PLAYBACK_NO_ERROR;
@@ -277,7 +277,7 @@ static int PlaybackPlay(Context_t  *context)
 	return ret;
 }
 
-static int PlaybackPause(Context_t  *context)
+static int PlaybackPause(Context_t *context)
 {
 	int ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
@@ -302,7 +302,7 @@ static int PlaybackPause(Context_t  *context)
 	return ret;
 }
 
-static int32_t PlaybackContinue(Context_t  *context)
+static int32_t PlaybackContinue(Context_t *context)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
@@ -329,7 +329,7 @@ static int32_t PlaybackContinue(Context_t  *context)
 	return ret;
 }
 
-static int32_t PlaybackStop(Context_t  *context)
+static int32_t PlaybackStop(Context_t *context)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	int wait_time = 20;
@@ -365,7 +365,7 @@ static int32_t PlaybackStop(Context_t  *context)
 	return ret;
 }
 
-static int32_t PlaybackTerminate(Context_t  *context)
+static int32_t PlaybackTerminate(Context_t *context)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	int wait_time = 20;
@@ -409,7 +409,7 @@ static int32_t PlaybackTerminate(Context_t  *context)
 	return ret;
 }
 
-static int32_t PlaybackSeek(Context_t  *context, int64_t *pos, uint8_t absolute)
+static int32_t PlaybackSeek(Context_t *context, int64_t *pos, uint8_t absolute)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "pos: %lldd\n", *pos);
@@ -436,7 +436,7 @@ static int32_t PlaybackSeek(Context_t  *context, int64_t *pos, uint8_t absolute)
 	return ret;
 }
 
-static int32_t PlaybackPts(Context_t  *context, int64_t *pts)
+static int32_t PlaybackPts(Context_t *context, int64_t *pts)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(20, "\n");
@@ -454,7 +454,7 @@ static int32_t PlaybackPts(Context_t  *context, int64_t *pts)
 	return ret;
 }
 
-static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount)
+static int32_t PlaybackGetFrameCount(Context_t *context, int64_t *frameCount)
 {
 	int ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(20, "\n");
@@ -472,7 +472,7 @@ static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount)
 	return ret;
 }
 
-static int32_t PlaybackLength(Context_t  *context, int64_t *length)
+static int32_t PlaybackLength(Context_t *context, int64_t *length)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(20, "\n");
@@ -493,7 +493,7 @@ static int32_t PlaybackLength(Context_t  *context, int64_t *length)
 	return ret;
 }
 
-static int32_t PlaybackSwitchAudio(Context_t  *context, int32_t *track)
+static int32_t PlaybackSwitchAudio(Context_t *context, int32_t *track)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	int32_t curtrackid = 0;
@@ -535,7 +535,7 @@ static int32_t PlaybackSwitchAudio(Context_t  *context, int32_t *track)
 	return ret;
 }
 
-static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
+static int32_t PlaybackSwitchSubtitle(Context_t *context, int32_t *track)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	int32_t curtrackid = -1;
@@ -575,7 +575,7 @@ static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
 	return ret;
 }
 
-static int32_t PlaybackInfo(Context_t  *context, char **infoString)
+static int32_t PlaybackInfo(Context_t *context, char **infoString)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
@@ -592,7 +592,7 @@ static int32_t PlaybackInfo(Context_t  *context, char **infoString)
 	return ret;
 }
 
-static int PlaybackMetadata(Context_t * context, char ***metadata)
+static int PlaybackMetadata(Context_t *context, char ***metadata)
 {
 	int ret = cERR_PLAYBACK_NO_ERROR;
 

@@ -50,6 +50,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #define PES_AUDIO_PRIVATE_HEADER_SIZE   16                                // consider maximum private header size.
 #define PES_AUDIO_HEADER_SIZE           (32 + PES_AUDIO_PRIVATE_HEADER_SIZE)
 #define PES_AUDIO_PACKET_SIZE           2028
@@ -66,7 +67,7 @@
 static short debug_level = 0;
 
 #define dts_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define dts_printf(level, fmt, x...)
 #endif
@@ -82,7 +83,7 @@ static short debug_level = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 /* ***************************** */
@@ -92,6 +93,7 @@ static short debug_level = 0;
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	return 0;

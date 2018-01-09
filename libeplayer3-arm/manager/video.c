@@ -30,6 +30,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #define TRACKWRAP 4
 
 #ifdef SAM_WITH_DEBUG
@@ -43,7 +44,7 @@
 static short debug_level = 0;
 
 #define video_mgr_printf(level, x...) do { \
-		if (debug_level >= level) printf(x); } while (0)
+if (debug_level >= level) printf(x); } while (0)
 #else
 #define video_mgr_printf(level, x...)
 #endif
@@ -65,7 +66,7 @@ static const char FILENAME[] = __FILE__;
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static Track_t *Tracks = NULL;
@@ -73,6 +74,7 @@ static int TrackCount = 0;
 static int CurrentTrack = 0; //TRACK[0] as default.
 
 static void (* updatedTrackInfoFnc)(void) = NULL;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
@@ -81,7 +83,7 @@ static void (* updatedTrackInfoFnc)(void) = NULL;
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t  *context, Track_t track)
+static int ManagerAdd(Context_t *context, Track_t track)
 {
 	video_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 	if (Tracks == NULL)
@@ -125,7 +127,7 @@ static int ManagerAdd(Context_t  *context, Track_t track)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static char **ManagerList(Context_t * context __attribute__((unused)))
+static char **ManagerList(Context_t *context __attribute__((unused)))
 {
 	int i = 0, j = 0;
 	char **tracklist = NULL;
@@ -181,7 +183,7 @@ static int ManagerDel(Context_t *context)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static int Command(void  *_context, ManagerCmd_t command, void *argument)
+static int Command(void *_context, ManagerCmd_t command, void *argument)
 {
 	Context_t  *context = (Context_t *) _context;
 	int ret = cERR_VIDEO_MGR_NO_ERROR;

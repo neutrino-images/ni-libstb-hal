@@ -47,9 +47,8 @@ libeplayer3_arm_la_SOURCES = \
 	external/ffmpeg/src/mpeg4audio.c
 
 
-LIBEPLAYER3_LIBS = libeplayer3_arm.la
+LIBEPLAYER3_LIBS = libeplayer3_arm.la -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lm
 
 bin_PROGRAMS = eplayer3
 eplayer3_SOURCES = main/exteplayer.c
-eplayer3_LDADD = -leplayer3_arm -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lm
-eplayer3_DEPENDENCIES = libeplayer3_arm.la
+eplayer3_LDADD = $(LIBEPLAYER3_LIBS)

@@ -34,7 +34,7 @@
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 extern Manager_t AudioManager;
@@ -58,6 +58,7 @@ ManagerHandler_t ManagerHandler =
 /* ***************************** */
 /* Functions                     */
 /* ***************************** */
+
 void copyTrack(Track_t *to, Track_t *from)
 {
 	if (NULL != to && NULL != from)

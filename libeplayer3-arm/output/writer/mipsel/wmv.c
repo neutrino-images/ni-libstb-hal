@@ -67,7 +67,7 @@
 static short debug_level = 10;
 
 #define wmv_printf(level, fmt, x...) do { \
-		if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define wmv_printf(level, fmt, x...)
 #endif
@@ -85,8 +85,9 @@ static short debug_level = 10;
 static const  uint8_t Vc1FrameStartCode[]     = {0, 0, 1, WMV_FRAME_START_CODE};
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
+
 static int initialHeader = 1;
 static video_codec_data_t videocodecdata = {0, 0};
 

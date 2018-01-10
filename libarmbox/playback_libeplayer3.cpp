@@ -206,6 +206,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 				}
 			}
 			playing = true;
+			first = true;
 			player->output->Command(player, OUTPUT_OPEN, NULL);
 			ret = (player->playback->Command(player, PLAYBACK_PLAY, NULL) == 0);
 			if (ret && !isHTTP)
@@ -424,7 +425,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 bool cPlayback::SetPosition(int position, bool absolute)
 {
 	lt_info("%s %d\n", __func__, position);
-	if (!playing)
+	if (playing && first)
 	{
 		/* the calling sequence is:
 		 * Start()       - paused
@@ -433,6 +434,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 		 * so let's remember the initial jump position and later jump to it
 		 */
 		init_jump = position;
+		first = false;
 		return false;
 	}
 	int64_t pos = (position / 1000.0);
@@ -673,6 +675,7 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 	lt_info("%s\n", __func__);
 	playing = false;
 	decoders_closed = false;
+	first = false;
 }
 
 cPlayback::~cPlayback()

@@ -18,7 +18,7 @@ class cPlayback
 
 	private:
 		bool enabled;
-		bool playing;
+		bool playing, first;
 		bool no_probe;
 		int nPlaybackSpeed;
 		int mAudioStream;

@@ -15,16 +15,16 @@
 
 typedef struct BitPacker_s
 {
-	uint8_t   *Ptr;                                    /* write pointer */
-	uint32_t   BitBuffer;                              /* bitreader shifter */
-	int32_t    Remaining;                              /* number of remaining in the shifter */
+	uint8_t   *Ptr;         /* write pointer */
+	uint32_t   BitBuffer;   /* bitreader shifter */
+	int32_t    Remaining;   /* number of remaining in the shifter */
 } BitPacker_t;
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
 
-#define INVALID_PTS_VALUE                       0x200000000ull
+#define INVALID_PTS_VALUE    0x200000000ull
 
 /* ***************************** */
 /* Prototypes                    */
@@ -96,16 +96,16 @@ static inline int32_t IsDreambox()
 static inline uint32_t ReadUint32(uint8_t *buffer)
 {
 	uint32_t num = (uint32_t)buffer[0] << 24 |
-				   (uint32_t)buffer[1] << 16 |
-				   (uint32_t)buffer[2] << 8  |
-				   (uint32_t)buffer[3];
+	               (uint32_t)buffer[1] << 16 |
+	               (uint32_t)buffer[2] << 8  |
+	               (uint32_t)buffer[3];
 	return num;
 }
 
 static inline uint16_t ReadUInt16(uint8_t *buffer)
 {
 	uint16_t num = (uint16_t)buffer[0] << 8 |
-				   (uint16_t)buffer[1];
+	               (uint16_t)buffer[1];
 	return num;
 }
 

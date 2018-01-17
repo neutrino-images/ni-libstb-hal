@@ -120,7 +120,7 @@ static int writeData(void *_call)
 	while (Position < call->len)
 	{
 		int32_t PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-							   (call->len - Position) : MAX_PES_PACKET_SIZE;
+		                       (call->len - Position) : MAX_PES_PACKET_SIZE;
 		int32_t Remaining = call->len - Position - PacketLength;
 		mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 		struct iovec iov[2];

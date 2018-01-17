@@ -182,7 +182,7 @@ static int _writeData(void *_call, int type)
 	else // check LOAS header
 	{
 		if (!(call->len > 2 && call->data[0] == 0x56 && (call->data[1] >> 4) == 0xe &&
-				(AV_RB16(call->data + 1) & 0x1FFF) + 3 == call->len))
+		     (AV_RB16(call->data + 1) & 0x1FFF) + 3 == call->len))
 		{
 			aac_err("parsing Data with wrong latm header. ignoring...\n");
 			return 0;
@@ -193,9 +193,9 @@ static int _writeData(void *_call, int type)
 	unsigned int  HeaderLength = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = HeaderLength;
+	iov[0].iov_len  = HeaderLength;
 	iov[1].iov_base = call->data;
-	iov[1].iov_len = call->len;
+	iov[1].iov_len  = call->len;
 	return writev_with_retry(call->fd, iov, 2);
 }
 
@@ -219,7 +219,7 @@ static int writeDataADTS(void *_call)
 		return 0;
 	}
 	if ((call->private_data && 0 == strncmp("ADTS", call->private_data, call->private_size)) ||
-			HasADTSHeader(call->data, call->len))
+	     HasADTSHeader(call->data, call->len))
 	{
 		return _writeData(_call, 0);
 	}
@@ -294,7 +294,7 @@ static int writeDataLATM(void *_call)
 	if (ret)
 	{
 		printf("%02x %02x %02x %02x %02x %02x %02x %02x\n", (int)call->data[0], (int)call->data[1], (int)call->data[2], (int)call->data[3], \
-			   (int)call->data[4], (int)call->data[5], (int)call->data[6], (int)call->data[7]);
+		      (int)call->data[4], (int)call->data[5], (int)call->data[6], (int)call->data[7]);
 		aac_err("latm_decode_extradata failed. ignoring...\n");
 		return 0;
 	}

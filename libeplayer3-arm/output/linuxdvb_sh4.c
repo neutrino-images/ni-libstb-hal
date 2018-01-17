@@ -59,7 +59,7 @@ static const char FILENAME[] = __FILE__;
 
 #ifdef LINUXDVB_DEBUG
 #define linuxdvb_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x ); } while (0)
+if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define linuxdvb_printf(x...)
 #endif
@@ -828,7 +828,7 @@ static int Write(void *_context, void *_out)
 	video = !strcmp("video", out->type);
 	audio = !strcmp("audio", out->type);
 	linuxdvb_printf(20, "DataLength=%u PrivateLength=%u Pts=%llu FrameRate=%f\n",
-					out->len, out->extralen, out->pts, out->frameRate);
+	                out->len, out->extralen, out->pts, out->frameRate);
 	linuxdvb_printf(20, "v%d a%d\n", video, audio);
 	if (video)
 	{

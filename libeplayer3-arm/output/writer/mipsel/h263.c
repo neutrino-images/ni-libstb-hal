@@ -69,6 +69,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #else
 #define h263_err(fmt, x...)
 #endif
+
 /* ***************************** */
 /* Types                         */
 /* ***************************** */

@@ -190,7 +190,7 @@ static int Flush()
 
 static int Write(void *_context, void *data)
 {
-	Context_t  *context = (Context_t *)_context;
+	Context_t *context = (Context_t *)_context;
 	char *Encoding      = NULL;
 	SubtitleOut_t *out  = NULL;
 	int32_t curtrackid  = -1;
@@ -224,7 +224,7 @@ static int Write(void *_context, void *data)
 	else
 	{
 		subtitle_err("unknown encoding %s\n", Encoding);
-		return  cERR_SUBTITLE_ERROR;
+		return cERR_SUBTITLE_ERROR;
 	}
 	subtitle_printf(10, "<\n");
 	return cERR_SUBTITLE_NO_ERROR;
@@ -259,7 +259,7 @@ static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 
 static int Command(void *_context, OutputCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
+	Context_t *context = (Context_t *) _context;
 	int ret = cERR_SUBTITLE_NO_ERROR;
 	subtitle_printf(50, "%d\n", command);
 	switch (command)

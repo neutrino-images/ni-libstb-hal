@@ -119,8 +119,7 @@ static void *TermThreadFun(void *arg)
 	FD_SET(g_pfd[0], &readfds);
 	FD_SET(fd, &readfds);
 	nfds = fd > g_pfd[0] ? fd + 1 : g_pfd[0] + 1;
-	while (select(nfds, &readfds, NULL, NULL, NULL) == -1
-			&& errno == EINTR)
+	while (select(nfds, &readfds, NULL, NULL, NULL) == -1 && errno == EINTR)
 	{
 		/* Restart if interrupted by signal */
 		continue;
@@ -128,7 +127,7 @@ static void *TermThreadFun(void *arg)
 	if (FD_ISSET(fd, &readfds))
 	{
 		/*
-		if ( (cl = accept(fd, NULL, NULL)) == -1)
+		if ((cl = accept(fd, NULL, NULL)) == -1)
 		{
 		    perror("TermThreadFun accept error");
 		    goto finish;
@@ -404,7 +403,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 				else // video
 				{
 					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\",\"w\":%d,\"h\":%d,\"f\":%u,\"p\":%d,\"an\":%d,\"ad\":%d}}\n", \
-							argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name, track->width, track->height, track->frame_rate, track->progressive, track->aspect_ratio_num, track->aspect_ratio_den);
+					        argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name, track->width, track->height, track->frame_rate, track->progressive, track->aspect_ratio_num, track->aspect_ratio_den);
 				}
 				free(track->Encoding);
 				free(track->Name);
@@ -475,6 +474,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 	return commandRetVal;
 }
 #endif
+
 static void UpdateVideoTrack()
 {
 	HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, "vc");
@@ -932,10 +932,10 @@ int main(int argc, char *argv[])
 					if (ptrP)
 					{
 						fprintf(stderr, "{\"PLAYBACK_INFO\":{ \"isPlaying\":%s, \"isPaused\":%s, \"isForwarding\":%s, \"isSeeking\":%s, \"isCreationPhase\":%s,", \
-								DUMP_BOOL(ptrP->isPlaying), DUMP_BOOL(ptrP->isPaused), DUMP_BOOL(ptrP->isForwarding), DUMP_BOOL(ptrP->isSeeking), DUMP_BOOL(ptrP->isCreationPhase));
+						        DUMP_BOOL(ptrP->isPlaying), DUMP_BOOL(ptrP->isPaused), DUMP_BOOL(ptrP->isForwarding), DUMP_BOOL(ptrP->isSeeking), DUMP_BOOL(ptrP->isCreationPhase));
 						fprintf(stderr, "\"BackWard\":%d, \"SlowMotion\":%d, \"Speed\":%d, \"AVSync\":%d,", ptrP->BackWard, ptrP->SlowMotion, ptrP->Speed, ptrP->AVSync);
 						fprintf(stderr, " \"isVideo\":%s, \"isAudio\":%s, \"isSubtitle\":%s, \"isDvbSubtitle\":%s, \"isTeletext\":%s, \"mayWriteToFramebuffer\":%s, \"abortRequested\":%s }}\n", \
-								DUMP_BOOL(ptrP->isVideo), DUMP_BOOL(ptrP->isAudio), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(ptrP->abortRequested));
+						        DUMP_BOOL(ptrP->isVideo), DUMP_BOOL(ptrP->isAudio), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(0), DUMP_BOOL(ptrP->abortRequested));
 					}
 					break;
 				}

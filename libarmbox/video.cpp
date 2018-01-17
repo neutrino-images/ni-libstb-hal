@@ -602,6 +602,8 @@ void cVideo::StopPicture()
 	lt_debug("%s\n", __func__);
 	stillpicture = false;
 	Stop(1);
+	closeDevice();
+	openDevice();
 }
 
 void cVideo::Standby(unsigned int bOn)

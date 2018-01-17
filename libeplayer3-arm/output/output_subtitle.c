@@ -68,8 +68,6 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #define cERR_SUBTITLE_NO_ERROR         0
 #define cERR_SUBTITLE_ERROR            -1
 
-static const char FILENAME[] = __FILE__;
-
 /*
 Number, Style, Name,, MarginL, MarginR, MarginV, Effect,, Text
 

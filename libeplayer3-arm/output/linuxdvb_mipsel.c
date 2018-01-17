@@ -58,7 +58,7 @@
 #define LINUXDVB_SILENT
 #endif
 
-static short debug_level = 20;
+static unsigned short debug_level = 20;
 
 static const char FILENAME[] = __FILE__;
 

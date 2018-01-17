@@ -351,7 +351,7 @@ void cVideo::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
 	/* looks like sometimes close is unhappy about non-empty buffers */
-	Start();
+//	Start();
 	if (fd >= 0)
 		close(fd);
 	fd = -1;

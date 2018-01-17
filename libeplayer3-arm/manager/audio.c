@@ -253,9 +253,9 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 				if (track)
 				{
 					memset(track, 0, sizeof(TrackDescription_t));
-					track->Id       = Tracks[CurrentTrack].Id;
-					track->Name     = strdup(Tracks[CurrentTrack].Name);
-					track->Encoding = strdup(Tracks[CurrentTrack].Encoding);
+					track->Id               = Tracks[CurrentTrack].Id;
+					track->Name             = strdup(Tracks[CurrentTrack].Name);
+					track->Encoding         = strdup(Tracks[CurrentTrack].Encoding);
 				}
 			}
 			else

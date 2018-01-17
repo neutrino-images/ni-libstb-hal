@@ -175,9 +175,9 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 		return cERR_PLAYBACK_ERROR;
 	}
 	pFiles->szFirstFile = context->playback->uri;
-	if ((context->container->Command(context, CONTAINER_ADD, extension) < 0)
-			|| (!context->container->selectedContainer)
-			|| (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
+	if ((context->container->Command(context, CONTAINER_ADD, extension) < 0) ||
+	    (!context->container->selectedContainer) ||
+	    (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
 	{
 		playback_err("CONTAINER_ADD failed\n");
 		return cERR_PLAYBACK_ERROR;
@@ -307,8 +307,8 @@ static int32_t PlaybackContinue(Context_t *context)
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
 	if (context->playback->isPlaying &&
-			(context->playback->isPaused || context->playback->isForwarding ||
-			 context->playback->BackWard || context->playback->SlowMotion))
+	   (context->playback->isPaused || context->playback->isForwarding ||
+	    context->playback->BackWard || context->playback->SlowMotion))
 	{
 		if (context->playback->SlowMotion)
 			context->output->Command(context, OUTPUT_CLEAR, NULL);
@@ -440,7 +440,8 @@ static int PlaybackFastBackward(Context_t *context, int *speed)
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "speed = %d\n", *speed);
 	/* Audio only reverse play not supported */
-	if (context->playback->isVideo && !context->playback->isForwarding && (!context->playback->isPaused || context->playback->isPlaying))
+	if (context->playback->isVideo && !context->playback->isForwarding &&
+	   (!context->playback->isPaused || context->playback->isPlaying))
 	{
 		if ((*speed > 0) || (*speed < cMaxSpeed_fr))
 		{

@@ -198,7 +198,7 @@ static int writeData(void *_call)
 		h264_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
-	if (call->InfoFlags & 0x1)  // TS container
+	if (call->InfoFlags & 0x1) // TS container
 	{
 		h264_printf(10, "H265 simple inject method!\n");
 		uint32_t PacketLength = 0;

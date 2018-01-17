@@ -68,7 +68,7 @@ static void printContainerCapabilities()
 	container_printf(10, "\n");
 }
 
-static int32_t selectContainer(Context_t  *context, char *extension)
+static int32_t selectContainer(Context_t *context, char *extension)
 {
 	int32_t i = 0;
 	int32_t j = 0;

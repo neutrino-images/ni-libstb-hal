@@ -51,15 +51,15 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#define WMV3_PRIVATE_DATA_LENGTH            4
+#define WMV3_PRIVATE_DATA_LENGTH          4
 
-#define METADATA_STRUCT_A_START      12
-#define METADATA_STRUCT_B_START      24
-#define METADATA_STRUCT_B_FRAMERATE_START   32
-#define METADATA_STRUCT_C_START      8
+#define METADATA_STRUCT_A_START           12
+#define METADATA_STRUCT_B_START           24
+#define METADATA_STRUCT_B_FRAMERATE_START 32
+#define METADATA_STRUCT_C_START           8
 
-#define VC1_SEQUENCE_LAYER_METADATA_START_CODE    0x80
-#define VC1_FRAME_START_CODE                0x0d
+#define VC1_SEQUENCE_LAYER_METADATA_START_CODE  0x80
+#define VC1_FRAME_START_CODE                    0x0d
 
 #ifdef SAM_WITH_DEBUG
 #define VC1_DEBUG
@@ -87,9 +87,9 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 /* Types                         */
 /* ***************************** */
 
-static const unsigned char  SequenceLayerStartCode[]      = {0x00,    0x00,   0x01,   VC1_SEQUENCE_LAYER_METADATA_START_CODE};
+static const unsigned char  SequenceLayerStartCode[] = {0x00,    0x00,   0x01,   VC1_SEQUENCE_LAYER_METADATA_START_CODE};
 
-static const unsigned char  Metadata[]    =
+static const unsigned char  Metadata[] =
 {
 	0x00,    0x00,   0x00,   0xc5,
 	0x04,    0x00,   0x00,   0x00,
@@ -103,7 +103,7 @@ static const unsigned char  Metadata[]    =
 };
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static int initialHeader = 1;
@@ -199,7 +199,7 @@ static int writeData(void *_call)
 		while (Position < call->len)
 		{
 			int32_t PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-								   (call->len - Position) : MAX_PES_PACKET_SIZE;
+			                       (call->len - Position) : MAX_PES_PACKET_SIZE;
 			int32_t Remaining = call->len - Position - PacketLength;
 			vc1_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 			uint8_t PesHeader[PES_MAX_HEADER_SIZE];

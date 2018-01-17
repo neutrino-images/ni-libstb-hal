@@ -1,7 +1,7 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#include<stdint.h>
+#include <stdint.h>
 
 #include "container.h"
 #include "output.h"

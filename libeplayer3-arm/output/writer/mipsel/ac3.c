@@ -99,7 +99,7 @@ static int writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	ac3_printf(10, "\n");
-	unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 	if (call == NULL)
 	{
 		ac3_err("call data is NULL...\n");
@@ -118,7 +118,7 @@ static int writeData(void *_call)
 	}
 	struct iovec iov[3];
 	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);  //+ sizeof(AC3_SYNC_HEADER)
+	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0); //+ sizeof(AC3_SYNC_HEADER)
 	//PesHeader[6] = 0x81;
 	//PesHeader[7] = 0x80;
 	//PesHeader[8] = 0x09;

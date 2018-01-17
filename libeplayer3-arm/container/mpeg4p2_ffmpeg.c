@@ -32,9 +32,9 @@ static int filter_packet(AVBitStreamFilterContext *bsf_ctx, AVCodecContext *enc_
 	int ret;
 	AVPacket new_pkt = *pkt;
 	ret = av_bitstream_filter_filter(bsf_ctx, enc_ctx, NULL,
-									 &new_pkt.data, &new_pkt.size,
-									 pkt->data, pkt->size,
-									 pkt->flags & AV_PKT_FLAG_KEY);
+	                                 &new_pkt.data, &new_pkt.size,
+	                                 pkt->data, pkt->size,
+	                                 pkt->flags & AV_PKT_FLAG_KEY);
 	if (ret == 0 && new_pkt.data != pkt->data)
 	{
 		if ((ret = av_copy_packet(&new_pkt, pkt)) < 0)
@@ -47,15 +47,15 @@ static int filter_packet(AVBitStreamFilterContext *bsf_ctx, AVCodecContext *enc_
 		pkt->side_data_elems = 0;
 		wrapped_packet_unref(pkt);
 		new_pkt.buf = av_buffer_create(new_pkt.data, new_pkt.size,
-									   av_buffer_default_free, NULL, 0);
+		                               av_buffer_default_free, NULL, 0);
 		if (!new_pkt.buf)
 			return -1;
 	}
 	if (ret < 0)
 	{
 		ffmpeg_err("Failed to filter bitstream with filter %s for stream %d with codec %s\n",
-				   bsf_ctx->filter->name, pkt->stream_index,
-				   avcodec_get_name(enc_ctx->codec_id));
+		           bsf_ctx->filter->name, pkt->stream_index,
+		           avcodec_get_name(enc_ctx->codec_id));
 		return -1;
 	}
 	*pkt = new_pkt;

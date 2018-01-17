@@ -99,6 +99,7 @@ static Writer_t *AvailableWriter[] =
 /* ***************************** */
 /*  Functions                    */
 /* ***************************** */
+
 ssize_t write_with_retry(int fd, const void *buf, size_t size)
 {
 	ssize_t ret;

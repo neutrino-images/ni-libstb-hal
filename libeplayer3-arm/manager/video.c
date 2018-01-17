@@ -183,7 +183,7 @@ static int ManagerDel(Context_t *context)
 
 static int Command(void *_context, ManagerCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
+	Context_t *context = (Context_t *) _context;
 	int ret = cERR_VIDEO_MGR_NO_ERROR;
 	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	switch (command)

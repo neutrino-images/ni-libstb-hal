@@ -34,7 +34,9 @@ hw_caps_t *get_hwcaps(void)
 	caps.can_shutdown = 1;
 	caps.display_xres = 16;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_can_deepstandby = 0;
 	caps.display_can_set_brightness = 1;
+	caps.display_has_statusline = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "AX-Technologies");
 	strcpy(caps.boxname, "HD51");

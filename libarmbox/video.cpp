@@ -148,6 +148,27 @@ static const char *vid_modes[] = {
 #define VIDEO_STREAMTYPE_H265_HEVC 7
 #define VIDEO_STREAMTYPE_AVS 16
 
+ssize_t write_all(int fd, const void *buf, size_t count)
+{
+	int retval;
+	char *ptr = (char*)buf;
+	size_t handledcount = 0;
+	while (handledcount < count)
+	{
+		retval = write(fd, &ptr[handledcount], count - handledcount);
+		if (retval == 0)
+			return -1;
+		if (retval < 0)
+		{
+			if (errno == EINTR)
+				continue;
+			return retval;
+		}
+		handledcount += retval;
+	}
+	return handledcount;
+}
+
 void init_parameters(AVFrame* in_frame, AVCodecContext *codec_context)
 {
 	/* put sample parameters */
@@ -162,10 +183,12 @@ void init_parameters(AVFrame* in_frame, AVCodecContext *codec_context)
 	codec_context->pix_fmt = AV_PIX_FMT_YUV420P;
 }
 
-void write_frame(AVFrame* in_frame, FILE* fp)
+void write_frame(AVFrame* in_frame, int fd)
 {
-	if(in_frame == NULL || fp == NULL)
+	if(in_frame == NULL)
 		return;
+	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
+
 	AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_MPEG2VIDEO);
 	if (codec)
 	{
@@ -180,19 +203,18 @@ void write_frame(AVFrame* in_frame, FILE* fp)
 				int got_output = 0;
 				int ret = avcodec_encode_video2(codec_context, &pkt, in_frame, &got_output);
 				if (ret != -1){
-					if (got_output){
-						fwrite(pkt.data, 1, pkt.size, fp);
-						av_packet_unref(&pkt);
-					}
 					int i =1;
-					for (got_output = 1; got_output; i++){
 					/* get the delayed frames */
-						in_frame->pts = i;
-						ret = avcodec_encode_video2(codec_context, &pkt, 0, &got_output);
-						if (ret != -1 && got_output){
-							fwrite(pkt.data, 1, pkt.size, fp);
-							av_packet_unref(&pkt);
+					in_frame->pts = i;
+					ret = avcodec_encode_video2(codec_context, &pkt, 0, &got_output);
+					if (ret != -1 && got_output){
+						if ((pkt.data[3] >> 4) != 0xE){
+							write_all(fd, pes_header, sizeof(pes_header));
+						}else{
+							pkt.data[4] = pkt.data[5] = 0x00;
 						}
+						write_all(fd,pkt.data, pkt.size);
+						av_packet_unref(&pkt);
 					}
 				}
 			}
@@ -202,7 +224,7 @@ void write_frame(AVFrame* in_frame, FILE* fp)
 	}
 }
 
-int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
+int decode_frame(AVCodecContext *codecContext,AVPacket &packet, int fd)
 {
 	int decode_ok = 0;
 	AVFrame *frame = av_frame_alloc();
@@ -223,7 +245,7 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, FILE* fp)
 				sws_scale(convert, frame->data, frame->linesize, 0, frame->height, dest_frame->data, dest_frame->linesize);
 				sws_freeContext(convert);
 			}
-			write_frame(dest_frame, fp);
+			write_frame(dest_frame, fd);
 			av_frame_free(&dest_frame);
 		}
 		av_frame_free(&frame);
@@ -250,7 +272,7 @@ AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext
 	return NULL;
 }
 
-int image_to_mpeg2(const char *image_name, const char *encode_name)
+int image_to_mpeg2(const char *image_name, int fd)
 {
 	int ret = 0;
 	av_register_all();
@@ -263,14 +285,10 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 			AVPacket packet;
 			av_init_packet(&packet);
 			if ((ret = av_read_frame(formatContext, &packet)) !=-1){
-				FILE* fp = fopen(encode_name, "wb");
-				if(fp){
-					if(decode_frame(codecContext, packet, fp) != 1){
-						/* add sequence end code to have a real mpeg file */
-						uint8_t endcode[] = { 0, 0, 1, 0xb7 };
-						fwrite(endcode, 1, sizeof(endcode), fp);
-					}
-					fclose(fp);
+				if((ret = decode_frame(codecContext, packet, fd)) != 1){
+				/* add sequence end code to have a real mpeg file */
+					uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+					write_all(fd,endcode, sizeof(endcode));
 				}
 				av_free_packet(&packet);
 			}
@@ -279,7 +297,7 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 		avformat_close_input(&formatContext);
 	}
 	av_free(formatContext);
-	return 0;
+	return ret;
 }
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)
@@ -333,7 +351,7 @@ void cVideo::closeDevice(void)
 {
 	lt_debug("%s\n", __func__);
 	/* looks like sometimes close is unhappy about non-empty buffers */
-	Start();
+//	Start();
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -544,128 +562,38 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
-ssize_t write_all(int fd, const void *buf, size_t count)
-{
-	int retval;
-	char *ptr = (char*)buf;
-	size_t handledcount = 0;
-	while (handledcount < count)
-	{
-		retval = write(fd, &ptr[handledcount], count - handledcount);
-		if (retval == 0)
-			return -1;
-		if (retval < 0)
-		{
-			if (errno == EINTR)
-				continue;
-			return retval;
-		}
-		handledcount += retval;
-	}
-	return handledcount;
-}
-
-void cVideo::ShowPicture(const char * fname, const char *_destname)
+void cVideo::ShowPicture(const char * fname)
 {
 	lt_debug("%s(%s)\n", __func__, fname);
-	//static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
-	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
-	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
-	char destname[512];
-	char *p;
-	int mfd;
-	struct stat st, st2;
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */
 		lt_info("%s: video_standby == true\n", __func__);
 		return;
 	}
-	const char *lastDot = strrchr(fname, '.');
-	if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
-		strncpy(destname, fname, sizeof(destname));
-	else {
-		if (_destname)
-			strncpy(destname, _destname, sizeof(destname));
-		else {
-			strcpy(destname, "/tmp/cache");
-			if (stat(fname, &st2))
-			{
-				lt_info("%s: could not stat %s (%m)\n", __func__, fname);
-				return;
-			}
-			mkdir(destname, 0755);
-			/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
-			   /var/cache/share.tuxbox.neutrino.icons.radiomode.jpg.m2v
-			   build that filename first...
-			   TODO: this could cause name clashes, use a hashing function instead... */
-			strcat(destname, fname);
-			p = &destname[strlen("/tmp/cache/")];
-			while ((p = strchr(p, '/')) != NULL)
-				*p = '.';
-			strcat(destname, ".m2v");
-		}
-		/* ...then check if it exists already... */
-		if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
-		{
-			struct utimbuf u;
-			u.actime = time(NULL);
-			u.modtime = st2.st_mtime;
-			/* it does not exist or has a different date, so call ffmpeg... */
-			image_to_mpeg2(fname, destname);
-			utime(destname, &u);
-		}
+	struct stat st;
+	if (stat(fname, &st)){
+		return;
 	}
-	mfd = open(destname, O_RDONLY);
-	if (mfd < 0)
-	{
-		lt_info("%s cannot open %s: %m\n", __func__, destname);
-		goto out;
-	}
-	fstat(mfd, &st);
-
 	closeDevice();
 	openDevice();
-
 	if (fd >= 0)
 	{
+		usleep(50000);//workaround for switch to radiomode
 		stillpicture = true;
-
-		bool seq_end_avail = false;
-		off_t pos=0;
-		unsigned char iframe[st.st_size];
-		if (! iframe)
-		{
-			lt_info("%s: malloc failed (%m)\n", __func__);
-			goto out;
-		}
-		read(mfd, iframe, st.st_size);
-		if(iframe[0] == 0x00 && iframe[1] == 0x00 && iframe[2] == 0x00 && iframe[3] == 0x01 && (iframe[4] & 0x0f) == 0x07)
-			ioctl(fd, VIDEO_SET_STREAMTYPE, 1); // set to mpeg4
-		else
-			ioctl(fd, VIDEO_SET_STREAMTYPE, 0); // set to mpeg2
+		ioctl(fd, VIDEO_SET_STREAMTYPE, VIDEO_STREAMTYPE_MPEG2); // set to mpeg2
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
 		ioctl(fd, VIDEO_PLAY);
 		ioctl(fd, VIDEO_CONTINUE);
 		ioctl(fd, VIDEO_CLEAR_BUFFER);
-		while (pos <= (st.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
-			++pos;
-
-		if ((iframe[3] >> 4) != 0xE) // no pes header
-			write_all(fd, pes_header, sizeof(pes_header));
-		else
-			iframe[4] = iframe[5] = 0x00;
-		write_all(fd, iframe, st.st_size);
-		if (!seq_end_avail)
-			write(fd, seq_end, sizeof(seq_end));
-		memset(iframe, 0, 8192);
+		image_to_mpeg2(fname, fd);
+		unsigned char iframe[8192];
+		memset(iframe,0xff,sizeof(iframe));
 		write_all(fd, iframe, 8192);
 		usleep(150000);
 		ioctl(fd, VIDEO_STOP, 0);
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	}
- out:
-	close(mfd);
 	return;
 }
 
@@ -674,6 +602,8 @@ void cVideo::StopPicture()
 	lt_debug("%s\n", __func__);
 	stillpicture = false;
 	Stop(1);
+	closeDevice();
+	openDevice();
 }
 
 void cVideo::Standby(unsigned int bOn)
@@ -1020,7 +950,6 @@ void cVideo::GetCECAddressInfo()
 {
 	if (hdmiFd >= 0)
 	{
-		bool hasdata = false;
 		struct addressinfo addressinfo;
 
 		__u16 phys_addr;

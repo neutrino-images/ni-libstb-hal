@@ -2,6 +2,7 @@
 #define OUTPUT_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 typedef enum
 {
@@ -69,7 +70,6 @@ typedef struct Output_s
 	int32_t (* Command)(/*Context_t*/void *, OutputCmd_t, void *);
 	int32_t (* Write)(/*Context_t*/void *, void *privateData);
 	char **Capabilities;
-
 } Output_t;
 
 extern Output_t LinuxDvbOutput;

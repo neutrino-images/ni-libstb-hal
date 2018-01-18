@@ -98,6 +98,7 @@ static video_codec_data_t videocodecdata = {0, 0};
 /* ***************************** */
 /* MISC Functions                */
 /* ***************************** */
+
 static int reset()
 {
 	initialHeader = 1;
@@ -159,8 +160,8 @@ static int writeData(void *_call)
 		}
 	}
 	uint8_t needFrameStartCode = 0;
-	if (sizeof(Vc1FrameStartCode) >= call->len
-			|| memcmp(call->data, Vc1FrameStartCode, sizeof(Vc1FrameStartCode)) != 0)
+	if (sizeof(Vc1FrameStartCode) >= call->len ||
+	    memcmp(call->data, Vc1FrameStartCode, sizeof(Vc1FrameStartCode)) != 0)
 	{
 		needFrameStartCode = 1;
 		PacketLength += sizeof(Vc1FrameStartCode);

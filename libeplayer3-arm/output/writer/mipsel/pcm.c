@@ -266,8 +266,7 @@ static int32_t writeData(void *_call)
 		iov[1].iov_len  = fixed_buffersize;
 		writev_with_retry(call->fd, iov, 2);
 		fixed_buffertimestamp += fixed_bufferduration;
-		int g_fd_dump = open("/hdd/lpcm/ffmpeg.pes", O_CREAT |
-							 O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+		int g_fd_dump = open("/hdd/lpcm/ffmpeg.pes", O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
 		writev_with_retry(g_fd_dump, iov, 2);
 		close(g_fd_dump);
 	}

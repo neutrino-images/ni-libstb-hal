@@ -54,7 +54,8 @@ static cAudio *gThiz = NULL;
 static ao_device *adevice = NULL;
 static ao_sample_format sformat;
 
-static AVCodecContext *c= NULL;
+static AVCodecContext *c = NULL;
+static AVCodecParameters *p = NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
@@ -356,28 +357,31 @@ void cAudio::run()
 		lt_info("%s: nb_streams: %d, should be 1!\n", __func__, avfc->nb_streams);
 		goto out;
 	}
-	if (avfc->streams[0]->codec->codec_type != AVMEDIA_TYPE_AUDIO)
-		lt_info("%s: stream 0 no audio codec? 0x%x\n", __func__, avfc->streams[0]->codec->codec_type);
+	p = avfc->streams[0]->codecpar;
+	if (p->codec_type != AVMEDIA_TYPE_AUDIO)
+		lt_info("%s: stream 0 no audio codec? 0x%x\n", __func__, p->codec_type);
 
-	c = avfc->streams[0]->codec;
-	codec = avcodec_find_decoder(c->codec_id);
+	codec = avcodec_find_decoder(p->codec_id);
 	if (!codec) {
-		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(c->codec_id));
+		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(p->codec_id));
 		goto out;
 	}
+	if (c)
+		av_free(c);
+	c = avcodec_alloc_context3(codec);
 	if (avcodec_open2(c, codec, NULL) < 0) {
 		lt_info("%s: avcodec_open2() failed\n", __func__);
 		goto out;
 	}
 	frame = av_frame_alloc();
 	if (!frame) {
-		lt_info("%s: avcodec_alloc_frame failed\n", __func__);
+		lt_info("%s: av_frame_alloc failed\n", __func__);
 		goto out2;
 	}
 	/* output sample rate, channels, layout could be set here if necessary */
-	o_ch = c->channels;		/* 2 */
-	o_sr = c->sample_rate;		/* 48000 */
-	o_layout = c->channel_layout;	/* AV_CH_LAYOUT_STEREO */
+	o_ch = p->channels;		/* 2 */
+	o_sr = p->sample_rate;		/* 48000 */
+	o_layout = p->channel_layout;	/* AV_CH_LAYOUT_STEREO */
 	if (sformat.channels != o_ch || sformat.rate != o_sr ||
 	    sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 	{
@@ -392,8 +396,9 @@ void cAudio::run()
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ai = ao_driver_info(driver);
 		lt_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
-			__func__, o_ch, o_sr, 16, adevice);;
-		lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
+			__func__, o_ch, o_sr, 16, adevice);
+		if(ai)
+			lt_info("libao driver: %d name '%s' short '%s' author '%s'\n",
 				driver, ai->name, ai->short_name, ai->author);
 	}
 #if 0
@@ -404,10 +409,10 @@ void cAudio::run()
 #endif
 	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
 	lt_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
-		 avcodec_get_name(c->codec_id), c->sample_fmt, tmp, c->sample_rate, c->channels);
+		 avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
 	swr = swr_alloc_set_opts(swr,
 				 o_layout, AV_SAMPLE_FMT_S16, o_sr,			/* output */
-				 c->channel_layout, c->sample_fmt, c->sample_rate,	/* input */
+				 p->channel_layout, c->sample_fmt, p->sample_rate,	/* input */
 				 0, NULL);
 	if (! swr) {
 		lt_info("could not alloc resample context\n");
@@ -421,15 +426,15 @@ void cAudio::run()
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 		if (gotframe && thread_started) {
 			int out_linesize;
-			obuf_sz = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) +
-						 frame->nb_samples, o_sr, c->sample_rate, AV_ROUND_UP);
+			obuf_sz = av_rescale_rnd(swr_get_delay(swr, p->sample_rate) +
+						 frame->nb_samples, o_sr, p->sample_rate, AV_ROUND_UP);
 			if (obuf_sz > obuf_sz_max) {
 				lt_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
 				av_free(obuf);
 				if (av_samples_alloc(&obuf, &out_linesize, o_ch,
 							frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0) {
 					lt_info("av_samples_alloc failed\n");
-					av_free_packet(&avpkt);
+					av_packet_unref(&avpkt);
 					break; /* while (thread_started) */
 				}
 				obuf_sz_max = obuf_sz;
@@ -442,7 +447,7 @@ void cAudio::run()
 								  obuf_sz, AV_SAMPLE_FMT_S16, 1);
 			ao_play(adevice, (char *)obuf, o_buf_sz);
 		}
-		av_free_packet(&avpkt);
+		av_packet_unref(&avpkt);
 	}
 	// ao_close(adevice); /* can take long :-( */
 	av_free(obuf);
@@ -451,6 +456,7 @@ void cAudio::run()
 	av_frame_free(&frame);
  out2:
 	avcodec_close(c);
+	av_free(c);
 	c = NULL;
  out:
 	avformat_close_input(&avfc);

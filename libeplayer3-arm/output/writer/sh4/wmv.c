@@ -51,7 +51,7 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#define WMV3_PRIVATE_DATA_LENGTH        4
+#define WMV3_PRIVATE_DATA_LENGTH            4
 
 #define METADATA_STRUCT_A_START             12
 #define METADATA_STRUCT_B_START             24
@@ -149,7 +149,7 @@ static int writeData(void *_call)
 	wmv_printf(10, "VideoPts %lld\n", call->Pts);
 	wmv_printf(10, "Got Private Size %d\n", call->private_size);
 	memcpy(private_data.privateData, call->private_data,
-		   call->private_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->private_size);
+	       call->private_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->private_size);
 	private_data.width = call->Width;
 	private_data.height = call->Height;
 	private_data.framerate = call->FrameRate;
@@ -185,7 +185,7 @@ static int writeData(void *_call)
 		*PesPtr++           = (crazyFramerate >> 16) & 0xff;
 		*PesPtr++           =  crazyFramerate >> 24;
 		MetadataLength      = PesPtr - &PesPacket[PES_MIN_HEADER_SIZE];
-		int HeaderLength        = InsertPesHeader(PesPacket, MetadataLength, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
+		int HeaderLength    = InsertPesHeader(PesPacket, MetadataLength, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
 		len = write(call->fd, PesPacket, HeaderLength + MetadataLength);
 		initialHeader = 0;
 	}
@@ -196,7 +196,7 @@ static int writeData(void *_call)
 		while (Position < call->len)
 		{
 			int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-							   (call->len - Position) : MAX_PES_PACKET_SIZE;
+			                   (call->len - Position) : MAX_PES_PACKET_SIZE;
 			int Remaining = call->len - Position - PacketLength;
 			wmv_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
 			unsigned char       PesHeader[PES_MAX_HEADER_SIZE];
@@ -207,11 +207,10 @@ static int writeData(void *_call)
 			{
 				unsigned int        PesLength;
 				unsigned int        PrivateHeaderLength;
-				PrivateHeaderLength     = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength],
-																	   call->len);
+				PrivateHeaderLength     = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->len);
 				/* Update PesLength */
 				PesLength               = PesHeader[PES_LENGTH_BYTE_0] +
-										  (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
+				                         (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
 				PesHeader[PES_LENGTH_BYTE_0]            = PesLength & 0xff;
 				PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
 				PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;

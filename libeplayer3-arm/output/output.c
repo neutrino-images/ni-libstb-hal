@@ -57,8 +57,6 @@ if (debug_level >= level) fprintf(stderr, x); } while (0)
 #define cERR_OUTPUT_NO_ERROR         0
 #define cERR_OUTPUT_INTERNAL_ERROR   -1
 
-static const char *FILENAME = "output.c";
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -85,7 +83,7 @@ static Output_t *AvailableOutput[] =
 static void printOutputCapabilities()
 {
 	int i, j;
-	output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	output_printf(10, "Capabilities:\n");
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
@@ -105,7 +103,7 @@ static void printOutputCapabilities()
 static void OutputAdd(Context_t *context, char *port)
 {
 	int i, j;
-	output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
 		for (j = 0; AvailableOutput[i]->Capabilities[j] != NULL; j++)
@@ -134,7 +132,7 @@ static void OutputAdd(Context_t *context, char *port)
 
 static void OutputDel(Context_t *context, char *port)
 {
-	output_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	if (!strcmp("audio", port))
 	{
 		context->output->audio = NULL;
@@ -151,9 +149,9 @@ static void OutputDel(Context_t *context, char *port)
 
 static int Command(void *_context, OutputCmd_t command, void *argument)
 {
-	Context_t  *context = (Context_t *) _context;
+	Context_t *context = (Context_t *) _context;
 	int ret = cERR_OUTPUT_NO_ERROR;
-	output_printf(10, "%s::%s Command %d\n", FILENAME, __FUNCTION__, command);
+	output_printf(10, "%s::%s Command %d\n", __FILE__, __FUNCTION__, command);
 	switch (command)
 	{
 		case OUTPUT_OPEN:
@@ -542,11 +540,11 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 			}
 		}
 		default:
-			output_err("%s::%s OutputCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
+			output_err("%s::%s OutputCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
 			ret = cERR_OUTPUT_INTERNAL_ERROR;
 			break;
 	}
-	output_printf(10, "%s::%s exiting with value %d\n", FILENAME, __FUNCTION__, ret);
+	output_printf(10, "%s::%s exiting with value %d\n", __FILE__, __FUNCTION__, ret);
 	return ret;
 }
 

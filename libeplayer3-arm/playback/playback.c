@@ -175,9 +175,9 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 		return cERR_PLAYBACK_ERROR;
 	}
 	pFiles->szFirstFile = context->playback->uri;
-	if ((context->container->Command(context, CONTAINER_ADD, extension) < 0)
-			|| (!context->container->selectedContainer)
-			|| (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
+	if ((context->container->Command(context, CONTAINER_ADD, extension) < 0) ||
+	    (!context->container->selectedContainer) ||
+	    (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
 	{
 		playback_err("CONTAINER_ADD failed\n");
 		return cERR_PLAYBACK_ERROR;
@@ -307,8 +307,8 @@ static int32_t PlaybackContinue(Context_t *context)
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(10, "\n");
 	if (context->playback->isPlaying &&
-			(context->playback->isPaused || context->playback->isForwarding ||
-			 context->playback->BackWard || context->playback->SlowMotion))
+	   (context->playback->isPaused || context->playback->isForwarding ||
+	    context->playback->BackWard || context->playback->SlowMotion))
 	{
 		if (context->playback->SlowMotion)
 			context->output->Command(context, OUTPUT_CLEAR, NULL);
@@ -406,6 +406,111 @@ static int32_t PlaybackTerminate(Context_t *context)
 		ret = cERR_PLAYBACK_ERROR;
 	}
 	playback_printf(20, "exiting with value %d\n", ret);
+	return ret;
+}
+
+static int PlaybackFastForward(Context_t *context, int *speed)
+{
+	int32_t ret = cERR_PLAYBACK_NO_ERROR;
+	playback_printf(10, "speed %d\n", *speed);
+	/* Audio only forwarding not supported */
+	if (context->playback->isVideo && !context->playback->isHttp && !context->playback->BackWard && (!context->playback->isPaused || context->playback->isPlaying))
+	{
+		if ((*speed <= 0) || (*speed > cMaxSpeed_ff))
+		{
+			playback_err("speed %d out of range (1 - %d) \n", *speed, cMaxSpeed_ff);
+			return cERR_PLAYBACK_ERROR;
+		}
+		context->playback->isForwarding = 1;
+		context->playback->Speed = *speed;
+		playback_printf(20, "Speed: %d x {%d}\n", *speed, context->playback->Speed);
+		context->output->Command(context, OUTPUT_FASTFORWARD, NULL);
+	}
+	else
+	{
+		playback_err("fast forward not possible\n");
+		ret = cERR_PLAYBACK_ERROR;
+	}
+	playback_printf(10, "exiting with value %d\n", ret);
+	return ret;
+}
+
+static int PlaybackFastBackward(Context_t *context, int *speed)
+{
+	int32_t ret = cERR_PLAYBACK_NO_ERROR;
+	playback_printf(10, "speed = %d\n", *speed);
+	/* Audio only reverse play not supported */
+	if (context->playback->isVideo && !context->playback->isForwarding &&
+	   (!context->playback->isPaused || context->playback->isPlaying))
+	{
+		if ((*speed > 0) || (*speed < cMaxSpeed_fr))
+		{
+			playback_err("speed %d out of range (0 - %d) \n", *speed, cMaxSpeed_fr);
+			return cERR_PLAYBACK_ERROR;
+		}
+		if (*speed == 0)
+		{
+			context->playback->BackWard = 0;
+			context->playback->Speed = 0;    /* reverse end */
+		}
+		else
+		{
+			context->playback->isSeeking = 1;
+			context->playback->Speed = *speed;
+			context->playback->BackWard = 2 ^ (*speed);
+			playback_printf(1, "S %d B %f\n", context->playback->Speed, context->playback->BackWard);
+		}
+		context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
+		context->output->Command(context, OUTPUT_CLEAR, NULL);
+		if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0)
+		{
+			playback_err("OUTPUT_REVERSE failed\n");
+			context->playback->BackWard = 0;
+			context->playback->Speed = 1;
+			context->playback->isSeeking = 0;
+			ret = cERR_PLAYBACK_ERROR;
+		}
+	}
+	else
+	{
+		playback_err("fast backward not possible\n");
+		ret = cERR_PLAYBACK_ERROR;
+	}
+	context->playback->isSeeking = 0;
+	playback_printf(10, "exiting with value %d\n", ret);
+	return ret;
+}
+
+static int32_t PlaybackSlowMotion(Context_t *context, int *speed)
+{
+	int32_t ret = cERR_PLAYBACK_NO_ERROR;
+	playback_printf(10, "\n");
+	//Audio only forwarding not supported
+	if (context->playback->isVideo && !context->playback->isHttp && context->playback->isPlaying)
+	{
+		if (context->playback->isPaused)
+			PlaybackContinue(context);
+		switch (*speed)
+		{
+			case 2:
+				context->playback->SlowMotion = 2;
+				break;
+			case 4:
+				context->playback->SlowMotion = 4;
+				break;
+			case 8:
+				context->playback->SlowMotion = 8;
+				break;
+		}
+		playback_printf(20, "SlowMotion: %d x {%d}\n", *speed, context->playback->SlowMotion);
+		context->output->Command(context, OUTPUT_SLOWMOTION, NULL);
+	}
+	else
+	{
+		playback_err("slowmotion not possible\n");
+		ret = cERR_PLAYBACK_ERROR;
+	}
+	playback_printf(10, "exiting with value %d\n", ret);
 	return ret;
 }
 
@@ -676,6 +781,21 @@ static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)
 		case PLAYBACK_INFO:
 		{
 			ret = PlaybackInfo(context, (char **)argument);
+			break;
+		}
+		case PLAYBACK_SLOWMOTION:
+		{
+			ret = PlaybackSlowMotion(context, (int *)argument);
+			break;
+		}
+		case PLAYBACK_FASTBACKWARD:
+		{
+			ret = PlaybackFastBackward(context, (int *)argument);
+			break;
+		}
+		case PLAYBACK_FASTFORWARD:
+		{
+			ret = PlaybackFastForward(context, (int *)argument);
 			break;
 		}
 		case PLAYBACK_GET_FRAME_COUNT:

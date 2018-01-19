@@ -425,6 +425,7 @@ static int PlaybackFastForward(Context_t *context, int *speed)
 		context->playback->Speed = *speed;
 		playback_printf(20, "Speed: %d x {%d}\n", *speed, context->playback->Speed);
 		context->output->Command(context, OUTPUT_FASTFORWARD, NULL);
+		context->output->Command(context, OUTPUT_CONTINUE, NULL);
 	}
 	else
 	{

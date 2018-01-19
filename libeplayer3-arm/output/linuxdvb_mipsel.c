@@ -401,6 +401,10 @@ int LinuxDvbContinue(Context_t *context __attribute__((unused)), char *type)
 	linuxdvb_printf(10, "v%d a%d\n", video, audio);
 	if (video && videofd != -1)
 	{
+		if (context->playback->isForwarding == 0)
+		{
+			ioctl(videofd, VIDEO_FAST_FORWARD, 0);
+		}
 		if (ioctl(videofd, VIDEO_CONTINUE, NULL) == -1)
 		{
 			linuxdvb_err("ioctl failed with errno %d\n", errno);

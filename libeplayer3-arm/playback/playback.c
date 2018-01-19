@@ -310,15 +310,15 @@ static int32_t PlaybackContinue(Context_t *context)
 			(context->playback->isPaused || context->playback->isForwarding ||
 			 context->playback->BackWard || context->playback->SlowMotion))
 	{
-		if (context->playback->SlowMotion)
+		if (context->playback->SlowMotion || context->playback->isForwarding)
 			context->output->Command(context, OUTPUT_CLEAR, NULL);
-		context->output->Command(context, OUTPUT_CONTINUE, NULL);
 		context->playback->isPaused     = 0;
 		//context->playback->isPlaying  = 1;
 		context->playback->isForwarding = 0;
 		context->playback->BackWard     = 0;
 		context->playback->SlowMotion   = 0;
 		context->playback->Speed        = 1;
+		context->output->Command(context, OUTPUT_CONTINUE, NULL);
 	}
 	else
 	{

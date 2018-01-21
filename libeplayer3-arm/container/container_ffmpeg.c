@@ -59,7 +59,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-#if (LIBAVFORMAT_VERSION_MAJOR > 57)
+#if (LIBAVFORMAT_VERSION_MAJOR > 56)
 #define TS_BYTES_SEEKING 0
 #else
 #define TS_BYTES_SEEKING 1
@@ -2365,9 +2365,10 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 	Track_t *audioTrack = NULL;
 	Track_t *current = NULL;
 	seek_target_flag = 0;
+	sec *= AV_TIME_BASE;
 	if (!absolute)
 	{
-		ffmpeg_printf(10, "seeking %f sec\n", sec);
+		ffmpeg_printf(10, "seeking %lld sec\n", sec / AV_TIME_BASE);
 		if (sec == 0)
 		{
 			ffmpeg_err("sec = 0 ignoring\n");
@@ -2382,14 +2383,15 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 				ffmpeg_err("fail to get current PTS\n");
 				return cERR_CONTAINER_FFMPEG_ERR;
 			}
-			sec += currPts / 90000;
+			sec += (currPts / 90000 * AV_TIME_BASE);
+		}
+
+		if (sec < 0)
+		{
+			sec = 0;
 		}
 	}
-	ffmpeg_printf(10, "goto %d sec\n", sec);
-	if (sec < 0)
-	{
-		sec = 0;
-	}
+	ffmpeg_printf(10, "goto %lld sec\n", sec / AV_TIME_BASE);
 	context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
 	context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
 	if (videoTrack != NULL)
@@ -2415,7 +2417,7 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_NO_ERROR;
 	}
-	ffmpeg_printf(10, "iformat->flags %d\n", avContextTab[0]->iformat->flags);
+	ffmpeg_printf(10, "iformat->flags 0x%08x\n", avContextTab[0]->iformat->flags);
 #if defined(TS_BYTES_SEEKING) && TS_BYTES_SEEKING
 	if (avContextTab[0]->iformat->flags & AVFMT_TS_DISCONT)
 	{
@@ -2426,11 +2428,11 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		* about 10 seconds, backward does not work.
 		*/
 		off_t pos = avio_tell(avContextTab[0]->pb);
-		ffmpeg_printf(10, "pos %lld %d\n", pos, avContextTab[0]->bit_rate);
+		ffmpeg_printf(10, "pos %lld %lld\n", pos, avContextTab[0]->bit_rate);
 		if (avContextTab[0]->bit_rate)
 		{
 			sec *= avContextTab[0]->bit_rate / 8;
-			ffmpeg_printf(10, "bit_rate %d\n", avContextTab[0]->bit_rate);
+			ffmpeg_printf(10, "bit_rate %lld\n", avContextTab[0]->bit_rate);
 		}
 		else
 		{
@@ -2441,14 +2443,14 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		{
 			pos = 0;
 		}
-		ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %d\n", pos, sec);
-		seek_target_bytes = pos;
+		ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %lld\n", pos / AV_TIME_BASE, sec / AV_TIME_BASE);
+		seek_target_bytes = pos / AV_TIME_BASE;
 		do_seek_target_bytes = 1;
 	}
 	else
 #endif
 	{
-		seek_target_seconds = sec * AV_TIME_BASE;
+		seek_target_seconds = sec;
 		do_seek_target_seconds = 1;
 	}
 	releaseMutex(__FILE__, __FUNCTION__, __LINE__);

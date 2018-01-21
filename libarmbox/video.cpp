@@ -470,6 +470,10 @@ int cVideo::Stop(bool blank)
 
 int cVideo::setBlank(int)
 {
+	fop(ioctl, VIDEO_PLAY);
+	fop(ioctl, VIDEO_CONTINUE);
+	video_still_picture sp = { NULL, 0 };
+	fop(ioctl, VIDEO_STILLPICTURE, &sp);
 	return Stop(1);
 }
 

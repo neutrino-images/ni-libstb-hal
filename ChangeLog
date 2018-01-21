@@ -1,3 +1,160 @@
+2018-01-21  Thilo Graf  <dbt@novatux.de>
+
+	update to version 1.0.3-mpx
+
+	libarmbox/video.cpp: add missing lines in setBlank()
+	Fix lost lines in pick 'add armbox'
+
+	libarmbox/hardware_caps.c: add missing init for caps.display_can_deepstandby
+
+	libarmbox/playback_gst.cpp: minor format changes
+
+	libarmbox/playback_gst.cpp: small format changes
+
+2018-01-21  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	Revert "return false in decoder have no time"
+	This reverts commit 6f006f1ce9026cccddfe87a88fb3ebaa1f6a9e98.
+
+	return false in decoder have no time
+
+	fix null list
+
+	fix get play position
+
+2018-01-21  Frankenstone  <dampf_acc@yahoo.com>
+
+	libeplayer3-arm: fix fast forward (thx DboxOldie)
+
+2018-01-21  max_10  <max_10@gmx.de>
+
+	Revert "libeplayer3: switch off the teletext sub"
+	This reverts commit 96bd1c5c9f631ceb272dd4afb4667e8a976c8620.
+
+	libeplayer3-arm: Code formatting
+
+	libeplayer3-arm: eliminate some warnings
+
+	adding SLOWMOTION, FASTBACKWARD and FASTFORWARD are not working properly yet.
+
+2018-01-21  TangoCash  <eric@loxat.de>
+
+	fix last commit
+
+	generic gestreamer align to armbox
+
+2018-01-21  max_10  <max_10@gmx.de>
+
+	test
+
+	Revert "Revert "libeplayer3: switch off the teletext sub""
+	This reverts commit a2fc1d51ee2bd5d66263aecdbf2936cf26e91f17.
+
+2018-01-21  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	Revert "return false in decoder have no time"
+	This reverts commit 6f006f1ce9026cccddfe87a88fb3ebaa1f6a9e98.
+
+	return false in decoder have no time
+
+2018-01-21  max_10  <max_10@gmx.de>
+
+	libarmbox: fix resolution icon in infoviewer
+
+	armbox: Cosmetics replace spaces with tabs and delete unnecessary tabs
+
+2018-01-20  max_10  <max_10@gmx.de>
+
+	armbox eplayer: fix playing files with subtitles
+
+	Conflicts:
+		libeplayer3-arm/manager/subtitle.c
+
+	additional format fixes, solved conflicts and clean up
+
+2018-01-20  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: audio.c delete newline
+
+	generic-pc: switch to ffmpeg 3.0 API
+
+	libarmbox/video: Workaround Channel Change No Black Picture when Show Picture was active.
+
+	libeplayer3-arm: fixes segfault on internet streams (thx DboxOldie)
+
+2018-01-20  Frankenstone  <dampf_acc@yahoo.com>
+
+	libeplayer3-arm: fix fast forward (thx DboxOldie)
+	 Conflicts:
+		libeplayer3-arm/playback/playback.c
+
+2018-01-11  TangoCash  <eric@loxat.de>
+
+	armbox eplayer: fix init jump
+
+2018-01-11  max_10  <max_10@gmx.de>
+
+	fix ci arm auth (thx DboxOldie)
+
+2018-01-11  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- fix build for generic-pc
+
+2018-01-11  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: update Makefile.am
+
+	libeplayer3-arm: eliminate some warnings
+
+	libeplayer3-arm: Code formatting
+
+2018-01-07  Frankenstone  <dampf_acc@yahoo.com>
+
+	fix ci arm hardware (thx DboxOldie)
+
+2018-01-07  max_10  <max_10@gmx.de>
+
+	armbox eplayer: remove writeReverseData (unused)
+
+2018-01-03  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	remove double AV_CODEC_ID_EAC3
+
+2018-01-03  max_10  <max_10@gmx.de>
+
+	armbox eplayer: noprobe for ts (thx DboxOldie)
+
+	armbox eplayer: increase wait time (thx DboxOldie)
+
+	armbox eplayer: eplayer3 Binary adaptation to the changed manager list (thx DboxOldie)
+
+2018-01-03  TangoCash  <eric@loxat.de>
+
+	armbox eplayer: fix playing files with subtitles
+
+2018-01-02  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- add some missing members for ARM_HARDWARE; mostly dummy functions
+
+2017-12-28  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: Code formatting
+
+	libarmbox: Code formatting playback_libeplayer3
+
+	armbox eplayer: add eplayer3 bin
+
+	Code formatting
+
+2017-12-28  TangoCash  <eric@loxat.de>
+
+	eplayer armbox: fix webtv (thx dbo)
+
+2017-12-21  Thilo Graf  <dbt@novatux.de>
+
+	update version 1.0.2-mpx
+	eplayer beta
+
 2017-12-21  TangoCash  <eric@loxat.de>
 
 	armbox eplayer: reactivate audio, subtitle and chapters

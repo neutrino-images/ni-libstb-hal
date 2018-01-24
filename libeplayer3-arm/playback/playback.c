@@ -96,20 +96,7 @@ static void SupervisorThread(Context_t *context)
 	playback_printf(10, ">\n");
 	while (context && context->playback && context->playback->isPlaying && !context->playback->abortRequested)
 	{
-		if (context->playback->BackWard != 0)
-		{
-			/* Offset -3 seconds for backward
-			 * so initial backward speed is 4x */
-			int64_t pos = (int64_t)context->playback->Speed - 3;
-			playback_printf(10, "Speed %d BackWard %d to seek %lld\n", context->playback->Speed, context->playback->BackWard, pos);
-			context->playback->isSeeking = 1;
-			context->output->Command(context, OUTPUT_CLEAR, NULL);
-			context->container->selectedContainer->Command(context, CONTAINER_SEEK, &pos);
-			context->playback->isSeeking = 0;
-			usleep(350000);
-		} else {
-			usleep(100000);
-		}
+		usleep(100000);
 	}
 	playback_printf(10, "<\n");
 	hasThreadStarted = 2;

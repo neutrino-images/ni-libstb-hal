@@ -391,7 +391,6 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 		case AV_CODEC_ID_WMAV1:
 		case AV_CODEC_ID_WMAV2:
 			return (wma_software_decode) ? "A_IPCM" : "A_WMA";
-		case 86056:
 		case AV_CODEC_ID_WMAPRO:
 			return (wma_software_decode) ? "A_IPCM" : "A_WMA/PRO";
 		case AV_CODEC_ID_WMALOSSLESS:
@@ -589,8 +588,48 @@ static void FFMPEGThread(Context_t *context)
 			}
 			continue;
 		}
+		if (context->playback->BackWard && av_gettime() >= showtime) {
+			context->output->Command(context, OUTPUT_CLEAR, "video");
+
+			if (bofcount == 1) {
+			showtime = av_gettime();
+			usleep(100000);
+			continue;
+			}
+
+			if (avContextTab[0]->iformat->flags & AVFMT_TS_DISCONT) {
+				off_t pos = avio_tell(avContextTab[0]->pb);
+
+				if (pos > 0) {
+					float br;
+					if (avContextTab[0]->bit_rate)
+						br = avContextTab[0]->bit_rate / 8.0;
+					else
+						br = 180000.0;
+					seek_target_bytes = (double)pos + (double)context->playback->Speed * 8.0 * br;
+					if (seek_target_bytes < 0)
+						seek_target_bytes = 1;
+					do_seek_target_bytes = 1;
+				}
+			}
+			else
+			{
+				int64_t currPts = -1;
+				context->playback->Command(context, PLAYBACK_PTS, &currPts);
+				seek_target_seconds = ((double)currPts / 90000.0 + context->playback->Speed) * AV_TIME_BASE;
+				if (seek_target_seconds < 0)
+					seek_target_seconds = AV_TIME_BASE;
+				do_seek_target_seconds = 1;
+			}
+			showtime = av_gettime() + 300000;	//jump back every 300ms
+		}
+		else
+		{
+			bofcount = 0;
+		}
 		if (do_seek_target_seconds || do_seek_target_bytes)
 		{
+			int res = -1;
 			isWaitingForFinish = 0;
 			if (do_seek_target_seconds)
 			{
@@ -608,8 +647,9 @@ static void FFMPEGThread(Context_t *context)
 						{
 							seek_target_seconds += avContextTab[i]->start_time;
 						}
-						//av_seek_frame(avContextTab[i], -1, seek_target_seconds, 0);
-						avformat_seek_file(avContextTab[i], -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
+						res = avformat_seek_file(avContextTab[i], -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
+						if (res < 0 && context->playback->BackWard)
+							bofcount = 1;
 					}
 					else
 					{
@@ -1785,7 +1825,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 						{
 							track.TimeScale = 1000;
 						}
-						ffmpeg_printf(10, "bit_rate       [%d]\n", get_codecpar(stream)->bit_rate);
+						ffmpeg_printf(10, "bit_rate       [%lld]\n", get_codecpar(stream)->bit_rate);
 						ffmpeg_printf(10, "time_base.den  [%d]\n", stream->time_base.den);
 						ffmpeg_printf(10, "time_base.num  [%d]\n", stream->time_base.num);
 						ffmpeg_printf(10, "width          [%d]\n", get_codecpar(stream)->width);
@@ -1804,6 +1844,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 							ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
 							track.duration = (int64_t) avContext->duration / 1000;
 						}
+						ffmpeg_printf(10, "duration       [%lld]\n", track.duration);
 						if (context->manager->video)
 						{
 							if (get_codecpar(stream)->codec_id == AV_CODEC_ID_MPEG4)

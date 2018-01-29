@@ -43,6 +43,7 @@ ca_slot_info_t info;
 #endif
 #if HAVE_ARM_HARDWARE
 const char ci_path[] = "/dev/ci%d";
+static int last_source = -1;
 #endif
 static bool checkLiveSlot = false;
 static bool CertChecked = false;
@@ -927,6 +928,8 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 					setInputSource((eDVBCISlot*)(*it), false);
 				}
 			}
+			if (!(*it)->init)
+				last_source = (int)source;
 		}
 #endif
 		printf("No free ci-slot\n");
@@ -1192,6 +1195,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->status = eStatusReset;
 		usleep(200000);
 #if HAVE_ARM_HARDWARE
+		last_source = (int)(*it)->source;
 		setInputSource((eDVBCISlot*)(*it), false);
 #endif
 		if ((*it)->hasCCManager)
@@ -1284,6 +1288,7 @@ void cCA::ci_removed(eDVBCISlot* slot)
 {
 	printf("cam (%d) status changed ->cam now _not_ present\n", slot->slot);
 #if HAVE_ARM_HARDWARE
+		last_source = (int)slot->source;
 		setInputSource(slot, false);
 #endif
 	if (slot->hasCCManager)
@@ -1383,7 +1388,7 @@ void cCA::slot_pollthread(void *c)
 						}
 #endif
 						ci_inserted(slot);
-						setInputSource(slot, true);
+						//setInputSource(slot, true);
 						goto FROM_FIRST;
 					}
 				}
@@ -1594,6 +1599,14 @@ FROM_FIRST:
 				break;
 		} /* switch(slot->status) */
 #endif		/* end Duckbox */
+#if HAVE_ARM_HARDWARE
+		if (!slot->init && slot->camIsReady && last_source > -1)
+		{
+			slot->source = (u8)last_source;
+			setInputSource(slot, true);
+			last_source = -1;
+		}
+#endif
 		if (slot->hasCAManager && slot->hasAppManager && !slot->init)
 		{
 			slot->init = true;
@@ -1631,7 +1644,7 @@ FROM_FIRST:
 				slot->ccmgrSession->resendKey(slot);
 		}
 		/* slow down for hd51 to avoid high cpu load */
-		if (wait && slot->init)
+		if (wait && slot->init && !slot->mmiOpened)
 			usleep(300000);
 	}
 }

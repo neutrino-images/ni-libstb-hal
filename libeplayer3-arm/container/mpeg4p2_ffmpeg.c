@@ -87,12 +87,12 @@ static void mpeg4p2_context_reset(Mpeg4P2Context *context)
 	context->packet_duration = 0;
 }
 
-static void mpeg4p2_write(Context_t *ctx, Track_t *track, int avContextIdx, int64_t *currentVideoPts, int64_t *latestPts, AVPacket *pkt)
+static void mpeg4p2_write(Context_t *ctx, Track_t *track, int avContextIdx, int64_t *pts_current, int64_t *pts_latest, AVPacket *pkt)
 {
-	*currentVideoPts = track->pts = calcPts(avContextIdx, track->stream, pkt->pts);
-	if ((*currentVideoPts > *latestPts) && (*currentVideoPts != INVALID_PTS_VALUE))
+	*pts_current = track->pts = calcPts(avContextIdx, track->stream, pkt->pts);
+	if ((*pts_current > *pts_latest) && (*pts_current != INVALID_PTS_VALUE))
 	{
-		*latestPts = *currentVideoPts;
+		*pts_latest = *pts_current;
 	}
 	track->dts = calcPts(avContextIdx, track->stream, pkt->dts);
 	AudioVideoOut_t avOut;

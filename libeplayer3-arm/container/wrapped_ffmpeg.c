@@ -39,7 +39,7 @@ static void wrapped_packet_unref(void *param)
 #endif
 }
 
-static void wrapped_set_max_analyze_duration(void *param, int val)
+static void wrapped_set_max_analyze_duration(void *param, int val __attribute__((unused)))
 {
 #if (LIBAVFORMAT_VERSION_MAJOR > 55) && (LIBAVFORMAT_VERSION_MAJOR < 56)
 	((AVFormatContext *)param)->max_analyze_duration2 = val;
@@ -114,7 +114,7 @@ void free_all_stored_avcodec_context()
 	}
 }
 
-int store_avcodec_context(AVCodecContext *avCodecCtx, uint32_t cAVIdx, int id)
+int store_avcodec_context(AVCodecContext *avCodecCtx __attribute__((unused)), uint32_t cAVIdx __attribute__((unused)), int id __attribute__((unused)))
 {
 	CodecCtxStoreItem_t *ptr = malloc(sizeof(CodecCtxStoreItem_t));
 	if (!ptr)
@@ -152,8 +152,8 @@ static AVCodecContext *wrapped_avcodec_get_context(uint32_t cAVIdx, AVStream *st
 		}
 		av_codec_set_pkt_timebase(avCodecCtx, stream->time_base);
 		store_avcodec_context(avCodecCtx, cAVIdx, stream->id);
-		return avCodecCtx;
 	}
+	return avCodecCtx;
 #else
 	return stream->codec;
 #endif

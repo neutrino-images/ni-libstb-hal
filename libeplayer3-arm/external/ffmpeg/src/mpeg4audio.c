@@ -71,8 +71,7 @@ static inline int get_object_type(GetBitContext *gb)
 static inline int get_sample_rate(GetBitContext *gb, int *index)
 {
 	*index = get_bits(gb, 4);
-	return *index == 0x0f ? get_bits(gb, 24) :
-	       avpriv_mpeg4audio_sample_rates[*index];
+	return *index == 0x0f ? (int)get_bits(gb, 24) : avpriv_mpeg4audio_sample_rates[*index];
 }
 
 int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
@@ -88,7 +87,7 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 	c->object_type = get_object_type(&gb);
 	c->sample_rate = get_sample_rate(&gb, &c->sampling_index);
 	c->chan_config = get_bits(&gb, 4);
-	if (c->chan_config < FF_ARRAY_ELEMS(ff_mpeg4audio_channels))
+	if (c->chan_config < (int)FF_ARRAY_ELEMS(ff_mpeg4audio_channels))
 		c->channels = ff_mpeg4audio_channels[c->chan_config];
 	c->sbr = -1;
 	c->ps  = -1;

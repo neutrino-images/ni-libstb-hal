@@ -182,7 +182,7 @@ static int _writeData(void *_call, int type)
 	else // check LOAS header
 	{
 		if (!(call->len > 2 && call->data[0] == 0x56 && (call->data[1] >> 4) == 0xe &&
-		     (AV_RB16(call->data + 1) & 0x1FFF) + 3 == call->len))
+		     ((uint32_t)(AV_RB16(call->data + 1) & 0x1FFF) + 3) == call->len))
 		{
 			aac_err("parsing Data with wrong latm header. ignoring...\n");
 			return 0;
@@ -218,7 +218,7 @@ static int writeDataADTS(void *_call)
 		aac_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
-	if ((call->private_data && 0 == strncmp("ADTS", call->private_data, call->private_size)) ||
+	if ((call->private_data && 0 == strncmp("ADTS", (const char *)call->private_data, call->private_size)) ||
 	     HasADTSHeader(call->data, call->len))
 	{
 		return _writeData(_call, 0);
@@ -272,7 +272,7 @@ static int writeDataLATM(void *_call)
 		aac_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
-	if (call->private_data && 0 == strncmp("LATM", call->private_data, call->private_size))
+	if (call->private_data && 0 == strncmp("LATM", (const char *)call->private_data, call->private_size))
 	{
 		return _writeData(_call, 1);
 	}

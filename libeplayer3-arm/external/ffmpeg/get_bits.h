@@ -368,7 +368,7 @@ static inline unsigned int show_bits_long(GetBitContext *s, int n)
 	}
 }
 
-static inline int check_marker(void *logctx, GetBitContext *s, const char *msg)
+static inline int check_marker(void *logctx __attribute__((unused)), GetBitContext *s, const char *msg __attribute__((unused)))
 {
 	int bit = get_bits1(s);
 	return bit;

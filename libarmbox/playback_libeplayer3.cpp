@@ -87,7 +87,7 @@ bool cPlayback::Start(std::string filename, std::string headers)
 	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)))
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -247,7 +247,7 @@ bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 	return true;
 }
 
-bool cPlayback::SetVPid(int pid)
+bool cPlayback::SetVPid(int /*pid*/)
 {
 	lt_info("%s\n", __func__);
 	return true;
@@ -269,7 +269,7 @@ bool cPlayback::SetSubtitlePid(int pid)
 bool cPlayback::SetTeletextPid(int pid)
 {
 	lt_info("%s\n", __func__);
-	int i = pid;
+	//int i = pid;
 	if (pid != mTeletextStream)
 	{
 		//if(player && player->playback)
@@ -534,10 +534,10 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 	}
 }
 
-void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, std::string *language, int *mags, int *pages)
+void cPlayback::FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpids, std::string */*language*/, int */*mags*/, int */*pages*/)
 {
 	lt_info("%s\n", __func__);
-	int max_numpids = *numpids;
+	//int max_numpids = *numpids;
 	*numpids = 0;
 	/*
 	if (player && player->manager && player->manager->teletext)

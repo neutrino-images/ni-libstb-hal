@@ -152,7 +152,7 @@ static int32_t writeData(void *_call)
 		int32_t block_align = 0;
 		int32_t byterate = 0;
 		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
-		uint8_t dataPrecision = 0;
+		//uint8_t dataPrecision = 0;
 		uint8_t LE = 0;
 		switch (codecID)
 		{
@@ -224,6 +224,8 @@ static int32_t writeData(void *_call)
 			fixed_buffer = malloc(fixed_buffersize);
 		}
 		fixed_bufferfilled = 0;
+		/* avoid compiler warning */
+		if (LE) {}
 		//printf("PCM fixed_buffersize [%u] [%s]\n", fixed_buffersize, LE ? "LE":"BE");
 	}
 	while (size > 0)

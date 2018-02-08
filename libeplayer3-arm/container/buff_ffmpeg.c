@@ -163,33 +163,33 @@ static int32_t ffmpeg_read_wrapper(void *opaque, uint8_t *buf, int32_t buf_size)
 		return ffmpeg_real_read_org(opaque, buf, buf_size);
 	}
 }
-
+#if 0
 static int32_t ffmpeg_read_wrapper2(void *opaque, uint8_t *buf, int32_t buf_size)
 {
 	return ffmpeg_read_wrapper_base(opaque, buf, buf_size, 1);
 }
-
+#endif
 //for buffered io
-void getfillerMutex(const char *filename, const char *function, int line)
+void getfillerMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused)))
 {
 	ffmpeg_printf(100, "::%d requesting mutex\n", line);
 	pthread_mutex_lock(&fillermutex);
 	ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-void releasefillerMutex(const char *filename, const const char *function, int line)
+void releasefillerMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line __attribute__((unused)))
 {
 	pthread_mutex_unlock(&fillermutex);
 	ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 //for buffered io (end)encoding
-
+#if 0
 static int32_t container_set_ffmpeg_buf_seek_time(int32_t *time)
 {
 	ffmpeg_buf_seek_time = (*time);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
-
+#endif
 static int32_t container_set_ffmpeg_buf_size(int32_t *size)
 {
 	if (ffmpeg_buf == NULL)
@@ -229,13 +229,13 @@ static int32_t container_get_fillbufstatus(int32_t *size)
 	}
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
-
+#if 0
 static int32_t container_stop_buffer()
 {
 	ffmpeg_buf_stop = 1;
 	return 0;
 }
-
+#endif
 //flag 0: start direct
 //flag 1: from thread
 static void ffmpeg_filler(Context_t *context, int32_t id, int32_t *inpause, int32_t flag)
@@ -414,7 +414,7 @@ static int32_t ffmpeg_start_fillerTHREAD(Context_t *context)
 	return ret;
 }
 
-static int32_t ffmpeg_read_real(void *opaque, uint8_t *buf, int32_t buf_size)
+static int32_t ffmpeg_read_real(void *opaque __attribute__((unused)), uint8_t *buf, int32_t buf_size)
 {
 	int32_t len = buf_size;
 	int32_t rwdiff = 0;
@@ -495,7 +495,7 @@ static int32_t ffmpeg_read(void *opaque, uint8_t *buf, int32_t buf_size)
 	return sumlen;
 }
 
-static int64_t ffmpeg_seek(void *opaque, int64_t offset, int32_t whence)
+static int64_t ffmpeg_seek(void *opaque __attribute__((unused)), int64_t offset, int32_t whence)
 {
 	int64_t diff;
 	int32_t rwdiff = 0;

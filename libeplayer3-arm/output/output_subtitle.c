@@ -97,14 +97,14 @@ static int isSubtitleOpened = 0;
 /* Functions                     */
 /* ***************************** */
 
-static void getMutex(int line)
+static void getMutex(int line __attribute__((unused)))
 {
 	subtitle_printf(100, "%d requesting mutex\n", line);
 	pthread_mutex_lock(&mutex);
 	subtitle_printf(100, "%d received mutex\n", line);
 }
 
-static void releaseMutex(int line)
+static void releaseMutex(int line __attribute__((unused)))
 {
 	pthread_mutex_unlock(&mutex);
 	subtitle_printf(100, "%d released mutex\n", line);
@@ -202,7 +202,7 @@ static int Write(void *_context, void *data)
 	}
 	out = (SubtitleOut_t *) data;
 	context->manager->subtitle->Command(context, MANAGER_GET, &curtrackid);
-	if (curtrackid != out->trackId)
+	if (curtrackid != (int32_t)out->trackId)
 	{
 		Flush();
 	}
@@ -232,7 +232,7 @@ static int Write(void *_context, void *data)
 
 static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 {
-	uint32_t i = 0 ;
+	//uint32_t i = 0 ;
 	subtitle_printf(10, "\n");
 	if (isSubtitleOpened == 1)
 	{
@@ -248,7 +248,7 @@ static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 
 static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 {
-	uint32_t i = 0 ;
+	//uint32_t i = 0 ;
 	subtitle_printf(10, "\n");
 	getMutex(__LINE__);
 	isSubtitleOpened = 0;
@@ -257,7 +257,7 @@ static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 	return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int Command(void *_context, OutputCmd_t command, void *argument)
+static int Command(void *_context, OutputCmd_t command, void *argument __attribute__((unused)))
 {
 	Context_t *context = (Context_t *) _context;
 	int ret = cERR_SUBTITLE_NO_ERROR;

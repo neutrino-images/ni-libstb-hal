@@ -32,11 +32,10 @@
 
 #ifdef SAM_WITH_DEBUG
 #define PLAYBACK_DEBUG
+static short debug_level = 20;
 #else
 #define PLAYBACK_SILENT
 #endif
-
-static short debug_level = 20;
 
 #ifdef PLAYBACK_DEBUG
 #define playback_printf(level, fmt, x...) do { \
@@ -565,7 +564,7 @@ static int32_t PlaybackPts(Context_t *context, int64_t *pts)
 	return ret;
 }
 
-static int32_t PlaybackGetFrameCount(Context_t *context, int64_t *frameCount)
+static int32_t PlaybackGetFrameCount(Context_t *context, uint64_t *frameCount)
 {
 	int ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(20, "\n");

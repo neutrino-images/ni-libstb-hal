@@ -116,7 +116,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 				}
 				*NalLength = (data[21] & 3) + 1;
 				int num_param_sets = data[22];
-				int pos = 23;
+				uint32_t pos = 23;
 				for (i = 0; i < num_param_sets; i++)
 				{
 					int j;
@@ -175,7 +175,7 @@ static int writeData(void *_call)
 	unsigned long long int  VideoPts;
 	unsigned int            TimeDelta;
 	unsigned int            TimeScale;
-	int                     len = 0;
+	unsigned int            len = 0;
 	int ic = 0;
 	struct iovec iov[IOVEC_SIZE];
 	h264_printf(20, "\n");
@@ -186,6 +186,9 @@ static int writeData(void *_call)
 	}
 	TimeDelta = call->FrameRate;
 	TimeScale = call->FrameScale;
+	/* avoid compiler warnings */
+	if (TimeDelta) {}
+	if (TimeScale) {}
 	VideoPts  = call->Pts;
 	h264_printf(20, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta, TimeScale);
 	if ((call->data == NULL) || (call->len <= 0))

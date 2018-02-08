@@ -145,7 +145,7 @@ ssize_t write_with_retry(int fd, const void *buf, size_t size)
 ssize_t writev_with_retry(int fd, const struct iovec *iov, size_t ic)
 {
 	ssize_t len = 0;
-	int i = 0;
+	uint32_t i = 0;
 	for (i = 0; i < ic; ++i)
 	{
 		write_with_retry(fd, iov[i].iov_base, iov[i].iov_len);

@@ -147,7 +147,7 @@ static int32_t seek_target_flag = 0;
 /* ***************************** */
 static int32_t container_ffmpeg_seek_bytes(off_t pos);
 static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t absolute);
-static int32_t container_ffmpeg_seek_rel(Context_t *context, off_t pos, int64_t pts, int64_t sec);
+//static int32_t container_ffmpeg_seek_rel(Context_t *context, off_t pos, int64_t pts, int64_t sec);
 static int32_t container_ffmpeg_get_length(Context_t *context, int64_t *length);
 static int64_t calcPts(uint32_t avContextIdx, AVStream *stream, int64_t pts);
 
@@ -204,7 +204,7 @@ static int32_t flv2mpeg4_converter = 0;
 /* MISC Functions                */
 /* ***************************** */
 
-static void ffmpeg_silen_callback(void *avcl, int level, const char *fmt, va_list vl)
+static void ffmpeg_silen_callback(void *avcl __attribute__((unused)), int level __attribute__((unused)), const char *fmt __attribute__((unused)), va_list vl __attribute__((unused)))
 {
 	return;
 }
@@ -287,7 +287,7 @@ static void initMutex(void)
 	mutexInitialized = 1;
 }
 
-static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int32_t line)
+static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
 {
 	ffmpeg_printf(100, "::%d requesting mutex\n", line);
 	if (!mutexInitialized)
@@ -298,13 +298,13 @@ static void getMutex(const char *filename __attribute__((unused)), const char *f
 	ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int32_t line)
+static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
 {
 	pthread_mutex_unlock(&mutex);
 	ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
-static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extradata, int extradata_size, int profile, int32_t *version)
+static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extradata, int extradata_size, int profile __attribute__((unused)), int32_t *version)
 {
 	ffmpeg_printf(10, "Codec ID: %d (%.8lx)\n", codec_id, codec_id);
 	switch (codec_id)
@@ -524,8 +524,8 @@ static void FFMPEGThread(Context_t *context)
 	threadname[16] = 0;
 	prctl(PR_SET_NAME, (unsigned long)&threadname);
 	AVPacket packet;
-	off_t lastSeek = -1;
-	int64_t lastPts = -1;
+	//off_t lastSeek = -1;
+	//int64_t lastPts = -1;
 	int64_t currentVideoPts = -1;
 	int64_t currentAudioPts = -1;
 	/* lastVideoDts and lastAudioDts
@@ -535,7 +535,7 @@ static void FFMPEGThread(Context_t *context)
 	int64_t lastAudioDts = -1;
 	int64_t showtime = 0;
 	int64_t bofcount = 0;
-	int32_t err = 0;
+	//int32_t err = 0;
 	AudioVideoOut_t avOut;
 	g_context = context;
 	SwrContext *swr = NULL;
@@ -737,7 +737,7 @@ static void FFMPEGThread(Context_t *context)
 				ffmpeg_err("error getting subtitle track\n");
 			}
 			ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, pid);
-			if (videoTrack && (videoTrack->AVIdx == cAVIdx) && (videoTrack->Id == pid))
+			if (videoTrack && (videoTrack->AVIdx == (int)cAVIdx) && (videoTrack->Id == pid))
 			{
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 34, 100)
 				AVCodecContext *codec_context = videoTrack->avCodecCtx;
@@ -826,7 +826,7 @@ static void FFMPEGThread(Context_t *context)
 						}
 					}
 			}
-			else if (audioTrack && (audioTrack->AVIdx == cAVIdx) && (audioTrack->Id == pid))
+			else if (audioTrack && (audioTrack->AVIdx == (int)cAVIdx) && (audioTrack->Id == pid))
 			{
 				uint8_t skipPacket = 0;
 				currentAudioPts = audioTrack->pts = pts = calcPts(cAVIdx, audioTrack->stream, packet.pts);
@@ -1111,7 +1111,7 @@ static void FFMPEGThread(Context_t *context)
 			else if (subtitleTrack && (subtitleTrack->Id == pid))
 			{
 				int64_t duration = -1;
-				int64_t pts = calcPts(cAVIdx, subtitleTrack->stream, packet.pts);
+				pts = calcPts(cAVIdx, subtitleTrack->stream, packet.pts);
 				AVStream *stream = subtitleTrack->stream;
 				if (packet.duration != 0)
 				{
@@ -1604,7 +1604,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, int
 
 int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 {
-	int32_t err = 0;
+	//int32_t err = 0;
 	ffmpeg_printf(10, ">\n");
 	if (playFilesNames == NULL)
 	{
@@ -1741,7 +1741,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				}
 			}
 		}
-		int32_t n = 0;
+		uint32_t n = 0;
 		for (n = 0; n < avContext->nb_streams; n++)
 		{
 			Track_t track;
@@ -2323,7 +2323,7 @@ static int32_t container_ffmpeg_seek_bytes(off_t pos)
 	ffmpeg_printf(30, "current_pos after seek %lld\n", avio_tell(avContextTab[0]->pb));
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
-
+#if 0 //unused
 /* seeking relative to a given byteposition N seconds ->for reverse playback needed */
 static int32_t container_ffmpeg_seek_rel(Context_t *context, off_t pos, int64_t pts, int64_t sec)
 {
@@ -2399,12 +2399,12 @@ static int32_t container_ffmpeg_seek_rel(Context_t *context, off_t pos, int64_t 
 	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
-
+#endif
 static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t absolute)
 {
 	Track_t *videoTrack = NULL;
 	Track_t *audioTrack = NULL;
-	Track_t *current = NULL;
+//	Track_t *current = NULL;
 	seek_target_flag = 0;
 	sec *= AV_TIME_BASE;
 	if (!absolute)
@@ -2435,6 +2435,13 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 	ffmpeg_printf(10, "goto %lld sec\n", sec / AV_TIME_BASE);
 	context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
 	context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
+	if (!videoTrack && !audioTrack)
+	{
+		ffmpeg_err("no track available to seek\n");
+		return cERR_CONTAINER_FFMPEG_ERR;
+	}
+
+#if 0
 	if (videoTrack != NULL)
 	{
 		current = videoTrack;
@@ -2448,6 +2455,8 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		ffmpeg_err("no track available to seek\n");
 		return cERR_CONTAINER_FFMPEG_ERR;
 	}
+#endif
+
 	if (sec < 0)
 	{
 		seek_target_flag |= AVSEEK_FLAG_BACKWARD;
@@ -2546,7 +2555,7 @@ static int32_t container_ffmpeg_get_length(Context_t *context, int64_t *length)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int32_t container_ffmpeg_switch_audio(Context_t *context, int32_t *arg)
+static int32_t container_ffmpeg_switch_audio(Context_t *context, int32_t *arg __attribute__((unused)))
 {
 	ffmpeg_printf(10, "track %d\n", *arg);
 	/* Hellmaster1024: nothing to do here! */
@@ -2555,7 +2564,7 @@ static int32_t container_ffmpeg_switch_audio(Context_t *context, int32_t *arg)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int32_t container_ffmpeg_switch_subtitle(Context_t *context, int32_t *arg)
+static int32_t container_ffmpeg_switch_subtitle(Context_t *context, int32_t *arg __attribute__((unused)))
 {
 	ffmpeg_printf(10, "track %d\n", *arg);
 	/* This is made to flush inside the buffer because

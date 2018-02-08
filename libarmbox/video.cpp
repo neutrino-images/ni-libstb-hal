@@ -290,7 +290,7 @@ int image_to_mpeg2(const char *image_name, int fd)
 					uint8_t endcode[] = { 0, 0, 1, 0xb7 };
 					write_all(fd,endcode, sizeof(endcode));
 				}
-				av_free_packet(&packet);
+				av_packet_unref(&packet);
 			}
 			avcodec_close(codecContext);
 		}

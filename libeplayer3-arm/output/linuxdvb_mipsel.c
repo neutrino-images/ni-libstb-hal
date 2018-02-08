@@ -54,11 +54,10 @@
 
 #ifdef SAM_WITH_DEBUG
 #define LINUXDVB_DEBUG
+static unsigned short debug_level = 20;
 #else
 #define LINUXDVB_SILENT
 #endif
-
-static unsigned short debug_level = 20;
 
 static const char FILENAME[] = __FILE__;
 
@@ -311,8 +310,9 @@ int LinuxDvbPlay(Context_t *context, char *type)
 		}
 		free(Encoding);
 	}
-	//return ret;
-	return 0;
+	ret = cERR_LINUXDVB_NO_ERROR;
+	return ret;
+	//return 0;
 }
 
 int LinuxDvbStop(Context_t *context __attribute__((unused)), char *type)
@@ -425,7 +425,7 @@ int LinuxDvbContinue(Context_t *context __attribute__((unused)), char *type)
 	return ret;
 }
 
-int LinuxDvbReverseDiscontinuity(Context_t *context __attribute__((unused)), int *surplus)
+int LinuxDvbReverseDiscontinuity(Context_t *context __attribute__((unused)), int *surplus __attribute__((unused)))
 {
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	// int dis_type = VIDEO_DISCONTINUITY_CONTINUOUS_REVERSE | *surplus;
@@ -474,7 +474,7 @@ int LinuxDvbAudioMute(Context_t *context __attribute__((unused)), char *flag)
 	return ret;
 }
 
-int LinuxDvbFlush(Context_t *context __attribute__((unused)), char *type)
+int LinuxDvbFlush(Context_t *context __attribute__((unused)), char *type __attribute__((unused)))
 {
 	// unsigned char video = !strcmp("video", type);
 	// unsigned char audio = !strcmp("audio", type);
@@ -507,6 +507,7 @@ int LinuxDvbFastForward(Context_t *context, char *type)
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	unsigned char video = !strcmp("video", type);
 	unsigned char audio = !strcmp("audio", type);
+	if (audio) {}
 	linuxdvb_printf(10, "v%d a%d speed %d\n", video, audio, context->playback->Speed);
 	if (video && videofd != -1)
 	{
@@ -601,7 +602,7 @@ int LinuxDvbSlowMotion(Context_t *context, char *type)
 	return ret;
 }
 
-int LinuxDvbAVSync(Context_t *context, char *type __attribute__((unused)))
+int LinuxDvbAVSync(Context_t *context __attribute__((unused)), char *type __attribute__((unused)))
 {
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	/* konfetti: this one is dedicated to audiofd so we
@@ -691,7 +692,7 @@ int LinuxDvbPts(Context_t *context __attribute__((unused)), unsigned long long i
 	return ret;
 }
 
-int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned long long int *frameCount)
+int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned long long int *frameCount __attribute__((unused)))
 {
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	return ret;

@@ -195,12 +195,14 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 		if (cd_len > 7 && data[0] == 1)
 		{
 			unsigned short len = (data[6] << 8) | data[7];
-			if (cd_len >= (len + 8))
+			if (cd_len >= (uint32_t)(len + 8))
 			{
 				unsigned int i = 0;
 				uint8_t profile_num[] = { 66, 77, 88, 100 };
 				uint8_t profile_cmp[2] = { 0x67, 0x00 };
 				const char *profile_str[] = { "baseline", "main", "extended", "high" };
+				/* avoid compiler warning */
+				if (*profile_str) {}
 				memcpy(tmp, Head, sizeof(Head));
 				tmp_len += 4;
 				memcpy(tmp + tmp_len, data + 8, len);
@@ -289,7 +291,7 @@ static int writeData(void *_call)
 	unsigned long long int  VideoPts;
 	unsigned int            TimeDelta;
 	unsigned int            TimeScale;
-	int                     len = 0;
+	unsigned int            len = 0;
 	int ic = 0;
 	struct iovec iov[IOVEC_SIZE];
 	h264_printf(20, "\n");
@@ -300,6 +302,9 @@ static int writeData(void *_call)
 	}
 	TimeDelta = call->FrameRate;
 	TimeScale = call->FrameScale;
+	/* avoid compiler warnings */
+	if (TimeDelta) {}
+	if (TimeScale) {}
 	VideoPts  = call->Pts;
 	h264_printf(20, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta, TimeScale);
 	if ((call->data == NULL) || (call->len <= 0))
@@ -314,8 +319,8 @@ static int writeData(void *_call)
 	}
 	/* AnnexA */
 	if (!avc3 && ((1 < call->private_size && 0 == call->private_data[0]) ||
-	             (call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
-	             (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff))))
+	             ((call->len > 3) && ((call->data[0] == 0x00 && call->data[1] == 0x00 && call->data[2] == 0x00 && call->data[3] == 0x01) ||
+	             (call->data[0] == 0xff && call->data[1] == 0xff && call->data[2] == 0xff && call->data[3] == 0xff)))))
 	{
 		uint32_t PacketLength = 0;
 		uint32_t FakeStartCode = (call->Version << 8) | PES_VERSION_FAKE_START_CODE;

@@ -40,7 +40,7 @@ class cPlayback
 		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers = "");
 		bool Start(std::string filename, std::string headers = "");
 		bool SetAPid(int pid, bool ac3 = false);
-		bool SetVPid(int pid);
+		bool SetVPid(int /*pid*/);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
 		int GetAPid(void) { return mAudioStream; }
@@ -58,7 +58,7 @@ class cPlayback
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language) { FindAllSubs((int*) pids, (unsigned int*) supported, (unsigned int*) numpida, language); };
 		bool SelectSubtitles(int pid, std::string charset = "");
 		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
-		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage, int *mags, int *pages);
+		void FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpidt, std::string */*tlanguage*/, int */*mags*/, int */*pages*/);
 		void RequestAbort(void);
 		bool IsPlaying(void);
 		uint64_t GetReadCount(void);

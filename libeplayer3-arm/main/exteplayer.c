@@ -88,7 +88,7 @@ static int g_pfd[2] = {-1, -1}; /* Used to wake terminate thread */
 static int isPlaybackStarted = 0;
 static pthread_mutex_t playbackStartMtx;
 
-static void *TermThreadFun(void *arg)
+static void *TermThreadFun(void *arg __attribute__((unused)))
 {
 	const char *socket_path = "/tmp/iptvplayer_extplayer_term_fd";
 	struct sockaddr_un addr;
@@ -211,7 +211,7 @@ static void SetNice(int prio)
 	};
 	sched_setscheduler(0, SCHED_RR, &param);
 #else
-	int prevPrio = getpriority(PRIO_PROCESS, 0);
+	//int prevPrio = getpriority(PRIO_PROCESS, 0);
 	if (-1 == setpriority(PRIO_PROCESS, 0, prio))
 	{
 		printf("setpriority - failed\n");
@@ -484,9 +484,9 @@ static int ParseParams(int argc, char *argv[], char *file, char *audioFile, int 
 {
 	int ret = 0;
 	int c;
-	int digit_optind = 0;
-	int aopt = 0, bopt = 0;
-	char *copt = 0, *dopt = 0;
+	//int digit_optind = 0;
+	//int aopt = 0, bopt = 0;
+	//char *copt = 0, *dopt = 0;
 	while ((c = getopt(argc, argv, "we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:")) != -1)
 	{
 		switch (c)
@@ -877,7 +877,7 @@ int main(int argc, char *argv[])
 					CurrentSec = (int32_t)(pts / 90000);
 					if (0 == commandRetVal)
 					{
-						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90, commandRetVal);
+						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90);
 					}
 					if (0 == commandRetVal || force)
 					{
@@ -922,7 +922,7 @@ int main(int argc, char *argv[])
 					commandRetVal = g_player->playback->Command(g_player, PLAYBACK_PTS, &pts);
 					if (0 == commandRetVal)
 					{
-						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90, commandRetVal);
+						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90);
 					}
 					break;
 				}
@@ -941,7 +941,7 @@ int main(int argc, char *argv[])
 				}
 				case 'n':
 				{
-					uint8_t loop = 0;
+					//uint8_t loop = 0;
 					if ('1' == argvBuff[1] || '0' == argvBuff[1])
 					{
 						PlaybackHandler_t *ptrP = g_player->playback;

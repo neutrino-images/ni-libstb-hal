@@ -117,7 +117,7 @@ static int writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	unsigned char  PesHeader[PES_MAX_HEADER_SIZE + 4];
-	unsigned char  Version = 5;
+//	unsigned char  Version = 5;
 //	unsigned int   FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
 	divx_printf(10, "\n");
 	if (call == NULL)

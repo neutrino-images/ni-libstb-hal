@@ -224,6 +224,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 				{
 					ret = context->output->video->Command(context, OUTPUT_PLAY, "video");
 				}
+				else
+					ret = cERR_OUTPUT_INTERNAL_ERROR;
+
 				// success or not executed, dunn care
 				if (!ret)
 				{

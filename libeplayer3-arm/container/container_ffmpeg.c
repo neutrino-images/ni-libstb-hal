@@ -127,8 +127,6 @@ static AVFormatContext *avContextTab[IPTV_AV_CONTEXT_MAX_NUM] = {NULL, NULL};
 static int32_t use_custom_io[IPTV_AV_CONTEXT_MAX_NUM] = {0, 0};
 static AVDictionary *avio_opts = NULL;
 
-static uint8_t isContainerRunning = 0;
-
 static int64_t latestPts = 0;
 
 static int32_t restart_audio_resampling = 0;
@@ -1626,12 +1624,6 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 	{
 		ffmpeg_printf(10, "second filename %s\n", playFilesNames->szSecondFile);
 	}
-	if (isContainerRunning)
-	{
-		ffmpeg_err("ups already running?\n");
-		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
-		return cERR_CONTAINER_FFMPEG_RUNNING;
-	}
 	/* initialize ffmpeg */
 	avcodec_register_all();
 	av_register_all();
@@ -1656,7 +1648,6 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 	}
 	terminating = 0;
 	latestPts = 0;
-	isContainerRunning = 1;
 	res = container_ffmpeg_update_tracks(context, playFilesNames->szFirstFile, 1);
 	return res;
 }
@@ -2241,11 +2232,6 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 	 * and causes in most cases a segfault
 	 */
 	ffmpeg_printf(10, "\n");
-	if (!isContainerRunning)
-	{
-		ffmpeg_err("Container not running\n");
-		return cERR_CONTAINER_FFMPEG_ERR;
-	}
 	if (context->playback)
 	{
 		context->playback->isPlaying = 0;
@@ -2298,7 +2284,6 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 	{
 		av_dict_free(&avio_opts);
 	}
-	isContainerRunning = 0;
 	avformat_network_deinit();
 	ffmpeg_buf_free();
 	releaseMutex(__FILE__, __FUNCTION__, __LINE__);

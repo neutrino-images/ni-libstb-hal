@@ -228,12 +228,9 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 					ret = cERR_OUTPUT_INTERNAL_ERROR;
 
 				// success or not executed, dunn care
-				if (!ret)
+				if (context->playback->isAudio)
 				{
-					if (context->playback->isAudio)
-					{
-						ret = context->output->audio->Command(context, OUTPUT_PLAY, "audio");
-					}
+					ret = context->output->audio->Command(context, OUTPUT_PLAY, "audio");
 				}
 				if (!ret)
 				{

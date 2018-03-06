@@ -24,7 +24,7 @@ static void set_packet(AVPacket **pkt_dest, AVPacket *pkt_src)
 		av_free(*pkt_dest);
 	}
 	*pkt_dest = av_malloc(sizeof(AVPacket));
-	av_copy_packet(*pkt_dest, pkt_src);
+	av_packet_ref(*pkt_dest, pkt_src);
 }
 
 static int filter_packet(AVBitStreamFilterContext *bsf_ctx, AVCodecContext *enc_ctx, AVPacket *pkt)
@@ -37,7 +37,7 @@ static int filter_packet(AVBitStreamFilterContext *bsf_ctx, AVCodecContext *enc_
 	                                 pkt->flags & AV_PKT_FLAG_KEY);
 	if (ret == 0 && new_pkt.data != pkt->data)
 	{
-		if ((ret = av_copy_packet(&new_pkt, pkt)) < 0)
+		if ((ret = av_packet_ref(&new_pkt, pkt)) < 0)
 			return -1;
 		ret = 1;
 	}

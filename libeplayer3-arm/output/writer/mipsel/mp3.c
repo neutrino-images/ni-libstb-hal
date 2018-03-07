@@ -91,10 +91,9 @@ static int reset()
 	return 0;
 }
 
-static int writeData(void *_call)
+static int writeData(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-	unsigned char  PesHeader[PES_MAX_HEADER_SIZE + 22];
+	unsigned char PesHeader[PES_MAX_HEADER_SIZE + 22];
 	mp3_printf(10, "\n");
 	if (call == NULL)
 	{

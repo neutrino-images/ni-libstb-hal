@@ -69,7 +69,7 @@ if (debug_level >= level) printf(x); } while (0)
 
 static Track_t *Tracks = NULL;
 static int TrackCount = 0;
-static int CurrentTrack = 0; //TRACK[0] as default.
+static int CurrentTrack = 0;    //TRACK[0] as default.
 
 static void (* updatedTrackInfoFnc)(void) = NULL;
 
@@ -181,9 +181,8 @@ static int ManagerDel(Context_t *context)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static int Command(void *_context, ManagerCmd_t command, void *argument)
+static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
-	Context_t *context = (Context_t *) _context;
 	int ret = cERR_VIDEO_MGR_NO_ERROR;
 	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	switch (command)
@@ -243,7 +242,7 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 			video_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
-				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
+				*((Track_t **)argument) = (Track_t *) & Tracks[CurrentTrack];
 			}
 			else
 			{

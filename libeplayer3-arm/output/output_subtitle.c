@@ -188,9 +188,8 @@ static int Flush()
 	return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int Write(void *_context, void *data)
+static int Write(Context_t *context, void *data)
 {
-	Context_t *context = (Context_t *)_context;
 	char *Encoding      = NULL;
 	SubtitleOut_t *out  = NULL;
 	int32_t curtrackid  = -1;
@@ -257,9 +256,8 @@ static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 	return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int Command(void *_context, OutputCmd_t command, void *argument __attribute__((unused)))
+static int Command(Context_t *context, OutputCmd_t command, void *argument __attribute__((unused)))
 {
-	Context_t *context = (Context_t *) _context;
 	int ret = cERR_SUBTITLE_NO_ERROR;
 	subtitle_printf(50, "%d\n", command);
 	switch (command)

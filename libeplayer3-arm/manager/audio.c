@@ -71,7 +71,7 @@ if (debug_level >= level) printf("[%s:%s] \n" fmt, __FILE__, __FUNCTION__, ## x)
 
 static Track_t *Tracks = NULL;
 static int TrackCount = 0;
-static int CurrentTrack = 0; //TRACK[0] as default.
+static int CurrentTrack = 0;    //TRACK[0] as default.
 
 /* ***************************** */
 /* Prototypes                    */
@@ -212,9 +212,8 @@ static int ManagerDel(Context_t *context)
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
 
-static int Command(void *_context, ManagerCmd_t command, void *argument)
+static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
-	Context_t *context = (Context_t *) _context;
 	int ret = cERR_AUDIO_MGR_NO_ERROR;
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	switch (command)
@@ -228,7 +227,8 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 		case MANAGER_LIST:
 		{
 			container_ffmpeg_update_tracks(context, context->playback->uri, 0);
-			*((TrackDescription_t **)argument) = ManagerList(context);
+//			*((TrackDescription_t **)argument) = ManagerList(context);
+			*((char ** *) argument) = (char **) ManagerList(context);
 			break;
 		}
 		case MANAGER_GET:
@@ -269,7 +269,7 @@ static int Command(void *_context, ManagerCmd_t command, void *argument)
 			audio_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
-				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
+				*((Track_t **)argument) = (Track_t *) & Tracks[CurrentTrack];
 			}
 			else
 			{

@@ -27,6 +27,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 // SULGE DEBUG
 //#define SAM_WITH_DEBUG
 
@@ -53,7 +54,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #define cERR_PLAYBACK_NO_ERROR      0
 #define cERR_PLAYBACK_ERROR        -1
 
-#define cMaxSpeed_ff   128 /* fixme: revise */
+#define cMaxSpeed_ff   128  /* fixme: revise */
 #define cMaxSpeed_fr   -320 /* fixme: revise */
 
 /* ***************************** */
@@ -711,9 +712,8 @@ static int PlaybackMetadata(Context_t *context, char ***metadata)
 	return ret;
 }
 
-static int32_t Command(void *_context, PlaybackCmd_t command, void *argument)
+static int32_t Command(Context_t *context, PlaybackCmd_t command, void *argument)
 {
-	Context_t *context = (Context_t *) _context; /* to satisfy compiler */
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 	playback_printf(20, "Command %d\n", command);
 	switch (command)

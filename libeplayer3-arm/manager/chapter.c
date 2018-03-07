@@ -66,7 +66,7 @@ static const char FILENAME[] = __FILE__;
 
 static Track_t *Tracks = NULL;
 static int TrackCount = 0;
-static int CurrentTrack = 0;	//TRACK[0] as default.
+static int CurrentTrack = 0;    //TRACK[0] as default.
 
 /* ***************************** */
 /* Prototypes                    */
@@ -76,7 +76,7 @@ static int CurrentTrack = 0;	//TRACK[0] as default.
 /* Functions                     */
 /* ***************************** */
 
-static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track)
+static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 {
 	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
@@ -121,7 +121,7 @@ static int ManagerAdd(Context_t * context __attribute__((unused)), Track_t track
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }
 
-static char **ManagerList(Context_t * context __attribute__ ((unused)))
+static char **ManagerList(Context_t *context __attribute__((unused)))
 {
 	int i = 0, j = 0;
 	char **tracklist = NULL;
@@ -157,7 +157,7 @@ static char **ManagerList(Context_t * context __attribute__ ((unused)))
 	return tracklist;
 }
 
-static int ManagerDel(Context_t * context __attribute__((unused)))
+static int ManagerDel(Context_t *context __attribute__((unused)))
 {
 	int i = 0;
 

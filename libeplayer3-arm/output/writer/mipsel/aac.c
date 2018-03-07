@@ -156,9 +156,8 @@ static int reset()
 	return 0;
 }
 
-static int _writeData(void *_call, int type)
+static int _writeData(WriterAVCallData_t *call, int type)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	aac_printf(10, "\n _writeData type[%d]\n", type);
 	if (call == NULL)
 	{
@@ -199,9 +198,8 @@ static int _writeData(void *_call, int type)
 	return writev_with_retry(call->fd, iov, 2);
 }
 
-static int writeDataADTS(void *_call)
+static int writeDataADTS(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	aac_printf(10, "\n");
 	if (call == NULL)
 	{
@@ -221,7 +219,7 @@ static int writeDataADTS(void *_call)
 	if ((call->private_data && 0 == strncmp("ADTS", (const char *)call->private_data, call->private_size)) ||
 	     HasADTSHeader(call->data, call->len))
 	{
-		return _writeData(_call, 0);
+		return _writeData(call, 0);
 	}
 	uint32_t PacketLength = call->len + AAC_HEADER_LENGTH;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE + AAC_HEADER_LENGTH];
@@ -258,9 +256,8 @@ static int writeDataADTS(void *_call)
 	return writev_with_retry(call->fd, iov, 2);
 }
 
-static int writeDataLATM(void *_call)
+static int writeDataLATM(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	aac_printf(10, "\n");
 	if (call == NULL)
 	{
@@ -274,7 +271,7 @@ static int writeDataLATM(void *_call)
 	}
 	if (call->private_data && 0 == strncmp("LATM", (const char *)call->private_data, call->private_size))
 	{
-		return _writeData(_call, 1);
+		return _writeData(call, 1);
 	}
 	aac_printf(10, "AudioPts %lld\n", call->Pts);
 	if (!pLATMCtx)

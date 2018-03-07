@@ -69,7 +69,7 @@ if (debug_level >= level) printf(x); } while (0)
 
 static Track_t *Tracks = NULL;
 static int TrackCount = 0;
-static int CurrentTrack = -1; //no as default.
+static int CurrentTrack = -1;   //no as default.
 
 /* ***************************** */
 /* Prototypes                    */
@@ -256,7 +256,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		{
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
-				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
+				*((Track_t **)argument) = (Track_t *) & Tracks[CurrentTrack];
 			}
 			else
 			{

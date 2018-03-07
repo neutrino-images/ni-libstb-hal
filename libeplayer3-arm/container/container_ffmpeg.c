@@ -42,12 +42,6 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 
-#include <libavutil/avutil.h>
-#include <libavutil/time.h>
-#include <libavformat/avformat.h>
-#include <libswresample/swresample.h>
-#include <libavutil/opt.h>
-
 #include <ffmpeg/mpeg4audio.h>
 
 #include "common.h"
@@ -56,9 +50,11 @@
 #include "aac.h"
 #include "pcm.h"
 #include "ffmpeg_metadata.h"
+
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+
 #if (LIBAVFORMAT_VERSION_MAJOR > 56)
 #define TS_BYTES_SEEKING 0
 #else
@@ -1343,7 +1339,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, int
 		void *opaque = NULL;
 		const char *protoName = NULL;
 		uint8_t haveNativeProto = 0;
-		while (protoName = avio_enum_protocols(&opaque, 1))
+		while ((protoName = avio_enum_protocols(&opaque, 1)))
 		{
 			if (0 == strcmp("rtmp", protoName))
 			{
@@ -2625,12 +2621,14 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	size_t psize = 1;
 	char **pp;
 
-	if (!context) {
+	if (!context)
+	{
 		fprintf(stderr, "BUG %s:%d\n", __func__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_ERR;
 	}
 
-	if (!p || *p) {
+	if (!p || *p)
+	{
 		fprintf(stderr, "BUG %s:%d\n", __func__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_ERR;
 	}
@@ -2646,28 +2644,34 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 		psize += av_dict_count(((AVStream *)(audioTrack->stream))->metadata);
 
 	*p = malloc(sizeof(char *) * psize * 2);
-	if (!*p) {
+	if (!*p)
+	{
 		fprintf(stderr, "MALLOC %s:%d\n", __func__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_ERR;
 	}
 	pp = *p;
 
 	if (avContextTab[0]->metadata)
-		while ((tag = av_dict_get(avContextTab[0]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		while ((tag = av_dict_get(avContextTab[0]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+		{
 			*pp++ = strdup(tag->key);
 			*pp++ = strdup(tag->value);
 		}
 
-	if (videoTrack) {
+	if (videoTrack)
+	{
 		tag = NULL;
-		while ((tag = av_dict_get(((AVStream *)(videoTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		while ((tag = av_dict_get(((AVStream *)(videoTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+		{
 			*pp++ = strdup(tag->key);
 			*pp++ = strdup(tag->value);
 		}
 	}
-	if (audioTrack) {
+	if (audioTrack)
+	{
 		tag = NULL;
-		while ((tag = av_dict_get(((AVStream *)(audioTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		while ((tag = av_dict_get(((AVStream *)(audioTrack->stream))->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+		{
 			*pp++ = strdup(tag->key);
 			*pp++ = strdup(tag->value);
 		}
@@ -2678,9 +2682,8 @@ static int container_ffmpeg_get_metadata(Context_t * context, char ***p)
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
-static int32_t Command(void *_context, ContainerCmd_t command, void *argument)
+static int32_t Command(Context_t *context, ContainerCmd_t command, void *argument)
 {
-	Context_t *context = (Context_t *) _context;
 	int ret = cERR_CONTAINER_FFMPEG_NO_ERROR;
 	ffmpeg_printf(50, "Command %d\n", command);
 	if (command != CONTAINER_SET_BUFFER_SEEK_TIME &&

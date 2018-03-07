@@ -28,10 +28,13 @@ typedef enum
 	CONTAINER_GET_METADATA
 } ContainerCmd_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct Container_s
 {
 	char *Name;
-	int (* Command)(/*Context_t*/void *, ContainerCmd_t, void *);
+	int (* Command)(Context_t *, ContainerCmd_t, void *);
 	char **Capabilities;
 
 } Container_t;
@@ -43,7 +46,7 @@ typedef struct ContainerHandler_s
 	char *Name;
 	Container_t *selectedContainer;
 
-	int (* Command)(/*Context_t*/void *, ContainerCmd_t, void *);
+	int (* Command)(Context_t *, ContainerCmd_t, void *);
 } ContainerHandler_t;
 
 #endif

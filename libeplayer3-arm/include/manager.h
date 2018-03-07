@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <libavutil/avutil.h>
+#include <libavutil/time.h>
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libavutil/opt.h>
+
 typedef enum
 {
 	MANAGER_ADD,
@@ -54,11 +60,11 @@ typedef struct Track_s
 	int32_t               aspect_ratio_den;
 
 	/* stream from ffmpeg */
-	void                 *stream;
+	AVStream             *stream;
 	/* AVCodecContext  for steam */
 	void                 *avCodecCtx;
 	/* codec extra data (header or some other stuff) */
-	void                 *extraData;
+	uint8_t              *extraData;
 	int                   extraSize;
 
 	uint8_t              *aacbuf;
@@ -88,10 +94,13 @@ typedef struct TrackDescription_s
 	int                   progressive;
 } TrackDescription_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct Manager_s
 {
 	char *Name;
-	int (* Command)(/*Context_t*/void *, ManagerCmd_t, void *);
+	int (* Command)(Context_t *, ManagerCmd_t, void *);
 	char **Capabilities;
 } Manager_t;
 

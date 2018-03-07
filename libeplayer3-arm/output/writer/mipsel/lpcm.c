@@ -132,9 +132,8 @@ static int32_t reset()
 	return 0;
 }
 
-static int32_t writeData(void *_call)
+static int writeData(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	lpcm_printf(10, "\n");
 	if (!call)
 	{

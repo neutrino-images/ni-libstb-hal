@@ -26,6 +26,9 @@ typedef enum {
 	PLAYBACK_METADATA
 } PlaybackCmd_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct PlaybackHandler_s
 {
 	char *Name;
@@ -51,7 +54,7 @@ typedef struct PlaybackHandler_s
 	uint8_t isSubtitle;
 	uint8_t abortRequested;
 
-	int32_t (* Command)(/*Context_t*/void *, PlaybackCmd_t, void *);
+	int32_t (* Command)(Context_t *, PlaybackCmd_t, void *);
 	char *uri;
 	off_t size;
 	uint8_t noprobe; /* hack: only minimal probing in av_find_stream_info */

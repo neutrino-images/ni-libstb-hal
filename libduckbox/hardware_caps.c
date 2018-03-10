@@ -47,6 +47,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 1;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs912", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -79,6 +80,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 1;
 			caps.has_CI = 2;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "ufs910", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -100,6 +102,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "octagon1008", 11)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -110,6 +113,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 0;
 			caps.has_CI = 2;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "hs7110", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -175,6 +179,7 @@ hw_caps_t *get_hwcaps(void)
 			caps.can_cec = 0;
 			caps.has_fan = 1;
 			caps.has_CI = 2;
+			caps.display_can_set_brightness = 1;
 		}
 		else if (!strncmp(buf, "cuberevo-250hd", 4)) {
 			strcpy(caps.boxvendor, "DUCKBOX");

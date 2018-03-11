@@ -98,9 +98,8 @@ static int reset()
 	return 0;
 }
 
-static int writeData(void *_call, int is_vp6)
+static int writeData(WriterAVCallData_t *call, int is_vp6)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	vp_printf(10, "\n");
 	if (call == NULL)
 	{
@@ -142,14 +141,14 @@ static int writeData(void *_call, int is_vp6)
 	return writev_with_retry(call->fd, iov, 2);
 }
 
-static int writeDataVP6(void *_call)
+static int writeDataVP6(WriterAVCallData_t *call)
 {
-	return writeData(_call, 1);
+	return writeData(call, 1);
 }
 
-static int writeDataVP89(void *_call)
+static int writeDataVP89(WriterAVCallData_t *call)
 {
-	return writeData(_call, 0);
+	return writeData(call, 0);
 }
 
 /* ***************************** */

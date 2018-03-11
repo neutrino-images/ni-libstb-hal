@@ -64,11 +64,14 @@ typedef struct
 	char            *type;
 } SubtitleOut_t;
 
+struct Context_s;
+typedef struct Context_s Context_t;
+
 typedef struct Output_s
 {
 	char *Name;
-	int32_t (* Command)(/*Context_t*/void *, OutputCmd_t, void *);
-	int32_t (* Write)(/*Context_t*/void *, void *privateData);
+	int32_t (* Command)(Context_t *, OutputCmd_t, void *);
+	int32_t (* Write)(Context_t *, void *privateData);
 	char **Capabilities;
 } Output_t;
 
@@ -81,7 +84,7 @@ typedef struct OutputHandler_s
 	Output_t *audio;
 	Output_t *video;
 	Output_t *subtitle;
-	int32_t (* Command)(/*Context_t*/void *, OutputCmd_t, void *);
+	int32_t (* Command)(Context_t *, OutputCmd_t, void *);
 } OutputHandler_t;
 
 #endif

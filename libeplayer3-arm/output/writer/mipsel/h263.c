@@ -91,9 +91,8 @@ static int32_t reset()
 	return 0;
 }
 
-static int32_t writeData(void *_call)
+static int writeData(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	int32_t len = 0;
 	h263_printf(10, "\n");

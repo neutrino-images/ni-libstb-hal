@@ -852,7 +852,7 @@ bool getvideo2(unsigned char *video, int xres, int yres)
 		perror(videosnapshot);
 		return false;
 	}
-	ssize_t r = read(fd_video, video, xres * yres * 3);
+	//ssize_t r = read(fd_video, video, xres * yres * 3);
 	close(fd_video);
 	return true;
 }

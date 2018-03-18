@@ -180,9 +180,9 @@ static void releaseMutex(const char *filename __attribute__((unused)), const con
 	ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
-typedef int32_t (* Write_FN)(void *, void *);
+typedef int32_t (* Write_FN)(Context_t *context, void *);
 
-static int32_t Write(Write_FN WriteFun, void *context, void *privateData)
+static int32_t Write(Write_FN WriteFun, Context_t *context, void *privateData)
 {
 	/* Because Write is blocking we will release mutex which protect
 	 * avformat structures, during write time

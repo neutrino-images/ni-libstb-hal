@@ -361,7 +361,7 @@ void cVideo::closeDevice(void)
 int cVideo::setAspectRatio(int aspect, int mode)
 {
 	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
-	static const char *m[] = { "panscan", "bestfit", "letterbox", "nonlinear", "(unset)" };
+	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
 	int n;
 	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
 

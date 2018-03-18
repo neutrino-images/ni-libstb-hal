@@ -136,6 +136,8 @@ static int64_t prev_seek_time_sec = -1;
 
 static int32_t seek_target_flag = 0;
 
+static int32_t mutexInitialized = 0;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
@@ -153,6 +155,43 @@ static int32_t progressive_playback = 0;
 void progressive_playback_set(int32_t val)
 {
 	progressive_playback = val;
+}
+
+static void initMutex(void)
+{
+	pthread_mutex_init(&mutex, NULL);
+	mutexInitialized = 1;
+}
+
+static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
+{
+	ffmpeg_printf(100, "::%d requesting mutex\n", line);
+	if (!mutexInitialized)
+	{
+		initMutex();
+	}
+	pthread_mutex_lock(&mutex);
+	ffmpeg_printf(100, "::%d received mutex\n", line);
+}
+
+static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
+{
+	pthread_mutex_unlock(&mutex);
+	ffmpeg_printf(100, "::%d released mutex\n", line);
+}
+
+typedef int32_t (* Write_FN)(Context_t *context, void *);
+
+static int32_t Write(Write_FN WriteFun, Context_t *context, void *privateData)
+{
+	/* Because Write is blocking we will release mutex which protect
+	 * avformat structures, during write time
+	 */
+	int32_t ret = 0;
+	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
+	ret = WriteFun(context, privateData);
+	getMutex(__FILE__, __FUNCTION__, __LINE__);
+	return ret;
 }
 
 #include "buff_ffmpeg.c"
@@ -202,8 +241,6 @@ static void ffmpeg_silen_callback(void *avcl __attribute__((unused)), int level 
 {
 	return;
 }
-
-static int32_t mutexInitialized = 0;
 
 void sel_program_id_set(const int32_t val)
 {
@@ -273,29 +310,6 @@ void flv2mpeg4_converter_set(const int32_t val)
 int32_t ffmpeg_av_dict_set(const char *key, const char *value, int32_t flags)
 {
 	return av_dict_set(&avio_opts, key, value, flags);
-}
-
-static void initMutex(void)
-{
-	pthread_mutex_init(&mutex, NULL);
-	mutexInitialized = 1;
-}
-
-static void getMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
-{
-	ffmpeg_printf(100, "::%d requesting mutex\n", line);
-	if (!mutexInitialized)
-	{
-		initMutex();
-	}
-	pthread_mutex_lock(&mutex);
-	ffmpeg_printf(100, "::%d received mutex\n", line);
-}
-
-static void releaseMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int32_t line __attribute__((unused)))
-{
-	pthread_mutex_unlock(&mutex);
-	ffmpeg_printf(100, "::%d released mutex\n", line);
 }
 
 static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extradata, int extradata_size, int profile __attribute__((unused)), int32_t *version)
@@ -718,17 +732,24 @@ static void FFMPEGThread(Context_t *context)
 			Track_t *subtitleTrack = NULL;
 			int32_t pid = avContextTab[cAVIdx]->streams[packet.stream_index]->id;
 			reset_finish_timeout();
-			if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)
+			if (avContextTab[cAVIdx]->streams[packet.stream_index]->discard != AVDISCARD_ALL)
 			{
-				ffmpeg_err("error getting video track\n");
+				if (context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack) < 0)
+				{
+					ffmpeg_err("error getting video track\n");
+				}
+				if (context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack) < 0)
+				{
+					ffmpeg_err("error getting audio track\n");
+				}
+				if (context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack) < 0)
+				{
+					ffmpeg_err("error getting subtitle track\n");
+				}
 			}
-			if (context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack) < 0)
+			else
 			{
-				ffmpeg_err("error getting audio track\n");
-			}
-			if (context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack) < 0)
-			{
-				ffmpeg_err("error getting subtitle track\n");
+				ffmpeg_printf(1, "SKIP DISCARDED PACKET stream_index[%d] pid[%d]\n", packet.size, (int)packet.stream_index, pid);
 			}
 			ffmpeg_printf(200, "packet.size %d - index %d\n", packet.size, pid);
 			if (videoTrack && (videoTrack->AVIdx == (int)cAVIdx) && (videoTrack->Id == pid))
@@ -814,7 +835,7 @@ static void FFMPEGThread(Context_t *context)
 						{
 							avOut.infoFlags = 1; // TS container
 						}
-						if (context->output->video->Write(context, &avOut) < 0)
+						if (Write(context->output->video->Write, context, &avOut) < 0)
 						{
 							ffmpeg_err("writing data to video device failed\n");
 						}
@@ -882,7 +903,7 @@ static void FFMPEGThread(Context_t *context)
 					avOut.width      = 0;
 					avOut.height     = 0;
 					avOut.type       = "audio";
-					if (context->output->audio->Write(context, &avOut) < 0)
+					if (Write(context->output->audio->Write, context, &avOut) < 0)
 					{
 						ffmpeg_err("(raw pcm) writing data to audio device failed\n");
 					}
@@ -1058,7 +1079,7 @@ static void FFMPEGThread(Context_t *context)
 						avOut.width      = 0;
 						avOut.height     = 0;
 						avOut.type       = "audio";
-						if (!context->playback->BackWard && context->output->audio->Write(context, &avOut) < 0)
+						if (!context->playback->BackWard && Write(context->output->audio->Write, context, &avOut) < 0)
 						{
 							ffmpeg_err("writing data to audio device failed\n");
 						}
@@ -1079,7 +1100,7 @@ static void FFMPEGThread(Context_t *context)
 					avOut.width      = 0;
 					avOut.height     = 0;
 					avOut.type       = "audio";
-					if (!context->playback->BackWard && context->output->audio->Write(context, &avOut) < 0)
+					if (!context->playback->BackWard && Write(context->output->audio->Write, context, &avOut) < 0)
 					{
 						ffmpeg_err("(aac) writing data to audio device failed\n");
 					}
@@ -1096,7 +1117,7 @@ static void FFMPEGThread(Context_t *context)
 					avOut.width      = 0;
 					avOut.height     = 0;
 					avOut.type       = "audio";
-					if (!context->playback->BackWard && context->output->audio->Write(context, &avOut) < 0)
+					if (!context->playback->BackWard && Write(context->output->audio->Write, context, &avOut) < 0)
 					{
 						ffmpeg_err("writing data to audio device failed\n");
 					}
@@ -1125,7 +1146,7 @@ static void FFMPEGThread(Context_t *context)
 					subOut.data = (uint8_t *)packet.data;
 					subOut.pts = pts;
 					subOut.durationMS = duration;
-					if (context->output->subtitle->Write(context, &subOut) < 0)
+					if (Write(context->output->subtitle->Write, context, &subOut) < 0)
 					{
 						ffmpeg_err("writing data to teletext fifo failed\n");
 					}
@@ -1650,19 +1671,21 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 
 int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32_t initial)
 {
-	Track_t *audioTrack = NULL;
-	Track_t *subtitleTrack = NULL;
+	Track_t *currAudioTrack = NULL;
+	Track_t *currSubtitleTrack = NULL;
+	uint32_t addedVideoTracksCount = 0;
 	if (terminating)
 	{
 		return cERR_CONTAINER_FFMPEG_NO_ERROR;
 	}
+	getMutex(__FILE__, __FUNCTION__, __LINE__);
 	if (initial && context->manager->subtitle)
 	{
-		context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &subtitleTrack);
+		context->manager->subtitle->Command(context, MANAGER_GET_TRACK, &currSubtitleTrack);
 	}
 	if (context->manager->audio)
 	{
-		context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
+		context->manager->audio->Command(context, MANAGER_GET_TRACK, &currAudioTrack);
 	}
 	if (context->manager->video)
 	{
@@ -1748,7 +1771,11 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 					}
 				}
 				if (!isStreamFromSelProg)
+				{
+					stream->discard = AVDISCARD_ALL;
+					ffmpeg_printf(1, "cAVIdx[%d]: add DISCARD flag to  stream index[%d]\n", cAVIdx, stream->index);
 					continue; // skip this stream
+				}
 			}
 			encoding = Codec2Encoding((int32_t)get_codecpar(stream)->codec_id, (int32_t)get_codecpar(stream)->codec_type, \
 			                          (uint8_t *)get_codecpar(stream)->extradata, \
@@ -1775,6 +1802,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 			{
 				case AVMEDIA_TYPE_VIDEO:
 					ffmpeg_printf(10, "CODEC_TYPE_VIDEO %d\n", get_codecpar(stream)->codec_type);
+					stream->discard = AVDISCARD_ALL; /* by default we discard all video streams */
 					if (encoding != NULL)
 					{
 						track.type           = eTypeES;
@@ -1844,6 +1872,14 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 								/* konfetti: fixme: is this a reason to return with error? */
 								ffmpeg_err("failed to add track %d\n", n);
 							}
+							else
+							{
+								if (addedVideoTracksCount == 0) /* at now we can handle only first video track */
+								{
+									stream->discard = AVDISCARD_DEFAULT;
+								}
+								addedVideoTracksCount += 1;
+							}
 						}
 					}
 					else
@@ -1853,6 +1889,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 					break;
 				case AVMEDIA_TYPE_AUDIO:
 					ffmpeg_printf(10, "CODEC_TYPE_AUDIO %d\n", get_codecpar(stream)->codec_type);
+					stream->discard = AVDISCARD_ALL;
 					if (encoding != NULL)
 					{
 						AVDictionaryEntry *lang;
@@ -2172,11 +2209,45 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				case AVMEDIA_TYPE_ATTACHMENT:
 				case AVMEDIA_TYPE_NB:
 				default:
+					stream->discard = AVDISCARD_ALL;
 					ffmpeg_err("not handled or unknown codec_type %d\n", get_codecpar(stream)->codec_type);
 					break;
 			}
 		} /* for */
 	}
+	if (context->manager->audio)
+	{
+		Track_t *Tracks = NULL;
+		int32_t TrackCount = 0;
+		int32_t selTrackIdx = -1;
+		context->manager->audio->Command(context, MANAGER_REF_LIST, &Tracks);
+		context->manager->audio->Command(context, MANAGER_REF_LIST_SIZE, &TrackCount);
+		if (Tracks && TrackCount)
+		{
+			int32_t i;
+			for (i = 0; i < TrackCount; ++i)
+			{
+				if (Tracks[i].pending || Tracks[i].Id < 0)
+					continue;
+				if (selTrackIdx == -1)
+					selTrackIdx = i;
+				if (currAudioTrack && currAudioTrack->Id == Tracks[i].Id)
+				{
+					selTrackIdx = i;
+					break;
+				}
+			}
+			if (selTrackIdx > -1)
+			{
+				((AVStream *)Tracks[selTrackIdx].stream)->discard = AVDISCARD_DEFAULT;
+				if (!currAudioTrack || currAudioTrack->Id != Tracks[selTrackIdx].Id)
+				{
+					context->manager->audio->Command(context, MANAGER_SET, &Tracks[selTrackIdx].Id);
+				}
+			}
+		}
+	}
+	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
@@ -2442,7 +2513,6 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 	{
 		seek_target_flag |= AVSEEK_FLAG_BACKWARD;
 	}
-	getMutex(__FILE__, __FUNCTION__, __LINE__);
 	if (!context->playback || !context->playback->isPlaying)
 	{
 		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
@@ -2458,7 +2528,9 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		* seeking per HTTP does still not work very good. forward seeks everytime
 		* about 10 seconds, backward does not work.
 		*/
+		getMutex(__FILE__, __FUNCTION__, __LINE__);
 		off_t pos = avio_tell(avContextTab[0]->pb);
+		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 		ffmpeg_printf(10, "pos %lld %lld\n", pos, avContextTab[0]->bit_rate);
 		if (avContextTab[0]->bit_rate)
 		{
@@ -2484,7 +2556,6 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		seek_target_seconds = sec;
 		do_seek_target_seconds = 1;
 	}
-	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
@@ -2539,8 +2610,25 @@ static int32_t container_ffmpeg_get_length(Context_t *context, int64_t *length)
 static int32_t container_ffmpeg_switch_audio(Context_t *context, int32_t *arg __attribute__((unused)))
 {
 	ffmpeg_printf(10, "track %d\n", *arg);
+	getMutex(__FILE__, __FUNCTION__, __LINE__);
+	if (context->manager->audio)
+	{
+		Track_t *Tracks = NULL;
+		int32_t TrackCount = 0;
+		context->manager->audio->Command(context, MANAGER_REF_LIST, &Tracks);
+		context->manager->audio->Command(context, MANAGER_REF_LIST_SIZE, &TrackCount);
+		if (Tracks && TrackCount)
+		{
+			int32_t i;
+			for (i = 0; i < TrackCount; ++i)
+			{
+				((AVStream *)Tracks[i].stream)->discard = Tracks[i].Id == *arg ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
+			}
+		}
+	}
+	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 	/* Hellmaster1024: nothing to do here! */
-	int64_t sec = -5;
+	int64_t sec = -1;
 	context->playback->Command(context, PLAYBACK_SEEK, (void *)&sec);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -2553,7 +2641,7 @@ static int32_t container_ffmpeg_switch_subtitle(Context_t *context, int32_t *arg
 	 * we seek to force ffmpeg to read once again the same data
 	 * but now we will not ignore subtitle frame
 	 */
-	int64_t sec = -5;
+	int64_t sec = -1;
 	context->playback->Command(context, PLAYBACK_SEEK, (void *)&sec);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }

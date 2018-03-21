@@ -1,7 +1,6 @@
 noinst_LTLIBRARIES = libarmbox.la
 
-AM_CPPFLAGS = -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
-AM_CPPFLAGS += \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/include
 
@@ -13,7 +12,7 @@ AM_LDFLAGS = \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \
 	@SWRESAMPLE_LIBS@ \
-	-lpthread -lasound -lrt
+	-lpthread -lass -lrt
 
 libarmbox_la_SOURCES = \
 	hardware_caps.c \
@@ -42,3 +41,5 @@ AM_CPPFLAGS += \
 AM_LDFLAGS += \
 	-lass
 endif
+
+AM_CPPFLAGS += -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS

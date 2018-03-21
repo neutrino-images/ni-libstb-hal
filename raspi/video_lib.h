@@ -1,10 +1,11 @@
-#ifndef _VIDEO_TD_H
-#define _VIDEO_TD_H
+#ifndef _VIDEO_LIB_H
+#define _VIDEO_LIB_H
 
 #include <vector>
 #include <linux/dvb/video.h>
-#include "../common/cs_types.h"
-#include "dmx_lib.h"
+#include "cs_types.h"
+#include "dmx_hal.h"
+
 extern "C" {
 #include <libavutil/rational.h>
 }
@@ -57,7 +58,7 @@ typedef enum {
 	DISPLAY_AR_14_9,
 	DISPLAY_AR_16_9,
 	DISPLAY_AR_20_9,
-	DISPLAY_AR_RAW,
+	DISPLAY_AR_RAW
 } DISPLAY_AR;
 
 typedef enum {
@@ -101,7 +102,7 @@ typedef enum {
 
 /* not used, for dummy functions */
 typedef enum {
-	VIDEO_HDMI_CEC_MODE_OFF	= 0,
+	VIDEO_HDMI_CEC_MODE_OFF = 0,
 	VIDEO_HDMI_CEC_MODE_TUNER,
 	VIDEO_HDMI_CEC_MODE_RECORDER
 } VIDEO_HDMI_CEC_MODE;

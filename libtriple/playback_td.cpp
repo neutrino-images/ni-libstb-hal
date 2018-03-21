@@ -1,13 +1,18 @@
+#include <config.h>
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <cstring>
+#include <map>
+
 #include "playback_td.h"
-#include "dmx_td.h"
+#include "dmx_hal.h"
 #include "audio_td.h"
 #include "video_td.h"
 #include "lt_debug.h"

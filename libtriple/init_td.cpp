@@ -36,7 +36,7 @@ int gfxfd = -1;
 #define DFBCHECK(x...)                                                \
 	err = x;                                                      \
 	if (err != DFB_OK) {                                          \
-		fprintf(stderr, "%s <%d>:\n\t", __FILE__, __LINE__ ); \
+		fprintf(stderr, "init_td.cpp:%d:\n\t", __LINE__);     \
 		DirectFBErrorFatal(#x, err );                         \
 	}
 

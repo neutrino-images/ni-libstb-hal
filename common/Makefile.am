@@ -1,17 +1,19 @@
 noinst_LTLIBRARIES = libcommon.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
+
+AM_CXXFLAGS += \
+	-I $(top_srcdir)/include
+
 AM_LDFLAGS = -lpthread
 
 if BOXTYPE_DUCKBOX
 AM_CXXFLAGS += \
-	-I $(top_srcdir)/include \
 	-I $(top_srcdir)/libdvbci
 endif
 
 if BOXTYPE_ARMBOX
 AM_CXXFLAGS += \
-	-I $(top_srcdir)/include \
 	-I $(top_srcdir)/libdvbci
 endif
 

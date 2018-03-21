@@ -9,6 +9,7 @@
 #include <linux/dvb/audio.h>
 
 #include <proc_tools.h>
+
 #include "audio_lib.h"
 #include "audio_mixer.h"
 #include "lt_debug.h"
@@ -224,7 +225,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
 		if (dsp_dev)
 			lt_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-					" fall back to /dev/dsp1\n", __func__, dsp_dev);
+				" fall back to /dev/dsp1\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp1";
 	}
 	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */

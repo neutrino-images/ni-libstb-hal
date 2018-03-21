@@ -23,7 +23,7 @@
 #include <cstdlib>
 
 #include "audio_lib.h"
-#include "dmx_lib.h"
+#include "dmx_hal.h"
 #include "lt_debug.h"
 
 #define lt_debug(args...) _lt_debug(HAL_DEBUG_AUDIO, this, args)

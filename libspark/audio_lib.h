@@ -2,7 +2,7 @@
 
 #ifndef _AUDIO_TD_H_
 #define _AUDIO_TD_H_
-#include "../common/cs_types.h"
+#include "cs_types.h"
 
 typedef enum
 {

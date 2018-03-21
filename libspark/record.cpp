@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include <pthread.h>
 #include <aio.h>
 
 #include "record_lib.h"
@@ -15,7 +16,7 @@
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_RECORD, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_RECORD, this, args)
 
-/* helper functions to call the cpp thread loops */
+/* helper function to call the cpp thread loop */
 void *execute_record_thread(void *c)
 {
 	cRecord *obj = (cRecord *)c;
@@ -137,7 +138,7 @@ bool cRecord::ChangePids(unsigned short /*vpid*/, unsigned short *apids, int num
 		lt_info("%s: DMX = NULL\n", __func__);
 		return false;
 	}
-	pids = dmx->getPesPids();
+	pids = dmx->pesfds;
 	/* the first PID is the video pid, so start with the second PID... */
 	for (std::vector<pes_pids>::const_iterator i = pids.begin() + 1; i != pids.end(); ++i) {
 		found = false;
@@ -173,7 +174,7 @@ bool cRecord::AddPid(unsigned short pid)
 		lt_info("%s: DMX = NULL\n", __func__);
 		return false;
 	}
-	pids = dmx->getPesPids();
+	pids = dmx->pesfds;
 	for (std::vector<pes_pids>::const_iterator i = pids.begin(); i != pids.end(); ++i) {
 		if ((*i).pid == pid)
 			return true; /* or is it an error to try to add the same PID twice? */
@@ -214,7 +215,7 @@ void cRecord::RecordThread()
 	strncpy(threadname, "RecordThread", sizeof(threadname));
 	threadname[16] = 0;
 	prctl (PR_SET_NAME, (unsigned long)&threadname);
-	int readsize = bufsize/16;
+	int readsize = bufsize / 16;
 	int buf_pos = 0;
 	int count = 0;
 	int queued = 0;
@@ -257,13 +258,15 @@ void cRecord::RecordThread()
 			if (toread > readsize)
 				toread = readsize;
 			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
-			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
+			lt_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
+				buf_pos, (int)s, bufsize - buf_pos);
 			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
 				{
 					lt_info("%s: read failed: %m\n", __func__);
 					exit_flag = RECORD_FAILED_READ;
+					state = REC_STATUS_OVERFLOW;
 					break;
 				}
 			}
@@ -289,6 +292,7 @@ void cRecord::RecordThread()
 			overflow = true;
 			if (!(overflow_count % 10))
 				lt_info("%s: buffer full! Overflow? (%d)\n", __func__, ++overflow_count);
+			state = REC_STATUS_SLOW;
 		}
 		r = aio_error(&a);
 		if (r == EINPROGRESS)

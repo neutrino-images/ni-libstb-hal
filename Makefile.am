@@ -9,8 +9,6 @@ libstb_hal_la_LIBADD = \
 	common/libcommon.la \
 	libthread/libthread.la
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include
 
 #libstb_hal_test_SOURCES = libtest.cpp
 #libstb_hal_test_LDADD = libstb-hal.la
@@ -67,3 +65,24 @@ libstb_hal_la_LIBADD += \
 endif
 
 endif
+
+pkginclude_HEADERS = \
+	include/audio_hal.h \
+	include/ca_cs.h \
+	include/ca.h \
+	include/cs_api.h \
+	include/ca_ci.h \
+	include/cs_types.h \
+	include/dmx_cs.h \
+	include/dmx_hal.h \
+	include/glfb.h \
+	include/hardware_caps.h \
+	include/init_cs.h \
+	include/init_td.h \
+	include/mmi.h \
+	include/playback.h \
+	include/playback_hal.h \
+	include/pwrmngr.h \
+	include/record_hal.h \
+	include/video_cs.h \
+	include/video_hal.h

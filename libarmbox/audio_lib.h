@@ -1,8 +1,9 @@
 /* public header file */
 
-#ifndef _AUDIO_TD_H_
-#define _AUDIO_TD_H_
-#include "../common/cs_types.h"
+#ifndef _AUDIO_LIB_H_
+#define _AUDIO_LIB_H_
+
+#include "cs_types.h"
 
 typedef enum
 {

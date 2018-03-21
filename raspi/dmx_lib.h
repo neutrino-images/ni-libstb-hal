@@ -1,10 +1,9 @@
-#ifndef __DEMUX_TD_H
-#define __DEMUX_TD_H
+#ifndef __dmx_hal__
+#define __dmx_hal__
 
 #include <cstdlib>
 #include <vector>
 #include <inttypes.h>
-#include <sys/ioctl.h>
 #include <linux/dvb/dmx.h>
 #include "../common/cs_types.h"
 
@@ -28,20 +27,13 @@ typedef struct
 	unsigned short pid;
 } pes_pids;
 
+class cRecord;
+class cPlayback;
 class cDemux
 {
-	private:
-		int num;
-		int fd;
-		int buffersize;
-		bool measure;
-		uint64_t last_measure, last_data;
-		DMX_CHANNEL_TYPE dmx_type;
-		std::vector<pes_pids> pesfds;
-		struct dmx_sct_filter_params s_flt;
-		struct dmx_pes_filter_params p_flt;
+	friend class cRecord;
+	friend class cPlayback;
 	public:
-
 		bool Open(DMX_CHANNEL_TYPE pes_type, void * x = NULL, int y = 0);
 		void Close(void);
 		bool Start(bool record = false);
@@ -58,13 +50,20 @@ class cDemux
 		int getUnit(void);
 		static bool SetSource(int unit, int source);
 		static int GetSource(int unit);
-		// TD only functions
 		int getFD(void) { return fd; };		/* needed by cPlayback class */
-		void removePid(unsigned short Pid);	/* needed by cRecord class */
-		std::vector<pes_pids> getPesPids(void) { return pesfds; };
-		//
 		cDemux(int num = 0);
 		~cDemux();
+
+	private:
+		void removePid(unsigned short Pid);	/* needed by cRecord class */
+		int num;
+		int fd;
+		int buffersize;
+		uint16_t pid;
+		uint8_t flt;
+		std::vector<pes_pids> pesfds;
+		DMX_CHANNEL_TYPE dmx_type;
+		void *pdata;
 };
 
-#endif //__DEMUX_H
+#endif //__dmx_hal__

@@ -5,13 +5,13 @@
 
 #include <stdint.h>
 #include <thread_abstraction.h>
-#include "../common/cs_types.h"
+#include "cs_types.h"
 
 typedef enum
 {
-  AUDIO_SYNC_WITH_PTS,
-  AUDIO_NO_SYNC,
-  AUDIO_SYNC_AUDIO_MASTER
+	AUDIO_SYNC_WITH_PTS,
+	AUDIO_NO_SYNC,
+	AUDIO_SYNC_AUDIO_MASTER
 } AUDIO_SYNC_MODE;
 
 typedef enum {
@@ -22,20 +22,20 @@ typedef enum {
 
 typedef enum
 {
-   AUDIO_FMT_AUTO = 0,
-   AUDIO_FMT_MPEG,
-   AUDIO_FMT_MP3,
-   AUDIO_FMT_DOLBY_DIGITAL,
-   AUDIO_FMT_BASIC = AUDIO_FMT_DOLBY_DIGITAL,
-   AUDIO_FMT_AAC,
-   AUDIO_FMT_AAC_PLUS,
-   AUDIO_FMT_DD_PLUS,
-   AUDIO_FMT_DTS,
-   AUDIO_FMT_AVS,
-   AUDIO_FMT_MLP,
-   AUDIO_FMT_WMA,
-   AUDIO_FMT_MPG1, // TD only. For Movieplayer / cPlayback
-   AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
+	AUDIO_FMT_AUTO = 0,
+	AUDIO_FMT_MPEG,
+	AUDIO_FMT_MP3,
+	AUDIO_FMT_DOLBY_DIGITAL,
+	AUDIO_FMT_BASIC = AUDIO_FMT_DOLBY_DIGITAL,
+	AUDIO_FMT_AAC,
+	AUDIO_FMT_AAC_PLUS,
+	AUDIO_FMT_DD_PLUS,
+	AUDIO_FMT_DTS,
+	AUDIO_FMT_AVS,
+	AUDIO_FMT_MLP,
+	AUDIO_FMT_WMA,
+	AUDIO_FMT_MPG1, // TD only. For Movieplayer / cPlayback
+	AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
 } AUDIO_FORMAT;
 
 class cAudio : public Thread
@@ -63,6 +63,7 @@ class cAudio : public Thread
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
 		void run();
+
 	public:
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
@@ -102,4 +103,3 @@ class cAudio : public Thread
 };
 
 #endif
-

@@ -40,7 +40,7 @@ extern "C" {
 #define DMX_BUF_SZ 0x20000
 
 #include "video_lib.h"
-#include "dmx_lib.h"
+#include "dmx_hal.h"
 #include "glfb.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)

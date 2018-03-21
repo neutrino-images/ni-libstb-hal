@@ -9,8 +9,8 @@
 #include <linux/dvb/audio.h>
 
 #include <proc_tools.h>
+
 #include "audio_lib.h"
-//#include "audio_mixer.h"
 #include "lt_debug.h"
 
 #define AUDIO_DEVICE	"/dev/dvb/adapter0/audio0"
@@ -26,7 +26,6 @@ cAudio::cAudio(void *, void *, void *)
 	fd = -1;
 	clipfd = -1;
 	mixer_fd = -1;
-
 	openDevice();
 	Muted = false;
 }
@@ -147,8 +146,6 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 }
 
-// E2 streamtype values. These correspond to
-//  player2/linux/drivers/media/dvb/stm/dvb/dvb_audio.c:AudioIoctlSetBypassMode
 #define AUDIO_STREAMTYPE_AC3	0
 #define AUDIO_STREAMTYPE_MPEG	1
 #define AUDIO_STREAMTYPE_DTS	2

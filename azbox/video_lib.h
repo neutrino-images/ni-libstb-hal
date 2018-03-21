@@ -1,9 +1,9 @@
-#ifndef _VIDEO_TD_H
-#define _VIDEO_TD_H
+#ifndef _VIDEO_LIB_H
+#define _VIDEO_LIB_H
 
 #include <linux/dvb/video.h>
-#include "../common/cs_types.h"
-#include "dmx_lib.h"
+#include "cs_types.h"
+#include "dmx_hal.h"
 
 typedef enum {
 	ANALOG_SD_RGB_CINCH = 0x00,
@@ -97,7 +97,7 @@ typedef enum {
 
 /* not used, for dummy functions */
 typedef enum {
-	VIDEO_HDMI_CEC_MODE_OFF	= 0,
+	VIDEO_HDMI_CEC_MODE_OFF = 0,
 	VIDEO_HDMI_CEC_MODE_TUNER,
 	VIDEO_HDMI_CEC_MODE_RECORDER
 } VIDEO_HDMI_CEC_MODE;
@@ -127,11 +127,11 @@ class cVideo
 		int /*vidOutFmt_t*/ outputformat;
 		int scartvoltage;
 
-		VIDEO_FORMAT	    StreamType;
-		VIDEO_DEFINITION       VideoDefinition;
+		VIDEO_FORMAT StreamType;
+		VIDEO_DEFINITION VideoDefinition;
 		DISPLAY_AR DisplayAR;
 		VIDEO_PLAY_MODE SyncMode;
-		DISPLAY_AR_MODE                ARMode;
+		DISPLAY_AR_MODE ARMode;
 		VIDEO_DB_DR eDbDr;
 		DISPLAY_AR PictureAR;
 		VIDEO_FRAME_RATE FrameRate;

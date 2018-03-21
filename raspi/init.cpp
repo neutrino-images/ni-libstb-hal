@@ -34,7 +34,7 @@
 #include <map>
 #include <thread_abstraction.h>
 
-#include "init_lib.h"
+#include "init_td.h"
 #include "lt_debug.h"
 #include "glfb.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)

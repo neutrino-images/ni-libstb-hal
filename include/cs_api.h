@@ -1,20 +1,37 @@
+/* compatibility header for tripledragon. I'm lazy, so I just left it
+   as "cs_api.h" so that I don't need too many ifdefs in the code */
+
+#ifndef __CS_API_H_
+#define __CS_API_H_
+
+#include "init_td.h"
 #include <config.h>
-#if HAVE_TRIPLEDRAGON
-#include "../libtriple/cs_api.h"
-#elif HAVE_DUCKBOX_HARDWARE
-#include "../libduckbox/cs_api.h"
-#elif HAVE_SPARK_HARDWARE
-#include "../libspark/cs_api.h"
-#elif HAVE_ARM_HARDWARE
-#include "../libarmbox/cs_api.h"
-#elif HAVE_AZBOX_HARDWARE
-#include "../azbox/cs_api.h"
-#elif HAVE_GENERIC_HARDWARE
-#if BOXMODEL_RASPI
-#include "../raspi/cs_api.h"
+
+typedef void (*cs_messenger) (unsigned int msg, unsigned int data);
+
+inline void cs_api_init()
+{
+	init_td_api();
+};
+
+inline void cs_api_exit()
+{
+	shutdown_td_api();
+};
+
+#define cs_malloc_uncached	malloc
+#define cs_free_uncached	free
+
+// Callback function helpers
+#if HAVE_DUCKBOX_HARDWARE || HAVE_ARM_HARDWARE
+void cs_register_messenger(cs_messenger messenger);
 #else
-#include "../generic-pc/cs_api.h"
+static inline void cs_register_messenger(cs_messenger) { return; };
 #endif
-#else
-#error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
-#endif
+static inline void cs_deregister_messenger(void) { return; };
+
+/* compat... HD1 seems to be version 6. everything newer ist > 6... */
+static inline unsigned int cs_get_revision(void) { return 1; };
+static inline unsigned int cs_get_chip_type(void) { return 0; };
+extern int cnxt_debug;
+#endif //__CS_API_H_

@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include "init_lib.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -9,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "init_td.h"
 #include "pwrmngr.h"
 #include <proc_tools.h>
 

@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include "init_lib.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -14,6 +13,7 @@
 
 #include <linux/dvb/dmx.h>
 
+#include "init_td.h"
 #include "pwrmngr.h"
 
 #include "lt_debug.h"

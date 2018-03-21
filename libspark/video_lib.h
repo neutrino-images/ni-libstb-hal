@@ -1,9 +1,9 @@
-#ifndef _VIDEO_TD_H
-#define _VIDEO_TD_H
+#ifndef _VIDEO_LIB_H
+#define _VIDEO_LIB_H
 
 #include <linux/dvb/video.h>
-#include "../common/cs_types.h"
-#include "dmx_lib.h"
+#include "cs_types.h"
+#include "dmx_hal.h"
 
 typedef struct cs_vs_format_t
 {

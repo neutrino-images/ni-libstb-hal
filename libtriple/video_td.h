@@ -4,7 +4,7 @@
 #include <hardware/vid/vid_inf.h>
 #define video_format_t          vidDispSize_t
 //#define video_displayformat_t   vidDispMode_t
-#include "../common/cs_types.h"
+#include "cs_types.h"
 #include "dmx_td.h"
 
 #define STB_HAL_VIDEO_HAS_GETSCREENIMAGE 1

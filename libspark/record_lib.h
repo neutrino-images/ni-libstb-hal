@@ -1,9 +1,8 @@
-#ifndef __RECORD_TD_H
-#define __RECORD_TD_H
+#ifndef __record_hal__
+#define __record_hal__
 
-#include <pthread.h>
 #include <semaphore.h>
-#include "dmx_lib.h"
+#include "dmx_hal.h"
 
 #define REC_STATUS_OK 0
 #define REC_STATUS_SLOW 1

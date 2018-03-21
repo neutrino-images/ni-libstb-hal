@@ -4,7 +4,7 @@
 #define _AUDIO_TD_H_
 
 #include <hardware/aud/aud_inf.h>
-#include "../common/cs_types.h"
+#include "cs_types.h"
 
 typedef enum
 {

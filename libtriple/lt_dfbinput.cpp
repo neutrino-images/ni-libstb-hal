@@ -58,7 +58,7 @@ extern cVideo *videoDecoder;
 #define DFBCHECK(x...)                                                \
 	err = x;                                                      \
 	if (err != DFB_OK) {                                          \
-		fprintf(stderr, "%s <%d>:\n\t", __FILE__, __LINE__ ); \
+		fprintf(stderr, "lt_dfbinput.cpp:%d:\n\t", __LINE__); \
 		DirectFBErrorFatal(#x, err );                         \
 	}
 

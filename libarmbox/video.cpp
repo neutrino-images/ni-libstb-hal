@@ -845,17 +845,21 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 
 bool getvideo2(unsigned char *video, int xres, int yres)
 {
+	bool ret = false;
 	if(video ==  NULL)
-		return false;
+		return ret;
 	char videosnapshot[] = "/dev/dvb/adapter0/video0";
 	int fd_video = open(videosnapshot, O_RDONLY);
 	if (fd_video < 0) {
 		perror(videosnapshot);
-		return false;
+		return ret;
 	}
-	//ssize_t r = read(fd_video, video, xres * yres * 3);
+	ssize_t r = read(fd_video, video, xres * yres * 3);
+	if(r){
+		ret = true;
+	}
 	close(fd_video);
-	return true;
+	return ret;
 }
 static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int dw, int dh, AVPixelFormat sfmt)
 {

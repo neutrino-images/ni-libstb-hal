@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES = libgeneric.la
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS = -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+AM_CPPFLAGS += \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/include
 
@@ -21,7 +22,6 @@ libgeneric_la_SOURCES = \
 	audio.cpp \
 	glfb.cpp \
 	init.cpp \
-	pwrmngr.cpp \
 	record.cpp
 
 if ENABLE_GSTREAMER_01
@@ -43,5 +43,3 @@ libgeneric_la_SOURCES += \
 	playback.cpp
 endif
 endif
-
-AM_CPPFLAGS += -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS

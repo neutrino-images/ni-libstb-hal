@@ -20,7 +20,6 @@ libarmbox_la_SOURCES = \
 	video.cpp \
 	audio.cpp \
 	init.cpp \
-	pwrmngr.cpp \
 	record.cpp
 
 if ENABLE_GSTREAMER_10

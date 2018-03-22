@@ -596,8 +596,48 @@ static void FFMPEGThread(Context_t *context)
 			}
 			continue;
 		}
+		if (context->playback->BackWard && av_gettime() >= showtime) {
+			context->output->Command(context, OUTPUT_CLEAR, "video");
+
+			if (bofcount == 1) {
+			showtime = av_gettime();
+			usleep(100000);
+			continue;
+			}
+
+			if (avContextTab[0]->iformat->flags & AVFMT_TS_DISCONT) {
+				off_t pos = avio_tell(avContextTab[0]->pb);
+
+				if (pos > 0) {
+					float br;
+					if (avContextTab[0]->bit_rate)
+						br = avContextTab[0]->bit_rate / 8.0;
+					else
+						br = 180000.0;
+					seek_target_bytes = (double)pos + (double)context->playback->Speed * 8.0 * br;
+					if (seek_target_bytes < 0)
+						seek_target_bytes = 1;
+					do_seek_target_bytes = 1;
+				}
+			}
+			else
+			{
+				int64_t currPts = -1;
+				context->playback->Command(context, PLAYBACK_PTS, &currPts);
+				seek_target_seconds = ((double)currPts / 90000.0 + context->playback->Speed) * AV_TIME_BASE;
+				if (seek_target_seconds < 0)
+					seek_target_seconds = AV_TIME_BASE;
+				do_seek_target_seconds = 1;
+			}
+			showtime = av_gettime() + 300000;	//jump back every 300ms
+		}
+		else
+		{
+			bofcount = 0;
+		}
 		if (do_seek_target_seconds || do_seek_target_bytes)
 		{
+			int res = -1;
 			isWaitingForFinish = 0;
 			if (do_seek_target_seconds)
 			{
@@ -615,8 +655,9 @@ static void FFMPEGThread(Context_t *context)
 						{
 							seek_target_seconds += avContextTab[i]->start_time;
 						}
-						//av_seek_frame(avContextTab[i], -1, seek_target_seconds, 0);
-						avformat_seek_file(avContextTab[i], -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
+						res = avformat_seek_file(avContextTab[i], -1, INT64_MIN, seek_target_seconds, INT64_MAX, 0);
+						if (res < 0 && context->playback->BackWard)
+							bofcount = 1;
 					}
 					else
 					{
@@ -1799,7 +1840,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 						{
 							track.TimeScale = 1000;
 						}
-						ffmpeg_printf(10, "bit_rate       [%d]\n", get_codecpar(stream)->bit_rate);
+						ffmpeg_printf(10, "bit_rate       [%lld]\n", get_codecpar(stream)->bit_rate);
 						ffmpeg_printf(10, "time_base.den  [%d]\n", stream->time_base.den);
 						ffmpeg_printf(10, "time_base.num  [%d]\n", stream->time_base.num);
 						ffmpeg_printf(10, "width          [%d]\n", get_codecpar(stream)->width);
@@ -1818,6 +1859,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 							ffmpeg_printf(10, "Stream has no duration so we take the duration from context\n");
 							track.duration = (int64_t) avContext->duration / 1000;
 						}
+						ffmpeg_printf(10, "duration       [%lld]\n", track.duration);
 						if (context->manager->video)
 						{
 							if (get_codecpar(stream)->codec_id == AV_CODEC_ID_MPEG4)
@@ -2416,9 +2458,10 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 	Track_t *audioTrack = NULL;
 //	Track_t *current = NULL;
 	seek_target_flag = 0;
+	sec *= AV_TIME_BASE;
 	if (!absolute)
 	{
-		ffmpeg_printf(10, "seeking %f sec\n", sec);
+		ffmpeg_printf(10, "seeking %lld sec\n", sec / AV_TIME_BASE);
 		if (sec == 0)
 		{
 			ffmpeg_err("sec = 0 ignoring\n");
@@ -2433,14 +2476,15 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 				ffmpeg_err("fail to get current PTS\n");
 				return cERR_CONTAINER_FFMPEG_ERR;
 			}
-			sec += currPts / 90000;
+			sec += (currPts / 90000 * AV_TIME_BASE);
+		}
+
+		if (sec < 0)
+		{
+			sec = 0;
 		}
 	}
-	ffmpeg_printf(10, "goto %d sec\n", sec);
-	if (sec < 0)
-	{
-		sec = 0;
-	}
+	ffmpeg_printf(10, "goto %lld sec\n", sec / AV_TIME_BASE);
 	context->manager->video->Command(context, MANAGER_GET_TRACK, &videoTrack);
 	context->manager->audio->Command(context, MANAGER_GET_TRACK, &audioTrack);
 	if (!videoTrack && !audioTrack)
@@ -2474,7 +2518,7 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_NO_ERROR;
 	}
-	ffmpeg_printf(10, "iformat->flags %d\n", avContextTab[0]->iformat->flags);
+	ffmpeg_printf(10, "iformat->flags 0x%08x\n", avContextTab[0]->iformat->flags);
 #if defined(TS_BYTES_SEEKING) && TS_BYTES_SEEKING
 	if (avContextTab[0]->iformat->flags & AVFMT_TS_DISCONT)
 	{
@@ -2487,10 +2531,11 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		getMutex(__FILE__, __FUNCTION__, __LINE__);
 		off_t pos = avio_tell(avContextTab[0]->pb);
 		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
+		ffmpeg_printf(10, "pos %lld %lld\n", pos, avContextTab[0]->bit_rate);
 		if (avContextTab[0]->bit_rate)
 		{
 			sec *= avContextTab[0]->bit_rate / 8;
-			ffmpeg_printf(10, "bit_rate %d\n", avContextTab[0]->bit_rate);
+			ffmpeg_printf(10, "bit_rate %lld\n", avContextTab[0]->bit_rate);
 		}
 		else
 		{
@@ -2501,14 +2546,14 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 		{
 			pos = 0;
 		}
-		ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %d\n", pos, sec);
-		seek_target_bytes = pos;
+		ffmpeg_printf(10, "1. seeking to position %lld bytes ->sec %lld\n", pos / AV_TIME_BASE, sec / AV_TIME_BASE);
+		seek_target_bytes = pos / AV_TIME_BASE;
 		do_seek_target_bytes = 1;
 	}
 	else
 #endif
 	{
-		seek_target_seconds = sec * AV_TIME_BASE;
+		seek_target_seconds = sec;
 		do_seek_target_seconds = 1;
 	}
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;

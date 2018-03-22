@@ -95,7 +95,9 @@ static void SupervisorThread(Context_t *context)
 	hasThreadStarted = 1;
 	playback_printf(10, ">\n");
 	while (context && context->playback && context->playback->isPlaying && !context->playback->abortRequested)
+	{
 		usleep(100000);
+	}
 	playback_printf(10, "<\n");
 	hasThreadStarted = 2;
 	PlaybackTerminate(context);
@@ -310,8 +312,10 @@ static int32_t PlaybackContinue(Context_t *context)
 	   (context->playback->isPaused || context->playback->isForwarding ||
 	    context->playback->BackWard || context->playback->SlowMotion))
 	{
-		if (context->playback->SlowMotion || context->playback->isForwarding)
+		if (context->playback->SlowMotion || context->playback->isForwarding || context->playback->BackWard)
 			context->output->Command(context, OUTPUT_CLEAR, NULL);
+		if (context->playback->BackWard)
+			context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
 		context->playback->isPaused     = 0;
 		//context->playback->isPlaying  = 1;
 		context->playback->isForwarding = 0;
@@ -453,15 +457,16 @@ static int PlaybackFastBackward(Context_t *context, int *speed)
 		{
 			context->playback->BackWard = 0;
 			context->playback->Speed = 0;    /* reverse end */
+			context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
 		}
 		else
 		{
 			context->playback->isSeeking = 1;
 			context->playback->Speed = *speed;
-			context->playback->BackWard = 2 ^ (*speed);
-			playback_printf(1, "S %d B %f\n", context->playback->Speed, context->playback->BackWard);
+			context->playback->BackWard = 1;
+			context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
+			playback_printf(1, "S %d B %d\n", context->playback->Speed, context->playback->BackWard);
 		}
-		context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
 		context->output->Command(context, OUTPUT_CLEAR, NULL);
 		if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0)
 		{

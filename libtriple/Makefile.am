@@ -2,6 +2,7 @@ noinst_LTLIBRARIES = libtriple.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/include \
 	@DIRECTFB_CFLAGS@
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing

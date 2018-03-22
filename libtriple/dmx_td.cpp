@@ -17,18 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <cstdio>
 #include <string>
 #include <hardware/tddevices.h>
-#include "dmx_td.h"
+#include "dmx_hal.h"
 #include "lt_debug.h"
 
 /* Ugh... see comment in destructor for details... */
@@ -39,14 +42,8 @@ extern cVideo *videoDecoder;
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_DEMUX, this, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
-	uint16_t _pid = (uint16_t)-1; uint16_t _f = 0;\
-	if (dmx_type == DMX_PSI_CHANNEL) { \
-		_pid = s_flt.pid; _f = s_flt.filter[0]; \
-	} else { \
-		_pid = p_flt.pid; \
-	}; \
 	lt_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
-		__func__, _errstr, fd, _revents, DMX_T[dmx_type], _pid, _f); \
+		__func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
 } while(0);
 
 cDemux *videoDemux = NULL;
@@ -75,6 +72,15 @@ static const char *devname[] = {
 static int dmx_tp_count = 0;
 #define MAX_TS_COUNT 1
 
+typedef struct dmx_pdata {
+	bool measure;
+	int last_measure;
+	int last_data;
+	int devnum;
+	bool running;
+} dmx_pdata;
+#define P ((dmx_pdata *)pdata)
+
 cDemux::cDemux(int n)
 {
 	if (n < 0 || n > 2)
@@ -85,32 +91,24 @@ cDemux::cDemux(int n)
 	else
 		num = n;
 	fd = -1;
-	measure = false;
-	last_measure = 0;
-	last_data = 0;
+	pdata = calloc(1, sizeof(dmx_pdata));
+	P->measure = false;
+	P->last_measure = 0;
+	P->last_data = 0;
+	P->running = false;
 }
 
 cDemux::~cDemux()
 {
 	lt_debug("%s #%d fd: %d\n", __FUNCTION__, num, fd);
 	Close();
-	/* in zapit.cpp, videoDemux is deleted after videoDecoder
-	 * in the video watchdog, we access videoDecoder
-	 * the thread still runs after videoDecoder has been deleted
-	 * => set videoDecoder to NULL here to make the check in the
-	 * watchdog thread pick this up.
-	 * This is ugly, but it saves me from changing neutrino
-	 *
-	 * if the delete order in neutrino will ever be changed, this
-	 * will blow up badly :-(
-	 */
-	if (dmx_type == DMX_VIDEO_CHANNEL)
-		videoDecoder = NULL;
+	free(pdata);
+	pdata = NULL;
 }
 
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
-	devnum = num;
+	P->devnum = num;
 	int flags = O_RDWR;
 	if (fd > -1)
 		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
@@ -120,10 +118,10 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		if (num == 0 && uBufferSize == 3 * 3008 * 62) /* streaminfo measurement, let's cheat... */
 		{
 			lt_info("%s num=0 and DMX_TP_CHANNEL => measurement demux\n", __func__);
-			devnum = 2; /* demux 0 is used for live, demux 1 for recording */
-			measure = true;
-			last_measure = 0;
-			last_data = 0;
+			P->devnum = 2; /* demux 0 is used for live, demux 1 for recording */
+			P->measure = true;
+			P->last_measure = 0;
+			P->last_data = 0;
 			flags |= O_NONBLOCK;
 		}
 		else
@@ -137,18 +135,18 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 				return false;
 			}
 			dmx_tp_count++;
-			devnum = dmx_tp_count;
+			P->devnum = dmx_tp_count;
 		}
 	}
-	fd = open(devname[devnum], flags);
+	fd = open(devname[P->devnum], flags);
 	if (fd < 0)
 	{
-		lt_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
+		lt_info("%s %s: %m\n", __FUNCTION__, devname[P->devnum]);
 		return false;
 	}
 	fcntl(fd, F_SETFD, FD_CLOEXEC);
 	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d dev:%s fd: %d\n", __func__,
-		 num, DMX_T[pes_type], pes_type, uBufferSize, devname[devnum] + strlen("/dev/stb/"), fd);
+		 num, DMX_T[pes_type], pes_type, uBufferSize, devname[P->devnum] + strlen("/dev/stb/"), fd);
 
 	dmx_type = pes_type;
 
@@ -159,7 +157,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	}
 	if (pes_type == DMX_TP_CHANNEL)
 	{
-		if (measure)
+		if (P->measure)
 			return true;
 		struct demux_bucket_para bp;
 		bp.unloader.unloader_type = UNLOADER_TYPE_TRANSPORT;
@@ -201,7 +199,7 @@ void cDemux::Close(void)
 	ioctl(fd, DEMUX_STOP);
 	close(fd);
 	fd = -1;
-	if (measure)
+	if (P->measure)
 		return;
 	if (dmx_type == DMX_TP_CHANNEL)
 	{
@@ -229,6 +227,7 @@ bool cDemux::Start(bool)
 			perror("DEMUX_START");
 	}
 	ioctl(fd, DEMUX_START);
+	P->running = true;
 	return true;
 }
 
@@ -246,6 +245,7 @@ bool cDemux::Stop(void)
 			perror("DEMUX_STOP");
 	}
 	ioctl(fd, DEMUX_STOP);
+	P->running = false;
 	return true;
 }
 
@@ -262,7 +262,15 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	ufds.events = POLLIN;
 	ufds.revents = 0;
 
-	if (measure)
+	if (dmx_type == DMX_INVALID)	/* happens, if too many DMX_TP are requested, because */
+	{				/* nobody checks the return value of Open or Start... */
+		lt_debug("%s #%d: DMX_INVALID\n", __func__, num);
+		usleep(timeout * 1000);	/* rate-limit the debug message */
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (P->measure)
 	{
 		if (timeout)
 			usleep(timeout * 1000);
@@ -271,7 +279,7 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 		clock_gettime(CLOCK_MONOTONIC, &t);
 		now = t.tv_sec * 1000;
 		now += t.tv_nsec / 1000000;
-		if (now - last_measure < 333)
+		if (now - P->last_measure < 333)
 			return 0;
 		unsigned char dummy[12];
 		unsigned long long bit_s = 0;
@@ -295,17 +303,17 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 				bit_s = (m.rx_bytes * 7816793ULL + (m.rx_time_us / 2ULL)) / m.rx_time_us;
 				 */
 				bit_s = (m.rx_bytes * 8000ULL + (m.rx_time_us / 2ULL)) / m.rx_time_us;
-				if (now - last_data < 5000)
-					rc = bit_s * (now - last_data) / 8ULL;
+				if (now - P->last_data < 5000)
+					rc = bit_s * (now - P->last_data) / 8ULL;
 				else
 					rc = 0;
 				lt_debug("%s measure bit_s: %llu rc: %d timediff: %lld\n",
-					  __func__, bit_s, rc, (now - last_data));
-				last_data = now;
+					  __func__, bit_s, rc, (now - P->last_data));
+				P->last_data = now;
 			} else
 				rc = 0;
 		}
-		last_measure = now;
+		P->last_measure = now;
 		ioctl(fd, DEMUX_START);
 		return rc;
 	}
@@ -350,13 +358,14 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	return rc;
 }
 
-bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filter,
+bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filter,
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
 	int length;
+	struct demux_filter_para s_flt;
 	memset(&s_flt, 0, sizeof(s_flt));
-
+	pid = _pid;
 	if (len > FILTER_LENGTH - 2)
 		lt_info("%s #%d: len too long: %d, FILTER_LENGTH: %d\n", __func__, num, len, FILTER_LENGTH);
 	if (len < 1) /* memcpy below will be unhappy */
@@ -365,6 +374,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	length = (len + 2 + 1) & 0xfe;	/* reportedly, the TD drivers don't handle odd filter  */
 	if (length > FILTER_LENGTH)	/* lengths well. So make sure the length is a multiple */
 		length = FILTER_LENGTH;	/* of 2. The unused mask is zeroed anyway.             */
+	flt = filter[0];
 	s_flt.pid = pid;
 	s_flt.filter_length = length;
 	s_flt.filter[0] = filter[0];
@@ -467,11 +477,15 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	if (ioctl(fd, DEMUX_FILTER_SET, &s_flt) < 0)
 		return false;
 
+	P->running = true;
 	return true;
 }
 
-bool cDemux::pesFilter(const unsigned short pid)
+bool cDemux::pesFilter(const unsigned short _pid)
 {
+	demux_pes_para p_flt;
+	pid = _pid;
+	flt = 0;
 	/* allow PID 0 for web streaming e.g.
 	 * this check originally is from tuxbox cvs but I'm not sure
 	 * what it is good for...
@@ -483,7 +497,7 @@ bool cDemux::pesFilter(const unsigned short pid)
 
 	lt_debug("%s #%d pid: 0x%04hx fd: %d type: %s\n", __FUNCTION__, num, pid, fd, DMX_T[dmx_type]);
 
-	if (dmx_type == DMX_TP_CHANNEL && !measure)
+	if (dmx_type == DMX_TP_CHANNEL && !P->measure)
 	{
 		unsigned int n = pesfds.size();
 		addPid(pid);
@@ -533,6 +547,8 @@ void cDemux::SetSyncMode(AVSYNC_TYPE /*mode*/)
 void *cDemux::getBuffer()
 {
 	lt_debug("%s #%d\n", __FUNCTION__, num);
+	if (P->running)
+		return (void *)1;
 	return NULL;
 }
 
@@ -552,14 +568,14 @@ bool cDemux::addPid(unsigned short Pid)
 		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
 		return false;
 	}
-	if (measure)
+	if (P->measure)
 	{
 		lt_info("%s measurement demux -> skipping\n", __func__);
 		return true;
 	}
 	if (fd == -1)
 		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
-	pfd.fd = open(devname[devnum], O_RDWR);
+	pfd.fd = open(devname[P->devnum], O_RDWR);
 	if (pfd.fd < 0)
 	{
 		lt_info("%s #%d Pid = %hx open failed (%m)\n", __FUNCTION__, num, Pid);

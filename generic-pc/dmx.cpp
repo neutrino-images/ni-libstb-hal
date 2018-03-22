@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,11 +31,12 @@
 #include <cstdio>
 #include <string>
 #include <unistd.h>
-#include "dmx_lib.h"
+#include <sys/ioctl.h>
+#include "dmx_hal.h"
 #include "lt_debug.h"
 
-/* needed for getSTC :-( */
 #include "video_lib.h"
+/* needed for getSTC... */
 extern cVideo *videoDecoder;
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
@@ -44,14 +44,8 @@ extern cVideo *videoDecoder;
 #define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_DEMUX, NULL, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
-	uint16_t _pid = (uint16_t)-1; uint16_t _f = 0;\
-	if (dmx_type == DMX_PSI_CHANNEL) { \
-		_pid = s_flt.pid; _f = s_flt.filter.filter[0]; \
-	} else { \
-		_pid = p_flt.pid; \
-	}; \
 	lt_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
-		__func__, _errstr, fd, _revents, DMX_T[dmx_type], _pid, _f); \
+		__func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
 } while(0);
 
 cDemux *videoDemux = NULL;
@@ -95,9 +89,6 @@ cDemux::cDemux(int n)
 	else
 		num = n;
 	fd = -1;
-	measure = false;
-	last_measure = 0;
-	last_data = 0;
 }
 
 cDemux::~cDemux()
@@ -163,8 +154,6 @@ void cDemux::Close(void)
 	ioctl(fd, DMX_STOP);
 	close(fd);
 	fd = -1;
-	if (measure)
-		return;
 	if (dmx_type == DMX_TP_CHANNEL)
 	{
 		dmx_tp_count--;
@@ -256,11 +245,13 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	return rc;
 }
 
-bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filter,
+bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filter,
 			   const unsigned char * const mask, int len, int timeout,
 			   const unsigned char * const negmask)
 {
+	struct dmx_sct_filter_params s_flt;
 	memset(&s_flt, 0, sizeof(s_flt));
+	pid = _pid;
 
 	if (len > DMX_FILTER_SIZE)
 	{
@@ -269,6 +260,7 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	}
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
+	flt = filter[0];
 	memcpy(s_flt.filter.filter, filter, len);
 	memcpy(s_flt.filter.mask,   mask,   len);
 	if (negmask != NULL)
@@ -369,8 +361,11 @@ bool cDemux::sectionFilter(unsigned short pid, const unsigned char * const filte
 	return true;
 }
 
-bool cDemux::pesFilter(const unsigned short pid)
+bool cDemux::pesFilter(const unsigned short _pid)
 {
+	struct dmx_pes_filter_params p_flt;
+	pid = _pid;
+	flt = 0;
 	/* allow PID 0 for web streaming e.g.
 	 * this check originally is from tuxbox cvs but I'm not sure
 	 * what it is good for...

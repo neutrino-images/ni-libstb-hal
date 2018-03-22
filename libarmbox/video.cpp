@@ -362,7 +362,8 @@ void cVideo::closeDevice(void)
 int cVideo::setAspectRatio(int aspect, int mode)
 {
 	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
-	static const char *m[] = { "panscan", "bestfit", "letterbox", "nonlinear", "(unset)" };
+//	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
+	static const char *m[] = { "letterbox", "panscan", "bestfit", "nonlinear", "(unset)" }; 
 	int n;
 	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
 
@@ -478,30 +479,6 @@ int cVideo::setBlank(int)
 	return Stop(1);
 }
 
-int cVideo::GetVideoSystem(void)
-{
-	char current[32];
-	proc_get("/proc/stb/video/videomode", current, 32);
-	for (int i = 0; vid_modes[i]; i++)
-	{
-		if (strcmp(current, vid_modes[i]) == 0)
-			return i;
-	}
-	lt_info("%s: could not find '%s' mode, returning VIDEO_STD_720P50\n", __func__, current);
-	return VIDEO_STD_720P50;
-}
-
-void cVideo::GetVideoSystemFormatName(cs_vs_format_t *format, int system)
-{
-	if (system == -1)
-		system = GetVideoSystem();
-	if (system < 0 || system > VIDEO_STD_1080P50) {
-		lt_info("%s: invalid system %d\n", __func__, system);
-		strcpy(format->format, "invalid");
-	} else
-		strcpy(format->format, vid_modes[system]);
-}
-
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
@@ -531,6 +508,30 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 		Start();
 
 	return ret;
+}
+
+int cVideo::GetVideoSystem(void)
+{
+	char current[32];
+	proc_get("/proc/stb/video/videomode", current, 32);
+	for (int i = 0; vid_modes[i]; i++)
+	{
+		if (strcmp(current, vid_modes[i]) == 0)
+			return i;
+	}
+	lt_info("%s: could not find '%s' mode, returning VIDEO_STD_720P50\n", __func__, current);
+	return VIDEO_STD_720P50;
+}
+
+void cVideo::GetVideoSystemFormatName(cs_vs_format_t *format, int system)
+{
+	if (system == -1)
+		system = GetVideoSystem();
+	if (system < 0 || system > VIDEO_STD_1080P50) {
+		lt_info("%s: invalid system %d\n", __func__, system);
+		strcpy(format->format, "invalid");
+	} else
+		strcpy(format->format, vid_modes[system]);
 }
 
 int cVideo::getPlayState(void)

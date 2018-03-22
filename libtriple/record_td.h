@@ -2,7 +2,7 @@
 #define __RECORD_TD_H
 
 #include <pthread.h>
-#include "dmx_td.h"
+#include "dmx_hal.h"
 
 #define REC_STATUS_OK 0
 #define REC_STATUS_SLOW 1

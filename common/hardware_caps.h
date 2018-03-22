@@ -1,1 +1,0 @@
-../include/hardware_caps.h

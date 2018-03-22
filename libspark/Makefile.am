@@ -6,7 +6,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libeplayer3/include
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
-
 AM_LDFLAGS = \
 	-lOpenThreads \
 	@AVFORMAT_LIBS@ \
@@ -23,7 +22,6 @@ libspark_la_SOURCES = \
 	audio_mixer.cpp \
 	init.cpp \
 	playback_libeplayer3.cpp \
-	pwrmngr.cpp \
 	record.cpp
 
 AM_CPPFLAGS += -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS

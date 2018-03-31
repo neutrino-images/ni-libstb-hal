@@ -522,21 +522,40 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
 				ret = cERR_OUTPUT_INTERNAL_ERROR;
 			}
 			break;
-			case OUTPUT_GET_PROGRESSIVE:
+		}
+		case OUTPUT_GET_PROGRESSIVE:
+		{
+			if (context && context->playback)
 			{
-				if (context && context->playback)
+				if (context->playback->isVideo)
 				{
-					if (context->playback->isVideo)
-					{
-						return context->output->video->Command(context, OUTPUT_GET_PROGRESSIVE, (void *) argument);
-					}
+					return context->output->video->Command(context, OUTPUT_GET_PROGRESSIVE, (void *) argument);
 				}
-				else
-				{
-					ret = cERR_OUTPUT_INTERNAL_ERROR;
-				}
-				break;
 			}
+			else
+			{
+				ret = cERR_OUTPUT_INTERNAL_ERROR;
+			}
+			break;
+		}
+		case OUTPUT_SET_BUFFER_SIZE:
+		{
+			if (context && context->playback)
+			{
+				if (context->output->video)
+				{
+					return context->output->video->Command(context, OUTPUT_SET_BUFFER_SIZE, argument);
+				}
+				else if (context->output->audio)
+				{
+					return context->output->audio->Command(context, OUTPUT_SET_BUFFER_SIZE, argument);
+				}
+			}
+			else
+			{
+				ret = cERR_OUTPUT_INTERNAL_ERROR;
+			}
+			break;
 		}
 		default:
 			output_err("%s::%s OutputCmd %d not supported!\n", __FILE__, __FUNCTION__, command);

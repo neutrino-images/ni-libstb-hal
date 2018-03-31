@@ -181,7 +181,7 @@ static int writeData(WriterAVCallData_t *call)
 		free(videocodecdata.data);
 		videocodecdata.data = NULL;
 	}
-	return writev_with_retry(call->fd, iov, ic);
+	return call->WriteV(call->fd, iov, ic);
 }
 
 /* ***************************** */

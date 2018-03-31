@@ -138,7 +138,7 @@ static int writeData(WriterAVCallData_t *call, int is_vp6)
 	iov[0].iov_len = pes_header_len;
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
-	return writev_with_retry(call->fd, iov, 2);
+	return call->WriteV(call->fd, iov, 2);
 }
 
 static int writeDataVP6(WriterAVCallData_t *call)

@@ -468,14 +468,6 @@ static int PlaybackFastBackward(Context_t *context, int *speed)
 			playback_printf(1, "S %d B %d\n", context->playback->Speed, context->playback->BackWard);
 		}
 		context->output->Command(context, OUTPUT_CLEAR, NULL);
-		if (context->output->Command(context, OUTPUT_REVERSE, NULL) < 0)
-		{
-			playback_err("OUTPUT_REVERSE failed\n");
-			context->playback->BackWard = 0;
-			context->playback->Speed = 1;
-			context->playback->isSeeking = 0;
-			ret = cERR_PLAYBACK_ERROR;
-		}
 	}
 	else
 	{

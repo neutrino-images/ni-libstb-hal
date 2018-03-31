@@ -55,6 +55,7 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
+#define H264_SILENT
 //#define H265_DEBUG
 #ifdef H265_DEBUG
 
@@ -220,7 +221,7 @@ static int writeData(WriterAVCallData_t *call)
 		iov[ic++].iov_len = call->len;
 		PacketLength     += call->len;
 		iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, FakeStartCode);
-		return writev_with_retry(call->fd, iov, ic);
+		return call->WriteV(call->fd, iov, ic);
 	}
 	uint32_t PacketLength = 0;
 	ic = 0;
@@ -275,7 +276,7 @@ static int writeData(WriterAVCallData_t *call)
 		while ((pos + NalLengthBytes) < call->len);
 		h264_printf(10, "<<<< PacketLength [%d]\n", PacketLength);
 		iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, 0);
-		len = writev_with_retry(call->fd, iov, ic);
+		len = call->WriteV(call->fd, iov, ic);
 		PacketLength += iov[0].iov_len;
 		if (PacketLength != len)
 		{

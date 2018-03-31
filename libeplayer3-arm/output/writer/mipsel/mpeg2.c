@@ -125,7 +125,7 @@ static int writeData(WriterAVCallData_t *call)
 		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, 0xe0, call->Pts, 0);
 		iov[1].iov_base = call->data + Position;
 		iov[1].iov_len = PacketLength;
-		ssize_t l = writev_with_retry(call->fd, iov, 2);
+		ssize_t l = call->WriteV(call->fd, iov, 2);
 		if (l < 0)
 		{
 			len = l;

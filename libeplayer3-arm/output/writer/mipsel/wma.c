@@ -158,7 +158,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[0].iov_len  = headerSize;
 	iov[1].iov_base = call->data;
 	iov[1].iov_len  = call->len;
-	return writev_with_retry(call->fd, iov, 2);
+	return call->WriteV(call->fd, iov, 2);
 }
 
 /* ***************************** */

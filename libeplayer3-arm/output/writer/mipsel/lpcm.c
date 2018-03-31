@@ -238,7 +238,7 @@ static int writeData(WriterAVCallData_t *call)
 		iov[0].iov_len  = pes_header_size;
 		iov[1].iov_base = frame;
 		iov[1].iov_len  = i_frame_size;
-		i_ret_size += writev_with_retry(call->fd, iov, 2);
+		i_ret_size += call->WriteV(call->fd, iov, 2);
 	}
 	memcpy(p_buffer, call->data + i_bytes_consumed, i_leftover_samples * i_channels * 2);
 	i_buffer_used = i_leftover_samples;

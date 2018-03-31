@@ -150,7 +150,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[0].iov_len = InsertPesHeader(PesHeader, Size, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
 	iov[1].iov_base = Data;
 	iov[1].iov_len = Size;
-	int32_t len = writev_with_retry(call->fd, iov, 2);
+	int32_t len = call->WriteV(call->fd, iov, 2);
 	dts_printf(10, "< len %d\n", len);
 	return len;
 }

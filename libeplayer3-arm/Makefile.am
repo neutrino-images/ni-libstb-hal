@@ -21,6 +21,7 @@ libeplayer3_arm_la_SOURCES = \
 	output/linuxdvb_mipsel.c \
 	output/output_subtitle.c \
 	output/output.c \
+	output/linuxdvb_buffering.c \
 	output/writer/common/pes.c \
 	output/writer/common/misc.c \
 	output/writer/mipsel/writer.c \

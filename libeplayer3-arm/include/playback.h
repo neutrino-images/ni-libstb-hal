@@ -2,6 +2,10 @@
 #define PLAYBACK_H_
 #include <sys/types.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+typedef void( * PlaybackDieNowCallback )();
+bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback);
 
 typedef enum {
 	PLAYBACK_OPEN,

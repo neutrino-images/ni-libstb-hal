@@ -84,9 +84,14 @@ static void TerminateAllSockets(void)
 	}
 }
 
-static int g_pfd[2] = {-1, -1}; /* Used to wake terminate thread */
+static int g_pfd[2] = {-1, -1}; /* Used to wake terminate thread and kbhit */
 static int isPlaybackStarted = 0;
 static pthread_mutex_t playbackStartMtx;
+
+static void TerminateWakeUp()
+{
+	write(g_pfd[1], "x", 1);
+}
 
 static void *TermThreadFun(void *arg __attribute__((unused)))
 {
@@ -126,13 +131,6 @@ static void *TermThreadFun(void *arg __attribute__((unused)))
 	}
 	if (FD_ISSET(fd, &readfds))
 	{
-		/*
-		if ((cl = accept(fd, NULL, NULL)) == -1)
-		{
-		    perror("TermThreadFun accept error");
-		    goto finish;
-		}
-		*/
 		pthread_mutex_lock(&playbackStartMtx);
 		PlaybackDieNow(1);
 		if (isPlaybackStarted)
@@ -171,16 +169,17 @@ static void map_inter_file_path(char *filename)
 static int kbhit(void)
 {
 	struct timeval tv;
-	fd_set read_fd;
+	fd_set readfds;
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
-	FD_ZERO(&read_fd);
-	FD_SET(0, &read_fd);
-	if (-1 == select(1, &read_fd, NULL, NULL, &tv))
+	FD_ZERO(&readfds);
+	FD_SET(0,&readfds);
+	FD_SET(g_pfd[0], &readfds);
+	if(-1 == select(g_pfd[0] + 1, &readfds, NULL, NULL, &tv))
 	{
 		return 0;
 	}
-	if (FD_ISSET(0, &read_fd))
+	if (FD_ISSET(0, &readfds))
 	{
 		return 1;
 	}
@@ -639,7 +638,7 @@ int main(int argc, char *argv[])
 	memset(argvBuff, '\0', sizeof(argvBuff));
 	int commandRetVal = -1;
 	/* inform client that we can handle additional commands */
-	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 41);
+	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 42);
 	if (0 != ParseParams(argc, argv, file, audioFile, &audioTrackIdx, &subtitleTrackIdx, &linuxDvbBufferSizeMB))
 	{
 		printf("Usage: exteplayer3 filePath [-u user-agent] [-c cookies] [-h headers] [-p prio] [-a] [-d] [-w] [-l] [-s] [-i] [-t audioTrackId] [-9 subtitleTrackId] [-x separateAudioUri] plabackUri\n");
@@ -745,6 +744,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "{\"PLAYBACK_PLAY\":{\"sts\":%d}}\n", commandRetVal);
 		if (g_player->playback->isPlaying)
 		{
+			PlaybackDieNowRegisterCallback(TerminateWakeUp);
 			HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, "vc");
 			HandleTracks(g_player->manager->audio, (PlaybackCmd_t) - 1, "al");
 			if (audioTrackIdx >= 0)
@@ -763,7 +763,7 @@ int main(int argc, char *argv[])
 			}
 			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) - 1, "sc");
 		}
-		while (g_player->playback->isPlaying)
+		while (g_player->playback->isPlaying && 0 == PlaybackDieNow(0))
 		{
 			/* we made fgets non blocking */
 			if (NULL == fgets(argvBuff, sizeof(argvBuff) - 1, stdin))
@@ -994,6 +994,5 @@ int main(int argc, char *argv[])
 	pthread_mutex_destroy(&playbackStartMtx);
 	close(g_pfd[0]);
 	close(g_pfd[1]);
-	//printOutputCapabilities();
 	exit(0);
 }

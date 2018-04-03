@@ -349,6 +349,13 @@ int32_t LinuxDvbBuffFlush(Context_t *context __attribute__((unused)))
 	return 0;
 }
 
+int32_t LinuxDvbBuffResume(Context_t *context __attribute__((unused)))
+{
+	/* signal if we are waiting for write to DVB decoders */
+	WriteWakeUp();
+	return 0;
+}
+
 ssize_t BufferingWriteV(int fd, const struct iovec *iov, size_t ic) 
 {
 	OutputType_t dataType = OUTPUT_UNK;

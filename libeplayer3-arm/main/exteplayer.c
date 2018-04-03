@@ -638,7 +638,7 @@ int main(int argc, char *argv[])
 	memset(argvBuff, '\0', sizeof(argvBuff));
 	int commandRetVal = -1;
 	/* inform client that we can handle additional commands */
-	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 43);
+	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 44);
 	if (0 != ParseParams(argc, argv, file, audioFile, &audioTrackIdx, &subtitleTrackIdx, &linuxDvbBufferSizeMB))
 	{
 		printf("Usage: exteplayer3 filePath [-u user-agent] [-c cookies] [-h headers] [-p prio] [-a] [-d] [-w] [-l] [-s] [-i] [-t audioTrackId] [-9 subtitleTrackId] [-x separateAudioUri] plabackUri\n");

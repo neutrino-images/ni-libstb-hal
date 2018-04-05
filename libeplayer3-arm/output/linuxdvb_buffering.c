@@ -294,6 +294,8 @@ int32_t LinuxDvbBuffClose(Context_t *context __attribute__((unused)))
 		WriteWakeUp();
 		
 		pthread_mutex_lock(&bufferingMtx);
+		/* wake up if thread is waiting for data */ 
+		pthread_cond_signal(&bufferingdDataAddedCond);
 		/* wait for thread end */
 		clock_gettime(CLOCK_REALTIME, &max_wait);
 		max_wait.tv_sec += 1;

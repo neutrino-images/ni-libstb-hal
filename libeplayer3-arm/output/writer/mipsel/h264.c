@@ -396,7 +396,7 @@ static int writeData(WriterAVCallData_t *call)
 	ic = 0;
 	iov[ic++].iov_base = PesHeader;
 
-	//if (initialHeader)
+	if (!avc3)
 	{
 		if (CodecData)
 		{

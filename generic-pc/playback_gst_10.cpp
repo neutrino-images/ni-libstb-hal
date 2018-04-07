@@ -30,7 +30,6 @@
 #include <pthread.h>
 #include <syscall.h>
 
-#include "dmx_lib.h"
 #include "audio_lib.h"
 #include "video_lib.h"
 #include "glfb.h"

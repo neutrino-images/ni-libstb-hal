@@ -84,6 +84,7 @@ static int CurrentTrack = 0;    //TRACK[0] as default.
 static int ManagerAdd(Context_t *context, Track_t track)
 {
 	audio_mgr_printf(10, "%s::%s name=\"%s\" encoding=\"%s\" id=%d\n", __FILE__, __FUNCTION__, track.Name, track.Encoding, track.Id);
+
 	if (Tracks == NULL)
 	{
 		Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
@@ -93,11 +94,13 @@ static int ManagerAdd(Context_t *context, Track_t track)
 			Tracks[i].Id = -1;
 		}
 	}
+
 	if (Tracks == NULL)
 	{
 		audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
 		return cERR_AUDIO_MGR_ERROR;
 	}
+
 	int i = 0;
 	for (i = 0; i < TRACKWRAP; i++)
 	{
@@ -107,6 +110,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 			return cERR_AUDIO_MGR_NO_ERROR;
 		}
 	}
+
 	if (TrackCount < TRACKWRAP)
 	{
 		copyTrack(&Tracks[TrackCount], &track);
@@ -117,10 +121,12 @@ static int ManagerAdd(Context_t *context, Track_t track)
 		audio_mgr_err("%s:%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_AUDIO_MGR_ERROR;
 	}
+
 	if (TrackCount > 0)
 	{
 		context->playback->isAudio = 1;
 	}
+
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
@@ -129,28 +135,36 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 {
 	int i = 0, j = 0;
 	char **tracklist = NULL;
+
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	if (Tracks != NULL)
 	{
 		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
+
 		if (tracklist == NULL)
 		{
 			audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
+
 		for (i = 0, j = 0; i < TrackCount; i++, j += 2)
 		{
 			if (Tracks[i].pending)
+			{
 				continue;
+			}
+
 			size_t len = strlen(Tracks[i].Name) + 20;
 			char tmp[len];
 			snprintf(tmp, len, "%d %s", Tracks[i].Id, Tracks[i].Name);
 			tracklist[j] = strdup(tmp);
 			tracklist[j + 1] = strdup(Tracks[i].Encoding);
 		}
+
 		tracklist[j] = NULL;
 	}
 	audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", __FILE__, __FUNCTION__, tracklist, j, TrackCount);
+
 	return tracklist;
 }
 
@@ -159,15 +173,18 @@ static TrackDescription_t *ManagerList(Context_t  *context __attribute__((unused
 {
 	int i = 0;
 	TrackDescription_t *tracklist = NULL;
+
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	if (Tracks != NULL)
 	{
 		tracklist = malloc(sizeof(TrackDescription_t) * ((TrackCount) + 1));
+
 		if (tracklist == NULL)
 		{
 			audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
+
 		int j = 0;
 		for (i = 0; i < TrackCount; ++i)
 		{
@@ -175,14 +192,17 @@ static TrackDescription_t *ManagerList(Context_t  *context __attribute__((unused
 			{
 				continue;
 			}
+
 			tracklist[j].Id = Tracks[i].Id;
 			tracklist[j].Name = strdup(Tracks[i].Name);
 			tracklist[j].Encoding = strdup(Tracks[i].Encoding);
 			++j;
 		}
+
 		tracklist[j].Id = -1;
 	}
 	//audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", __FILE__, __FUNCTION__, tracklist, j, TrackCount);
+
 	return tracklist;
 }
 #endif
@@ -190,13 +210,16 @@ static TrackDescription_t *ManagerList(Context_t  *context __attribute__((unused
 static int ManagerDel(Context_t *context)
 {
 	int i = 0;
+
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	if (Tracks != NULL)
 	{
 		for (i = 0; i < TrackCount; i++)
 		{
 			freeTrack(&Tracks[i]);
 		}
+
 		free(Tracks);
 		Tracks = NULL;
 	}
@@ -205,17 +228,22 @@ static int ManagerDel(Context_t *context)
 		audio_mgr_err("%s::%s nothing to delete!\n", __FILE__, __FUNCTION__);
 		return cERR_AUDIO_MGR_ERROR;
 	}
+
 	TrackCount = 0;
 	CurrentTrack = 0;
 	context->playback->isAudio = 0;
+
 	audio_mgr_printf(10, "%s::%s return no error\n", __FILE__, __FUNCTION__);
+
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
 
 static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
 	int ret = cERR_AUDIO_MGR_NO_ERROR;
+
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	switch (command)
 	{
 		case MANAGER_ADD:
@@ -244,6 +272,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_GET:
 		{
 			audio_mgr_printf(20, "%s::%s MANAGER_GET\n", __FILE__, __FUNCTION__);
+
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
 				*((int *)argument) = (int)Tracks[CurrentTrack].Id;
@@ -277,9 +306,10 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_GET_TRACK:
 		{
 			audio_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
+
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
-				*((Track_t **)argument) = (Track_t *) & Tracks[CurrentTrack];
+				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
 			}
 			else
 			{
@@ -315,6 +345,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		{
 			int i;
 			audio_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", __FILE__, __FUNCTION__, *((int *)argument));
+
 			for (i = 0; i < TrackCount; i++)
 			{
 				if (Tracks[i].Id == *((int *)argument))
@@ -323,6 +354,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 					break;
 				}
 			}
+
 			if (i == TrackCount)
 			{
 				audio_mgr_err("%s::%s track id %d unknown\n", __FILE__, __FUNCTION__, *((int *)argument));
@@ -349,9 +381,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			ret = cERR_AUDIO_MGR_ERROR;
 			break;
 	}
+
 	audio_mgr_printf(10, "%s:%s: returning %d\n", __FILE__, __FUNCTION__, ret);
+
 	return ret;
 }
+
 
 struct Manager_s AudioManager =
 {

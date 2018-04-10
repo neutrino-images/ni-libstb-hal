@@ -105,7 +105,9 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 	{
 		unsigned char tmp[2048];
 		unsigned int tmp_len = 0;
+
 		h264_printf(10, "H265 have codec data..!");
+
 		if (cd_len > 3 && (data[0] || data[1] || data[2] > 1))
 		{
 			if (cd_len > 22)
@@ -115,6 +117,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 				{
 					h264_printf(10, "Unsupported extra data version %d, decoding may fail", (int)data[0]);
 				}
+
 				*NalLength = (data[21] & 3) + 1;
 				int num_param_sets = data[22];
 				uint32_t pos = 23;
@@ -150,6 +153,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 						pos += nal_size;
 					}
 				}
+
 				CodecData = malloc(tmp_len);
 				memcpy(CodecData, tmp, tmp_len);
 				CodecDataLen = tmp_len;
@@ -160,6 +164,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 	{
 		*NalLength = 0;
 	}
+
 	return ret;
 }
 
@@ -179,33 +184,40 @@ static int writeData(WriterAVCallData_t *call)
 	int ic = 0;
 	struct iovec iov[IOVEC_SIZE];
 	h264_printf(20, "\n");
+
 	if (call == NULL)
 	{
 		h264_err("call data is NULL...\n");
 		return 0;
 	}
+
 	TimeDelta = call->FrameRate;
 	TimeScale = call->FrameScale;
 	/* avoid compiler warnings */
 	if (TimeDelta) {}
 	if (TimeScale) {}
 	VideoPts  = call->Pts;
+
 	h264_printf(20, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta, TimeScale);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		h264_err("NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		h264_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	if (call->InfoFlags & 0x1) // TS container
 	{
 		h264_printf(10, "H265 simple inject method!\n");
 		uint32_t PacketLength = 0;
 		uint32_t FakeStartCode = (call->Version << 8) | PES_VERSION_FAKE_START_CODE;
+
 		iov[ic++].iov_base = PesHeader;
 		initialHeader = 0;
 		if (initialHeader)
@@ -215,17 +227,24 @@ static int writeData(WriterAVCallData_t *call)
 			iov[ic++].iov_len = call->private_size;
 			PacketLength     += call->private_size;
 		}
+
 		iov[ic].iov_base = "";
 		iov[ic++].iov_len = 1;
+
 		iov[ic].iov_base  = call->data;
 		iov[ic++].iov_len = call->len;
 		PacketLength     += call->len;
+
 		iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, FakeStartCode);
+
 		return call->WriteV(call->fd, iov, ic);
 	}
+
 	uint32_t PacketLength = 0;
+
 	ic = 0;
 	iov[ic++].iov_base = PesHeader;
+
 	if (initialHeader)
 	{
 		if (CodecData)
@@ -233,9 +252,12 @@ static int writeData(WriterAVCallData_t *call)
 			free(CodecData);
 			CodecData = NULL;
 		}
+
 		uint8_t  *private_data = call->private_data;
 		uint32_t  private_size = call->private_size;
+
 		PreparCodecData(private_data, private_size, &NalLengthBytes);
+
 		if (CodecData != NULL)
 		{
 			iov[ic].iov_base  = CodecData;
@@ -244,6 +266,7 @@ static int writeData(WriterAVCallData_t *call)
 			initialHeader = 0;
 		}
 	}
+
 	if (CodecData != NULL)
 	{
 		uint32_t pos = 0;
@@ -254,6 +277,7 @@ static int writeData(WriterAVCallData_t *call)
 				h264_err(">> Drop data due to ic overflow\n");
 				break;
 			}
+
 			uint32_t pack_len = 0;
 			uint32_t i = 0;
 			for (i = 0; i < NalLengthBytes; i++, pos++)
@@ -261,21 +285,28 @@ static int writeData(WriterAVCallData_t *call)
 				pack_len <<= 8;
 				pack_len += call->data[pos];
 			}
+
 			if ((pos + pack_len) > call->len)
 			{
 				pack_len = call->len - pos;
 			}
+
 			iov[ic].iov_base  = Head;
 			iov[ic++].iov_len = sizeof(Head);
 			PacketLength += sizeof(Head);
+
 			iov[ic].iov_base  = call->data + pos;
 			iov[ic++].iov_len = pack_len;
 			PacketLength     += pack_len;
+
 			pos += pack_len;
+
 		}
 		while ((pos + NalLengthBytes) < call->len);
+
 		h264_printf(10, "<<<< PacketLength [%d]\n", PacketLength);
 		iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, 0);
+
 		len = call->WriteV(call->fd, iov, ic);
 		PacketLength += iov[0].iov_len;
 		if (PacketLength != len)
@@ -283,6 +314,7 @@ static int writeData(WriterAVCallData_t *call)
 			h264_err("<<<< not all data have been written [%d/%d]\n", len, PacketLength);
 		}
 	}
+
 	h264_printf(10, "< len %d\n", len);
 	return len;
 }

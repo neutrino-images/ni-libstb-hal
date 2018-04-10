@@ -33,11 +33,13 @@
 
 #define TRACKWRAP 20
 
+//#define SAM_WITH_DEBUG
 #ifdef SAM_WITH_DEBUG
 #define SUBTITLE_MGR_DEBUG
 #else
 #define SUBTITLE_MGR_SILENT
 #endif
+
 
 #ifdef SUBTITLE_MGR_DEBUG
 
@@ -256,7 +258,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		{
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
-				*((Track_t **)argument) = (Track_t *) & Tracks[CurrentTrack];
+				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
 			}
 			else
 			{

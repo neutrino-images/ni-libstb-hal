@@ -70,23 +70,30 @@ int InsertVideoPrivateDataHeader(unsigned char *data, int payload_size)
 {
 	BitPacker_t ld2 = {data, 0, 32};
 	int         i;
+
 	PutBits(&ld2, PES_PRIVATE_DATA_FLAG, 8);
 	PutBits(&ld2, payload_size & 0xff, 8);
 	PutBits(&ld2, (payload_size >> 8) & 0xff, 8);
 	PutBits(&ld2, (payload_size >> 16) & 0xff, 8);
+
 	for (i = 4; i < (PES_PRIVATE_DATA_LENGTH + 1); i++)
 		PutBits(&ld2, 0, 8);
+
 	FlushBits(&ld2);
+
 	return PES_PRIVATE_DATA_LENGTH + 1;
+
 }
 
 int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsigned long long int pts, int pic_start_code)
 {
 	BitPacker_t ld2 = {data, 0, 32};
+
 	if (size > (MAX_PES_PACKET_SIZE - 13))
 	{
 		size = -1; // unbounded
 	}
+
 	PutBits(&ld2, 0x0, 8);
 	PutBits(&ld2, 0x0, 8);
 	PutBits(&ld2, 0x1, 8);  // Start Code
@@ -108,6 +115,7 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 	PutBits(&ld2, 0x0, 1);  // Copyright
 	PutBits(&ld2, 0x0, 1);  // Original or Copy
 	//7 = 6+1
+
 	if (pts != INVALID_PTS_VALUE)
 	{
 		PutBits(&ld2, 0x2, 2);
@@ -116,6 +124,7 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 	{
 		PutBits(&ld2, 0x0, 2); // PTS_DTS flag
 	}
+
 	PutBits(&ld2, 0x0, 1); // ESCR_flag
 	PutBits(&ld2, 0x0, 1); // ES_rate_flag
 	PutBits(&ld2, 0x0, 1); // DSM_trick_mode_flag
@@ -123,11 +132,13 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 	PutBits(&ld2, 0x0, 1); // PES_CRC_flag
 	PutBits(&ld2, 0x0, 1); // PES_extension_flag
 	//8 = 7+1
+
 	if (pts != INVALID_PTS_VALUE)
 		PutBits(&ld2, 0x5, 8);
 	else
 		PutBits(&ld2, 0x0, 8); // PES_header_data_length
 	//9 = 8+1
+
 	if (pts != INVALID_PTS_VALUE)
 	{
 		PutBits(&ld2, 0x2, 4);
@@ -139,6 +150,7 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 		PutBits(&ld2, 0x1, 1);
 	}
 	//14 = 9+5
+
 	if (pic_start_code)
 	{
 		PutBits(&ld2, 0x0, 8);
@@ -148,6 +160,8 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 		PutBits(&ld2, (pic_start_code >> 8) & 0xff, 8); // For any extra information (like in mpeg4p2, the pic_start_code)
 		//14 + 4 = 18
 	}
+
 	FlushBits(&ld2);
+
 	return (ld2.Ptr - data);
 }

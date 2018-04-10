@@ -100,8 +100,10 @@ typedef struct GetBitContext
     unsigned int name ## _index = (gb)->index;  \
     unsigned int av_unused name ## _cache
 
+
 #define OPEN_READER(name, gb) OPEN_READER_NOSIZE(name, gb)
 #define BITS_AVAILABLE(name, gb) 1
+
 
 #define CLOSE_READER(name, gb) (gb)->index = name ## _index
 
@@ -123,6 +125,7 @@ typedef struct GetBitContext
 
 #endif
 
+
 #ifdef BITSTREAM_READER_LE
 
 # define UPDATE_CACHE(name, gb) UPDATE_CACHE_LE(name, gb)
@@ -138,6 +141,7 @@ typedef struct GetBitContext
 #endif
 
 #define SKIP_COUNTER(name, gb, num) name ## _index += (num)
+
 
 #define BITS_LEFT(name, gb) ((int)((gb)->size_in_bits - name ## _index))
 
@@ -282,6 +286,7 @@ static inline unsigned int get_bits1(GetBitContext *s)
 #endif
 	index++;
 	s->index = index;
+
 	return result;
 }
 
@@ -349,6 +354,7 @@ static inline int get_sbits_long(GetBitContext *s, int n)
 	/* sign_extend(x, 0) is undefined */
 	if (!n)
 		return 0;
+
 	return sign_extend(get_bits_long(s, n), n);
 }
 
@@ -387,18 +393,22 @@ static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
 {
 	int buffer_size;
 	int ret = 0;
+
 	if (bit_size >= INT_MAX - 7 || bit_size < 0 || !buffer)
 	{
 		bit_size    = 0;
 		buffer      = NULL;
 		ret         = AVERROR_INVALIDDATA;
 	}
+
 	buffer_size = (bit_size + 7) >> 3;
+
 	s->buffer             = buffer;
 	s->size_in_bits       = bit_size;
 	s->size_in_bits_plus8 = bit_size + 8;
 	s->buffer_end         = buffer + buffer_size;
 	s->index              = 0;
+
 	return ret;
 }
 
@@ -500,6 +510,7 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
         SKIP_BITS(name, gb, n);                                 \
     } while (0)
 
+
 static inline int decode012(GetBitContext *gb)
 {
 	int n;
@@ -527,12 +538,14 @@ static inline int skip_1stop_8data_bits(GetBitContext *gb)
 {
 	if (get_bits_left(gb) <= 0)
 		return AVERROR_INVALIDDATA;
+
 	while (get_bits1(gb))
 	{
 		skip_bits(gb, 8);
 		if (get_bits_left(gb) <= 0)
 			return AVERROR_INVALIDDATA;
 	}
+
 	return 0;
 }
 

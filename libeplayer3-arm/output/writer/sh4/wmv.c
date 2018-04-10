@@ -128,31 +128,40 @@ static int reset()
 static int writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	awmv_t private_data;
 	int len = 0;
+
 	wmv_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		wmv_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		wmv_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		wmv_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	wmv_printf(10, "VideoPts %lld\n", call->Pts);
 	wmv_printf(10, "Got Private Size %d\n", call->private_size);
+
 	memcpy(private_data.privateData, call->private_data,
 	       call->private_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->private_size);
+
 	private_data.width = call->Width;
 	private_data.height = call->Height;
 	private_data.framerate = call->FrameRate;
+
 #define PES_MIN_HEADER_SIZE 9
 	if (initialHeader)
 	{
@@ -160,16 +169,22 @@ static int writeData(void *_call)
 		unsigned char              *PesPtr;
 		unsigned int                MetadataLength;
 		unsigned int                crazyFramerate = 0;
+
 		wmv_printf(10, "Framerate: %u\n", private_data.framerate);
 		wmv_printf(10, "biWidth: %d\n",   private_data.width);
 		wmv_printf(10, "biHeight: %d\n",  private_data.height);
+
 		crazyFramerate = ((10000000.0 / private_data.framerate) * 1000.0);
 		wmv_printf(10, "crazyFramerate: %u\n", crazyFramerate);
+
 		PesPtr          = &PesPacket[PES_MIN_HEADER_SIZE];
+
 		memcpy(PesPtr, Metadata, sizeof(Metadata));
 		PesPtr         += METADATA_STRUCT_C_START;
+
 		memcpy(PesPtr, private_data.privateData, WMV3_PRIVATE_DATA_LENGTH);
 		PesPtr             += WMV3_PRIVATE_DATA_LENGTH;
+
 		/* Metadata Header Struct A */
 		*PesPtr++           = (private_data.height >>  0) & 0xff;
 		*PesPtr++           = (private_data.height >>  8) & 0xff;
@@ -179,16 +194,23 @@ static int writeData(void *_call)
 		*PesPtr++           = (private_data.width  >>  8) & 0xff;
 		*PesPtr++           = (private_data.width  >> 16) & 0xff;
 		*PesPtr++           =  private_data.width  >> 24;
+
 		PesPtr             += 12;       /* Skip flag word and Struct B first 8 bytes */
+
 		*PesPtr++           = (crazyFramerate >>  0) & 0xff;
 		*PesPtr++           = (crazyFramerate >>  8) & 0xff;
 		*PesPtr++           = (crazyFramerate >> 16) & 0xff;
 		*PesPtr++           =  crazyFramerate >> 24;
+
 		MetadataLength      = PesPtr - &PesPacket[PES_MIN_HEADER_SIZE];
+
 		int HeaderLength    = InsertPesHeader(PesPacket, MetadataLength, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
+
 		len = write(call->fd, PesPacket, HeaderLength + MetadataLength);
+
 		initialHeader = 0;
 	}
+
 	if (call->len > 0 && call->data)
 	{
 		unsigned int Position = 0;
@@ -197,12 +219,16 @@ static int writeData(void *_call)
 		{
 			int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
 			                   (call->len - Position) : MAX_PES_PACKET_SIZE;
+
 			int Remaining = call->len - Position - PacketLength;
+
 			wmv_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
+
 			unsigned char       PesHeader[PES_MAX_HEADER_SIZE];
 			memset(PesHeader, '0', PES_MAX_HEADER_SIZE);
 			int                 HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, call->Pts, 0);
 			unsigned char      *PacketStart;
+
 			if (insertSampleHeader)
 			{
 				unsigned int        PesLength;
@@ -215,18 +241,23 @@ static int writeData(void *_call)
 				PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
 				PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
 				PesHeader[PES_FLAGS_BYTE]              |= PES_EXTENSION_DATA_PRESENT;
+
 				HeaderLength                           += PrivateHeaderLength;
 				insertSampleHeader = 0;
 			}
+
 			PacketStart = malloc(call->len + HeaderLength);
 			memcpy(PacketStart, PesHeader, HeaderLength);
 			memcpy(PacketStart + HeaderLength, call->data + Position, PacketLength);
+
 			len = write(call->fd, PacketStart, PacketLength + HeaderLength);
 			free(PacketStart);
+
 			Position += PacketLength;
 			call->Pts = INVALID_PTS_VALUE;
 		}
 	}
+
 	wmv_printf(10, "< %d\n", len);
 	return len;
 }

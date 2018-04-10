@@ -14,6 +14,7 @@ typedef struct
 	AVPacket *second_ip_frame;
 } Mpeg4P2Context;
 
+
 static void set_packet(AVPacket **pkt_dest, AVPacket *pkt_src)
 {
 	if (pkt_dest == NULL)
@@ -82,6 +83,7 @@ static void mpeg4p2_context_reset(Mpeg4P2Context *context)
 		av_free(context->second_ip_frame);
 	}
 	context->second_ip_frame = NULL;
+
 	context->b_frames_count = 0;
 	context->first_ip_frame_written = 0;
 	context->packet_duration = 0;
@@ -95,6 +97,7 @@ static void mpeg4p2_write(Context_t *ctx, Track_t *track, int avContextIdx, int6
 		*pts_latest = *pts_current;
 	}
 	track->dts = calcPts(avContextIdx, track->stream, pkt->dts);
+
 	AudioVideoOut_t avOut;
 	avOut.data       = pkt->data;
 	avOut.len        = pkt->size;
@@ -107,6 +110,7 @@ static void mpeg4p2_write(Context_t *ctx, Track_t *track, int avContextIdx, int6
 	avOut.width      = track->width;
 	avOut.height     = track->height;
 	avOut.type       = "video";
+
 	if (Write(ctx->output->video->Write, ctx, &avOut, avOut.pts) < 0)
 	{
 		ffmpeg_err("writing data to video device failed\n");
@@ -206,3 +210,4 @@ static int mpeg4p2_write_packet(Context_t *ctx, Mpeg4P2Context *mpeg4p2_ctx, Tra
 	}
 	return 0;
 }
+

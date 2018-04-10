@@ -103,32 +103,40 @@ static int reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+
 	mpeg4_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		mpeg4_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		mpeg4_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		mpeg4_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	mpeg4_printf(10, "VideoPts %lld\n", call->Pts);
+
 	unsigned int PacketLength = call->len;
 	if (initialHeader && call->private_size && call->private_data != NULL)
 	{
 		PacketLength += call->private_size;
 	}
+
 	struct iovec iov[3];
 	int ic = 0;
 	iov[ic].iov_base = PesHeader;
 	iov[ic++].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
+
 	if (initialHeader && call->private_size && call->private_data != NULL)
 	{
 		initialHeader = 0;
@@ -137,8 +145,11 @@ static int writeData(WriterAVCallData_t *call)
 	}
 	iov[ic].iov_base = call->data;
 	iov[ic++].iov_len = call->len;
+
 	int len = call->WriteV(call->fd, iov, ic);
+
 	mpeg4_printf(10, "xvid_Write < len=%d\n", len);
+
 	return len;
 }
 

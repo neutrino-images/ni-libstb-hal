@@ -56,8 +56,10 @@ static void printContainerCapabilities()
 {
 	int32_t i = 0;
 	int32_t j = 0;
+
 	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	container_printf(10, "Capabilities: ");
+
 	for (i = 0; AvailableContainer[i] != NULL; i++)
 	{
 		for (j = 0; AvailableContainer[i]->Capabilities[j] != NULL; j++)
@@ -73,7 +75,9 @@ static int32_t selectContainer(Context_t *context, char *extension)
 	int32_t i = 0;
 	int32_t j = 0;
 	int32_t ret = -1;
+
 	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	for (i = 0; AvailableContainer[i] != NULL; i++)
 	{
 		for (j = 0; AvailableContainer[i]->Capabilities[j] != NULL; j++)
@@ -81,26 +85,32 @@ static int32_t selectContainer(Context_t *context, char *extension)
 			if (!strcasecmp(AvailableContainer[i]->Capabilities[j], extension))
 			{
 				context->container->selectedContainer = AvailableContainer[i];
+
 				container_printf(10, "Selected Container: %s\n", context->container->selectedContainer->Name);
 				ret = 0;
 				break;
 			}
 		}
+
 		if (ret == 0)
 		{
 			break;
 		}
 	}
+
 	if (ret != 0)
 	{
 		container_err("No Container found :-(\n");
 	}
+
 	return ret;
 }
+
 
 static int Command(Context_t *context, ContainerCmd_t command, void *argument __attribute__((unused)))
 {
 	int ret = 0;
+
 	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 
 	switch (command)
@@ -124,8 +134,10 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument __
 			container_err("%s::%s ContainerCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
 			break;
 	}
+
 	return ret;
 }
+
 
 ContainerHandler_t ContainerHandler =
 {

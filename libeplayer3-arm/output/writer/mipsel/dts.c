@@ -103,25 +103,32 @@ static int32_t reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	uint8_t PesHeader[PES_AUDIO_HEADER_SIZE];
+
 	dts_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		dts_err("call data is NULL...\n");
 		return 0;
 	}
+
 	dts_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		dts_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		dts_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	uint8_t *Data = call->data;
 	int32_t Size = call->len;
+
 #ifdef CHECK_FOR_DTS_HD
 	int32_t pos = 0;
 	while ((pos + 4) <= Size)
@@ -135,6 +142,7 @@ static int writeData(WriterAVCallData_t *call)
 		++pos;
 	}
 #endif
+
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
 	/* 16-bit byte swap all data before injecting it */
@@ -145,11 +153,13 @@ static int writeData(WriterAVCallData_t *call)
 		Data[i + 1] = Tmp;
 	}
 #endif
+
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len = InsertPesHeader(PesHeader, Size, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
 	iov[1].iov_base = Data;
 	iov[1].iov_len = Size;
+
 	int32_t len = call->WriteV(call->fd, iov, 2);
 	dts_printf(10, "< len %d\n", len);
 	return len;

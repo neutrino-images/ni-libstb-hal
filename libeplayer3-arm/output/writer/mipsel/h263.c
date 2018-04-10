@@ -95,37 +95,46 @@ static int writeData(WriterAVCallData_t *call)
 {
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	int32_t len = 0;
+
 	h263_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		h263_err("call data is NULL...\n");
 		return 0;
 	}
+
 	h263_printf(10, "VideoPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		h263_err("NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		h263_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	int32_t HeaderLength = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
 	int32_t PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->len);
 	int32_t PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
+
 	PesHeader[PES_LENGTH_BYTE_0]            = PesLength & 0xff;
 	PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
 	PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
 	PesHeader[PES_FLAGS_BYTE]              |= PES_EXTENSION_DATA_PRESENT;
 	HeaderLength                           += PrivateHeaderLength;
+
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len = HeaderLength;
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
 	len = call->WriteV(call->fd, iov, 2);
+
 	h263_printf(10, "< len %d\n", len);
 	return len;
 }

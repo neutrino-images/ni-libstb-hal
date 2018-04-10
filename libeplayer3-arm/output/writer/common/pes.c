@@ -57,6 +57,7 @@
 /* Types                         */
 /* ***************************** */
 
+
 /* ***************************** */
 /* Varaibles                     */
 /* ***************************** */
@@ -73,25 +74,32 @@ int32_t InsertVideoPrivateDataHeader(uint8_t *data, int32_t payload_size)
 {
 	BitPacker_t ld2 = {data, 0, 32};
 	int32_t i = 0;
+
 	PutBits(&ld2, PES_PRIVATE_DATA_FLAG, 8);
 	PutBits(&ld2, payload_size & 0xff, 8);
 	PutBits(&ld2, (payload_size >> 8) & 0xff, 8);
 	PutBits(&ld2, (payload_size >> 16) & 0xff, 8);
+
 	for (i = 4; i < (PES_PRIVATE_DATA_LENGTH + 1); i++)
 	{
 		PutBits(&ld2, 0, 8);
 	}
+
 	FlushBits(&ld2);
+
 	return PES_PRIVATE_DATA_LENGTH + 1;
+
 }
 
 int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t pts, int32_t pic_start_code)
 {
 	BitPacker_t ld2 = {data, 0, 32};
+
 	if (size > (MAX_PES_PACKET_SIZE - 13))
 	{
 		size = -1; // unbounded
 	}
+
 	PutBits(&ld2, 0x0, 8);
 	PutBits(&ld2, 0x0, 8);
 	PutBits(&ld2, 0x1, 8);  // Start Code
@@ -113,6 +121,7 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 	PutBits(&ld2, 0x0, 1);  // Copyright
 	PutBits(&ld2, 0x0, 1);  // Original or Copy
 	//7 = 6+1
+
 	if (pts != INVALID_PTS_VALUE)
 	{
 		PutBits(&ld2, 0x2, 2);
@@ -121,6 +130,7 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 	{
 		PutBits(&ld2, 0x0, 2); // PTS_DTS flag
 	}
+
 	PutBits(&ld2, 0x0, 1); // ESCR_flag
 	PutBits(&ld2, 0x0, 1); // ES_rate_flag
 	PutBits(&ld2, 0x0, 1); // DSM_trick_mode_flag
@@ -128,6 +138,7 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 	PutBits(&ld2, 0x0, 1); // PES_CRC_flag
 	PutBits(&ld2, 0x0, 1); // PES_extension_flag
 	//8 = 7+1
+
 	if (pts != INVALID_PTS_VALUE)
 	{
 		PutBits(&ld2, 0x5, 8);
@@ -137,6 +148,7 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 		PutBits(&ld2, 0x0, 8); // PES_header_data_length
 	}
 	//9 = 8+1
+
 	if (pts != INVALID_PTS_VALUE)
 	{
 		PutBits(&ld2, 0x2, 4);
@@ -148,6 +160,7 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 		PutBits(&ld2, 0x1, 1);
 	}
 	//14 = 9+5
+
 	if (pic_start_code)
 	{
 		PutBits(&ld2, 0x0, 8);
@@ -157,6 +170,8 @@ int32_t InsertPesHeader(uint8_t *data, int32_t size, uint8_t stream_id, uint64_t
 		PutBits(&ld2, (pic_start_code >> 8) & 0xff, 8); // For any extra information (like in mpeg4p2, the pic_start_code)
 		//14 + 4 = 18
 	}
+
 	FlushBits(&ld2);
+
 	return (ld2.Ptr - data);
 }

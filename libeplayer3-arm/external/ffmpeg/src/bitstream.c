@@ -31,6 +31,7 @@
 #include <libavutil/avassert.h>
 #include <ffmpeg/put_bits.h>
 
+
 void avpriv_align_put_bits(PutBitContext *s)
 {
 	put_bits(s, s->bit_left & 7, 0);
@@ -52,9 +53,12 @@ void avpriv_copy_bits(PutBitContext *pb, const uint8_t *src, int length)
 	int words = length >> 4;
 	int bits  = length & 15;
 	int i;
+
 	if (length == 0)
 		return;
+
 	av_assert0(length <= put_bits_left(pb));
+
 	if (words < 16 || put_bits_count(pb) & 7)
 	{
 		for (i = 0; i < words; i++)
@@ -68,5 +72,7 @@ void avpriv_copy_bits(PutBitContext *pb, const uint8_t *src, int length)
 		memcpy(put_bits_ptr(pb), src + i, 2 * words - i);
 		skip_put_bytes(pb, 2 * words - i);
 	}
+
 	put_bits(pb, bits, AV_RB16(src + 2 * words) >> (16 - bits));
 }
+

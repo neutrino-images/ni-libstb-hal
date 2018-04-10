@@ -54,6 +54,7 @@ static inline void init_put_bits(PutBitContext *s, uint8_t *buffer,
 		buffer_size = 0;
 		buffer      = NULL;
 	}
+
 	s->size_in_bits = 8 * buffer_size;
 	s->buf          = buffer;
 	s->buf_end      = s->buf + buffer_size;
@@ -73,6 +74,7 @@ static inline void rebase_put_bits(PutBitContext *s, uint8_t *buffer,
                                    int buffer_size)
 {
 	av_assert0(8 * buffer_size > s->size_in_bits);
+
 	s->buf_end = buffer + buffer_size;
 	s->buf_ptr = buffer + (s->buf_ptr - s->buf);
 	s->buf     = buffer;
@@ -154,9 +156,12 @@ static inline void put_bits(PutBitContext *s, int n, unsigned int value)
 {
 	unsigned int bit_buf;
 	int bit_left;
+
 	av_assert2(n <= 31 && value < (1U << n));
+
 	bit_buf  = s->bit_buf;
 	bit_left = s->bit_left;
+
 	/* XXX: optimize */
 #ifdef BITSTREAM_WRITER_LE
 	bit_buf |= value << (32 - bit_left);
@@ -200,6 +205,7 @@ static inline void put_bits(PutBitContext *s, int n, unsigned int value)
 		bit_buf     = value;
 	}
 #endif
+
 	s->bit_buf  = bit_buf;
 	s->bit_left = bit_left;
 }
@@ -207,6 +213,7 @@ static inline void put_bits(PutBitContext *s, int n, unsigned int value)
 static inline void put_sbits(PutBitContext *pb, int n, int32_t value)
 {
 	av_assert2(n >= 0 && n <= 31);
+
 	put_bits(pb, n, av_mod_uintp2(value, n));
 }
 

@@ -77,14 +77,16 @@ static Output_t *AvailableOutput[] =
 /* ***************************** */
 
 /* ***************************** */
-/* Functions                     */
+/* MISC Functions                */
 /* ***************************** */
 
 static void printOutputCapabilities()
 {
 	int i, j;
+
 	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 	output_printf(10, "Capabilities:\n");
+
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
 		output_printf(10, "\t%s : ", AvailableOutput[i]->Name);
@@ -103,7 +105,9 @@ static void printOutputCapabilities()
 static void OutputAdd(Context_t *context, char *port)
 {
 	int i, j;
+
 	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
 		for (j = 0; AvailableOutput[i]->Capabilities[j] != NULL; j++)
@@ -133,6 +137,7 @@ static void OutputAdd(Context_t *context, char *port)
 static void OutputDel(Context_t *context, char *port)
 {
 	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	if (!strcmp("audio", port))
 	{
 		context->output->audio = NULL;
@@ -150,7 +155,9 @@ static void OutputDel(Context_t *context, char *port)
 static int Command(Context_t *context, OutputCmd_t command, void *argument)
 {
 	int ret = cERR_OUTPUT_NO_ERROR;
+
 	output_printf(10, "%s::%s Command %d\n", __FILE__, __FUNCTION__, command);
+
 	switch (command)
 	{
 		case OUTPUT_OPEN:
@@ -522,28 +529,49 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
 				ret = cERR_OUTPUT_INTERNAL_ERROR;
 			}
 			break;
-			case OUTPUT_GET_PROGRESSIVE:
+		}
+		case OUTPUT_GET_PROGRESSIVE:
+		{
+			if (context && context->playback)
 			{
-				if (context && context->playback)
+				if (context->playback->isVideo)
 				{
-					if (context->playback->isVideo)
-					{
-						return context->output->video->Command(context, OUTPUT_GET_PROGRESSIVE, (void *) argument);
-					}
+					return context->output->video->Command(context, OUTPUT_GET_PROGRESSIVE, (void *) argument);
 				}
-				else
-				{
-					ret = cERR_OUTPUT_INTERNAL_ERROR;
-				}
-				break;
 			}
+			else
+			{
+				ret = cERR_OUTPUT_INTERNAL_ERROR;
+			}
+			break;
+		}
+		case OUTPUT_SET_BUFFER_SIZE:
+		{
+			if (context && context->playback)
+			{
+				if (context->output->video)
+				{
+					return context->output->video->Command(context, OUTPUT_SET_BUFFER_SIZE, argument);
+				}
+				else if (context->output->audio)
+				{
+					return context->output->audio->Command(context, OUTPUT_SET_BUFFER_SIZE, argument);
+				}
+			}
+			else
+			{
+				ret = cERR_OUTPUT_INTERNAL_ERROR;
+			}
+			break;
 		}
 		default:
 			output_err("%s::%s OutputCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
 			ret = cERR_OUTPUT_INTERNAL_ERROR;
 			break;
 	}
+
 	output_printf(10, "%s::%s exiting with value %d\n", __FILE__, __FUNCTION__, ret);
+
 	return ret;
 }
 

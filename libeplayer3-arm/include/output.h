@@ -28,6 +28,7 @@ typedef enum
 	OUTPUT_DISCONTINUITY_REVERSE,
 	OUTPUT_GET_FRAME_COUNT,
 	OUTPUT_GET_PROGRESSIVE,
+	OUTPUT_SET_BUFFER_SIZE,
 } OutputCmd_t;
 
 typedef struct
@@ -73,6 +74,7 @@ typedef struct Output_s
 	int32_t (* Command)(Context_t *, OutputCmd_t, void *);
 	int32_t (* Write)(Context_t *, void *);
 	char **Capabilities;
+
 } Output_t;
 
 extern Output_t LinuxDvbOutput;

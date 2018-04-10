@@ -181,8 +181,7 @@ static int ManagerDel(Context_t *context __attribute__((unused)))
 	TrackCount = 0;
 	CurrentTrack = 0;
 
-	chapter_mgr_printf(10, "%s::%s return no error\n", FILENAME,
-	                   __FUNCTION__);
+	chapter_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
 
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }

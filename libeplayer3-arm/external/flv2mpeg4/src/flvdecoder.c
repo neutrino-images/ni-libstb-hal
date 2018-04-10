@@ -38,6 +38,7 @@ static const uint8 zig_zag_scan[64] =
 	58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
 };
 
+
 static const VLCtab vlc_table_intra_MCBPC[] = //: table_size=72 table_allocated=128 bits=6
 {
 	{64, -3},
@@ -127,6 +128,7 @@ static const VLCtab vlc_table_rl_inter[] = //: table_size=554 table_allocated=10
 	{100, 3}, {101, 3}, {8, 1}, {7, 1}
 };
 
+
 static const VLCtab vlc_table_mv[] = //mv_vlc: table_size=538 table_allocated=1024 bits=9
 {
 	{512, -3}, {520, -2}, {524, -1}, {526, -1}, {528, -1}, {530, -1}, {532, -1}, {534, -1}, {536, -1}, {10, 9},
@@ -181,6 +183,7 @@ static int __inline decode_DC(BR *p)
 		return -1;
 	}
 	if (level == 255) level = 128;
+
 //	printf("DC: %d\n", level);
 	return level;
 }
@@ -188,6 +191,7 @@ static int __inline decode_DC(BR *p)
 static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 {
 	int code, run, level, last, sign;
+
 	while (1)
 	{
 		code = get_vlc(p, vlc_table_rl_inter, 9, 2);
@@ -196,12 +200,14 @@ static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 			printf("invalid Huffman code in getblock()\n");
 			return -1;
 		}
+
 		if (code == rl_inter_n)
 		{
 			//escape
 			if (escape_type == 1)
 			{
 				int is11bit = get_bits(p, 1);
+
 				last = get_bits(p, 1);
 				run = get_bits(p, 6);
 				if (is11bit)
@@ -227,9 +233,11 @@ static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 			run = rl_inter_run[code];
 			level = rl_inter_level[code];
 			last = code >= rl_inter_last;
+
 			sign = get_bits(p, 1);
 			if (sign) level = -level;
 		}
+
 		i += run;
 		if (i >= 64)
 		{
@@ -240,6 +248,7 @@ static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 		if (last) break;
 		i++;
 	}
+
 	block->last_index = i;
 	return 0;
 }
@@ -252,12 +261,15 @@ static int __inline decode_intra_block(BR *p, BLOCK *block, int escape_type, int
 		printf("dc error.\n");
 		return -1;
 	}
+
 	block->block[0] = level;
 	block->last_index = 0;
+
 	if (!coded)
 	{
 		return 0;
 	}
+
 	if (decode_AC(p, block, escape_type, 1) < 0) return -1;
 	return 0;
 }
@@ -265,10 +277,12 @@ static int __inline decode_intra_block(BR *p, BLOCK *block, int escape_type, int
 static int __inline decode_inter_block(BR *p, BLOCK *block, int escape_type, int coded)
 {
 	block->last_index = -1;
+
 	if (!coded)
 	{
 		return 0;
 	}
+
 	if (decode_AC(p, block, escape_type, 0) < 0) return -1;
 	return 0;
 }
@@ -298,6 +312,7 @@ static int __inline get_inter_MCBPC(BR *br)
 		if (cbpc < 0) return -1;
 	}
 	while (cbpc == 20);
+
 	return cbpc;
 }
 
@@ -316,11 +331,14 @@ static int __inline decode_motion(BR *br, VLCDEC *vlcdec)
 {
 	int tmp;
 	int code = get_vlcdec(br, vlc_table_mv, 9, 2, vlcdec);
+
 	vlcdec->bits_ex = 0;
+
 	if (code == 0)
 		return 0;
 	if (code < 0)
 		return -1;
+
 	tmp = get_bits(br, 1);
 	/*
 	    vlcdec->value |= (tmp << vlcdec->bits);
@@ -331,6 +349,7 @@ static int __inline decode_motion(BR *br, VLCDEC *vlcdec)
 	*/
 	vlcdec->bits_ex = 1;
 	vlcdec->value_ex = tmp;
+
 	return 0;
 }
 
@@ -338,23 +357,28 @@ static int __inline decode_intra_mb_internal(BR *p, MICROBLOCK *mb, int escape_t
 {
 	int cbpy, cbp;
 	int i;
+
 	cbpy = get_cbpy(p);
 	if (cbpy < 0)
 	{
 		printf("cbpy error\n");
 		return -1;
 	}
+
 	cbp = (cbpc & 3) | (cbpy << 2);
+
 	if (dquant)
 	{
 		mb->dquant = decode_dquant(p);
 		qscale += mb->dquant;
 	}
+
 	for (i = 0; i < 6; i++)
 	{
 		if (decode_intra_block(p, &mb->block[i], escape_type, cbp & 32) != 0) return -1;
 		cbp += cbp;
 	}
+
 	return 0;
 }
 
@@ -362,19 +386,23 @@ static int __inline decode_inter_mb_internal(BR *p, MICROBLOCK *mb, int escape_t
 {
 	int cbpy, cbp;
 	int i;
+
 	cbpy = get_cbpy(p);
 	if (cbpy < 0)
 	{
 		printf("cbpy error\n");
 		return -1;
 	}
+
 	cbpy ^= 0xF;
 	cbp = (cbpc & 3) | (cbpy << 2);
+
 	if (dquant)
 	{
 		mb->dquant = decode_dquant(p);
 		qscale += mb->dquant;
 	}
+
 	if ((cbpc & 16) == 0)
 	{
 		// 16x16 motion prediction
@@ -392,11 +420,13 @@ static int __inline decode_inter_mb_internal(BR *p, MICROBLOCK *mb, int escape_t
 		}
 		mb->mv_type = MV_TYPE_8X8;
 	}
+
 	for (i = 0; i < 6; i++)
 	{
 		if (decode_inter_block(p, &mb->block[i], escape_type, cbp & 32) != 0) return -1;
 		cbp += cbp;
 	}
+
 	return 0;
 }
 
@@ -410,18 +440,22 @@ int decode_I_mb(BR *p, MICROBLOCK *mb, int escape_type, int qscale)
 		printf("intra_MCBPC error\n");
 		return -1;
 	}
+
 	dquant = cbpc & 4;
 	decode_intra_mb_internal(p, mb, escape_type, qscale, cbpc, dquant);
+
 	if (show_bits(p, 16) == 0)
 	{
 //		printf("slice end???\n");
 	}
+
 	return 0;
 }
 
 int decode_P_mb(BR *p, MICROBLOCK *mb, int escape_type, int qscale)
 {
 	int cbpc = get_inter_MCBPC(p);
+
 	if (cbpc == -1)
 	{
 		printf("inter_MCBPC error\n");
@@ -435,6 +469,7 @@ int decode_P_mb(BR *p, MICROBLOCK *mb, int escape_type, int qscale)
 	{
 		int dquant = cbpc & 8;
 		mb->skip = 0;
+
 		if ((cbpc & 4) != 0)
 		{
 			mb->intra = 1;
@@ -446,31 +481,38 @@ int decode_P_mb(BR *p, MICROBLOCK *mb, int escape_type, int qscale)
 			decode_inter_mb_internal(p, mb, escape_type, qscale, cbpc, dquant);
 		}
 	}
+
 	if (show_bits(p, 16) == 0)
 	{
 //		printf("slice end???\n");
 	}
+
 	return 0;
 }
 
 int decode_picture_header(BR *p, PICTURE *picture)
 {
 	int tmp, width = 0, height = 0;
+
 	if (get_bits(p, 17) != 1)
 	{
 		fprintf(stderr, "start code error\n");
 		return -1;
 	}
+
 	tmp = get_bits(p, 5);
 	if (tmp != 0 && tmp != 1)
 	{
 		fprintf(stderr, "picture format error\n");
 		return -1;
 	}
+
 	picture->escape_type = tmp;
 	picture->frame_number = get_bits(p, 8);
+
 //	printf("picture_format: %d\n", tmp);
 //	printf("picture_number: %d\n", get_bits(p, 8));
+
 	tmp = get_bits(p, 3);
 	switch (tmp)
 	{
@@ -501,21 +543,27 @@ int decode_picture_header(BR *p, PICTURE *picture)
 			fprintf(stderr, "size error\n");
 			return -1;
 	}
+
 	picture->width = width;
 	picture->height = height;
 //	printf("width: %d height: %d\n", width, height);
+
 	picture->picture_type = get_bits(p, 2);
 //	printf("picture_type: %d\n", tmp);
+
 	tmp = get_bits(p, 1);
 //	printf("deblocking flag: %d\n", tmp);
+
 	tmp = get_bits(p, 5);
 	picture->qscale = tmp;
 //	printf("qscale: %d\n", tmp);
+
 	// PEI
 	while (get_bits(p, 1) != 0)
 	{
 		flash_bits(p, 8);
 	}
+
 //	dump_marker(0, "dd header end");
 	return 0;
 }

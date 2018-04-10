@@ -34,16 +34,21 @@ static int parse_config_ALS(GetBitContext *gb, MPEG4AudioConfig *c)
 {
 	if (get_bits_left(gb) < 112)
 		return -1;
+
 	if (get_bits_long(gb, 32) != MKBETAG('A', 'L', 'S', '\0'))
 		return -1;
+
 	// override AudioSpecificConfig channel configuration and sample rate
 	// which are buggy in old ALS conformance files
 	c->sample_rate = get_bits_long(gb, 32);
+
 	// skip number of samples
 	skip_bits_long(gb, 32);
+
 	// read number of channels
 	c->chan_config = 0;
 	c->channels    = get_bits(gb, 16) + 1;
+
 	return 0;
 }
 
@@ -79,11 +84,14 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 {
 	GetBitContext gb;
 	int specific_config_bitindex, ret;
+
 	if (bit_size <= 0)
 		return AVERROR_INVALIDDATA;
+
 	ret = init_get_bits(&gb, buf, bit_size);
 	if (ret < 0)
 		return ret;
+
 	c->object_type = get_object_type(&gb);
 	c->sample_rate = get_sample_rate(&gb, &c->sampling_index);
 	c->chan_config = get_bits(&gb, 4);
@@ -110,15 +118,19 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 		c->ext_sample_rate = 0;
 	}
 	specific_config_bitindex = get_bits_count(&gb);
+
 	if (c->object_type == AOT_ALS)
 	{
 		skip_bits(&gb, 5);
 		if (show_bits_long(&gb, 24) != MKBETAG('\0', 'A', 'L', 'S'))
 			skip_bits_long(&gb, 24);
+
 		specific_config_bitindex = get_bits_count(&gb);
+
 		if (parse_config_ALS(&gb, c))
 			return -1;
 	}
+
 	if (c->ext_object_type != AOT_SBR && sync_extension)
 	{
 		while (get_bits_left(&gb) > 15)
@@ -141,12 +153,14 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 				get_bits1(&gb); // skip 1 bit
 		}
 	}
+
 	//PS requires SBR
 	if (!c->sbr)
 		c->ps = 0;
 	//Limit implicit PS to the HE-AACv2 Profile
 	if ((c->ps == -1 && c->object_type != AOT_AAC_LC) || c->channels & ~0x01)
 		c->ps = 0;
+
 	return specific_config_bitindex;
 }
 
@@ -163,6 +177,7 @@ int avpriv_copy_pce_data(PutBitContext *pb, GetBitContext *gb)
 {
 	int five_bit_ch, four_bit_ch, comment_size, bits;
 	int offset = put_bits_count(pb);
+
 	copy_bits(pb, gb, 10);                  //Tag, Object Type, Frequency
 	five_bit_ch  = copy_bits(pb, gb, 4);    //Front
 	five_bit_ch += copy_bits(pb, gb, 4);    //Side
@@ -185,5 +200,6 @@ int avpriv_copy_pce_data(PutBitContext *pb, GetBitContext *gb)
 	comment_size = copy_bits(pb, gb, 8);
 	for (; comment_size > 0; comment_size--)
 		copy_bits(pb, gb, 8);
+
 	return put_bits_count(pb) - offset;
 }

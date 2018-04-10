@@ -94,6 +94,7 @@ typedef struct TrackDescription_s
 	int32_t               aspect_ratio_num;
 	int32_t               aspect_ratio_den;
 	int                   progressive;
+
 } TrackDescription_t;
 
 struct Context_s;
@@ -104,6 +105,7 @@ typedef struct Manager_s
 	char *Name;
 	int (* Command)(Context_t *, ManagerCmd_t, void *);
 	char **Capabilities;
+
 } Manager_t;
 
 typedef struct ManagerHandler_s

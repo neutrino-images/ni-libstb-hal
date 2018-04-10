@@ -29,6 +29,7 @@ static inline int HasADTSHeader(uint8_t *data, int size)
 	{
 		return 1;
 	}
+
 	return 0;
 }
 

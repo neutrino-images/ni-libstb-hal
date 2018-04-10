@@ -95,36 +95,47 @@ static int reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+
 	int len = 0;
 	unsigned int Position = 0;
+
 	mpeg2_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		mpeg2_err("call data is NULL...\n");
 		return 0;
 	}
+
 	mpeg2_printf(10, "VideoPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		mpeg2_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		mpeg2_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	while (Position < call->len)
 	{
 		int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
 		                   (call->len - Position) : MAX_PES_PACKET_SIZE;
+
 		int Remaining = call->len - Position - PacketLength;
+
 		mpeg2_printf(20, "PacketLength=%d, Remaining=%d, Position=%d\n", PacketLength, Remaining, Position);
+
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
 		iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, 0xe0, call->Pts, 0);
 		iov[1].iov_base = call->data + Position;
 		iov[1].iov_len = PacketLength;
+
 		ssize_t l = call->WriteV(call->fd, iov, 2);
 		if (l < 0)
 		{
@@ -132,9 +143,11 @@ static int writeData(WriterAVCallData_t *call)
 			break;
 		}
 		len += l;
+
 		Position += PacketLength;
 		call->Pts = INVALID_PTS_VALUE;
 	}
+
 	mpeg2_printf(10, "< len %d\n", len);
 	return len;
 }

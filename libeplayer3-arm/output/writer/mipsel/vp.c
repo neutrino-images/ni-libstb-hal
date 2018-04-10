@@ -54,7 +54,6 @@
 /* ***************************** */
 
 //#define SAM_WITH_DEBUG
-
 #ifdef SAM_WITH_DEBUG
 #define VP_DEBUG
 #else
@@ -76,6 +75,7 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 #else
 #define vp_err(fmt, x...)
 #endif
+
 
 /* ***************************** */
 /* Types                         */
@@ -101,25 +101,31 @@ static int reset()
 static int writeData(WriterAVCallData_t *call, int is_vp6)
 {
 	vp_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		vp_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		vp_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		vp_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	vp_printf(10, "VideoPts %lld\n", call->Pts);
 	vp_printf(10, "Got Private Size %d\n", call->private_size);
+
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 	struct iovec iov[2];
+
 	iov[0].iov_base = PesHeader;
 	uint32_t pes_header_len = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
 	uint32_t len = call->len + 4 + 6;
@@ -138,6 +144,7 @@ static int writeData(WriterAVCallData_t *call, int is_vp6)
 	iov[0].iov_len = pes_header_len;
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
+
 	return call->WriteV(call->fd, iov, 2);
 }
 

@@ -124,10 +124,13 @@ static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32
 	       uBitsPerSample/*Format->wBitsPerSample*/,
 	       (uBitsPerSample/*Format->wBitsPerSample*/ / 8)
 	     );
+
 	SubFrameLen = 0;
 	SubFramesPerPES = 0;
 	breakBufferFillSize = 0;
+
 	memcpy(lpcm_prv, clpcm_prv, sizeof(lpcm_prv));
+
 	//figure out size of subframe
 	//and set up sample rate
 	switch (uSampleRate)
@@ -158,14 +161,18 @@ static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32
 		default:
 			break;
 	}
+
 	SubFrameLen *= uNoOfChannels;
 	SubFrameLen *= (uBitsPerSample / 8);
+
 	//rewrite PES size to have as many complete subframes per PES as we can
 	// FIXME: PES header size was hardcoded to 18 in previous code. Actual size returned by InsertPesHeader is 14.
 	SubFramesPerPES = ((2048 - 18) - sizeof(lpcm_prv)) / SubFrameLen;
 	SubFrameLen *= SubFramesPerPES;
+
 	//set number of channels
 	lpcm_prv[10] = uNoOfChannels - 1;
+
 	switch (uBitsPerSample)
 	{
 		case 24:
@@ -176,6 +183,7 @@ static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32
 			printf("inappropriate bits per sample (%d) - must be 16 or 24\n", uBitsPerSample);
 			return 1;
 	}
+
 	return 0;
 }
 
@@ -188,25 +196,33 @@ static int32_t reset()
 static int32_t writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	unsigned char  PesHeader[PES_MAX_HEADER_SIZE];
+
 	pcm_printf(10, "\n");
+
 	if (!call)
 	{
 		pcm_err("call data is NULL...\n");
 		return 0;
 	}
+
 	pcm_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if (!call->data || (call->len <= 0))
 	{
 		pcm_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		pcm_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	pcmPrivateData_t *pcmPrivateData = (pcmPrivateData_t *)call->private_data;
+
 	if (initialHeader)
 	{
 		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
@@ -240,11 +256,14 @@ static int32_t writeData(void *_call)
 		initialHeader = 0;
 		prepareClipPlay(pcmPrivateData->channels, pcmPrivateData->sample_rate, pcmPrivateData->bits_per_coded_sample, LE);
 	}
+
 	uint8_t *buffer = call->data;
 	uint32_t size = call->len;
+
 	uint32_t n;
 	uint8_t *injectBuffer = malloc(SubFrameLen);
 	uint32_t pos;
+
 	for (pos = 0; pos < size;)
 	{
 		//printf("PCM %s - Position=%d\n", __FUNCTION__, pos);
@@ -255,6 +274,7 @@ static int32_t writeData(void *_call)
 			//printf("PCM %s - Unplayed=%d\n", __FUNCTION__, breakBufferFillSize);
 			break;
 		}
+
 		//get first PES's worth
 		if (breakBufferFillSize > 0)
 		{
@@ -268,12 +288,15 @@ static int32_t writeData(void *_call)
 			memcpy(injectBuffer, &buffer[pos], sizeof(uint8_t)*SubFrameLen);
 			pos += SubFrameLen;
 		}
+
 		struct iovec iov[3];
 		iov[0].iov_base = PesHeader;
 		iov[1].iov_base = lpcm_prv;
 		iov[1].iov_len = sizeof(lpcm_prv);
+
 		iov[2].iov_base = injectBuffer;
 		iov[2].iov_len = SubFrameLen;
+
 		//write the PCM data
 		if (16 == pcmPrivateData->bits_per_coded_sample)
 		{
@@ -305,8 +328,10 @@ static int32_t writeData(void *_call)
 				p[ 8] = t;
 			}
 		}
+
 		//increment err... subframe count?
 		lpcm_prv[1] = ((lpcm_prv[1] + SubFramesPerPES) & 0x1F);
+
 		iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len + iov[2].iov_len, PCM_PES_START_CODE, call->Pts, 0);
 		int32_t len = writev(call->fd, iov, 3);
 		if (len < 0)
@@ -315,6 +340,7 @@ static int32_t writeData(void *_call)
 		}
 	}
 	free(injectBuffer);
+
 	return size;
 }
 

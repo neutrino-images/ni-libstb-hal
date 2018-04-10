@@ -57,12 +57,14 @@ static void __inline init_bw(BW *p, uint8 *buf, uint32 size)
 static void __inline forword_bits(BW *p, uint32 bits)
 {
 	p->bitoffset += bits;
+
 	if (p->bitoffset >= 32)
 	{
 		p->buf[p->pos++] = (p->tmp >> 24) & 0xff;
 		p->buf[p->pos++] = (p->tmp >> 16) & 0xff;
 		p->buf[p->pos++] = (p->tmp >> 8) & 0xff;
 		p->buf[p->pos++] = (p->tmp >> 0) & 0xff;
+
 		p->tmp = 0;
 		p->bitoffset -= 32;
 	}
@@ -71,6 +73,7 @@ static void __inline forword_bits(BW *p, uint32 bits)
 static void __inline put_bits(BW *p, uint32 bits, uint32 value)
 {
 	uint32 shift = 32 - p->bitoffset - bits;
+
 	if (shift <= 32)
 	{
 		p->tmp |= value << shift;
@@ -81,6 +84,7 @@ static void __inline put_bits(BW *p, uint32 bits, uint32 value)
 		shift = bits - (32 - p->bitoffset);
 		p->tmp |= value >> shift;
 		forword_bits(p, bits - shift);
+
 		p->tmp |= value << (32 - shift);
 		forword_bits(p, shift);
 	}
@@ -98,6 +102,7 @@ static void __inline pad_to_boundary(BW *p)
 static void __inline flash_bw(BW *p)
 {
 	pad_to_boundary(p);
+
 	switch (p->bitoffset)
 	{
 		case 0: // nothing to do
@@ -118,6 +123,7 @@ static void __inline flash_bw(BW *p)
 //		fprintf(stderr, "flash_bw error!(%d)\n", p->bitoffset);
 			break;
 	}
+
 	p->tmp = 0;
 	p->bitoffset = 0;
 }
@@ -136,6 +142,7 @@ static void __inline put_vlcdec(BW *bw, VLCDEC *vlcdec)
 static void __inline m4v_stuffing(BW *p)
 {
 	int length;
+
 	put_bits(p, 1, 0);
 	length = (- p->bitoffset) & 7;
 	if (length) put_bits(p, length, (1 << length) - 1);

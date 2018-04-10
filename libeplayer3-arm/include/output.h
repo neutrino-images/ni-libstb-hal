@@ -74,6 +74,7 @@ typedef struct Output_s
 	int32_t (* Command)(Context_t *, OutputCmd_t, void *);
 	int32_t (* Write)(Context_t *, void *);
 	char **Capabilities;
+
 } Output_t;
 
 extern Output_t LinuxDvbOutput;

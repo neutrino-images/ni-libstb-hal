@@ -92,6 +92,7 @@ typedef enum
 	VIDEO_ENCODING_PRIVATE
 } video_encoding_t;
 
+
 /*
  * List of possible audio encodings - used to select frame parser and codec.
  */
@@ -198,6 +199,7 @@ typedef struct dvb_play_info_s
 typedef dvb_play_info_t                 video_play_info_t;
 typedef dvb_play_info_t                 audio_play_info_t;
 
+
 typedef enum
 {
 #define DVB_OPTION_VALUE_DISABLE                                                        0
@@ -283,6 +285,7 @@ typedef enum
 // Legacy typo correction
 #define DVP_OPTION_H264_FORCE_PIC_ORDER_CNT_IGNORE_DPB_DISPLAY_FRAME_ORDERING DVB_OPTION_H264_FORCE_PIC_ORDER_CNT_IGNORE_DPB_DISPLAY_FRAME_ORDERING
 
+
 typedef dvb_option_t                    video_option_t;
 
 /* Decoder commands */
@@ -292,6 +295,7 @@ typedef dvb_option_t                    video_option_t;
 #define VIDEO_CMD_CONTINUE              (3)
 #define VIDEO_CMD_SET_OPTION            (4)
 #define VIDEO_CMD_GET_OPTION            (5)
+
 
 /* Flags for VIDEO_CMD_FREEZE */
 #define VIDEO_CMD_FREEZE_TO_BLACK       (1 << 0)

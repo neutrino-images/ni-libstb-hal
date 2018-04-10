@@ -50,8 +50,6 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-//#define SAM_WITH_DEBUG
-
 #ifdef SAM_WITH_DEBUG
 #define VORBIS_DEBUG
 #else
@@ -98,30 +96,42 @@ static int reset()
 static int writeData(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+
 	vorbis_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		vorbis_err("call data is NULL...\n");
 		return 0;
 	}
+
 	vorbis_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		vorbis_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		vorbis_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	int HeaderLength = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
+
 	unsigned char *PacketStart = malloc(call->len + HeaderLength);
+
 	memcpy(PacketStart, PesHeader, HeaderLength);
 	memcpy(PacketStart + HeaderLength, call->data, call->len);
+
 	int len = write(call->fd, PacketStart, call->len + HeaderLength);
+
 	free(PacketStart);
+
 	vorbis_printf(10, "vorbis_Write-< len=%d\n", len);
 	return len;
 }

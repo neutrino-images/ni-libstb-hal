@@ -25,6 +25,7 @@
 
 #include "dcprediction.h"
 
+
 // M4V ADDED
 static const uint8 mpeg4_y_dc_scale_table[32] =
 {
@@ -43,10 +44,12 @@ static int __inline get_pred(int *dc_cur, int stride, int scale)
 {
 	/* B C
 	   A X */
+
 	int A = dc_cur[-1];
 	int B = dc_cur[-1 - stride];
 	int C = dc_cur[-stride];
 	int pred;
+
 	if (abs(A - B) < abs(B - C))
 	{
 		pred = C;
@@ -55,6 +58,7 @@ static int __inline get_pred(int *dc_cur, int stride, int scale)
 	{
 		pred = A;
 	}
+
 	return (pred + (scale >> 1)) / scale;
 }
 
@@ -68,6 +72,7 @@ static void __inline set_dc_to_dc_cur(int *dc_cur, int level, int scale)
 		else
 			level = 2047;
 	}
+
 	dc_cur[0] = level;
 }
 
@@ -118,6 +123,7 @@ int dcpred_for_enc(M4V_DCPRED *p, int n, int level)
 	int *dc_cur = p->dc_cur[n];
 	int scale = get_scale(p, n);
 	int pred = get_pred(dc_cur, p->stride[n], scale);
+
 	set_dc_to_dc_cur(dc_cur, level, scale);
 	return level - pred;
 }
@@ -127,6 +133,7 @@ int dcpred_for_dec(M4V_DCPRED *p, int n, int level)
 	int *dc_cur = p->dc_cur[n];
 	int scale = get_scale(p, n);
 	int pred = get_pred(dc_cur, p->stride[n], scale);
+
 	level += pred;
 	set_dc_to_dc_cur(dc_cur, level, scale);
 	return level;
@@ -137,6 +144,7 @@ static void init_plane(M4V_DCPRED *pred, int n)
 {
 	int x, len = pred->stride[n] * pred->height[n];
 	int *p = pred->_dc[n];
+
 	for (x = 0; x < len; x++)
 	{
 		p[x] = 1024;
@@ -156,16 +164,20 @@ void alloc_dcpred(M4V_DCPRED *pred, int mb_width, int mb_height)
 	const int h2 = mb_height * 2 + 1;
 	const int w = mb_width      + 1;
 	const int h = mb_height     + 1;
+
 	pred->_dc[0] = pred->_dc[1] = pred->_dc[2] = pred->_dc[3] = (int *)malloc(sizeof(int) * w2 * h2);
 	pred->_dc[4] = (int *)malloc(sizeof(int) * w * h);
 	pred->_dc[5] = (int *)malloc(sizeof(int) * w * h);
+
 	pred->dc[0] = pred->dc[1] = pred->dc[2] = pred->dc[3] = pred->_dc[0] + w2 + 1;
 	pred->dc[4] = pred->_dc[4] + w + 1;
 	pred->dc[5] = pred->_dc[5] + w + 1;
+
 	pred->stride[0] = pred->stride[1] = pred->stride[2] = pred->stride[3] = w2;
 	pred->height[0] = pred->height[1] = pred->height[2] = pred->height[3] = h2;
 	pred->stride[4] = pred->stride[5] = w;
 	pred->height[4] = pred->height[5] = h;
+
 	pred->block_offset[0] = 0;
 	pred->block_offset[1] = 1;
 	pred->block_offset[2] = w2;

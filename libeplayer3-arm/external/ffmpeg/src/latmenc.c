@@ -38,9 +38,11 @@
 #define latmenc_err(fmt, x...)
 #endif
 
+
 int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size)
 {
 	MPEG4AudioConfig m4ac;
+
 	if (size > MAX_EXTRADATA_SIZE)
 	{
 		latmenc_err("Extradata is larger than currently supported.\n");
@@ -49,6 +51,7 @@ int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size)
 	ctx->off = avpriv_mpeg4audio_get_config(&m4ac, buf, size * 8, 1);
 	if (ctx->off < 0)
 		return ctx->off;
+
 	if (ctx->object_type == AOT_ALS && (ctx->off & 7))
 	{
 		// as long as avpriv_mpeg4audio_get_config works correctly this is impossible
@@ -56,6 +59,7 @@ int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size)
 		return AVERROR_INVALIDDATA;
 	}
 	/* FIXME: are any formats not allowed in LATM? */
+
 	if (m4ac.object_type > AOT_SBR && m4ac.object_type != AOT_ALS)
 	{
 		latmenc_err("Muxing MPEG-4 AOT %d in LATM is not supported\n", m4ac.object_type);
@@ -63,14 +67,17 @@ int latmenc_decode_extradata(LATMContext *ctx, uint8_t *buf, int size)
 	}
 	ctx->channel_conf = m4ac.chan_config;
 	ctx->object_type  = m4ac.object_type;
+
 	return 0;
 }
 
 static void latmenc_write_frame_header(LATMContext *ctx, uint8_t *extradata, int extradata_size, PutBitContext *bs)
 {
 	int header_size;
+
 	/* AudioMuxElement */
 	put_bits(bs, 1, !!ctx->counter);
+
 	if (!ctx->counter)
 	{
 		/* StreamMuxConfig */
@@ -79,6 +86,7 @@ static void latmenc_write_frame_header(LATMContext *ctx, uint8_t *extradata, int
 		put_bits(bs, 6, 0); /* numSubFrames */
 		put_bits(bs, 4, 0); /* numProgram */
 		put_bits(bs, 3, 0); /* numLayer */
+
 		/* AudioSpecificConfig */
 		if (ctx->object_type == AOT_ALS)
 		{
@@ -90,6 +98,7 @@ static void latmenc_write_frame_header(LATMContext *ctx, uint8_t *extradata, int
 			// + 3 assumes not scalable and dependsOnCoreCoder == 0,
 			// see decode_ga_specific_config in libavcodec/aacdec.c
 			avpriv_copy_bits(bs, extradata, ctx->off + 3);
+
 			if (!ctx->channel_conf)
 			{
 				GetBitContext gb;
@@ -99,11 +108,14 @@ static void latmenc_write_frame_header(LATMContext *ctx, uint8_t *extradata, int
 				avpriv_copy_pce_data(bs, &gb);
 			}
 		}
+
 		put_bits(bs, 3, 0); /* frameLengthType */
 		put_bits(bs, 8, 0xff); /* latmBufferFullness */
+
 		put_bits(bs, 1, 0); /* otherDataPresent */
 		put_bits(bs, 1, 0); /* crcCheckPresent */
 	}
+
 	ctx->counter++;
 	ctx->counter %= ctx->mod;
 }
@@ -112,15 +124,22 @@ int latmenc_write_packet(LATMContext *ctx, uint8_t *data, int size, uint8_t *ext
 {
 	PutBitContext bs;
 	int i, len;
+
 	if (size > 0x1fff)
 		goto too_large;
+
 	init_put_bits(&bs, ctx->buffer, size + 1024 + MAX_EXTRADATA_SIZE);
+
 	latmenc_write_frame_header(ctx, extradata, extradata_size, &bs);
+
 	/* PayloadLengthInfo() */
 	for (i = 0; i <= size - 255; i += 255)
 		put_bits(&bs, 8, 255);
+
 	put_bits(&bs, 8, size - i);
+
 	/* The LATM payload is written unaligned */
+
 	/* PayloadMux() */
 	if (size && (data[0] & 0xe1) == 0x81)
 	{
@@ -137,17 +156,23 @@ int latmenc_write_packet(LATMContext *ctx, uint8_t *data, int size, uint8_t *ext
 	}
 	else
 		avpriv_copy_bits(&bs, data, 8 * size);
+
 	avpriv_align_put_bits(&bs);
 	flush_put_bits(&bs);
+
 	len = put_bits_count(&bs) >> 3;
+
 	if (len > 0x1fff)
 		goto too_large;
+
 	memcpy(ctx->loas_header, "\x56\xe0\x00", 3);
 	ctx->loas_header[1] |= (len >> 8) & 0x1f;
 	ctx->loas_header[2] |= len & 0xff;
 	ctx->len = len;
 	return 0;
+
 too_large:
 	latmenc_err("LATM packet size larger than maximum size 0x1fff\n");
 	return AVERROR_INVALIDDATA;
 }
+

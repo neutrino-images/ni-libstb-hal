@@ -100,6 +100,7 @@ static Writer_t *AvailableWriter[] =
 Writer_t *getWriter(char *encoding)
 {
 	int i;
+
 	for (i = 0; AvailableWriter[i] != NULL; i++)
 	{
 		if (strcmp(AvailableWriter[i]->caps->textEncoding, encoding) == 0)
@@ -108,13 +109,16 @@ Writer_t *getWriter(char *encoding)
 			return AvailableWriter[i];
 		}
 	}
+
 	writer_printf(1, "%s: no writer found for \"%s\"\n", __func__, encoding);
+
 	return NULL;
 }
 
 Writer_t *getDefaultVideoWriter()
 {
 	int i;
+
 	for (i = 0; AvailableWriter[i] != NULL; i++)
 	{
 		if (strcmp(AvailableWriter[i]->caps->textEncoding, "V_MPEG2") == 0)
@@ -123,13 +127,16 @@ Writer_t *getDefaultVideoWriter()
 			return AvailableWriter[i];
 		}
 	}
+
 	writer_printf(1, "%s: no writer found\n", __func__);
+
 	return NULL;
 }
 
 Writer_t *getDefaultAudioWriter()
 {
 	int i;
+
 	for (i = 0; AvailableWriter[i] != NULL; i++)
 	{
 		if (strcmp(AvailableWriter[i]->caps->textEncoding, "A_MP3") == 0)
@@ -138,6 +145,8 @@ Writer_t *getDefaultAudioWriter()
 			return AvailableWriter[i];
 		}
 	}
+
 	writer_printf(1, "%s: no writer found\n", __func__);
+
 	return NULL;
 }

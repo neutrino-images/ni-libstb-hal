@@ -56,8 +56,6 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-//#define SAM_WITH_DEBUG
-
 #ifdef SAM_WITH_DEBUG
 #define PCM_DEBUG
 #else
@@ -113,26 +111,32 @@ static int32_t reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	pcm_printf(10, "\n");
+
 	if (!call)
 	{
 		pcm_err("call data is NULL...\n");
 		return 0;
 	}
+
 	pcm_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if (!call->data || (call->len <= 0))
 	{
 		pcm_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		pcm_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	static uint8_t  PesHeader[PES_MAX_HEADER_SIZE + 22];
 	pcmPrivateData_t *pcmPrivateData = (pcmPrivateData_t *)call->private_data;
 	uint8_t *buffer = call->data;
 	uint32_t   size = call->len;
+
 	if (pcmPrivateData->bResampling || NULL == fixed_buffer)
 	{
 		if (0)
@@ -143,14 +147,18 @@ static int writeData(WriterAVCallData_t *call)
 			printf("ioctl %d", ioctl(call->fd, AUDIO_PLAY));
 			printf("ioctl %d", ioctl(call->fd, AUDIO_CONTINUE));
 		}
+
 		int32_t format = 0x01;
+
 		int32_t width = 0;
 		int32_t depth = 0;
 		int32_t rate = (uint64_t)pcmPrivateData->sample_rate;
 		int32_t channels = (uint8_t) pcmPrivateData->channels;
 		int32_t block_align = 0;
 		int32_t byterate = 0;
+
 		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
+
 		//uint8_t dataPrecision = 0;
 		uint8_t LE = 0;
 		switch (codecID)
@@ -183,7 +191,9 @@ static int writeData(WriterAVCallData_t *call)
 			default:
 				break;
 		}
+
 		uint8_t *data = codec_data;
+
 		byterate = channels * rate * width / 8;
 		block_align = channels * width / 8;
 		memset(data, 0, sizeof(codec_data));
@@ -209,10 +219,12 @@ static int writeData(WriterAVCallData_t *call)
 		/* word size */
 		*(data++) = depth & 0xff;
 		*(data++) = (depth >> 8) & 0xff;
+
 		uint32_t nfixed_buffersize = rate * 30 / 1000;
 		nfixed_buffersize *= channels * depth / 8;
 		fixed_buffertimestamp = call->Pts;
 		fixed_bufferduration = 90000 * nfixed_buffersize /  byterate;
+
 		if (fixed_buffersize != nfixed_buffersize || NULL == fixed_buffer)
 		{
 			fixed_buffersize = nfixed_buffersize;
@@ -227,6 +239,7 @@ static int writeData(WriterAVCallData_t *call)
 		if (LE) {}
 		//printf("PCM fixed_buffersize [%u] [%s]\n", fixed_buffersize, LE ? "LE":"BE");
 	}
+
 	while (size > 0)
 	{
 		uint32_t cpSize = (fixed_buffersize - fixed_bufferfilled);
@@ -236,10 +249,12 @@ static int writeData(WriterAVCallData_t *call)
 			fixed_bufferfilled += size;
 			return size;
 		}
+
 		memcpy(fixed_buffer + fixed_bufferfilled, buffer, cpSize);
 		fixed_bufferfilled = 0;
 		buffer += cpSize;
 		size -= cpSize;
+
 		uint32_t addHeaderSize = 0;
 		if (IsDreambox())
 		{
@@ -253,13 +268,17 @@ static int writeData(WriterAVCallData_t *call)
 			PesHeader[headerSize++] = 0x4D; // M
 			PesHeader[headerSize++] = 0x41; // A
 		}
+
 		PesHeader[headerSize++] = (fixed_buffersize >> 24) & 0xff;
 		PesHeader[headerSize++] = (fixed_buffersize >> 16) & 0xff;
 		PesHeader[headerSize++] = (fixed_buffersize >> 8)  & 0xff;
 		PesHeader[headerSize++] = fixed_buffersize & 0xff;
+
 		memcpy(PesHeader + headerSize, codec_data, sizeof(codec_data));
 		headerSize += sizeof(codec_data);
+
 		PesHeader[6] |= 1;
+
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
 		iov[0].iov_len  = headerSize;
@@ -267,10 +286,13 @@ static int writeData(WriterAVCallData_t *call)
 		iov[1].iov_len  = fixed_buffersize;
 		call->WriteV(call->fd, iov, 2);
 		fixed_buffertimestamp += fixed_bufferduration;
-		int g_fd_dump = open("/hdd/lpcm/ffmpeg.pes", O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+
+		int g_fd_dump = open("/hdd/lpcm/ffmpeg.pes", O_CREAT |
+		                     O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
 		call->WriteV(g_fd_dump, iov, 2);
 		close(g_fd_dump);
 	}
+
 	return size;
 }
 

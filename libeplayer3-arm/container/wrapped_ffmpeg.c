@@ -121,9 +121,11 @@ int store_avcodec_context(AVCodecContext *avCodecCtx __attribute__((unused)), ui
 	{
 		return -1;
 	}
+
 	memset(ptr, 0x00, sizeof(CodecCtxStoreItem_t));
 	ptr->next = g_codecCtxStoreListHead;
 	g_codecCtxStoreListHead = ptr;
+
 	return 0;
 }
 #else
@@ -144,6 +146,7 @@ static AVCodecContext *wrapped_avcodec_get_context(uint32_t cAVIdx, AVStream *st
 			fprintf(stderr, "context3 alloc for stream %d failed\n", (int)stream->id);
 			return NULL;
 		}
+
 		if (avcodec_parameters_to_context(avCodecCtx, stream->codecpar) < 0)
 		{
 			fprintf(stderr, "parameters to context for stream %d failed\n", (int)stream->id);
@@ -151,8 +154,10 @@ static AVCodecContext *wrapped_avcodec_get_context(uint32_t cAVIdx, AVStream *st
 			return NULL;
 		}
 		av_codec_set_pkt_timebase(avCodecCtx, stream->time_base);
+
 		store_avcodec_context(avCodecCtx, cAVIdx, stream->id);
 	}
+
 	return avCodecCtx;
 #else
 	return stream->codec;

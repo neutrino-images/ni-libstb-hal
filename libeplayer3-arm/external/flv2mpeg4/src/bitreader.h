@@ -56,6 +56,7 @@ static uint32 get_u24(BR *p)
 	uint32 a = get_u8(p);
 	uint32 b = get_u8(p);
 	uint32 c = get_u8(p);
+
 	return (a << 16) | (b << 8) | c;
 }
 
@@ -65,6 +66,7 @@ static uint32 get_u32(BR *p)
 	uint32 b = get_u8(p);
 	uint32 c = get_u8(p);
 	uint32 d = get_u8(p);
+
 	return (a << 24) | (b << 16) | (c << 8) | d;
 }
 
@@ -82,10 +84,12 @@ static uint32 show_bits(BR *p, uint32 bits)
 {
 	const uint8 *pp;
 	uint32 tmp;
+
 	pp = p->buf + p->read;
 	tmp = (pp[0] << 24) | (pp[1] << 16) | (pp[2] << 8) | (pp[3]);
 	tmp <<= p->bitoffset;
 	tmp >>= 32 - bits;
+
 	return tmp;
 }
 
@@ -93,10 +97,12 @@ static int32 show_sbits(BR *p, uint32 bits)
 {
 	const uint8 *pp;
 	int32 tmp;
+
 	pp = p->buf + p->read;
 	tmp = (pp[0] << 24) | (pp[1] << 16) | (pp[2] << 8) | (pp[3]);
 	tmp <<= p->bitoffset;
 	tmp >>= 32 - bits;
+
 	return tmp;
 }
 
@@ -150,14 +156,17 @@ static int __inline get_vlc(BR *br, const VLCtab *table, int bits, int max_depth
 	index = show_bits(br, bits);
 	code  = table[index].code;
 	n     = table[index].n;
+
 	if (max_depth > 1 && n < 0)
 	{
 		flash_bits(br, bits);
 		nb_bits = -n;
+
 		index = show_bits(br, nb_bits) + code;
 		code = table[index].code;
 		n = table[index].n;
 	}
+
 	flash_bits(br, n);
 	return code;
 }

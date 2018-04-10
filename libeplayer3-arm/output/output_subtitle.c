@@ -82,6 +82,7 @@ Number, Style, Name,, MarginL, MarginR, MarginV, Effect,, Text
 /* Types                         */
 /* ***************************** */
 
+
 /* ***************************** */
 /* Variables                     */
 /* ***************************** */
@@ -94,19 +95,22 @@ static int isSubtitleOpened = 0;
 /* ***************************** */
 
 /* ***************************** */
-/* Functions                     */
+/* MISC Functions                */
 /* ***************************** */
 
 static void getMutex(int line __attribute__((unused)))
 {
 	subtitle_printf(100, "%d requesting mutex\n", line);
+
 	pthread_mutex_lock(&mutex);
+
 	subtitle_printf(100, "%d received mutex\n", line);
 }
 
 static void releaseMutex(int line __attribute__((unused)))
 {
 	pthread_mutex_unlock(&mutex);
+
 	subtitle_printf(100, "%d released mutex\n", line);
 }
 
@@ -176,6 +180,7 @@ static char *json_string_escape(char *str)
 				*ptr1++ = *ptr2;
 				break;
 		}
+
 		++ptr2;
 	}
 	*ptr1 = '\0';
@@ -193,25 +198,32 @@ static int Write(Context_t *context, void *data)
 	char *Encoding      = NULL;
 	SubtitleOut_t *out  = NULL;
 	int32_t curtrackid  = -1;
+
 	subtitle_printf(10, "\n");
+
 	if (data == NULL)
 	{
 		subtitle_err("null pointer passed\n");
 		return cERR_SUBTITLE_ERROR;
 	}
+
 	out = (SubtitleOut_t *) data;
+
 	context->manager->subtitle->Command(context, MANAGER_GET, &curtrackid);
 	if (curtrackid != (int32_t)out->trackId)
 	{
 		Flush();
 	}
 	context->manager->subtitle->Command(context, MANAGER_GETENCODING, &Encoding);
+
 	if (Encoding == NULL)
 	{
 		subtitle_err("encoding unknown\n");
 		return cERR_SUBTITLE_ERROR;
 	}
+
 	subtitle_printf(20, "Encoding:%s Text:%s Len:%d\n", Encoding, (const char *) out->data, out->len);
+
 	if (!strncmp("S_TEXT/SUBRIP", Encoding, 13))
 	{
 		fprintf(stderr, "{\"s_a\":{\"id\":%d,\"s\":%lld,\"e\":%lld,\"t\":\"%s\"}}\n", out->trackId, out->pts / 90, out->pts / 90 + out->durationMS, json_string_escape((char *)out->data));
@@ -225,6 +237,7 @@ static int Write(Context_t *context, void *data)
 		subtitle_err("unknown encoding %s\n", Encoding);
 		return cERR_SUBTITLE_ERROR;
 	}
+
 	subtitle_printf(10, "<\n");
 	return cERR_SUBTITLE_NO_ERROR;
 }
@@ -232,15 +245,21 @@ static int Write(Context_t *context, void *data)
 static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 {
 	//uint32_t i = 0 ;
+
 	subtitle_printf(10, "\n");
+
 	if (isSubtitleOpened == 1)
 	{
 		subtitle_err("already opened! ignoring\n");
 		return cERR_SUBTITLE_ERROR;
 	}
+
 	getMutex(__LINE__);
+
 	isSubtitleOpened = 1;
+
 	releaseMutex(__LINE__);
+
 	subtitle_printf(10, "<\n");
 	return cERR_SUBTITLE_NO_ERROR;
 }
@@ -248,18 +267,26 @@ static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 {
 	//uint32_t i = 0 ;
+
 	subtitle_printf(10, "\n");
+
 	getMutex(__LINE__);
+
 	isSubtitleOpened = 0;
+
 	releaseMutex(__LINE__);
+
 	subtitle_printf(10, "<\n");
+
 	return cERR_SUBTITLE_NO_ERROR;
 }
 
 static int Command(Context_t *context, OutputCmd_t command, void *argument __attribute__((unused)))
 {
 	int ret = cERR_SUBTITLE_NO_ERROR;
+
 	subtitle_printf(50, "%d\n", command);
+
 	switch (command)
 	{
 		case OUTPUT_OPEN:
@@ -312,9 +339,11 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument __att
 			ret = cERR_SUBTITLE_ERROR;
 			break;
 	}
+
 	subtitle_printf(50, "exiting with value %d\n", ret);
 	return ret;
 }
+
 
 static char *SubtitleCapabilitis[] = { "subtitle", NULL };
 

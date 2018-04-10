@@ -56,14 +56,17 @@ static inline char *basename(char *name)
 {
 	int i = 0;
 	int pos = 0;
+
 	while (name[i] != 0)
 	{
 		if (name[i] == '/')
 			pos = i;
 		i++;
 	}
+
 	if (name[pos] == '/')
 		pos++;
+
 	return name + pos;
 }
 
@@ -73,6 +76,7 @@ static inline char *dirname(char *name)
 	static char path[100];
 	uint32_t i = 0;
 	int32_t pos = 0;
+
 	while ((name[i] != 0) && (i < sizeof(path)))
 	{
 		if (name[i] == '/')
@@ -82,8 +86,10 @@ static inline char *dirname(char *name)
 		path[i] = name[i];
 		i++;
 	}
+
 	path[i] = 0;
 	path[pos] = 0;
+
 	return path;
 }
 

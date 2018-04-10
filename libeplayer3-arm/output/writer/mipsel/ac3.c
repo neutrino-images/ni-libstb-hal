@@ -98,34 +98,45 @@ static int reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	ac3_printf(10, "\n");
+
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+
 	if (call == NULL)
 	{
 		ac3_err("call data is NULL...\n");
 		return 0;
 	}
+
 	ac3_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		ac3_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		ac3_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	struct iovec iov[3];
+
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0); //+ sizeof(AC3_SYNC_HEADER)
+
 	//PesHeader[6] = 0x81;
 	//PesHeader[7] = 0x80;
 	//PesHeader[8] = 0x09;
+
 	//iov[1].iov_base = AC3_SYNC_HEADER;
 	//iov[1].iov_len = sizeof(AC3_SYNC_HEADER);
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
+
 	ac3_printf(40, "PES HEADER LEN %d\n", iov[0].iov_len);
+
 	return call->WriteV(call->fd, iov, 2);
 }
 

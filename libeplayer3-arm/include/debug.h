@@ -6,6 +6,7 @@
 
 static inline void Hexdump(unsigned char *Data, int length)
 {
+
 	int k;
 	for (k = 0; k < length; k++)
 	{
@@ -14,6 +15,7 @@ static inline void Hexdump(unsigned char *Data, int length)
 			printf("\n");
 	}
 	printf("\n");
+
 }
 
 #endif

@@ -43,6 +43,7 @@
 #include <libavutil/intreadwrite.h>
 #include "ffmpeg/latmenc.h"
 
+
 #include "common.h"
 #include "output.h"
 #include "debug.h"
@@ -157,17 +158,21 @@ static int reset()
 static int _writeData(void *_call, int type)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	aac_printf(10, "\n _writeData type[%d]\n", type);
+
 	if (call == NULL)
 	{
 		aac_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len < 8))
 	{
 		aac_err("parsing Data with missing AAC header. ignoring...\n");
 		return 0;
 	}
+
 	/* simple validation */
 	if (0 == type) // check ADTS header
 	{
@@ -194,9 +199,13 @@ static int _writeData(void *_call, int type)
 			return 0;
 		}
 	}
+
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
+
 	aac_printf(10, "AudioPts %lld\n", call->Pts);
+
 	unsigned int  HeaderLength = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
+
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len = HeaderLength;
@@ -208,31 +217,38 @@ static int _writeData(void *_call, int type)
 static int writeDataADTS(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	aac_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		aac_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		aac_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		aac_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	if ((call->private_data && 0 == strncmp("ADTS", call->private_data, call->private_size)) ||
 	     HasADTSHeader(call->data, call->len))
 	{
 		return _writeData(_call, 0);
 	}
+
 	uint32_t PacketLength = call->len + AAC_HEADER_LENGTH;
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE + AAC_HEADER_LENGTH];
 	uint32_t headerSize = InsertPesHeader(PesHeader, PacketLength, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
 	uint8_t *pExtraData = &PesHeader[headerSize];
+
 	aac_printf(10, "AudioPts %lld\n", call->Pts);
 	if (call->private_data == NULL)
 	{
@@ -243,6 +259,7 @@ static int writeDataADTS(void *_call)
 	{
 		memcpy(pExtraData, call->private_data, AAC_HEADER_LENGTH);
 	}
+
 	pExtraData[3] &= 0xC0;
 	/* frame size over last 2 bits */
 	pExtraData[3] |= (PacketLength & 0x1800) >> 11;
@@ -255,33 +272,41 @@ static int writeDataADTS(void *_call)
 	/* buffer fullness(0x7FF for VBR) continued over 6 first bits + 2 zeros for
 	 * number of raw data blocks */
 	pExtraData[6] = 0xFC;
+
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len = headerSize + AAC_HEADER_LENGTH;
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
+
 	return writev(call->fd, iov, 2);
 }
 
 static int writeDataLATM(void *_call)
 {
 	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
+
 	aac_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		aac_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		aac_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->private_data && 0 == strncmp("LATM", call->private_data, call->private_size))
 	{
 		return _writeData(_call, 1);
 	}
+
 	aac_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if (!pLATMCtx)
 	{
 		pLATMCtx = malloc(sizeof(LATMContext));
@@ -289,11 +314,13 @@ static int writeDataLATM(void *_call)
 		pLATMCtx->mod = 14;
 		pLATMCtx->counter = 0;
 	}
+
 	if (!pLATMCtx)
 	{
 		aac_err("parsing NULL pLATMCtx. ignoring...\n");
 		return 0;
 	}
+
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
 	int ret = latmenc_decode_extradata(pLATMCtx, call->private_data, call->private_size);
 	if (ret)
@@ -309,14 +336,19 @@ static int writeDataLATM(void *_call)
 		aac_err("latm_write_packet failed. ignoring...\n");
 		return 0;
 	}
+
 	unsigned int  HeaderLength = InsertPesHeader(PesHeader,  pLATMCtx->len + 3, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
+
 	struct iovec iov[3];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len  = HeaderLength;
+
 	iov[1].iov_base = pLATMCtx->loas_header;
 	iov[1].iov_len  = 3;
+
 	iov[2].iov_base = pLATMCtx->buffer;
 	iov[2].iov_len  = pLATMCtx->len;
+
 	return writev(call->fd, iov, 3);
 }
 

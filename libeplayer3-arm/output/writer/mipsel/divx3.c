@@ -118,25 +118,32 @@ static int writeData(WriterAVCallData_t *call)
 	unsigned char PesHeader[PES_MAX_HEADER_SIZE + 4];
 //	unsigned char Version = 5;
 //	unsigned int  FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
+
 	divx_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		divx_err("call data is NULL...\n");
 		return 0;
 	}
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		divx_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		divx_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	divx_printf(10, "AudioPts %lld\n", call->Pts);
+
 	struct iovec iov[8];
 	int ic = 0;
+
 	if (initialHeader)
 	{
 		initialHeader = 0;
@@ -151,11 +158,14 @@ static int writeData(WriterAVCallData_t *call)
 		data[2] = B_GET_BITS(height, 9, 2);
 		data[3] = B_SET_BITS("height [1.0]", B_GET_BITS(height, 1, 0), 7, 6) |
 		          B_SET_BITS("'100000'", 0x20, 5, 0);
+
 		iov[ic].iov_base = brcm_divx311_sequence_header;
 		iov[ic++].iov_len = sizeof(brcm_divx311_sequence_header);
 	}
+
 	iov[ic].iov_base = PesHeader;
 	uint32_t headerSize = 0;
+
 	if (memcmp(call->data, "\x00\x00\x01\xb6", 4))
 	{
 		headerSize = InsertPesHeader(PesHeader, call->len + 4, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
@@ -167,10 +177,14 @@ static int writeData(WriterAVCallData_t *call)
 		headerSize = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
 	}
 	iov[ic++].iov_len = headerSize;
+
 	iov[ic].iov_base = call->data;
 	iov[ic++].iov_len = call->len;
-	int len = call->WriteV(call->fd, iov, ic); 
+
+	int len = call->WriteV(call->fd, iov, ic);
+
 	divx_printf(10, "xvid_Write < len=%d\n", len);
+
 	return len;
 }
 

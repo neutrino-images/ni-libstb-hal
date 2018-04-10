@@ -53,8 +53,6 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-//#define SAM_WITH_DEBUG
-
 #ifdef SAM_WITH_DEBUG
 #define WMA_DEBUG
 #else
@@ -106,28 +104,36 @@ static int reset()
 static int writeData(WriterAVCallData_t *call)
 {
 	//int len = 0;
+
 	wma_printf(10, "\n");
+
 	if (call == NULL)
 	{
 		wma_err("call data is NULL...\n");
 		return 0;
 	}
+
 	wma_printf(10, "AudioPts %lld\n", call->Pts);
+
 	if ((call->data == NULL) || (call->len <= 0))
 	{
 		wma_err("parsing NULL Data. ignoring...\n");
 		return 0;
 	}
+
 	if (call->fd < 0)
 	{
 		wma_err("file pointer < 0. ignoring ...\n");
 		return 0;
 	}
+
 	uint32_t packetLength = 4 + call->private_size + call->len;
+
 	if (IsDreambox())
 	{
 		packetLength += 4;
 	}
+
 	if ((packetLength + PES_MAX_HEADER_SIZE)  > MaxPesHeader)
 	{
 		if (PesHeader)
@@ -137,6 +143,7 @@ static int writeData(WriterAVCallData_t *call)
 		MaxPesHeader = packetLength + PES_MAX_HEADER_SIZE;
 		PesHeader = malloc(MaxPesHeader);
 	}
+
 	uint32_t headerSize = InsertPesHeader(PesHeader, packetLength, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
 	if (IsDreambox())
 	{
@@ -145,14 +152,18 @@ static int writeData(WriterAVCallData_t *call)
 		PesHeader[headerSize++] = 0x4D; // M
 		PesHeader[headerSize++] = 0x41; // A
 	}
+
 	size_t payload_len = call->len;
 	PesHeader[headerSize++] = (payload_len >> 24) & 0xff;
 	PesHeader[headerSize++] = (payload_len >> 16) & 0xff;
 	PesHeader[headerSize++] = (payload_len >> 8)  & 0xff;
 	PesHeader[headerSize++] = payload_len & 0xff;
+
 	memcpy(PesHeader + headerSize, call->private_data, call->private_size);
 	headerSize += call->private_size;
+
 	PesHeader[6] |= 1;
+
 	struct iovec iov[2];
 	iov[0].iov_base = PesHeader;
 	iov[0].iov_len  = headerSize;

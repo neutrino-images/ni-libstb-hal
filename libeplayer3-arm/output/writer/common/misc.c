@@ -69,12 +69,15 @@ void PutBits(BitPacker_t *ld, unsigned int code, unsigned int length)
 {
 	unsigned int bit_buf;
 	unsigned int bit_left;
+
 	bit_buf = ld->BitBuffer;
 	bit_left = ld->Remaining;
+
 #ifdef DEBUG_PUTBITS
 	if (ld->debug)
 		dprintf("code = %d, length = %d, bit_buf = 0x%x, bit_left = %d\n", code, length, bit_buf, bit_left);
 #endif /* DEBUG_PUTBITS */
+
 	if (length < bit_left)
 	{
 		/* fits into current buffer */
@@ -96,10 +99,12 @@ void PutBits(BitPacker_t *ld, unsigned int code, unsigned int length)
 		bit_left   = 32 - length;
 		bit_buf = code;
 	}
+
 #ifdef DEBUG_PUTBITS
 	if (ld->debug)
 		dprintf("bit_left = %d, bit_buf = 0x%x\n", bit_left, bit_buf);
 #endif /* DEBUG_PUTBITS */
+
 	/* writeback */
 	ld->BitBuffer = bit_buf;
 	ld->Remaining = bit_left;

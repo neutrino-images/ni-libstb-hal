@@ -1378,14 +1378,14 @@ int SAM_ReadFunc(void *ptr, uint8_t *buffer, int lSize)
 	}
 	else
 	{
-		if (io->iOffset < io->iMoovAtomOffset)
+		if ((uint64_t)io->iOffset < io->iMoovAtomOffset)
 		{
 			ret = (int)fread((void *) buffer, (size_t) 1, (size_t) lSize, io->pFile);
 			buffer += ret;
 			lSize -= ret;
 		}
 
-		if (io->iOffset + ret >= io->iMoovAtomOffset)
+		if ((uint64_t)io->iOffset + ret >= io->iMoovAtomOffset)
 		{
 			if (ret)
 			{
@@ -1440,12 +1440,12 @@ int64_t SAM_SeekFunc(void *ptr, int64_t pos, int whence)
 				return -1;
 		}
 
-		if (ret >= 0 && ret <= io->iFileSize)
+		if (ret >= 0 && (uint64_t)ret <= io->iFileSize)
 		{
-			if (ret < io->iMoovAtomOffset)
+			if ((uint64_t)ret < io->iMoovAtomOffset)
 			{
 				if (!fseeko(io->pFile, (off_t)ret, SEEK_SET))
-					io->iOffset = ret;
+					io->iOffset = (uint64_t)ret;
 				else
 					ret = -1;
 			}
@@ -1520,7 +1520,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	{
 		AVIOContext *avio_ctx = NULL;
 		custom_io_tab[AVIdx] = malloc(sizeof(CustomIOCtx_t));
-		sizeof(custom_io_tab[AVIdx], 0x00, sizeof(CustomIOCtx_t));
+		memset(custom_io_tab[AVIdx], 0x00, sizeof(CustomIOCtx_t));
 
 		custom_io_tab[AVIdx]->szFile = filename;
 		custom_io_tab[AVIdx]->iFileSize = fileSize;
@@ -2690,7 +2690,12 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 				 * avformat_close_input do not expect custom io, so it try
 				 * to release incorrectly
 				 */
-				fclose(avContextTab[i]->pb->opaque);
+				CustomIOCtx_t *io = (CustomIOCtx_t *)avContextTab[i]->pb->opaque;
+				if (io->pFile)
+					fclose(io->pFile);
+				if (io->pMoovFile)
+					fclose(io->pMoovFile);
+				free(custom_io_tab[i]);
 				av_freep(&(avContextTab[i]->pb->buffer));
 				av_freep(&(avContextTab[i]->pb));
 				use_custom_io[i] = 0;

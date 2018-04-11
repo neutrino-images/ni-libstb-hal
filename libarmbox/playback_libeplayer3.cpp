@@ -117,7 +117,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	}
 	else
 		isHTTP = true;
-	PlayFiles_t playbackFiles = { (char *) file.c_str(), NULL};
+	PlayFiles_t playbackFiles = { (char *) file.c_str(), NULL, NULL, NULL, 0, 0, 0, 0};
 	if (player->playback->Command(player, PLAYBACK_OPEN, &playbackFiles) == 0)
 	{
 		if (pm == PLAYMODE_TS)

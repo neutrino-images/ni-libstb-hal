@@ -45,6 +45,7 @@ extern "C"
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 }
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
@@ -842,11 +843,260 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 		proc_put("/proc/stb/video/hdmi_colorspace", p, strlen(p));
 }
 
-/* TODO: aspect ratio correction and PIP */
-bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
+bool getvideo2(unsigned char *video, int xres, int yres)
 {
-	lt_info("%s: video 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-		__func__, video, xres, yres, get_video, get_osd, scale_to_video);
+	bool ret = false;
+	if(video ==  NULL)
+		return ret;
+	char videosnapshot[] = "/dev/dvb/adapter0/video0";
+	int fd_video = open(videosnapshot, O_RDONLY);
+	if (fd_video < 0) {
+		perror(videosnapshot);
+		return ret;
+	}
+	ssize_t r = read(fd_video, video, xres * yres * 3);
+	if(r){
+		ret = true;
+	}
+	close(fd_video);
+	return ret;
+}
+static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int dw, int dh, AVPixelFormat sfmt)
+{
+	bool ret = false;
+	int len = 0;
+	struct SwsContext *scale = NULL;
+	scale = sws_getCachedContext(scale, sw, sh, sfmt, dw, dh, AV_PIX_FMT_RGB32, SWS_BICUBIC, 0, 0, 0);
+	if (!scale) {
+		lt_info_c("%s: ERROR setting up SWS context\n", __func__);
+		return ret;
+	}
+	AVFrame *sframe = av_frame_alloc();
+	AVFrame *dframe = av_frame_alloc();
+	if (sframe && dframe) {
+		len = av_image_fill_arrays(sframe->data, sframe->linesize, &(src)[0], sfmt, sw, sh, 1);
+		if(len>-1)
+			ret = true;
+
+		if(ret && (len = av_image_fill_arrays(dframe->data, dframe->linesize, &(dst)[0], AV_PIX_FMT_RGB32, dw, dh, 1)<0))
+			ret = false;
+
+		if(ret && (len = sws_scale(scale, sframe->data, sframe->linesize, 0, sh, dframe->data, dframe->linesize)<0))
+			ret = false;
+		else
+			ret = true;
+	}else{
+		lt_info_c("%s: could not alloc sframe (%p) or dframe (%p)\n", __func__, sframe, dframe);
+		ret = false;
+	}
+
+	if(sframe){
+		av_frame_free(&sframe);
+		sframe = NULL;
+	}
+	if(dframe){
+		av_frame_free(&dframe);
+		dframe = NULL;
+	}
+	if(scale){
+		sws_freeContext(scale);
+		scale = NULL;
+	}
+	lt_info_c("%s: %s scale %ix%i to %ix%i ,len %i\n",ret?" ":"ERROR",__func__, sw, sh, dw, dh,len);
+
+	return ret;
+}
+
+// grabing the osd picture
+void get_osd_size(int &xres, int &yres, int &bits_per_pixel)
+{
+	int fb=open("/dev/fb/0", O_RDWR);
+	if (fb == -1)
+	{
+		fprintf(stderr, "Framebuffer failed\n");
+		return;
+	}
+
+	struct fb_var_screeninfo var_screeninfo;
+	if(ioctl(fb, FBIOGET_VSCREENINFO, &var_screeninfo) == -1)
+	{
+		fprintf(stderr, "Framebuffer: <FBIOGET_VSCREENINFO failed>\n");
+		close(fb);
+		return;
+	}
+	close(fb);
+
+	bits_per_pixel = var_screeninfo.bits_per_pixel;
+	xres=var_screeninfo.xres;
+	yres=var_screeninfo.yres;
+	fprintf(stderr, "... Framebuffer-Size: %d x %d\n",xres,yres);
+
+}
+void get_osd_buf(unsigned char *osd_data)
+{
+	unsigned char *lfb = NULL;
+	struct fb_fix_screeninfo fix_screeninfo;
+	struct fb_var_screeninfo var_screeninfo;
+
+	int fb=open("/dev/fb/0", O_RDWR);
+	if (fb == -1)
+	{
+		fprintf(stderr, "Framebuffer failed\n");
+		return;
+	}
+
+	if(ioctl(fb, FBIOGET_FSCREENINFO, &fix_screeninfo) == -1)
+	{
+		fprintf(stderr, "Framebuffer: <FBIOGET_FSCREENINFO failed>\n");
+		close(fb);
+		return;
+	}
+
+	if(ioctl(fb, FBIOGET_VSCREENINFO, &var_screeninfo) == -1)
+	{
+		fprintf(stderr, "Framebuffer: <FBIOGET_VSCREENINFO failed>\n");
+		close(fb);
+		return;
+	}
+
+	if(!(lfb = (unsigned char*)mmap(0, fix_screeninfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0)))
+	{
+		fprintf(stderr, "Framebuffer: <Memmapping failed>\n");
+		close(fb);
+		return;
+	}
+
+	if ( var_screeninfo.bits_per_pixel == 32 )
+	{
+		fprintf(stderr, "Grabbing 32bit Framebuffer ...\n");
+		// get 32bit framebuffer
+		memcpy(osd_data,lfb,fix_screeninfo.line_length*var_screeninfo.yres);
+	}
+	close(fb);
+}
+
+inline void rgb24torgb32(unsigned char  *src, unsigned char *dest,int picsize) {
+	for (int i = 0; i < picsize; i++) {
+		*dest++ = *src++;
+		*dest++ = *src++;
+		*dest++ = *src++;
+		*dest++ = 255;
+	}
+}
+
+/* TODO: aspect ratio correction and PIP */
+bool cVideo::GetScreenImage(unsigned char * &out_data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
+{
+#define VDEC_PIXFMT AV_PIX_FMT_BGR24
+
+	lt_info("%s: out_data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
+		__func__, out_data, xres, yres, get_video, get_osd, scale_to_video);
+	int aspect = 0;
+	getPictureInfo(xres, yres, aspect); /* aspect is dummy here */
+	aspect = getAspectRatio();
+	if(xres < 1 || yres < 1 )
+		get_video = false;
+
+
+	if(!get_video && !get_osd)
+		return false;
+
+	int osd_w = 0;
+	int osd_h = 0;
+	int bits_per_pixel = 0;
+	if(get_osd){
+		get_osd_size(osd_w, osd_h, bits_per_pixel);
+		if(osd_w < 1 || osd_h < 1 || bits_per_pixel != 32)
+			get_osd = false;
+		if(!scale_to_video && get_osd){
+			xres = osd_w;
+			yres = osd_h;
+		}
+	}
+	unsigned char *osd_data = NULL;
+	out_data = (unsigned char *)malloc(xres * yres * 4);/* will be freed by caller */
+	if (out_data == NULL)
+		return false;
+
+	if (get_video) {
+		const int grab_w = 1920; const int grab_h = 1080; //hd51 video0 is always 1920x1080 
+		unsigned char *video_src = (unsigned char *)malloc(grab_w * grab_h * 3);
+		if (video_src == NULL)
+			return false;
+		if(getvideo2(video_src, grab_w,grab_h) == false){
+			free(out_data);
+			free(video_src);
+			return false;
+		}
+		if (grab_w != xres || grab_h != yres){ /* scale video into data... */
+			bool ret = swscale(video_src, out_data, grab_w, grab_h, xres, yres,VDEC_PIXFMT);
+			if(!ret){
+				free(out_data);
+				free(video_src);
+				return false;
+			}
+		}else{ /* get_video and no fancy scaling needed */
+			rgb24torgb32(video_src, out_data, grab_w * grab_h);
+		}
+		free(video_src);
+	}
+
+	if(get_osd){
+		osd_data = (unsigned char *)malloc(osd_w * osd_h * 4);
+		if(osd_data)
+			get_osd_buf(osd_data);
+	}
+
+	if (get_osd && (osd_w != xres || osd_h != yres)) {
+		/* rescale osd */
+		unsigned char *osd_src = (unsigned char *)malloc(xres * yres * 4);
+		if(osd_src){
+			bool ret = swscale(osd_data, osd_src, osd_w, osd_h, xres, yres,AV_PIX_FMT_RGB32);
+			if(!ret){
+				free(out_data);
+				free(osd_data);
+				free(osd_src);
+				return false;
+			}
+			free(osd_data);
+			osd_data = NULL;
+			osd_data = osd_src;
+		}else{
+			free(out_data);
+			free(osd_data);
+			return false;
+		}
+	}
+
+	if (get_video && get_osd) {
+		/* alpha blend osd onto out_data (video). TODO: maybe libavcodec can do this? */
+		uint32_t *d = (uint32_t *)out_data;
+		uint32_t *pixpos = (uint32_t *) osd_data;
+		for (int count = 0; count < yres; count++) {
+			for (int count2 = 0; count2 < xres; count2++ ) {
+				uint32_t pix = *pixpos;
+				if ((pix & 0xff000000) == 0xff000000)
+					*d = pix;
+				else {
+					uint8_t *in = (uint8_t *)(pixpos);
+					uint8_t *out = (uint8_t *)d;
+					int a = in[3];	/* TODO: big/little endian? */
+					*out = (*out + ((*in - *out) * a) / 256);
+					in++; out++;
+					*out = (*out + ((*in - *out) * a) / 256);
+					in++; out++;
+					*out = (*out + ((*in - *out) * a) / 256);
+				}
+				d++;
+				pixpos++;
+			}
+		}
+	}
+	else if (get_osd) /* only get_osd, out_data is not yet populated */
+		memcpy(out_data, osd_data, xres * yres * sizeof(uint32_t));
+
+	if(osd_data)
+		free(osd_data);
 
 	return true;
 }

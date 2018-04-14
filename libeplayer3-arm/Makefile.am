@@ -24,6 +24,7 @@ libeplayer3_arm_la_SOURCES = \
 	output/output.c \
 	output/writer/common/pes.c \
 	output/writer/common/misc.c \
+	output/writer/common/writer.c \
 	output/writer/mipsel/writer.c \
 	output/writer/mipsel/aac.c \
 	output/writer/mipsel/ac3.c \

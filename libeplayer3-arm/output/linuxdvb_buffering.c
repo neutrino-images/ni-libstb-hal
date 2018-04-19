@@ -392,7 +392,7 @@ ssize_t BufferingWriteV(int fd, const struct iovec *iov, int ic)
 	BufferingNode_t *nodePtr = NULL;
 	uint8_t *dataPtr = NULL;
 	uint32_t chunkSize = 0;
-	uint32_t i = 0;
+	int i = 0;
 
 	buff_printf(60, "ENTER\n");
 	if (fd == videofd)

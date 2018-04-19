@@ -23,7 +23,7 @@ typedef struct
 	unsigned int           Height;
 	unsigned char          Version;
 	unsigned int           InfoFlags;
-	ssize_t (* WriteV) (int, const struct iovec *, size_t);
+	ssize_t (* WriteV) (int, const struct iovec *, int);
 } WriterAVCallData_t;
 
 
@@ -88,8 +88,9 @@ Writer_t *getWriter(char *encoding);
 
 Writer_t *getDefaultVideoWriter();
 Writer_t *getDefaultAudioWriter();
-ssize_t write_with_retry(int fd, const void *buf, size_t size);
-ssize_t writev_with_retry(int fd, const struct iovec *iov, size_t ic);
+ssize_t write_with_retry(int fd, const void *buf, int size);
+ssize_t writev_with_retry(int fd, const struct iovec *iov, int ic);
 
-ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, size_t size);
+ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, int size);
+void FlushPipe(int pipefd);
 #endif

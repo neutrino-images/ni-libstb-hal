@@ -224,16 +224,22 @@ static void LinuxDvbBuffThread(Context_t *context)
 
 	buff_printf(20, "EXIT\n");
 	hasBufferingThreadStarted = false;
+
 	close(g_pfd[0]);
 	close(g_pfd[1]);
 	g_pfd[0] = -1;
 	g_pfd[1] = -1;
 }
 
-int32_t WriteSetBufferingSize(const uint32_t bufferSize)
+int32_t LinuxDvbBuffSetSize(const uint32_t bufferSize)
 {
 	maxBufferingDataSize = bufferSize;
 	return cERR_LINUX_DVB_BUFFERING_NO_ERROR;
+}
+
+uint32_t LinuxDvbBuffGetSize()
+{
+	return maxBufferingDataSize;
 }
 
 int32_t LinuxDvbBuffOpen(Context_t *context, char *type, int outfd)
@@ -380,13 +386,13 @@ int32_t LinuxDvbBuffResume(Context_t *context __attribute__((unused)))
 	return 0;
 }
 
-ssize_t BufferingWriteV(int fd, const struct iovec *iov, size_t ic)
+ssize_t BufferingWriteV(int fd, const struct iovec *iov, int ic)
 {
 	OutputType_t dataType = OUTPUT_UNK;
 	BufferingNode_t *nodePtr = NULL;
 	uint8_t *dataPtr = NULL;
 	uint32_t chunkSize = 0;
-	uint32_t i = 0;
+	int i = 0;
 
 	buff_printf(60, "ENTER\n");
 	if (fd == videofd)

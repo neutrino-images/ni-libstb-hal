@@ -34,7 +34,7 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#define WRITER_DEBUG
+//#define WRITER_DEBUG
 
 #ifdef WRITER_DEBUG
 

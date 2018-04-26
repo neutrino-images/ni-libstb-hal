@@ -158,7 +158,9 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	/*                       { "panscan", "letterbox", "fullscreen", "14:9", "(unset)" } */
 	static const char *m[] = { "1",        "2",        "0",          "1",    "(unset)" };
 	int n;
-	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mode < 0||mode > 3) ? 4 : mode]);
+
+	int mo = (mode < 0||mode > 3) ? 4 : mode;
+	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mo]);
 
 	if (aspect > 3 || aspect == 0)
 		lt_info("%s: invalid aspect: %d\n", __func__, aspect);
@@ -173,8 +175,8 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	if (mode == -1)
 		return 0;
 
-	lt_debug("%s: /proc/scalingmode -> %s\n", __func__, m[mode]);
-	n = proc_put("/proc/scalingmode", m[mode], strlen(m[mode]));
+	lt_debug("%s: /proc/scalingmode -> %s\n", __func__, m[mo]);
+	n = proc_put("/proc/scalingmode", m[mo], strlen(m[mo]));
 	if (n < 0)
 		return 1;
 	return 0;

@@ -73,8 +73,12 @@ typedef enum {
 } DISPLAY_AR;
 
 typedef enum {
-	DISPLAY_AR_MODE_PANSCAN = 0,
-	DISPLAY_AR_MODE_LETTERBOX,
+	/* FIX for HD51 mix-up of letterbox / panscan
+	   Standard is 1. PANSCAN 2. LETTERBOX
+	   If next drivers are correct please revert
+	   this and pzapit.cpp */
+	DISPLAY_AR_MODE_LETTERBOX = 0,
+	DISPLAY_AR_MODE_PANSCAN,
 	DISPLAY_AR_MODE_NONE,
 	DISPLAY_AR_MODE_PANSCAN2
 } DISPLAY_AR_MODE;

@@ -1,3 +1,142 @@
+2018-04-27  Thilo Graf  <dbt@novatux.de>
+
+	update to version 1.0.4-mpx
+
+2018-04-27  GetAway  <get-away@t-online.de>
+
+	fix possible segfault
+
+	fix HD51 mix-up letterbox<->panscan
+
+2018-04-20  max_10  <max_10@gmx.de>
+
+	fix-compiler-warnings
+
+2018-04-20  samsamsam  <samsamsam@o2.pl>
+
+	Fix typo
+
+	Fix typo
+
+	Add buffering for SH4
+
+2018-04-12  max_10  <max_10@gmx.de>
+
+	bugfix-last-commits
+
+2018-04-12  samsamsam  <samsamsam@o2.pl>
+
+	Fix wrong playback file name
+
+	Add possibility to provide moov atom data as separate file.
+	This will allow playback of MP4 files which are under download and
+	moov atom is located at the end of file.
+
+2018-04-10  Thilo Graf  <dbt@novatux.de>
+
+	generic-pc/dmx.cpp: fix possible compile error
+	Unused variable
+
+2018-04-10  TangoCash  <eric@loxat.de>
+
+	fix generic compile
+
+2018-04-10  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: insert original blank lines from exteplayer3.git, for better merge
+
+2018-04-10  samsamsam  <samsamsam@o2.pl>
+
+	Improve STOP command in the buffering mode
+
+	Linux DVB output - workaround for BUG? in the DVB drivers
+
+	Replace the AAC Main object type to the AAC LC in the ADTS header - workaround for no audio on some TS'streams
+
+	Linux DVB output for STBs based on Broadcom - replace active pooling by select (ready to write)
+
+	Add buffering for Linux DVB outputs
+
+	Do not wait in the FFMPEG thread.
+
+2018-03-23  max_10  <max_10@gmx.de>
+
+	all: clean up pwrmngr header file
+
+	all: clean up cDemux headers
+
+	armbox: fix video policy again
+	 Conflicts:
+		libarmbox/video.cpp
+
+2018-03-22  Thilo Graf  <dbt@novatux.de>
+
+	libeplayer3-arm/container/container_ffmpeg.c: add missing code parts
+	fix some pick errors
+
+	libeplayer3-arm/playback/playback.c: add missing parts for backward play
+
+2018-03-22  max_10  <max_10@gmx.de>
+
+	container_ffmpeg: fix Write from incompatible pointer type
+
+2018-03-22  samsamsam  <samsamsam@o2.pl>
+
+	Set discard flag to all not active streams, do not process packets from discarded streams
+	 Conflicts:
+		libeplayer3-arm/container/container_ffmpeg.c
+
+2018-03-22  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	fix commit 06f9a1b694c1806a20d18b85b9affde146f0c9bb
+
+2018-03-14  Thilo Graf  <dbt@novatux.de>
+
+	libarmbox/video.cpp: fix possible compile error
+	error: unused variable 'r' [-Werror=unused-variable]
+
+2018-03-13  samsamsam  <samsamsam@o2.pl>
+
+	h264 writer - Revert not intended test change
+
+	h264 writer - do not inject prive codec data if the Sequence Parameter Set (SPS) and the Picture Parameter Set (PPS) are available in the bitstreamThis should fix playback of stream http://www.djing.com/tv/live.m3u8
+
+2018-03-13  svenhoefer  <svenhoefer@svenhoefer.com>
+
+	- introduce caps.has_button_timer
+
+2018-03-13  BPanther  <bpanther_ts@hotmail.com>
+
+	missing brightness added for ufs922, hdbox, octagon1008, mini2, av7500
+
+2018-03-13  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: cleanup types, use Context_t in commands
+
+	libeplayer3-arm: reduce compiler warnings
+
+2018-02-26  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	add screenshot for hd51
+
+2018-02-11  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	supplement to b232a8f225056a80b4d732d4a7db3d01a050f288, fix segfault with only audio stream
+
+2018-02-10  Jacek Jendrzej  <satbaby@kawaii.com>
+
+	remove isContainerRunning, this break next file play aufter eof stop
+
+	fix OUTPUT_PLAY error handling
+
+2018-02-09  max_10  <max_10@gmx.de>
+
+	libeplayer3-arm: reduce compiler warnings
+
+2018-02-02  Frankenstone  <dampf_acc@yahoo.com>
+
+	arm different tuner authorization (thx DboxOldie)
+
 2018-01-21  Thilo Graf  <dbt@novatux.de>
 
 	update to version 1.0.3-mpx

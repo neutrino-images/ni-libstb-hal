@@ -323,6 +323,9 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 
 cVideo::~cVideo(void)
 {
+	if (standby_cec_activ && fd >= 0)
+		SetCECState(true);
+
 	closeDevice();
 }
 

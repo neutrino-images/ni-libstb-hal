@@ -323,6 +323,9 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 
 cVideo::~cVideo(void)
 {
+	if (standby_cec_activ && fd >= 0)
+		SetCECState(true);
+
 	closeDevice();
 }
 
@@ -345,10 +348,6 @@ retry:
 		}
 		lt_info("#%d: %s cannot open %s: %m, retries %d\n", devnum, __func__, VDEV[devnum], n);
 	}
-	if ( fd >= 0 && (ioctl(fd,VIDEO_SET_BLANK, false) < 0)){
-		perror("VIDEO SET BLANK: ");
-	}
-
 	playstate = VIDEO_STOPPED;
 }
 
@@ -357,12 +356,8 @@ void cVideo::closeDevice(void)
 	lt_debug("%s\n", __func__);
 	/* looks like sometimes close is unhappy about non-empty buffers */
 //	Start();
-	if (fd >= 0){
-		if ((ioctl(fd,VIDEO_SET_BLANK, true) < 0)){
-			perror("VIDEO SET BLANK: ");
-		}
+	if (fd >= 0)
 		close(fd);
-	}
 	fd = -1;
 	playstate = VIDEO_STOPPED;
 }

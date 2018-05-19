@@ -300,6 +300,16 @@ int image_to_mpeg2(const char *image_name, int fd)
 	av_free(formatContext);
 	return ret;
 }
+enum{ENCODER,AUX};
+void setAVInput(int val)
+{
+	int input_fd = open("/proc/stb/avs/0/input", O_WRONLY);
+	if(input_fd){
+		const char *input[] = {"encoder", "aux"};
+		write(input_fd, input[val], strlen(input[val]));
+		close(input_fd);
+	}
+}
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
@@ -323,6 +333,8 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 
 cVideo::~cVideo(void)
 {
+	if(fd >= 0)
+		setAVInput(AUX);
 	if (standby_cec_activ && fd >= 0)
 		SetCECState(true);
 
@@ -619,10 +631,12 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		closeDevice();
+		setAVInput(AUX);
 	}
 	else
 	{
 		openDevice();
+		setAVInput(ENCODER);
 	}
 	video_standby = bOn;
 	SetCECState(video_standby);

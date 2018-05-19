@@ -301,6 +301,19 @@ int image_to_mpeg2(const char *image_name, int fd)
 	return ret;
 }
 
+void setAVInput(int val)
+{
+	if (val != 0 && val != 1)
+		return;
+
+	int input_fd = open("/proc/stb/avs/0/input", O_WRONLY);
+	if(input_fd){
+		const char *input[] = {"encoder", "aux"};
+		write(input_fd, input[val], strlen(input[val]));
+		close(input_fd);
+	}
+}
+
 cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
 	lt_debug("%s unit %u\n", __func__, unit);
@@ -323,6 +336,8 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 
 cVideo::~cVideo(void)
 {
+	if(fd >= 0)
+		setAVInput(1);
 	if (standby_cec_activ && fd >= 0)
 		SetCECState(true);
 
@@ -619,10 +634,14 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		closeDevice();
+		if(fd < 0)
+			setAVInput(1);
 	}
 	else
 	{
 		openDevice();
+		if(fd >= 0)
+			setAVInput(0);
 	}
 	video_standby = bOn;
 	SetCECState(video_standby);

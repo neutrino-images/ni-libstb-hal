@@ -1125,7 +1125,7 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	physicalAddress[0] = 0x10;
 	physicalAddress[1] = 0x00;
 	logicalAddress = 1;
-	
+
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
 		if (hdmiFd >= 0) {
@@ -1209,11 +1209,15 @@ bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 		if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
 			lt_info("%s: CEC monitor failed (%m)\n", __func__);
 
+		GetCECAddressInfo();
+
+		if(autoview_cec_activ)
+			SetCECState(false);
+
+		return true;
+
 	}
-
-	GetCECAddressInfo();
-
-	return true;
+	return false;
 }
 
 void cVideo::GetCECAddressInfo()

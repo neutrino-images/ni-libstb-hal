@@ -329,6 +329,7 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	hdmiFd = -1;
 	standby_cec_activ = autoview_cec_activ = false;
 	openDevice();
+	setAVInput(ENCODER);
 }
 
 cVideo::~cVideo(void)

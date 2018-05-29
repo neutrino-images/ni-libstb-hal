@@ -411,7 +411,7 @@ int cVideo::getAspectRatio(void)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
 		int n = proc_get_hex(VMPEG_aspect[devnum]);
-		return n * 2 + 1;
+		return n;
 	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
 	{

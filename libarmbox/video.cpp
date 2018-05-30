@@ -329,6 +329,7 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	hdmiFd = -1;
 	standby_cec_activ = autoview_cec_activ = false;
 	openDevice();
+	setAVInput(ENCODER);
 }
 
 cVideo::~cVideo(void)
@@ -411,7 +412,7 @@ int cVideo::getAspectRatio(void)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
 		int n = proc_get_hex(VMPEG_aspect[devnum]);
-		return n * 2 + 1;
+		return n;
 	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
 	{
@@ -713,7 +714,7 @@ static inline int rate2csapi(int rate)
 			return 4;
 		case 50000:
 			return 5;
-		case 50940:
+		case 59940:
 			return 6;
 		case 60000:
 			return 7;
@@ -730,7 +731,10 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	if (fd == -1)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
-		r      = proc_get_hex(VMPEG_framerate[devnum]);
+		char buf[16];
+		int n = proc_get(VMPEG_framerate[devnum], buf, 16);
+		if (n > 0)
+			sscanf(buf, "%i", &r);
 		width  = proc_get_hex(VMPEG_xres[devnum]);
 		height = proc_get_hex(VMPEG_yres[devnum]);
 		rate   = rate2csapi(r);

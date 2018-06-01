@@ -794,7 +794,7 @@ static inline int rate2csapi(int rate)
 			return 1;
 		case 25000:
 			return 2;
-		case 29976:
+		case 29970:
 			return 3;
 		case 30000:
 			return 4;

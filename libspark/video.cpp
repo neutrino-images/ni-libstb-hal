@@ -794,13 +794,13 @@ static inline int rate2csapi(int rate)
 			return 1;
 		case 25000:
 			return 2;
-		case 29976:
+		case 29970:
 			return 3;
 		case 30000:
 			return 4;
 		case 50000:
 			return 5;
-		case 50940:
+		case 59940:
 			return 6;
 		case 60000:
 			return 7;
@@ -817,7 +817,10 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	if (fd == -1)
 	{
 		/* in movieplayer mode, fd is not opened -> fall back to procfs */
-		r      = proc_get_hex(VMPEG_framerate[devnum]);
+		char buf[16];
+		int n = proc_get(VMPEG_framerate[devnum], buf, 16);
+		if (n > 0)
+			sscanf(buf, "%i", &r);
 		width  = proc_get_hex(VMPEG_xres[devnum]);
 		height = proc_get_hex(VMPEG_yres[devnum]);
 		rate   = rate2csapi(r);

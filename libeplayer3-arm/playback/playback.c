@@ -300,7 +300,8 @@ static int PlaybackPlay(Context_t *context)
 			context->playback->BackWard        = 0;
 			context->playback->SlowMotion      = 0;
 			context->playback->Speed           = 0;
-			context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
+			if (context->container && context->container->selectedContainer)
+				ret = context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
 		}
 		else
 		{
@@ -331,7 +332,8 @@ static int PlaybackPlay(Context_t *context)
 
 			context->playback->isCreationPhase = 0; // allow thread to go into next state
 
-			ret = context->container->selectedContainer->Command(context, CONTAINER_PLAY, NULL);
+			if (context->container && context->container->selectedContainer)
+				ret = context->container->selectedContainer->Command(context, CONTAINER_PLAY, NULL);
 			if (ret != 0)
 			{
 				playback_err("CONTAINER_PLAY failed!\n");

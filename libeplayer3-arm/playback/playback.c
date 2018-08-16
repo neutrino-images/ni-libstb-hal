@@ -301,7 +301,7 @@ static int PlaybackPlay(Context_t *context)
 			context->playback->SlowMotion      = 0;
 			context->playback->Speed           = 0;
 			if (context->container && context->container->selectedContainer)
-				context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
+				ret = context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
 		}
 		else
 		{
@@ -331,6 +331,7 @@ static int PlaybackPlay(Context_t *context)
 			playback_printf(10, "clearing isCreationPhase!\n");
 
 			context->playback->isCreationPhase = 0; // allow thread to go into next state
+
 			if (context->container && context->container->selectedContainer)
 				ret = context->container->selectedContainer->Command(context, CONTAINER_PLAY, NULL);
 			if (ret != 0)

@@ -676,6 +676,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 
 int main(int argc, char *argv[])
 {
+	system("echo 'encoder' > /proc/stb/avs/0/input");
 	pthread_t termThread;
 	int isTermThreadStarted = 0;
 

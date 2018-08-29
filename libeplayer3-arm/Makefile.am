@@ -29,12 +29,14 @@ SOURCE_FILES += external/ffmpeg/src/bitstream.c
 SOURCE_FILES += external/ffmpeg/src/latmenc.c
 SOURCE_FILES += external/ffmpeg/src/mpeg4audio.c
 
-#AM_CFLAGS    += -DHAVE_FLV2MPEG4_CONVERTER
-#AM_CPPFLAGS  += -I$(srcdir)/external/flv2mpeg4
-#SOURCE_FILES += external/flv2mpeg4/src/m4vencode.c
-#SOURCE_FILES += external/flv2mpeg4/src/flvdecoder.c
-#SOURCE_FILES += external/flv2mpeg4/src/dcprediction.c
-#SOURCE_FILES += external/flv2mpeg4/src/flv2mpeg4.c
+if ENABLE_FLV2MPEG4
+AM_CFLAGS    += -DHAVE_FLV2MPEG4_CONVERTER
+AM_CPPFLAGS  += -I$(srcdir)/external/flv2mpeg4
+SOURCE_FILES += external/flv2mpeg4/src/m4vencode.c
+SOURCE_FILES += external/flv2mpeg4/src/flvdecoder.c
+SOURCE_FILES += external/flv2mpeg4/src/dcprediction.c
+SOURCE_FILES += external/flv2mpeg4/src/flv2mpeg4.c
+endif
 
 SOURCE_FILES += \
 	output/linuxdvb_mipsel.c \

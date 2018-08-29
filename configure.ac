@@ -66,7 +66,7 @@ AC_ARG_ENABLE(flv2mpeg4,
 	AS_HELP_STRING(--enable-flv2mpeg4, use flv2mpeg4 libeplayer3-arm),
 	,[enable_flv2mpeg4=no])
 
-AM_CONDITIONAL(FLV2MPEG4, test "$enable_flv2mpeg4" = "yes")
+AM_CONDITIONAL(ENABLE_FLV2MPEG4, test "$enable_flv2mpeg4" = "yes")
 if test "$enable_flv2mpeg4" = "yes"; then
 	AC_DEFINE(ENABLE_FLV2MPEG4, 1, [use flv2mpeg4 libeplayer3-arm])
 fi

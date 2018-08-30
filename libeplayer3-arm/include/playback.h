@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef void( * PlaybackDieNowCallback )();
+typedef void(* PlaybackDieNowCallback)();
 bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback);
 
 typedef enum {

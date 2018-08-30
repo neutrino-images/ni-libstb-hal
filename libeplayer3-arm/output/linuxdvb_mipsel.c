@@ -252,6 +252,7 @@ int LinuxDvbPlay(Context_t *context, char *type)
 		linuxdvb_printf(10, "V %s\n", Encoding);
 
 		writer = getWriter(Encoding);
+
 		if (writer == NULL)
 		{
 			linuxdvb_err("cannot found writer for encoding %s using default\n", Encoding);
@@ -324,7 +325,6 @@ int LinuxDvbPlay(Context_t *context, char *type)
 
 	ret = cERR_LINUXDVB_NO_ERROR;
 	return ret;
-	//return 0;
 }
 
 int LinuxDvbStop(Context_t *context __attribute__((unused)), char *type)
@@ -354,6 +354,7 @@ int LinuxDvbStop(Context_t *context __attribute__((unused)), char *type)
 		ioctl(videofd, VIDEO_FAST_FORWARD, 0);
 		ioctl(videofd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 	}
+
 	if (audio && audiofd != -1)
 	{
 		if (ioctl(audiofd, AUDIO_CLEAR_BUFFER) == -1)
@@ -634,6 +635,7 @@ int LinuxDvbPts(Context_t *context __attribute__((unused)), unsigned long long i
 	}
 
 	*((unsigned long long int *)pts) = (unsigned long long int)sCURRENT_PTS;
+
 	return ret;
 }
 
@@ -1095,7 +1097,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
 		case OUTPUT_GET_BUFFER_SIZE:
 		{
 			ret = cERR_LINUXDVB_NO_ERROR;
-			*((uint32_t*)argument) = LinuxDvbBuffGetSize();
+			*((uint32_t *)argument) = LinuxDvbBuffGetSize();
 			break;
 		}
 		default:

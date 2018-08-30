@@ -90,6 +90,7 @@ static void printOutputCapabilities()
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
 		output_printf(10, "\t%s : ", AvailableOutput[i]->Name);
+
 		for (j = 0; AvailableOutput[i]->Capabilities[j] != NULL; j++)
 		{
 			output_printf(10, "%s ", AvailableOutput[i]->Capabilities[j]);

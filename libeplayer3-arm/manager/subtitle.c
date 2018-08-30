@@ -118,7 +118,7 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 	}
 	else
 	{
-		subtitle_mgr_err("%s:%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
+		subtitle_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
 
@@ -145,7 +145,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 
 		if (tracklist == NULL)
 		{
-			subtitle_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+			subtitle_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
 
@@ -223,6 +223,8 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET:
 		{
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
+
 			if (TrackCount > 0 && CurrentTrack >= 0)
 			{
 				*((int *)argument) = (int)Tracks[CurrentTrack].Id;
@@ -255,6 +257,8 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET_TRACK:
 		{
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
+
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
 				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
@@ -292,6 +296,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_SET:
 		{
 			int i;
+
 			subtitle_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", __FILE__, __FUNCTION__, *((int *)argument));
 
 			if (*((int *)argument) < 0)

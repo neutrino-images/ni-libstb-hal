@@ -80,13 +80,13 @@
 static short debug_level = 1;
 
 #define ffmpeg_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s::%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ffmpeg_printf(level, fmt, x...)
 #endif
 
 #ifndef FFMPEG_SILENT
-#define ffmpeg_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#define ffmpeg_err(fmt, x...) do { printf("[%s::%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define ffmpeg_err(fmt, x...)
 #endif

@@ -1343,6 +1343,8 @@ static void FFMPEGThread(Context_t *context)
 
 	hasPlayThreadStarted = 0;
 	context->playback->isPlaying = 0;
+	seek_target_seconds = 0;
+	do_seek_target_seconds = 0;
 	PlaybackDieNow(1);
 	ffmpeg_printf(10, "terminating\n");
 }

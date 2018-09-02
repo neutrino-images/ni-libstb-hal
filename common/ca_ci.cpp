@@ -1128,6 +1128,44 @@ void cCA::setInputSource(eDVBCISlot* slot, bool ci)
 				case TUNER_D:
 					fprintf(input, "D");
 					break;
+#if BOXMODEL_VUSOLO4K
+				case TUNER_E:
+					fprintf(input, "E");
+					break;
+				case TUNER_F:
+					fprintf(input, "F");
+					break;
+				case TUNER_G:
+					fprintf(input, "G");
+					break;
+				case TUNER_H:
+					fprintf(input, "H");
+					break;
+				case TUNER_I:
+					fprintf(input, "I");
+					break;
+				case TUNER_J:
+					fprintf(input, "J");
+					break;
+				case TUNER_K:
+					fprintf(input, "K");
+					break;
+				case TUNER_L:
+					fprintf(input, "L");
+					break;
+				case TUNER_M:
+					fprintf(input, "M");
+					break;
+				case TUNER_N:
+					fprintf(input, "N");
+					break;
+				case TUNER_O:
+					fprintf(input, "O");
+					break;
+				case TUNER_P:
+					fprintf(input, "P");
+					break;
+#endif
 			}
 		}
 		fclose(input);

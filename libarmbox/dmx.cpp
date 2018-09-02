@@ -75,7 +75,11 @@ static const char *DMX_T[] = {
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
 
 /* map the device numbers. */
+#if BOXMODEL_VUSOLO4K
+#define NUM_DEMUXDEV 16
+#else
 #define NUM_DEMUXDEV 8
+#endif
 static const char *devname[NUM_DEMUXDEV] = {
 	"/dev/dvb/adapter0/demux0",
 	"/dev/dvb/adapter0/demux1",
@@ -85,6 +89,16 @@ static const char *devname[NUM_DEMUXDEV] = {
 	"/dev/dvb/adapter0/demux5",
 	"/dev/dvb/adapter0/demux6",
 	"/dev/dvb/adapter0/demux7"
+#if BOXMODEL_VUSOLO4K
+	, "/dev/dvb/adapter0/demux8"
+	, "/dev/dvb/adapter0/demux9"
+	, "/dev/dvb/adapter0/demux10"
+	, "/dev/dvb/adapter0/demux11"
+	, "/dev/dvb/adapter0/demux12"
+	, "/dev/dvb/adapter0/demux13"
+	, "/dev/dvb/adapter0/demux14"
+	, "/dev/dvb/adapter0/demux15"
+#endif
 };
 /* did we already DMX_SET_SOURCE on that demux device? */
 static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false };

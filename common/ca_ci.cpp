@@ -1011,6 +1011,44 @@ void cCA::setSource(eDVBCISlot* slot)
 			case TUNER_D:
 				fprintf(ci, "D");
 				break;
+#if BOXMODEL_VUSOLO4K
+			case TUNER_E:
+				fprintf(ci, "E");
+				break;
+			case TUNER_F:
+				fprintf(ci, "F");
+				break;
+			case TUNER_G:
+				fprintf(ci, "G");
+				break;
+			case TUNER_H:
+				fprintf(ci, "H");
+				break;
+			case TUNER_I:
+				fprintf(ci, "I");
+				break;
+			case TUNER_J:
+				fprintf(ci, "J");
+				break;
+			case TUNER_K:
+				fprintf(ci, "K");
+				break;
+			case TUNER_L:
+				fprintf(ci, "L");
+				break;
+			case TUNER_M:
+				fprintf(ci, "M");
+				break;
+			case TUNER_N:
+				fprintf(ci, "N");
+				break;
+			case TUNER_O:
+				fprintf(ci, "O");
+				break;
+			case TUNER_P:
+				fprintf(ci, "P");
+				break;
+#endif
 		}
 		fclose(ci);
 	}
@@ -1025,7 +1063,11 @@ void cCA::setInputs()
 	char choices[64];
 	FILE * fd = 0;
 
+#if BOXMODEL_VUSOLO4K
+	for (int number = 0; number < 16; number++) // tuner A to P, input 0 to 15
+#else
 	for (int number = 0; number < 4; number++) // tuner A to D, input 0 to 3
+#endif
 	{
 		snprintf(choices, 64, "/proc/stb/tsmux/input%d_choices", number);
 		if(access(choices, R_OK) < 0)

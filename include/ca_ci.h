@@ -1,6 +1,7 @@
 #ifndef __CA_H_
 #define __CA_H_
 
+#include <config.h>
 #include <stdint.h>
 #include <asm/types.h>
 #include <pthread.h>

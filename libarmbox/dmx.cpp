@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -101,7 +102,7 @@ static const char *devname[NUM_DEMUXDEV] = {
 #endif
 };
 /* did we already DMX_SET_SOURCE on that demux device? */
-static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false };
+static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 
 typedef struct dmx_pdata {
 	int last_source;

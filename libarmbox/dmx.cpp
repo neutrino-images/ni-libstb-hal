@@ -102,7 +102,11 @@ static const char *devname[NUM_DEMUXDEV] = {
 #endif
 };
 /* did we already DMX_SET_SOURCE on that demux device? */
+#if BOXMODEL_VUSOLO4K
 static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+#else
+static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false };
+#endif
 
 typedef struct dmx_pdata {
 	int last_source;

@@ -18,6 +18,7 @@
 #ifndef __dmx_hal__
 #define __dmx_hal__
 
+#include <config.h>
 #include <cstdlib>
 #include <vector>
 #include <inttypes.h>

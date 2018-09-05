@@ -1732,6 +1732,13 @@ FROM_FIRST:
 bool cCA::SendCaPMT(eDVBCISlot* slot)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
+	if (slot->fd > 0)
+	{
+#if HAVE_ARM_HARDWARE
+		setInputSource(slot, true);
+#endif
+		setSource(slot);
+	}
 	if ((slot->fd > 0) && (slot->camIsReady))
 	{
 		if (slot->hasCAManager)
@@ -1746,14 +1753,6 @@ bool cCA::SendCaPMT(eDVBCISlot* slot)
 				return true;
 			slot->camgrSession->sendSPDU(0x90, 0, 0, slot->pmtdata, slot->pmtlen);
 		}
-	}
-
-	if (slot->fd > 0)
-	{
-#if HAVE_ARM_HARDWARE
-		setInputSource(slot, true);
-#endif
-		setSource(slot);
 	}
 	return true;
 }

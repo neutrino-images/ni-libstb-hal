@@ -97,7 +97,7 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 	if (input_fd < 0)
 		lt_info("%s: could not open /tmp/neutrino.input FIFO: %m\n", __func__);
 	initKeys();
-	SimpleThread::startThread();
+	startThread();
 	while (!mInitDone)
 		usleep(1);
 }
@@ -105,7 +105,7 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 GLFramebuffer::~GLFramebuffer()
 {
 	mShutDown = true;
-	SimpleThread::joinThread();
+	joinThread();
 	if (input_fd >= 0)
 		close(input_fd);
 }

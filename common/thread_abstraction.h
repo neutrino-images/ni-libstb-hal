@@ -1,20 +1,20 @@
-#ifndef _SIMPLETHREAD_ABSTRACTION_H
-#define _SIMPLETHREAD_ABSTRACTION_H
+#ifndef _THREAD_ABSTRACTION_H
+#define _THREAD_ABSTRACTION_H
 
 #include <pthread.h>
 
-class SimpleThread
+class Thread
 {
 	bool mIsRunning;
 	pthread_t mThread;
 
 	static void* runThread(void*);
-	SimpleThread(const SimpleThread&);
-	const SimpleThread& operator=(const SimpleThread&);
+	Thread(const Thread&);
+	const Thread& operator=(const Thread&);
 
 	public:
-		SimpleThread();
-		~SimpleThread();
+		Thread();
+		~Thread();
 		void startThread();
 		void joinThread();
 

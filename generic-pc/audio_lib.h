@@ -37,7 +37,7 @@ typedef enum
 	AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
 } AUDIO_FORMAT;
 
-class cAudio : public SimpleThread
+class cAudio : public Thread
 {
 	friend class cPlayback;
 	private:

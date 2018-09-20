@@ -4,7 +4,7 @@
 #define _AUDIO_LIB_H_
 
 #include <stdint.h>
-#include <thread_abstraction.h>
+#include <OpenThreads/Thread>
 #include "cs_types.h"
 
 typedef enum

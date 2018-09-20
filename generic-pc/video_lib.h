@@ -220,7 +220,7 @@ class cVideo : public OpenThreads::Thread
 		int pig_w;
 		int pig_h;
 		bool pig_changed;
-		Mutex still_m;
+		OpenThreads::Mutex still_m;
 		bool stillpicture;
 };
 

@@ -76,7 +76,6 @@ Makefile
 common/Makefile
 libeplayer3/Makefile
 libeplayer3-arm/Makefile
-libthread/Makefile
 azbox/Makefile
 generic-pc/Makefile
 libduckbox/Makefile

@@ -29,6 +29,7 @@
 #define lt_debug(args...) _lt_debug(HAL_DEBUG_AUDIO, this, args)
 #define lt_info(args...) _lt_info(HAL_DEBUG_AUDIO, this, args)
 
+#include <OpenThreads/Thread>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -104,7 +105,7 @@ int cAudio::Start(void)
 {
 	lt_debug("%s >\n", __func__);
 	if (! HAL_nodec)
-		startThread();
+		OpenThreads::Thread::start();
 	lt_debug("%s <\n", __func__);
 	return 0;
 }
@@ -115,7 +116,7 @@ int cAudio::Stop(void)
 	if (thread_started)
 	{
 		thread_started = false;
-		joinThread();
+		OpenThreads::Thread::join();
 	}
 	lt_debug("%s <\n", __func__);
 	return 0;

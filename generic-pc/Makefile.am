@@ -9,6 +9,7 @@ AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 AM_LDFLAGS = \
 	-lglut -lGL -lGLU -lGLEW -lao \
+	-lOpenThreads \
 	@AVFORMAT_LIBS@ \
 	@AVUTIL_LIBS@ \
 	@AVCODEC_LIBS@ \

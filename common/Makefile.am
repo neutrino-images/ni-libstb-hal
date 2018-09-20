@@ -31,6 +31,8 @@ endif
 endif
 
 libcommon_la_SOURCES += \
+	thread_abstraction.cpp \
+	mutex_abstraction.cpp \
 	lt_debug.cpp \
 	proc_tools.c \
 	pwrmngr.cpp

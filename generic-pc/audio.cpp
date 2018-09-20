@@ -104,7 +104,7 @@ int cAudio::Start(void)
 {
 	lt_debug("%s >\n", __func__);
 	if (! HAL_nodec)
-		Thread::startThread();
+		SimpleThread::startThread();
 	lt_debug("%s <\n", __func__);
 	return 0;
 }
@@ -115,7 +115,7 @@ int cAudio::Stop(void)
 	if (thread_started)
 	{
 		thread_started = false;
-		Thread::joinThread();
+		SimpleThread::joinThread();
 	}
 	lt_debug("%s <\n", __func__);
 	return 0;

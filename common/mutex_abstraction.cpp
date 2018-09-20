@@ -1,19 +1,9 @@
-#include <mutex_abstraction.h>
+#include "mutex_abstraction.h"
 
 Mutex::Mutex() :
 	mMutex()
 {
 	pthread_mutex_init(&mMutex, 0);
-}
-
-Mutex::Mutex(int attr) :
-	mMutex()
-{
-	pthread_mutexattr_t Attr;
-
-	pthread_mutexattr_init(&Attr);
-	pthread_mutexattr_settype(&Attr, attr);
-	pthread_mutex_init(&mMutex, &Attr);
 }
 
 Mutex::~Mutex()

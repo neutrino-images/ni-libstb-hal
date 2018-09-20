@@ -1,8 +1,8 @@
 #ifndef _VIDEO_LIB_H
 #define _VIDEO_LIB_H
 
-#include <thread_abstraction.h>
-#include <mutex_abstraction.h>
+#include "../common/thread_abstraction.h"
+#include "../common/mutex_abstraction.h"
 #include <vector>
 #include <linux/dvb/video.h>
 #include "cs_types.h"
@@ -121,7 +121,7 @@ typedef enum
 
 
 #define VDEC_MAXBUFS 0x30
-class cVideo : public Thread
+class cVideo : public SimpleThread
 {
 	friend class GLFramebuffer;
 	friend class cDemux;

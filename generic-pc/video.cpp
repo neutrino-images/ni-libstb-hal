@@ -145,7 +145,7 @@ int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
 	lt_debug("%s running %d >\n", __func__, thread_running);
 	if (!thread_running && !HAL_nodec)
-		startThread();
+		OpenThreads::Thread::start();
 	lt_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
@@ -155,7 +155,7 @@ int cVideo::Stop(bool)
 	lt_debug("%s running %d >\n", __func__, thread_running);
 	if (thread_running) {
 		thread_running = false;
-		joinThread();
+		OpenThreads::Thread::join();
 	}
 	lt_debug("%s running %d <\n", __func__, thread_running);
 	return 0;

@@ -120,10 +120,10 @@ typedef enum
 } VIDEO_CONTROL;
 
 
-#define VDEC_MAXBUFS 0x30
+#define VDEC_MAXBUFS 0x40
 class cVideo : public OpenThreads::Thread
 {
-	friend class GLFramebuffer;
+	friend class GLFbPC;
 	friend class cDemux;
 	private:
 		/* called from GL thread */

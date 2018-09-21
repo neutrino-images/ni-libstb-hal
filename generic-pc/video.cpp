@@ -49,7 +49,7 @@ extern "C" {
 
 #include "video_lib.h"
 #include "dmx_hal.h"
-#include "glfb.h"
+#include "glfb_priv.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
@@ -57,7 +57,7 @@ extern "C" {
 
 cVideo *videoDecoder = NULL;
 extern cDemux *videoDemux;
-extern GLFramebuffer *glfb;
+extern GLFbPC *glfb_priv;
 int system_rev = 0;
 
 extern bool HAL_nodec;
@@ -111,7 +111,7 @@ int cVideo::setAspectRatio(int vformat, int cropping)
 	if (cropping >= 0)
 		display_crop = (DISPLAY_AR_MODE) cropping;
 	if (display_aspect < DISPLAY_AR_RAW && output_h > 0) /* don't know what to do with this */
-		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
+		glfb_priv->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
 	return 0;
 }
 
@@ -222,7 +222,7 @@ int cVideo::SetVideoSystem(int system, bool)
 //	v_std = (VIDEO_STD) system;
 	output_h = h;
 	if (display_aspect < DISPLAY_AR_RAW && output_h > 0) /* don't know what to do with this */
-		glfb->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
+		glfb_priv->setOutputFormat(aspect_ratios[display_aspect], output_h, display_crop);
 	return 0;
 }
 
@@ -369,6 +369,7 @@ void cVideo::Pig(int x, int y, int w, int h, int /*osd_w*/, int /*osd_h*/, int /
 	pig_y = y;
 	pig_w = w;
 	pig_h = h;
+	pig_changed = true;
 }
 
 void cVideo::getPictureInfo(int &width, int &height, int &rate)
@@ -572,10 +573,18 @@ void cVideo::run(void)
 				f->width(c->width);
 				f->height(c->height);
 				int64_t vpts = av_frame_get_best_effort_timestamp(frame);
+				/* a/v delay determined experimentally :-) */
+#if USE_OPENGL
 				if (v_format == VIDEO_FORMAT_MPEG2)
 					vpts += 90000*4/10; /* 400ms */
 				else
 					vpts += 90000*3/10; /* 300ms */
+#endif
+#if USE_CLUTTER
+				/* no idea why there's a difference between OpenGL and clutter rendering... */
+				if (v_format == VIDEO_FORMAT_MPEG2)
+					vpts += 90000*3/10; /* 300ms */
+#endif
 				f->pts(vpts);
 				AVRational a = av_guess_sample_aspect_ratio(avfc, avfc->streams[0], frame);
 				f->AR(a);
@@ -675,8 +684,8 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 	std::vector<unsigned char> *osd = NULL;
 	std::vector<unsigned char> s_osd; /* scaled OSD */
 	int vid_w = 0, vid_h = 0;
-	int osd_w = glfb->getOSDWidth();
-	int osd_h = glfb->getOSDHeight();
+	int osd_w = glfb_priv->getOSDWidth();
+	int osd_h = glfb_priv->getOSDHeight();
 	xres = osd_w;
 	yres = osd_h;
 	if (get_video) {
@@ -700,24 +709,26 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 		yres = osd_h;
 	}
 	if (get_osd)
-		osd = glfb->getOSDBuffer();
+		osd = glfb_priv->getOSDBuffer();
 	unsigned int need = av_image_get_buffer_size(AV_PIX_FMT_RGB32, xres, yres, 1);
 	data = (unsigned char *)realloc(data, need); /* will be freed by caller */
 	if (data == NULL)	/* out of memory? */
 		return false;
 
 	if (get_video) {
-		//memcpy dont work with copy BGR24 to RGB32
+#if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
 		if (vid_w != xres || vid_h != yres){ /* scale video into data... */
-			bool ret = swscale(&video[0], data, vid_w, vid_h, xres, yres, AV_PIX_FMT_RGB32);
+#endif
+			bool ret = swscale(&video[0], data, vid_w, vid_h, xres, yres,VDEC_PIXFMT);
 			if(!ret){
 				free(data);
 				return false;
 			}
-		//memcpy dont work with copy BGR24 to RGB32
-		} else { /* get_video and no fancy scaling needed */
+#if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
+		}else{ /* get_video and no fancy scaling needed */
 			memcpy(data, &video[0], xres * yres * sizeof(uint32_t));
 		}
+#endif
 	}
 
 	if (get_osd && (osd_w != xres || osd_h != yres)) {

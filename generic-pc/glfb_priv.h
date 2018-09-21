@@ -14,12 +14,14 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+	********************************************************************
+	private stuff of the GLFB thread that is only used inside libstb-hal
+	and not exposed to the application.
 */
 
-#ifndef __glthread__
-#define __glthread__
-#include <config.h>
-#include <OpenThreads/Thread>
+#ifndef __glfb_priv__
+#define __glfb_priv__
 #include <OpenThreads/Mutex>
 #include <vector>
 #include <map>
@@ -32,28 +34,26 @@
 #if USE_CLUTTER
 #include <clutter/clutter.h>
 #endif
+#include "glfb.h"
 extern "C" {
 #include <libavutil/rational.h>
 }
 
-class GLFramebuffer : public OpenThreads::Thread
+class GLFbPC
 {
 public:
-	GLFramebuffer(int x, int y);
-	~GLFramebuffer();
-	void run();
-	std::vector<unsigned char> *getOSDBuffer() { return &mOSDBuffer; } /* pointer to OSD bounce buffer */
+	GLFbPC(int x, int y, std::vector<unsigned char> &buf);
+	~GLFbPC();
+	std::vector<unsigned char> *getOSDBuffer() { return osd_buf; } /* pointer to OSD bounce buffer */
 	int getOSDWidth() { return mState.width; }
 	int getOSDHeight() { return mState.height; }
-	void blit() { mState.blit = true; }
-	fb_var_screeninfo getScreenInfo() { return screeninfo; }
+	void blit() { mState.blit = true; };
+	fb_var_screeninfo getScreenInfo() { return si; }
 	void setOutputFormat(AVRational a, int h, int c) { mOA = a; *mY = h; mCrop = c; mReInit = true; }
-
-	void clear();
-	int getWindowID() { return GLWinID; }
-
+/* just make everything public for simplicity - this is only used inside libstb-hal anyway
 private:
-	fb_var_screeninfo screeninfo;
+*/
+	fb_var_screeninfo si;
 	int *mX;
 	int *mY;
 	int _mX[2];			/* output window size */
@@ -65,7 +65,6 @@ private:
 	float zoom;			/* for cropping */
 	float xscale;			/* and aspect ratio */
 	int mCrop;			/* DISPLAY_AR_MODE */
-	int GLWinID;
 
 	bool mFullscreen;		/* fullscreen? */
 	bool mReInit;			/* setup things for GL */
@@ -75,7 +74,7 @@ private:
 	// OpenThreads::Condition mInitCond;	/* condition variable for init */
 	// mutable OpenThreads::Mutex mMutex;	/* lock our data */
 
-	std::vector<unsigned char> mOSDBuffer; /* silly bounce buffer */
+	std::vector<unsigned char> *osd_buf; /* silly bounce buffer */
 
 #if USE_OPENGL
 	std::map<unsigned char, int> mKeyMap;
@@ -86,6 +85,7 @@ private:
 #endif
 	int input_fd;
 	int64_t last_apts;
+	void run();
 
 	static void rendercb();		/* callback for GLUT */
 	void render();			/* actual render function */
@@ -103,8 +103,10 @@ private:
 #endif
 
 	void initKeys();		/* setup key bindings for window */
+#if 0
 	void setupCtx();		/* create the window and make the context current */
 	void setupOSDBuffer();		/* create the OSD buffer */
+#endif
 
 	struct {
 		int width;		/* width and height, fixed for a framebuffer instance */

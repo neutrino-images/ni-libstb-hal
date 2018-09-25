@@ -59,6 +59,8 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 			caps.display_can_set_brightness = 1;
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 16;
 		}
 		else if (!strncmp(buf, "ufs913", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -70,6 +72,8 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 			caps.display_can_set_brightness = 1;
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 16;
 		}
 		else if (!strncmp(buf, "ufs922", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -81,6 +85,8 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 1;
 			caps.has_CI = 2;
 			caps.display_can_set_brightness = 1;
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 16;
 		}
 		else if (!strncmp(buf, "ufs910", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
@@ -92,6 +98,8 @@ hw_caps_t *get_hwcaps(void)
 			caps.has_fan = 0;
 			caps.has_CI = 2;
 			caps.display_can_set_brightness = 1;
+			caps.display_type = HW_DISPLAY_LINE_TEXT;
+			caps.display_xres = 16;
 		}
 		else if (!strncmp(buf, "hdbox", 5)) {
 			strcpy(caps.boxvendor, "DUCKBOX");

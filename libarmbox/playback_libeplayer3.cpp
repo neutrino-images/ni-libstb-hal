@@ -69,6 +69,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 	{
 		player->output->Command(player, OUTPUT_ADD, (void *)"audio");
 		player->output->Command(player, OUTPUT_ADD, (void *)"video");
+		player->output->Command(player, OUTPUT_ADD, (void *)"subtitle");
 	}
 
 	return 0;
@@ -249,6 +250,7 @@ bool cPlayback::Stop(void)
 	{
 		player->output->Command(player, OUTPUT_DEL, (void *)"audio");
 		player->output->Command(player, OUTPUT_DEL, (void *)"video");
+		player->output->Command(player, OUTPUT_DEL, (void *)"subtitle");
 	}
 
 	if (player && player->playback)

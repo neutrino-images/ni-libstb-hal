@@ -304,7 +304,7 @@ static int PlaybackPlay(Context_t *context)
 			context->playback->Speed           = 0;
 
 			if (context->container && context->container->selectedContainer)
-				context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
+				ret = context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
 		}
 		else
 		{
@@ -568,19 +568,29 @@ static int PlaybackFastBackward(Context_t *context, int *speed)
 			return cERR_PLAYBACK_ERROR;
 		}
 
+		PlaybackContinue(context);
+
 		if (*speed == 0)
 		{
-			context->playback->BackWard = 0;
-			context->playback->Speed = 0;    /* reverse end */
+			context->playback->isPaused     = 0;
+			//context->playback->isPlaying  = 0;
+			context->playback->isForwarding = 0;
+			context->playback->BackWard     = 0;
+			context->playback->SlowMotion   = 0;
+			context->playback->Speed        = 0;
 			context->output->Command(context, OUTPUT_AUDIOMUTE, "0");
 		}
 		else
 		{
-			context->playback->isSeeking = 1;
-			context->playback->Speed = *speed;
-			context->playback->BackWard = 1;
+			context->playback->isPaused     = 0;
+			//context->playback->isPlaying  = 0;
+			context->playback->isForwarding = 0;
+			context->playback->BackWard     = 1;
+			context->playback->SlowMotion   = 0;
+			context->playback->Speed        = *speed;
+			context->playback->isSeeking    = 1;
 			context->output->Command(context, OUTPUT_AUDIOMUTE, "1");
-			playback_printf(1, "S %d B %d\n", context->playback->Speed, context->playback->BackWard);
+			playback_printf(1, "Speed: %d, Backward: %d\n", context->playback->Speed, context->playback->BackWard);
 		}
 
 		context->output->Command(context, OUTPUT_CLEAR, NULL);

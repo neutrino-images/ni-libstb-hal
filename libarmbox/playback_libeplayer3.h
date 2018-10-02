@@ -20,10 +20,12 @@ class cPlayback
 		bool enabled;
 		bool playing, first;
 		bool no_probe;
+		bool got_vpts_ts;
 		int nPlaybackSpeed;
 		int mAudioStream;
 		int mSubtitleStream;
 		int mTeletextStream;
+		int64_t vpts_ts;
 		bool Stop(void);
 		bool decoders_closed;
 		playmode_t pm;

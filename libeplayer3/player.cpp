@@ -372,7 +372,7 @@ bool Player::GetChapters(std::vector<int> &positions, std::vector<std::string> &
 	positions.clear();
 	titles.clear();
 	input.UpdateTracks();
-	ScopedLock m_lock(chapterMutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(chapterMutex);
 	for (std::vector<Chapter>::iterator it = chapters.begin(); it != chapters.end(); ++it) {
 		positions.push_back(it->start/1000);
 		titles.push_back(it->title);
@@ -382,7 +382,7 @@ bool Player::GetChapters(std::vector<int> &positions, std::vector<std::string> &
 
 void Player::SetChapters(std::vector<Chapter> &Chapters)
 {
-	ScopedLock m_lock(chapterMutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(chapterMutex);
 	chapters = Chapters;
 }
 

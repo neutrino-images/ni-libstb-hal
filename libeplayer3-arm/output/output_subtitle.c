@@ -266,8 +266,6 @@ static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 
 static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
 {
-	//uint32_t i = 0 ;
-
 	subtitle_printf(10, "\n");
 
 	getMutex(__LINE__);
@@ -341,6 +339,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument __att
 	}
 
 	subtitle_printf(50, "exiting with value %d\n", ret);
+
 	return ret;
 }
 

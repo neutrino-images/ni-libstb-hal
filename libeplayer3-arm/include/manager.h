@@ -44,7 +44,7 @@ typedef struct Track_s
 	/* new field for ffmpeg - add at the end so no problem
 	 * can occur with not changed srt saa container
 	 */
-	char                  *language;
+	char                 *language;
 
 	/* length of track */
 	int64_t               duration;

@@ -1,8 +1,8 @@
 #ifndef _VIDEO_LIB_H
 #define _VIDEO_LIB_H
 
-#include <thread_abstraction.h>
-#include <mutex_abstraction.h>
+#include <OpenThreads/Thread>
+#include <OpenThreads/Mutex>
 #include <vector>
 #include <linux/dvb/video.h>
 #include "cs_types.h"
@@ -120,10 +120,10 @@ typedef enum
 } VIDEO_CONTROL;
 
 
-#define VDEC_MAXBUFS 0x30
-class cVideo : public Thread
+#define VDEC_MAXBUFS 0x40
+class cVideo : public OpenThreads::Thread
 {
-	friend class GLFramebuffer;
+	friend class GLFbPC;
 	friend class cDemux;
 	private:
 		/* called from GL thread */
@@ -211,8 +211,7 @@ class cVideo : public Thread
 		bool thread_running;
 		VIDEO_FORMAT v_format;
 		VIDEO_STD v_std;
-		//OpenThreads::Mutex buf_m;
-		Mutex buf_m;
+		OpenThreads::Mutex buf_m;
 		DISPLAY_AR display_aspect;
 		DISPLAY_AR_MODE display_crop;
 		int output_h;
@@ -221,7 +220,7 @@ class cVideo : public Thread
 		int pig_w;
 		int pig_h;
 		bool pig_changed;
-		Mutex still_m;
+		OpenThreads::Mutex still_m;
 		bool stillpicture;
 };
 

@@ -45,7 +45,6 @@ typedef struct ContainerHandler_s
 {
 	char *Name;
 	Container_t *selectedContainer;
-
 	int (* Command)(Context_t *, ContainerCmd_t, void *);
 } ContainerHandler_t;
 

@@ -25,7 +25,7 @@
 
 void Manager::addTrack(std::map<int,Track*> &tracks, Track &track)
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	std::map<int,Track*>::iterator it = tracks.find(track.pid);
 	if (it == tracks.end()) {
 		Track *t = new Track;
@@ -59,7 +59,7 @@ std::vector<Track> Manager::getTracks(std::map<int,Track*> &tracks)
 {
 	player->input.UpdateTracks();
 	std::vector<Track> res;
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	for(std::map<int,Track*>::iterator it = tracks.begin(); it != tracks.end(); ++it)
 		if (!it->second->inactive && !it->second->hidden)
 			res.push_back(*it->second);
@@ -88,7 +88,7 @@ std::vector<Track> Manager::getTeletextTracks()
 
 Track *Manager::getTrack(std::map<int,Track*> &tracks, int pid)
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	std::map<int,Track*>::iterator it = tracks.find(pid);
 	if (it != tracks.end() && !it->second->inactive)
 		return it->second;
@@ -116,7 +116,7 @@ Track *Manager::getTeletextTrack(int pid)
 
 bool Manager::initTrackUpdate()
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 
 	for (std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
 		it->second->inactive = !it->second->is_static;
@@ -140,7 +140,7 @@ void Manager::addProgram(Program &program)
 
 std::vector<Program> Manager::getPrograms(void)
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	std::vector<Program> res;
 	for (std::map<int,Program>::iterator it = Programs.begin(); it != Programs.end(); ++it)
 		res.push_back(it->second);
@@ -149,7 +149,7 @@ std::vector<Program> Manager::getPrograms(void)
 
 bool Manager::selectProgram(const int id)
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 	std::map<int,Program>::iterator i = Programs.find(id);
 	if (i != Programs.end()) {
 
@@ -236,7 +236,7 @@ bool Manager::selectProgram(const int id)
 
 void Manager::clearTracks()
 {
-	ScopedLock m_lock(mutex);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> m_lock(mutex);
 
 	for (std::map<int,Track*>::iterator it = audioTracks.begin(); it != audioTracks.end(); ++it)
 		delete it->second;

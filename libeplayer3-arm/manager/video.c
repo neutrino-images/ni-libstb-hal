@@ -97,7 +97,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 
 	if (Tracks == NULL)
 	{
-		video_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+		video_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 		return cERR_VIDEO_MGR_ERROR;
 	}
 
@@ -118,7 +118,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	}
 	else
 	{
-		video_mgr_err("%s:%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
+		video_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_VIDEO_MGR_ERROR;
 	}
 
@@ -128,6 +128,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	}
 
 	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
@@ -144,7 +145,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 
 		if (tracklist == NULL)
 		{
-			video_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+			video_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
 
@@ -164,6 +165,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 	}
 
 	video_mgr_printf(10, "%s::%s return %p (%d - %d)\n", __FILE__, __FUNCTION__, tracklist, j, TrackCount);
+
 	return tracklist;
 }
 
@@ -213,7 +215,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_LIST:
 		{
 			container_ffmpeg_update_tracks(context, context->playback->uri, 0);
-			*((char ** *)argument) = (char **)ManagerList(context);
+			*((char ***)argument) = (char **)ManagerList(context);
 			break;
 		}
 		case MANAGER_GET:
@@ -224,7 +226,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			}
 			else
 			{
-				*((int *)argument) = (int) - 1;
+				*((int *)argument) = (int) -1;
 			}
 			break;
 		}
@@ -342,7 +344,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			break;
 	}
 
-	video_mgr_printf(10, "%s:%s: returning %d\n", __FILE__, __FUNCTION__, ret);
+	video_mgr_printf(10, "%s::%s returning %d\n", __FILE__, __FUNCTION__, ret);
 	return ret;
 }
 

@@ -21,7 +21,9 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-#include <scoped_lock.h>
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Thread>
+#include <OpenThreads/Condition>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -61,7 +63,7 @@ class Player {
 		Input input;
 		Output output;
 		Manager manager;
-		Mutex chapterMutex;
+		OpenThreads::Mutex chapterMutex;
 		std::vector<Chapter> chapters;
 		pthread_t playThread;
 

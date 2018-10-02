@@ -20,6 +20,18 @@ AC_DISABLE_STATIC
 AC_SYS_LARGEFILE
 AC_PROG_LIBTOOL
 
+AC_ARG_ENABLE(clutter,
+	AS_HELP_STRING(--enable-clutter, use clutter instead of OpenGL),
+	,[enable_clutter=no])
+
+AM_CONDITIONAL(USE_CLUTTER,test "$enable_clutter" = "yes")
+AM_CONDITIONAL(USE_OPENGL,test "$enable_clutter" = "no")
+if test "$enable_clutter" = "yes"; then
+	AC_DEFINE(USE_CLUTTER,1,[use clutter instead of opengl])
+else
+	AC_DEFINE(USE_OPENGL,1,[use opengl instead of clutter])
+fi
+
 if test x"$BOXTYPE" = x"tripledragon"; then
 	PKG_CHECK_MODULES([DIRECTFB], [directfb])
 fi
@@ -54,6 +66,9 @@ if test x$BOXTYPE = xarmbox -a "$enable_gstreamer_10" = "yes"; then
 fi
 
 if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
+	if test x"$enable_clutter" = xyes; then
+		PKG_CHECK_MODULES([CLUTTER], [clutter-1.0])
+	fi
 	PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1])
 	PKG_CHECK_MODULES([AVCODEC], [libavcodec >= 54.28.0])
 	# don't know which version is exactly needed here...
@@ -62,12 +77,20 @@ if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
 	PKG_CHECK_MODULES([SWRESAMPLE], [libswresample])
 fi
 
+AC_ARG_ENABLE(flv2mpeg4,
+	AS_HELP_STRING(--enable-flv2mpeg4, use flv2mpeg4 libeplayer3-arm),
+	,[enable_flv2mpeg4=no])
+
+AM_CONDITIONAL(ENABLE_FLV2MPEG4, test "$enable_flv2mpeg4" = "yes")
+if test "$enable_flv2mpeg4" = "yes"; then
+	AC_DEFINE(ENABLE_FLV2MPEG4, 1, [use flv2mpeg4 libeplayer3-arm])
+fi
+
 AC_OUTPUT([
 Makefile
 common/Makefile
 libeplayer3/Makefile
 libeplayer3-arm/Makefile
-libthread/Makefile
 azbox/Makefile
 generic-pc/Makefile
 libduckbox/Makefile

@@ -327,7 +327,7 @@ void cVideo::ShowPicture(const char *fname)
 			buf_in %= VDEC_MAXBUFS;
 			buf_num++;
 			if (buf_num > (VDEC_MAXBUFS - 1)) {
-				lt_info("%s: buf_num overflow\n", __func__);
+				lt_debug("%s: buf_num overflow\n", __func__);
 				buf_out++;
 				buf_out %= VDEC_MAXBUFS;
 				buf_num--;
@@ -604,7 +604,7 @@ void cVideo::run(void)
 					c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
 					av_frame_get_best_effort_timestamp(frame));
 		} else
-			lt_info("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
+			lt_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
 		still_m.unlock();
 		av_packet_unref(&avpkt);
 	}

@@ -42,6 +42,8 @@ bool cPlayback::Open(playmode_t PlayMode)
 	}
 
 	pm = PlayMode;
+	got_vpts_ts = false;
+	vpts_ts = 0;
 	fn_ts = "";
 	fn_xml = "";
 	last_size = 0;
@@ -448,6 +450,15 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	}
 	else
 	{
+		/* workaround for crazy vpts value during timeshift */
+		if (!got_vpts_ts && pm == PLAYMODE_TS)
+		{
+			vpts_ts = vpts;
+			got_vpts_ts = true;
+		}
+		if (got_vpts_ts)
+			vpts -= vpts_ts;
+		/* end workaround */
 		/* len is in nanoseconds. we have 90 000 pts per second. */
 		position = vpts / 90;
 	}

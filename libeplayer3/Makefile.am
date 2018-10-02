@@ -4,7 +4,7 @@ noinst_LTLIBRARIES = libeplayer3.la
 
 AM_CPPFLAGS = -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 AM_CPPFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
-AM_CPPFLAGS += -I$(srcdir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS += -I$(srcdir)/include
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 libeplayer3_la_SOURCES = \

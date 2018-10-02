@@ -70,5 +70,5 @@ if (debug_level >= level) printf(x); } while (0)
 void FlushPipe(int pipefd)
 {
 	char tmp;
-	while(1 == read(pipefd, &tmp, 1));
+	while (1 == read(pipefd, &tmp, 1));
 }

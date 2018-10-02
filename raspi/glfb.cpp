@@ -19,7 +19,7 @@
 */
 
 #include <vector>
-#include <condition_abstraction.h>
+#include <OpenThreads/Condition>
 
 #include "glfb.h"
 #include "bcm_host.h"
@@ -47,8 +47,8 @@ static int curr_res;
 static int pitch;
 static VC_IMAGE_TYPE_T type = VC_IMAGE_ARGB8888;
 
-static Mutex blit_mutex;
-static Condition blit_cond;
+static OpenThreads::Mutex blit_mutex;
+static OpenThreads::Condition blit_cond;
 
 static bool goodbye = false;	/* if set main loop is left */
 static bool ready = false;	/* condition predicate */
@@ -71,7 +71,7 @@ GLFramebuffer::GLFramebuffer(int x, int y)
 	si.red.offset = 16;
 	si.transp.offset = 24;
 
-	Thread::start();
+	OpenThreads::Thread::start();
 	while (!ready)
 		usleep(1);
 }
@@ -80,7 +80,7 @@ GLFramebuffer::~GLFramebuffer()
 {
 	goodbye = true;
 	blit(); /* wake up thread */
-	Thread::join();
+	OpenThreads::Thread::join();
 }
 
 void GLFramebuffer::run()

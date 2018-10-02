@@ -32,7 +32,7 @@
 
 #include <set>
 #include <map>
-#include <thread_abstraction.h>
+#include <OpenThreads/Thread>
 
 #include "init_td.h"
 #include "lt_debug.h"
@@ -69,7 +69,7 @@ static void init_keymap(void)
 	kmap[KEY_F8]	= KEY_SLEEP;
 }
 
-class Input: public Thread
+class Input: public OpenThreads::Thread
 {
 	public:
 		Input();
@@ -82,13 +82,13 @@ class Input: public Thread
 Input::Input()
 {
 	Init();
-	Thread::start();
+	start();
 }
 
 Input::~Input()
 {
 	running = false;
-	Thread::join();
+	join();
 }
 
 static int dirfilter(const struct dirent *d)

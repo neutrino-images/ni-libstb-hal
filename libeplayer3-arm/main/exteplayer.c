@@ -252,11 +252,12 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 			ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
 			if (NULL != TrackList)
 			{
-				int i = 0, Id = -1;
+				int i = 0;
+				int Id = -1;
 				char * pch;
 				char Name[] = "          ";
 				fprintf(stderr, "{\"%c_%c\": [", argvBuff[0], argvBuff[1]);
-				for (i = 0; TrackList[i] != NULL; i+=2)
+				for (i = 0; TrackList[i] != NULL; i += 2)
 				{
 					pch = strtok(TrackList[i], " ");
 					if (pch != NULL) {
@@ -272,7 +273,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 					}
 					fprintf(stderr, "{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}", Id, TrackList[i+1], Name);
 					free(TrackList[i]);
-					free(TrackList[i+1]);
+					free(TrackList[i + 1]);
 				}
 				fprintf(stderr, "]}\n");
 				free(TrackList);
@@ -297,7 +298,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 				else // video
 				{
 					fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\",\"w\":%d,\"h\":%d,\"f\":%u,\"p\":%d,\"an\":%d,\"ad\":%d}}\n", \
-							argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name, track->width, track->height, track->frame_rate, track->progressive, track->aspect_ratio_num, track->aspect_ratio_den);
+					        argvBuff[0], argvBuff[1], track->Id, track->Encoding, track->Name, track->width, track->height, track->frame_rate, track->progressive, track->aspect_ratio_num, track->aspect_ratio_den);
 				}
 				free(track->Encoding);
 				free(track->Name);
@@ -336,7 +337,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 						{
 							int i = 0;
 							char * pch;
-							for (i = 0; TrackList[i] != NULL; i+=2)
+							for (i = 0; TrackList[i] != NULL; i += 2)
 							{
 								if (idx == i)
 								{
@@ -345,7 +346,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 										id = atoi(pch);
 								}
 								free(TrackList[i]);
-								free(TrackList[i+1]);
+								free(TrackList[i + 1]);
 							}
 							free(TrackList);
 						}
@@ -501,7 +502,7 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
 
 static void UpdateVideoTrack()
 {
-	HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, "vc");
+	HandleTracks(g_player->manager->video, (PlaybackCmd_t) -1, "vc");
 }
 
 static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *pAudioTrackIdx, int *subtitleTrackIdx, uint32_t *linuxDvbBufferSizeMB)
@@ -657,6 +658,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 		ret = 0;
 		playbackFiles->szFirstFile = malloc(IPTV_MAX_FILE_PATH);
 		playbackFiles->szFirstFile[0] = '\0';
+
 		if (NULL == strstr(argv[optind], "://"))
 		{
 			strcpy(playbackFiles->szFirstFile, "file://");
@@ -693,6 +695,7 @@ int main(int argc, char *argv[])
 
 	PlayFiles_t playbackFiles;
 	memset(&playbackFiles, 0x00, sizeof(playbackFiles));
+
 	if (0 != ParseParams(argc, argv, &playbackFiles, &audioTrackIdx, &subtitleTrackIdx, &linuxDvbBufferSizeMB))
 	{
 		printf("Usage: exteplayer3 filePath [-u user-agent] [-c cookies] [-h headers] [-p prio] [-a] [-d] [-w] [-l] [-s] [-i] [-t audioTrackId] [-9 subtitleTrackId] [-x separateAudioUri] plabackUri\n");
@@ -816,24 +819,24 @@ int main(int argc, char *argv[])
 		{
 			PlaybackDieNowRegisterCallback(TerminateWakeUp);
 
-			HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, "vc");
-			HandleTracks(g_player->manager->audio, (PlaybackCmd_t) - 1, "al");
+			HandleTracks(g_player->manager->video, (PlaybackCmd_t) -1, "vc");
+			HandleTracks(g_player->manager->audio, (PlaybackCmd_t) -1, "al");
 			if (audioTrackIdx >= 0)
 			{
 				static char cmd[128] = ""; // static to not allocate on stack
 				sprintf(cmd, "ai%d\n", audioTrackIdx);
 				commandRetVal = HandleTracks(g_player->manager->audio, PLAYBACK_SWITCH_AUDIO, cmd);
 			}
-			HandleTracks(g_player->manager->audio, (PlaybackCmd_t) - 1, "ac");
+			HandleTracks(g_player->manager->audio, (PlaybackCmd_t) -1, "ac");
 
-			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) - 1, "sl");
+			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) -1, "sl");
 			if (subtitleTrackIdx >= 0)
 			{
 				static char cmd[128] = ""; // static to not allocate on stack
 				sprintf(cmd, "si%d\n", subtitleTrackIdx);
 				commandRetVal = HandleTracks(g_player->manager->subtitle, PLAYBACK_SWITCH_SUBTITLE, cmd);
 			}
-			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) - 1, "sc");
+			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) -1, "sc");
 		}
 
 		while (g_player->playback->isPlaying && 0 == PlaybackDieNow(0))
@@ -855,7 +858,7 @@ int main(int argc, char *argv[])
 			{
 				case 'v':
 				{
-					HandleTracks(g_player->manager->video, (PlaybackCmd_t) - 1, argvBuff);
+					HandleTracks(g_player->manager->video, (PlaybackCmd_t) -1, argvBuff);
 					break;
 				}
 				case 'a':
@@ -966,10 +969,12 @@ int main(int argc, char *argv[])
 
 					commandRetVal = g_player->playback->Command(g_player, PLAYBACK_PTS, &pts);
 					CurrentSec = (int32_t)(pts / 90000);
+
 					if (0 == commandRetVal)
 					{
 						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90);
 					}
+
 					if (0 == commandRetVal || force)
 					{
 						commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void *)&length);
@@ -1016,6 +1021,7 @@ int main(int argc, char *argv[])
 					{
 						int64_t lastPts = 0;
 						commandRetVal = 1;
+
 						if (g_player->container && g_player->container->selectedContainer)
 						{
 							commandRetVal = g_player->container->selectedContainer->Command((Context_t*)g_player->container, CONTAINER_LAST_PTS, &lastPts);

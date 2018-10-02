@@ -46,7 +46,7 @@
 static short debug_level = 40;
 
 #define audio_mgr_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] \n" fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+if (debug_level >= level) printf("[%s::%s] \n" fmt, __FILE__, __FUNCTION__, ## x); } while (0)
 #else
 #define audio_mgr_printf(level, x...)
 #endif
@@ -97,7 +97,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 
 	if (Tracks == NULL)
 	{
-		audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+		audio_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 		return cERR_AUDIO_MGR_ERROR;
 	}
 
@@ -118,7 +118,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	}
 	else
 	{
-		audio_mgr_err("%s:%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
+		audio_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_AUDIO_MGR_ERROR;
 	}
 
@@ -128,6 +128,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	}
 
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	return cERR_AUDIO_MGR_NO_ERROR;
 }
 
@@ -137,13 +138,14 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 	char **tracklist = NULL;
 
 	audio_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+
 	if (Tracks != NULL)
 	{
 		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
 
 		if (tracklist == NULL)
 		{
-			audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+			audio_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
 
@@ -160,9 +162,9 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 			tracklist[j] = strdup(tmp);
 			tracklist[j + 1] = strdup(Tracks[i].Encoding);
 		}
-
 		tracklist[j] = NULL;
 	}
+
 	audio_mgr_printf(10, "%s::%s return %p (%d - %d)\n", __FILE__, __FUNCTION__, tracklist, j, TrackCount);
 
 	return tracklist;
@@ -181,7 +183,7 @@ static TrackDescription_t *ManagerList(Context_t  *context __attribute__((unused
 
 		if (tracklist == NULL)
 		{
-			audio_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+			audio_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
 
@@ -256,7 +258,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		{
 			container_ffmpeg_update_tracks(context, context->playback->uri, 0);
 //			*((TrackDescription_t **)argument) = ManagerList(context);
-			*((char ** *) argument) = (char **) ManagerList(context);
+			*((char ***)argument) = (char **)ManagerList(context);
 			break;
 		}
 		case MANAGER_REF_LIST:
@@ -279,7 +281,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			}
 			else
 			{
-				*((int *)argument) = (int) - 1;
+				*((int *)argument) = (int) -1;
 			}
 			break;
 		}
@@ -292,9 +294,9 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 				if (track)
 				{
 					memset(track, 0, sizeof(TrackDescription_t));
-					track->Id               = Tracks[CurrentTrack].Id;
-					track->Name             = strdup(Tracks[CurrentTrack].Name);
-					track->Encoding         = strdup(Tracks[CurrentTrack].Encoding);
+					track->Id       = Tracks[CurrentTrack].Id;
+					track->Name     = strdup(Tracks[CurrentTrack].Name);
+					track->Encoding = strdup(Tracks[CurrentTrack].Encoding);
 				}
 			}
 			else
@@ -382,7 +384,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			break;
 	}
 
-	audio_mgr_printf(10, "%s:%s: returning %d\n", __FILE__, __FUNCTION__, ret);
+	audio_mgr_printf(10, "%s::%s returning %d\n", __FILE__, __FUNCTION__, ret);
 
 	return ret;
 }

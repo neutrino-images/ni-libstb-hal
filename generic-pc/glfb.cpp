@@ -22,6 +22,7 @@
 	TODO:	AV-Sync code is "experimental" at best
 */
 
+#include "config.h"
 #include <vector>
 
 #include <sys/types.h>
@@ -37,8 +38,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <linux/input.h>
-#include "glfb.h"
-#include <GL/glx.h>
+#include "glfb_priv.h"
 #include "video_lib.h"
 #include "audio_lib.h"
 
@@ -53,10 +53,36 @@
 extern cVideo *videoDecoder;
 extern cAudio *audioDecoder;
 
-static GLFramebuffer *gThiz = 0; /* GLUT does not allow for an arbitrary argument to the render func */
+/* the private class that does stuff only needed inside libstb-hal.
+ * is used e.g. by cVideo... */
+GLFbPC *glfb_priv = NULL;
 
-GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mInitDone(false)
+GLFramebuffer::GLFramebuffer(int x, int y)
 {
+	Init();
+	glfb_priv = new GLFbPC(x, y, osd_buf);
+	si = glfb_priv->getScreenInfo();
+	start();
+	while (!glfb_priv->mInitDone)
+		usleep(1);
+}
+
+GLFramebuffer::~GLFramebuffer()
+{
+	glfb_priv->mShutDown = true;
+	join();
+	delete glfb_priv;
+	glfb_priv = NULL;
+}
+
+void GLFramebuffer::blit()
+{
+	glfb_priv->blit();
+}
+
+GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mShutDown(false), mInitDone(false)
+{
+	osd_buf = &buf;
 	mState.width  = x;
 	mState.height = y;
 	mX = &_mX[0];
@@ -77,19 +103,19 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 	last_apts = 0;
 
 	/* linux framebuffer compat mode */
-	screeninfo.bits_per_pixel = 32;
-	screeninfo.xres = mState.width;
-	screeninfo.xres_virtual = screeninfo.xres;
-	screeninfo.yres = mState.height;
-	screeninfo.yres_virtual = screeninfo.yres;
-	screeninfo.blue.length = 8;
-	screeninfo.blue.offset = 0;
-	screeninfo.green.length = 8;
-	screeninfo.green.offset = 8;
-	screeninfo.red.length = 8;
-	screeninfo.red.offset = 16;
-	screeninfo.transp.length = 8;
-	screeninfo.transp.offset = 24;
+	si.bits_per_pixel = 32;
+	si.xres = mState.width;
+	si.xres_virtual = si.xres;
+	si.yres = mState.height;
+	si.yres_virtual = si.yres;
+	si.blue.length = 8;
+	si.blue.offset = 0;
+	si.green.length = 8;
+	si.green.offset = 8;
+	si.red.length = 8;
+	si.red.offset = 16;
+	si.transp.length = 8;
+	si.transp.offset = 24;
 
 	unlink("/tmp/neutrino.input");
 	mkfifo("/tmp/neutrino.input", 0600);
@@ -97,21 +123,22 @@ GLFramebuffer::GLFramebuffer(int x, int y): mReInit(true), mShutDown(false), mIn
 	if (input_fd < 0)
 		lt_info("%s: could not open /tmp/neutrino.input FIFO: %m\n", __func__);
 	initKeys();
-	Thread::startThread();
-	while (!mInitDone)
-		usleep(1);
 }
 
-GLFramebuffer::~GLFramebuffer()
+GLFbPC::~GLFbPC()
 {
 	mShutDown = true;
-	Thread::joinThread();
 	if (input_fd >= 0)
 		close(input_fd);
+	osd_buf->clear();
 }
 
-void GLFramebuffer::initKeys()
+void GLFbPC::initKeys()
 {
+	/*
+	   Keep in sync with initKeys() in clutterfb.cpp
+	*/
+
 	mSpecialMap[GLUT_KEY_UP]    = KEY_UP;
 	mSpecialMap[GLUT_KEY_DOWN]  = KEY_DOWN;
 	mSpecialMap[GLUT_KEY_LEFT]  = KEY_LEFT;
@@ -132,8 +159,8 @@ void GLFramebuffer::initKeys()
 	mSpecialMap[GLUT_KEY_F11] = KEY_NEXT;
 	mSpecialMap[GLUT_KEY_F12] = KEY_PREVIOUS;
 
-	mSpecialMap[GLUT_KEY_PAGE_UP]	= KEY_PAGEUP;
-	mSpecialMap[GLUT_KEY_PAGE_DOWN]	= KEY_PAGEDOWN;
+	mSpecialMap[GLUT_KEY_PAGE_UP]   = KEY_PAGEUP;
+	mSpecialMap[GLUT_KEY_PAGE_DOWN] = KEY_PAGEDOWN;
 
 	mKeyMap[0x0d] = KEY_OK;
 	mKeyMap[0x1b] = KEY_EXIT;
@@ -176,9 +203,21 @@ void GLFramebuffer::initKeys()
 
 void GLFramebuffer::run()
 {
-	setupCtx();
-	setupOSDBuffer();
-	mInitDone = true; /* signal that setup is finished */
+	int argc = 1;
+	int x = glfb_priv->mState.width;
+	int y = glfb_priv->mState.height;
+	/* some dummy commandline for GLUT to be happy */
+	char const *argv[2] = { "neutrino", 0 };
+	lt_info("GLFB: GL thread starting x %d y %d\n", x, y);
+	glutInit(&argc, const_cast<char **>(argv));
+	glutInitWindowSize(x, y);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+	glutCreateWindow("Neutrino");
+	/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
+	int fbmem = x * y * 4 * 2;
+	osd_buf.resize(fbmem);
+	lt_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf.data());
+	glfb_priv->mInitDone = true; /* signal that setup is finished */
 
 	/* init the good stuff */
 	GLenum err = glewInit();
@@ -193,16 +232,15 @@ void GLFramebuffer::run()
 		}
 		else
 		{
-			gThiz = this;
 			glutSetCursor(GLUT_CURSOR_NONE);
-			glutDisplayFunc(GLFramebuffer::rendercb);
-			glutKeyboardFunc(GLFramebuffer::keyboardcb);
-			glutSpecialFunc(GLFramebuffer::specialcb);
-			glutReshapeFunc(GLFramebuffer::resizecb);
-			setupGLObjects(); /* needs GLEW prototypes */
+			glutDisplayFunc(GLFbPC::rendercb);
+			glutKeyboardFunc(GLFbPC::keyboardcb);
+			glutSpecialFunc(GLFbPC::specialcb);
+			glutReshapeFunc(GLFbPC::resizecb);
+			glfb_priv->setupGLObjects(); /* needs GLEW prototypes */
 			glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
 			glutMainLoop();
-			releaseGLObjects();
+			glfb_priv->releaseGLObjects();
 		}
 	}
 	else
@@ -210,21 +248,20 @@ void GLFramebuffer::run()
 	lt_info("GLFB: GL thread stopping\n");
 }
 
-
-void GLFramebuffer::setupCtx()
+#if 0
+void GLFbPC::setupCtx()
 {
 	int argc = 1;
 	/* some dummy commandline for GLUT to be happy */
 	char const *argv[2] = { "neutrino", 0 };
-	lt_info("GLFB: GL thread starting\n");
+	lt_info("GLFB: GL thread starting x %d y %d\n", mX[0], mY[0]);
 	glutInit(&argc, const_cast<char **>(argv));
 	glutInitWindowSize(mX[0], mY[0]);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("Neutrino");
-	GLWinID = glXGetCurrentDrawable(); // this was the holy grail to get the right window handle for gstreamer :D
 }
 
-void GLFramebuffer::setupOSDBuffer()
+void GLFbPC::setupOSDBuffer()
 {	/* the OSD buffer size can be decoupled from the actual
 	   window size since the GL can blit-stretch with no
 	   trouble at all, ah, the luxury of ignorance... */
@@ -233,12 +270,13 @@ void GLFramebuffer::setupOSDBuffer()
 	{
 		/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
 		int fbmem = mState.width * mState.height * 4 * 2;
-		mOSDBuffer.resize(fbmem);
-		lt_info("GLFB: OSD buffer set to %d bytes\n", fbmem);
+		osd_buf->resize(fbmem);
+		lt_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf->data());
 	}
 }
+#endif
 
-void GLFramebuffer::setupGLObjects()
+void GLFbPC::setupGLObjects()
 {
 	unsigned char buf[4] = { 0, 0, 0, 0 }; /* 1 black pixel */
 	glGenTextures(1, &mState.osdtex);
@@ -266,7 +304,7 @@ void GLFramebuffer::setupGLObjects()
 }
 
 
-void GLFramebuffer::releaseGLObjects()
+void GLFbPC::releaseGLObjects()
 {
 	glDeleteBuffers(1, &mState.pbo);
 	glDeleteBuffers(1, &mState.displaypbo);
@@ -275,56 +313,56 @@ void GLFramebuffer::releaseGLObjects()
 }
 
 
-/* static */ void GLFramebuffer::rendercb()
+/* static */ void GLFbPC::rendercb()
 {
-	gThiz->render();
+	glfb_priv->render();
 }
 
 
-/* static */ void GLFramebuffer::keyboardcb(unsigned char key, int /*x*/, int /*y*/)
+/* static */ void GLFbPC::keyboardcb(unsigned char key, int /*x*/, int /*y*/)
 {
 	lt_debug_c("GLFB::%s: 0x%x\n", __func__, key);
 	struct input_event ev;
 	if (key == 'f')
 	{
-		lt_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, gThiz->mFullscreen?"off":"on");
-		gThiz->mFullscreen = !(gThiz->mFullscreen);
-		gThiz->mReInit = true;
+		lt_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, glfb_priv->mFullscreen?"off":"on");
+		glfb_priv->mFullscreen = !(glfb_priv->mFullscreen);
+		glfb_priv->mReInit = true;
 		return;
 	}
-	std::map<unsigned char, int>::const_iterator i = gThiz->mKeyMap.find(key);
-	if (i == gThiz->mKeyMap.end())
+	std::map<unsigned char, int>::const_iterator i = glfb_priv->mKeyMap.find(key);
+	if (i == glfb_priv->mKeyMap.end())
 		return;
 	ev.code  = i->second;
 	ev.value = 1; /* key own */
 	ev.type  = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	lt_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
-	write(gThiz->input_fd, &ev, sizeof(ev));
+	write(glfb_priv->input_fd, &ev, sizeof(ev));
 	ev.value = 0; /* neutrino is stupid, so push key up directly after key down */
-	write(gThiz->input_fd, &ev, sizeof(ev));
+	write(glfb_priv->input_fd, &ev, sizeof(ev));
 }
 
-/* static */ void GLFramebuffer::specialcb(int key, int /*x*/, int /*y*/)
+/* static */ void GLFbPC::specialcb(int key, int /*x*/, int /*y*/)
 {
 	lt_debug_c("GLFB::%s: 0x%x\n", __func__, key);
 	struct input_event ev;
-	std::map<int, int>::const_iterator i = gThiz->mSpecialMap.find(key);
-	if (i == gThiz->mSpecialMap.end())
+	std::map<int, int>::const_iterator i = glfb_priv->mSpecialMap.find(key);
+	if (i == glfb_priv->mSpecialMap.end())
 		return;
 	ev.code  = i->second;
 	ev.value = 1;
 	ev.type  = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	lt_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
-	write(gThiz->input_fd, &ev, sizeof(ev));
+	write(glfb_priv->input_fd, &ev, sizeof(ev));
 	ev.value = 0;
-	write(gThiz->input_fd, &ev, sizeof(ev));
+	write(glfb_priv->input_fd, &ev, sizeof(ev));
 }
 
 int sleep_us = 30000;
 
-void GLFramebuffer::render()
+void GLFbPC::render()
 {
 	if(mShutDown)
 		glutLeaveMainLoop();
@@ -452,12 +490,12 @@ void GLFramebuffer::render()
 	glutPostRedisplay();
 }
 
-/* static */ void GLFramebuffer::resizecb(int w, int h)
+/* static */ void GLFbPC::resizecb(int w, int h)
 {
-	gThiz->checkReinit(w, h);
+	glfb_priv->checkReinit(w, h);
 }
 
-void GLFramebuffer::checkReinit(int x, int y)
+void GLFbPC::checkReinit(int x, int y)
 {
 	static int last_x = 0, last_y = 0;
 
@@ -477,7 +515,7 @@ void GLFramebuffer::checkReinit(int x, int y)
 	last_y = y;
 }
 
-void GLFramebuffer::drawSquare(float size, float x_factor)
+void GLFbPC::drawSquare(float size, float x_factor)
 {
 	GLfloat vertices[] = {
 		 1.0f,  1.0f,
@@ -533,11 +571,11 @@ void GLFramebuffer::drawSquare(float size, float x_factor)
 }
 
 
-void GLFramebuffer::bltOSDBuffer()
+void GLFbPC::bltOSDBuffer()
 {
 	/* FIXME: copy each time  */
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mState.pbo);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, mOSDBuffer.size(), &mOSDBuffer[0], GL_STREAM_DRAW_ARB);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, osd_buf->size(), osd_buf->data(), GL_STREAM_DRAW_ARB);
 
 	glBindTexture(GL_TEXTURE_2D, mState.osdtex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mState.width, mState.height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
@@ -545,7 +583,7 @@ void GLFramebuffer::bltOSDBuffer()
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
-void GLFramebuffer::bltDisplayBuffer()
+void GLFbPC::bltDisplayBuffer()
 {
 	if (!videoDecoder) /* cannot start yet */
 		return;
@@ -553,7 +591,7 @@ void GLFramebuffer::bltDisplayBuffer()
 	cVideo::SWFramebuffer *buf = videoDecoder->getDecBuf();
 	if (!buf) {
 		if (warn)
-			lt_debug("GLFB::%s did not get a buffer...\n", __func__);
+			lt_info("GLFB::%s did not get a buffer...\n", __func__);
 		warn = false;
 		return;
 	}
@@ -605,10 +643,4 @@ void GLFramebuffer::bltDisplayBuffer()
 	}
 	lt_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
 			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);
-}
-
-void GLFramebuffer::clear()
-{
-	/* clears front and back buffer */
-	memset(&mOSDBuffer[0], 0, mOSDBuffer.size());
 }

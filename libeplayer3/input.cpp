@@ -290,17 +290,17 @@ static int lock_callback(void **mutex, enum AVLockOp op)
 {
 	switch (op) {
 		case AV_LOCK_CREATE:
-			*mutex = (void *) new Mutex;
+			*mutex = (void *) new OpenThreads::Mutex;
 			return !*mutex;
 		case AV_LOCK_DESTROY:
-			delete static_cast<Mutex *>(*mutex);
+			delete static_cast<OpenThreads::Mutex *>(*mutex);
 			*mutex = NULL;
 			return 0;
 		case AV_LOCK_OBTAIN:
-			static_cast<Mutex *>(*mutex)->lock();
+			static_cast<OpenThreads::Mutex *>(*mutex)->lock();
 			return 0;
 		case AV_LOCK_RELEASE:
-			static_cast<Mutex *>(*mutex)->unlock();
+			static_cast<OpenThreads::Mutex *>(*mutex)->unlock();
 			return 0;
 		default:
 			return -1;
@@ -656,7 +656,7 @@ bool Input::Stop()
 	av_log(NULL, AV_LOG_QUIET, "%s", "");
 
 	if (avfc) {
-		ScopedLock lock(mutex);
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(mutex);
 		for (unsigned int i = 0; i < avfc->nb_streams; i++)
 			avcodec_close(avfc->streams[i]->codec);
 		avformat_close_input(&avfc);

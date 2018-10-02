@@ -4,7 +4,7 @@
 #define _AUDIO_LIB_H_
 
 #include <stdint.h>
-#include <thread_abstraction.h>
+#include <OpenThreads/Thread>
 #include "cs_types.h"
 
 typedef enum
@@ -38,7 +38,7 @@ typedef enum
 	AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
 } AUDIO_FORMAT;
 
-class cAudio : public Thread
+class cAudio : public OpenThreads::Thread
 {
 	friend class cPlayback;
 	private:

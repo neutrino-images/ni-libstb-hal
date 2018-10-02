@@ -29,6 +29,7 @@
 #define lt_debug(args...) _lt_debug(HAL_DEBUG_AUDIO, this, args)
 #define lt_info(args...) _lt_info(HAL_DEBUG_AUDIO, this, args)
 
+#include <OpenThreads/Thread>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -104,7 +105,7 @@ int cAudio::Start(void)
 {
 	lt_debug("%s >\n", __func__);
 	if (! HAL_nodec)
-		Thread::startThread();
+		OpenThreads::Thread::start();
 	lt_debug("%s <\n", __func__);
 	return 0;
 }
@@ -115,7 +116,7 @@ int cAudio::Stop(void)
 	if (thread_started)
 	{
 		thread_started = false;
-		Thread::joinThread();
+		OpenThreads::Thread::join();
 	}
 	lt_debug("%s <\n", __func__);
 	return 0;
@@ -201,8 +202,34 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 	freq = 0;
 	bitrate = 0;	/* not used, but easy to get :-) */
 	mode = 0;	/* default: stereo */
+	printf("cAudio::getAudioInfo c %p\n", c);
 	if (c) {
-		type = (c->codec_id != AV_CODEC_ID_MP2); /* only mpeg / not mpeg is indicated */
+		switch (c->codec_id) {
+			case AV_CODEC_ID_MP2:
+				type = AUDIO_FMT_MPEG;
+				break;
+			case AV_CODEC_ID_MP3:
+				type = AUDIO_FMT_MP3;
+				break;
+			case AV_CODEC_ID_AC3:
+			case AV_CODEC_ID_TRUEHD:
+				type = AUDIO_FMT_DOLBY_DIGITAL;
+				break;
+			case AV_CODEC_ID_EAC3:
+				type = AUDIO_FMT_DD_PLUS;
+				break;
+			case AV_CODEC_ID_AAC:
+				type = AUDIO_FMT_AAC;
+				break;
+			case AV_CODEC_ID_DTS:
+				type = AUDIO_FMT_DTS;
+				break;
+			case AV_CODEC_ID_MLP:
+				type = AUDIO_FMT_MLP;
+				break;
+			default:
+				break;
+		}
 		freq = c->sample_rate;
 		bitrate = c->bit_rate;
 		if (c->channels == 1)
@@ -240,7 +267,7 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 		}
 	}
 	lt_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n",
-		  __func__, type, layer, freq, bitrate, mode, c ? c->codec_id : 0);
+		  __func__, type, layer, freq, bitrate, mode, c?c->codec_id:-1);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)

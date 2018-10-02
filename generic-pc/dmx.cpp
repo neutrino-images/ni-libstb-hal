@@ -64,14 +64,11 @@ static const char *DMX_T[] = {
 };
 
 /* map the device numbers. for now only demux0 is used */
-#define NUM_DEMUXDEV 1
-static const char *devname[NUM_DEMUXDEV] = {
+static const char *devname[] = {
 	"/dev/dvb/adapter0/demux0",
+	"/dev/dvb/adapter0/demux0",
+	"/dev/dvb/adapter0/demux0"
 };
-
-#define NUM_DEMUX 1
-static int dmx_source[NUM_DEMUX] = { 0 };
-static bool init[NUM_DEMUXDEV] = { false };
 
 /* uuuugly */
 static int dmx_tp_count = 0;
@@ -492,28 +489,12 @@ int cDemux::getUnit(void)
 
 bool cDemux::SetSource(int unit, int source)
 {
-	//lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
-	//return true;
-	if (unit >= NUM_DEMUX || unit < 0) {
-		lt_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
-		return false;
-	}
-	lt_info_c("%s(%d, %d) => %d to %d\n", __func__, unit, source, dmx_source[unit], source);
-	if (source < 0 || source >= NUM_DEMUXDEV)
-		lt_info_c("%s(%d, %d) ERROR: source %d out of range!\n", __func__, unit, source, source);
-	else
-		dmx_source[unit] = source;
+	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
 	return true;
 }
 
 int cDemux::GetSource(int unit)
 {
-	//lt_info_c("%s(%d): not implemented yet\n", __func__, unit);
-	//return 0;
-	if (unit >= NUM_DEMUX || unit < 0) {
-		lt_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
-		return -1;
-	}
-	lt_info_c("%s(%d) => %d\n", __func__, unit, dmx_source[unit]);
-	return dmx_source[unit];
+	lt_info_c("%s(%d): not implemented yet\n", __func__, unit);
+	return 0;
 }

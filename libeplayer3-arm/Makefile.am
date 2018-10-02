@@ -1,30 +1,45 @@
 AUTOMAKE_OPTIONS = subdir-objects
+AM_CFLAGS = -Wall -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
+
+CXXFLAGS = -Wall
 
 noinst_LTLIBRARIES = libeplayer3_arm.la
 
-AM_CFLAGS    = -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
+AM_CPPFLAGS   = -I$(srcdir)/include
+AM_CPPFLAGS  += -I$(top_srcdir)/include
+AM_CPPFLAGS  += -I$(srcdir)/external
 
-AM_CPPFLAGS  = -I$(srcdir)/include
-AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -I$(srcdir)/external
+AM_CXXFLAGS   = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
-AM_CXXFLAGS  = -fno-rtti -fno-exceptions -fno-strict-aliasing
+SOURCE_FILES  = container/container.c
+SOURCE_FILES += container/container_ffmpeg.c
+SOURCE_FILES += manager/manager.c
+SOURCE_FILES += manager/audio.c
+SOURCE_FILES += manager/video.c
+SOURCE_FILES += manager/chapter.c
+SOURCE_FILES += manager/subtitle.c
+SOURCE_FILES += output/output_subtitle.c
+SOURCE_FILES += output/output.c
+SOURCE_FILES += output/writer/common/pes.c
+SOURCE_FILES += output/writer/common/misc.c
+SOURCE_FILES += output/writer/common/writer.c
+SOURCE_FILES += output/linuxdvb_buffering.c
+SOURCE_FILES += playback/playback.c
+SOURCE_FILES += external/ffmpeg/src/bitstream.c
+SOURCE_FILES += external/ffmpeg/src/latmenc.c
+SOURCE_FILES += external/ffmpeg/src/mpeg4audio.c
 
-libeplayer3_arm_la_SOURCES = \
-	container/container.c \
-	container/container_ffmpeg.c \
-	manager/manager.c \
-	manager/audio.c \
-	manager/video.c \
-	manager/subtitle.c \
-	manager/chapter.c \
+if ENABLE_FLV2MPEG4
+AM_CFLAGS    += -DHAVE_FLV2MPEG4_CONVERTER
+AM_CPPFLAGS  += -I$(srcdir)/external/flv2mpeg4
+SOURCE_FILES += external/flv2mpeg4/src/m4vencode.c
+SOURCE_FILES += external/flv2mpeg4/src/flvdecoder.c
+SOURCE_FILES += external/flv2mpeg4/src/dcprediction.c
+SOURCE_FILES += external/flv2mpeg4/src/flv2mpeg4.c
+endif
+
+SOURCE_FILES += \
 	output/linuxdvb_mipsel.c \
-	output/linuxdvb_buffering.c \
-	output/output_subtitle.c \
-	output/output.c \
-	output/writer/common/pes.c \
-	output/writer/common/misc.c \
-	output/writer/common/writer.c \
 	output/writer/mipsel/writer.c \
 	output/writer/mipsel/aac.c \
 	output/writer/mipsel/ac3.c \
@@ -42,15 +57,13 @@ libeplayer3_arm_la_SOURCES = \
 	output/writer/mipsel/divx3.c \
 	output/writer/mipsel/vp.c \
 	output/writer/mipsel/wmv.c \
-	output/writer/mipsel/vc1.c \
-	playback/playback.c \
-	external/ffmpeg/src/bitstream.c \
-	external/ffmpeg/src/latmenc.c \
-	external/ffmpeg/src/mpeg4audio.c
+	output/writer/mipsel/vc1.c
 
+libeplayer3_arm_la_SOURCES = $(SOURCE_FILES)
 
-LIBEPLAYER3_LIBS = libeplayer3_arm.la -lpthread -lavformat -lavcodec -lavutil -lswresample -lz -lm
+LIBEPLAYER3_LIBS = libeplayer3_arm.la -lpthread -lavformat -lavcodec -lavutil -lswresample
 
 bin_PROGRAMS = eplayer3
 eplayer3_SOURCES = main/exteplayer.c
 eplayer3_LDADD = $(LIBEPLAYER3_LIBS)
+eplayer3_DEPENDENCIES = libeplayer3_arm.la

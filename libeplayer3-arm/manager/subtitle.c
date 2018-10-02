@@ -118,7 +118,7 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 	}
 	else
 	{
-		subtitle_mgr_err("%s:%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
+		subtitle_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
 
@@ -134,8 +134,8 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 
 static char **ManagerList(Context_t *context __attribute__((unused)))
 {
-	char **tracklist = NULL;
 	int i = 0, j = 0;
+	char **tracklist = NULL;
 
 	subtitle_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 
@@ -145,7 +145,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 
 		if (tracklist == NULL)
 		{
-			subtitle_mgr_err("%s:%s malloc failed\n", __FILE__, __FUNCTION__);
+			subtitle_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
 			return NULL;
 		}
 
@@ -162,7 +162,6 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 			tracklist[j] = strdup(tmp);
 			tracklist[j + 1] = strdup(Tracks[i].Encoding);
 		}
-
 		tracklist[j] = NULL;
 	}
 
@@ -219,18 +218,20 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_LIST:
 		{
 			container_ffmpeg_update_tracks(context, context->playback->uri, 0);
-			*((char ** *)argument) = (char **)ManagerList(context);
+			*((char ***)argument) = (char **)ManagerList(context);
 			break;
 		}
 		case MANAGER_GET:
 		{
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
+
 			if (TrackCount > 0 && CurrentTrack >= 0)
 			{
 				*((int *)argument) = (int)Tracks[CurrentTrack].Id;
 			}
 			else
 			{
-				*((int *)argument) = (int) - 1;
+				*((int *)argument) = (int) -1;
 			}
 			break;
 		}
@@ -243,9 +244,9 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 				if (track)
 				{
 					memset(track, 0, sizeof(TrackDescription_t));
-					track->Id               = Tracks[CurrentTrack].Id;
-					track->Name             = strdup(Tracks[CurrentTrack].Name);
-					track->Encoding         = strdup(Tracks[CurrentTrack].Encoding);
+					track->Id       = Tracks[CurrentTrack].Id;
+					track->Name     = strdup(Tracks[CurrentTrack].Name);
+					track->Encoding = strdup(Tracks[CurrentTrack].Encoding);
 				}
 			}
 			else
@@ -256,6 +257,8 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET_TRACK:
 		{
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
+
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
 				*((Track_t **)argument) = (Track_t *) &Tracks[CurrentTrack];
@@ -293,6 +296,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		case MANAGER_SET:
 		{
 			int i;
+
 			subtitle_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", __FILE__, __FUNCTION__, *((int *)argument));
 
 			if (*((int *)argument) < 0)
@@ -332,12 +336,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			break;
 		}
 		default:
-			subtitle_mgr_err("%s:%s: ContainerCmd not supported!", __FILE__, __FUNCTION__);
+			subtitle_mgr_err("%s::%s ContainerCmd not supported!", __FILE__, __FUNCTION__);
 			ret = cERR_SUBTITLE_MGR_ERROR;
 			break;
 	}
 
-	subtitle_mgr_printf(50, "%s:%s: returning %d\n", __FILE__, __FUNCTION__, ret);
+	subtitle_mgr_printf(50, "%s::%s returning %d\n", __FILE__, __FUNCTION__, ret);
 
 	return ret;
 }

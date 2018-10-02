@@ -17,11 +17,11 @@
 
 #ifndef __glthread__
 #define __glthread__
-#include <thread_abstraction.h>
+#include <OpenThreads/Thread>
 #include <vector>
 #include <linux/fb.h> /* for screeninfo etc. */
 
-class GLFramebuffer : public Thread
+class GLFramebuffer : public OpenThreads::Thread
 {
 public:
 	GLFramebuffer(int x, int y);
@@ -34,7 +34,7 @@ private:
 	void *pdata;	/* not yet used */
 	fb_var_screeninfo si;
 	std::vector<unsigned char> osd_buf; /* silly bounce buffer */
-	void run();	/* for Thread */
+	void run();	/* for OpenThreads::Thread */
 
 	void setup();
 	void blit_osd();

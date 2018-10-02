@@ -152,11 +152,11 @@ AC_SUBST(PLUGINDIR)
 AC_SUBST(THEMESDIR)
 dnl end workaround
 
-AC_DEFUN([TUXBOX_BOXTYPE],[
+AC_DEFUN([TUXBOX_BOXTYPE], [
 AC_ARG_WITH(boxtype,
-	[  --with-boxtype          valid values: tripledragon,spark,azbox,generic,duckbox,spark7162,armbox],
+	AS_HELP_STRING([--with-boxtype], [valid values: tripledragon, spark, azbox, generic, armbox, duckbox, spark7162]),
 	[case "${withval}" in
-		tripledragon|azbox|generic)
+		tripledragon|azbox|generic|armbox)
 			BOXTYPE="$withval"
 		;;
 		spark|spark7162)

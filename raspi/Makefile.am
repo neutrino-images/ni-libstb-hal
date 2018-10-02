@@ -10,7 +10,8 @@ AM_CPPFLAGS += \
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 AM_LDFLAGS = \
-	-L/opt/vc/lib/ -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt
+	-L/opt/vc/lib/ -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt \
+	-lOpenThreads
 
 libraspi_la_SOURCES = \
 	hardware_caps.c \

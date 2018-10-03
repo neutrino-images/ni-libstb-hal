@@ -19,3 +19,6 @@ Makefile.in
 *.o
 *.Plo
 *.Po
+
+git-*
+go_*

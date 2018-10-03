@@ -787,7 +787,8 @@ void cVideo::SetDemux(cDemux *)
 	lt_debug("#%d %s not implemented yet\n", devnum, __func__);
 }
 
-void cVideo::SetControl(int control, int value) {
+void cVideo::SetControl(int control, int value)
+{
 	const char *p = NULL;
 	switch (control) {
 	case VIDEO_CONTROL_BRIGHTNESS:
@@ -806,10 +807,47 @@ void cVideo::SetControl(int control, int value) {
 		hue = value;
 		p = "/proc/stb/vmpeg/0/pep_hue";
 		break;
+	case VIDEO_CONTROL_SHARPNESS:
+		sharpness = value;
+		p = "/proc/stb/vmpeg/0/pep_sharpness";
+		break;
+	case VIDEO_CONTROL_BLOCK_NOISE_REDUCTION:
+		block_noise_reduction = value;
+		p = "/proc/stb/vmpeg/0/pep_block_noise_reduction";
+		break;
+	case VIDEO_CONTROL_MOSQUITO_NOISE_REDUCTION:
+		mosquito_noise_reduction = value;
+		p = "/proc/stb/vmpeg/0/pep_mosquito_noise_reduction";
+		break;
+	case VIDEO_CONTROL_DIGITAL_CONTOUR_REMOVAL:
+		digital_contour_removal = value;
+		p = "/proc/stb/vmpeg/0/pep_digital_contour_removal";
+		break;
+	case VIDEO_CONTROL_AUTO_FLESH:
+		auto_flesh = value;
+		p = "/proc/stb/vmpeg/0/pep_auto_flesh";
+		break;
+	case VIDEO_CONTROL_GREEN_BOOST:
+		green_boost = value;
+		p = "/proc/stb/vmpeg/0/pep_green_boost";
+		break;
+	case VIDEO_CONTROL_BLUE_BOOST:
+		blue_boost = value;
+		p = "/proc/stb/vmpeg/0/pep_blue_boost";
+		break;
+	case VIDEO_CONTROL_DYNAMIC_CONTRAST:
+		dynamic_contrast = value;
+		p = "/proc/stb/vmpeg/0/pep_dynamic_contrast";
+		break;
+	case VIDEO_CONTROL_SCALER_SHARPNESS:
+		scaler_sharpness = value;
+		p = "/proc/stb/vmpeg/0/pep_scaler_sharpness";
+		break;
 	}
 	if (p) {
 		char buf[20];
-		int len = snprintf(buf, sizeof(buf), "%x00\n", value);
+		int fix_value = value * 256;
+		int len = snprintf(buf, sizeof(buf), "%0.8X", fix_value);
 		if (len < (int) sizeof(buf))
 			proc_put(p, buf, len);
 	}

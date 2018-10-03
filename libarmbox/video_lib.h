@@ -140,6 +140,14 @@ typedef enum
 	VIDEO_CONTROL_SATURATION,
 	VIDEO_CONTROL_HUE,
 	VIDEO_CONTROL_SHARPNESS,
+	VIDEO_CONTROL_BLOCK_NOISE_REDUCTION,
+	VIDEO_CONTROL_MOSQUITO_NOISE_REDUCTION,
+	VIDEO_CONTROL_DIGITAL_CONTOUR_REMOVAL,
+	VIDEO_CONTROL_AUTO_FLESH,
+	VIDEO_CONTROL_GREEN_BOOST,
+	VIDEO_CONTROL_BLUE_BOOST,
+	VIDEO_CONTROL_DYNAMIC_CONTRAST,
+	VIDEO_CONTROL_SCALER_SHARPNESS,
 	VIDEO_CONTROL_MAX = VIDEO_CONTROL_SHARPNESS
 } VIDEO_CONTROL;
 
@@ -187,6 +195,15 @@ class cVideo
 		int contrast;
 		int saturation;
 		int hue;
+		int sharpness;
+		int block_noise_reduction;
+		int mosquito_noise_reduction;
+		int digital_contour_removal;
+		int auto_flesh;
+		int green_boost;
+		int blue_boost;
+		int dynamic_contrast;
+		int scaler_sharpness;
 
 		/* used internally by dmx */
 		int64_t GetPTS(void);

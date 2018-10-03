@@ -1,6 +1,7 @@
 #ifndef __CA_H_
 #define __CA_H_
 
+#include <config.h>
 #include <stdint.h>
 #include <asm/types.h>
 #include <pthread.h>
@@ -126,6 +127,20 @@ typedef enum {
 	TUNER_B,
 	TUNER_C,
 	TUNER_D
+#if BOXMODEL_VUSOLO4K
+	, TUNER_E
+	, TUNER_F
+	, TUNER_G
+	, TUNER_H
+	, TUNER_I
+	, TUNER_J
+	, TUNER_K
+	, TUNER_L
+	, TUNER_M
+	, TUNER_N
+	, TUNER_O
+	, TUNER_P
+#endif
 } source_t;
 
 typedef enum {

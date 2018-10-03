@@ -18,6 +18,7 @@
 #ifndef __dmx_hal__
 #define __dmx_hal__
 
+#include <config.h>
 #include <cstdlib>
 #include <vector>
 #include <inttypes.h>
@@ -36,7 +37,11 @@ extern "C" {
 
 #include <cs_types.h>
 
+#if BOXMODEL_VUSOLO4K
+#define MAX_DMX_UNITS 16
+#else
 #define MAX_DMX_UNITS 4
+#endif
 
 typedef enum
 {

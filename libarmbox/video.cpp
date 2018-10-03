@@ -853,7 +853,8 @@ void cVideo::SetControl(int control, int value)
 	}
 }
 
-void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
+void cVideo::SetColorFormat(COLOR_FORMAT color_format)
+{
 	const char *p = NULL;
 	switch(color_format) {
 	case COLORFORMAT_RGB:
@@ -868,14 +869,20 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 	case COLORFORMAT_SVIDEO:
 		p = "svideo";
 		break;
+	case COLORFORMAT_HDMI_AUTO:
+		p = "Edid(Auto)";
+		break;
 	case COLORFORMAT_HDMI_RGB:
-		p = "hdmi_rgb";
+		p = "Hdmi_Rgb";
 		break;
 	case COLORFORMAT_HDMI_YCBCR444:
-		p = "hdmi_yuv";
+		p = "444";
 		break;
 	case COLORFORMAT_HDMI_YCBCR422:
-		p = "hdmi_422";
+		p = "422";
+		break;
+	case COLORFORMAT_HDMI_YCBCR420:
+		p = "420";
 		break;
 	}
 	if (p)

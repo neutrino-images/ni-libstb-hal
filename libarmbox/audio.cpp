@@ -67,6 +67,7 @@ void cAudio::closeDevice(void)
 int cAudio::do_mute(bool enable, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __FUNCTION__, enable, remember);
+
 	char str[4];
 
 	if (remember)
@@ -75,14 +76,12 @@ int cAudio::do_mute(bool enable, bool remember)
 	sprintf(str, "%d", Muted);
 	proc_put("/proc/stb/audio/j1_mute", str, strlen(str));
 
-	if (!enable)
+	if (fd > 0)
 	{
-		int f = open("/proc/stb/avs/0/volume", O_RDWR);
-		read(f, str, 4);
-		close(f);
-		str[3] = '\0';
-		proc_put("/proc/stb/avs/0/volume", str, strlen(str));
+		if (ioctl(fd, AUDIO_SET_MUTE, enable) < 0)
+			perror("AUDIO_SET_MUTE");
 	}
+
 	return 0;
 }
 
@@ -102,23 +101,28 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
-#if 0
-	if (clipfd != -1 && mixer_fd != -1) {
-		int tmp = 0;
-		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
-		if (! Muted)
-			tmp = left << 8 | right;
-		int ret = ioctl(mixer_fd, MIXER_WRITE(mixer_num), &tmp);
-		if (ret == -1)
-			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
-		return ret;
+
+	// convert to -1dB steps
+	left = map_volume(volume);
+	right = map_volume(volume);
+	//now range is 63..0, where 0 is loudest
+
+	audio_mixer_t mixer;
+
+	mixer.volume_left = left;
+	mixer.volume_right = right;
+
+	if (fd > 0)
+	{
+		if (ioctl(fd, AUDIO_SET_MIXER, &mixer) < 0)
+			perror("AUDIO_SET_MIXER");
 	}
-#endif
 
 	char str[4];
 	sprintf(str, "%d", v);
 
 	proc_put("/proc/stb/avs/0/volume", str, strlen(str));
+
 	return 0;
 }
 

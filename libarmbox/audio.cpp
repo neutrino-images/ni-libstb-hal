@@ -42,7 +42,7 @@ void cAudio::openDevice(void)
 		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
 			lt_info("openDevice: open failed (%m)\n");
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
-		do_mute(true, false);
+		//do_mute(true, false);
 	}
 	else
 		lt_info("openDevice: already open (fd = %d)\n", fd);

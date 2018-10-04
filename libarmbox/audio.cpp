@@ -42,7 +42,7 @@ void cAudio::openDevice(void)
 		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
 			lt_info("openDevice: open failed (%m)\n");
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
-		do_mute(true, false);
+		//do_mute(true, false);
 	}
 	else
 		lt_info("openDevice: already open (fd = %d)\n", fd);
@@ -67,6 +67,7 @@ void cAudio::closeDevice(void)
 int cAudio::do_mute(bool enable, bool remember)
 {
 	lt_debug("%s(%d, %d)\n", __FUNCTION__, enable, remember);
+
 	char str[4];
 
 	if (remember)
@@ -75,14 +76,12 @@ int cAudio::do_mute(bool enable, bool remember)
 	sprintf(str, "%d", Muted);
 	proc_put("/proc/stb/audio/j1_mute", str, strlen(str));
 
-	if (!enable)
+	if (fd > 0)
 	{
-		int f = open("/proc/stb/avs/0/volume", O_RDWR);
-		read(f, str, 4);
-		close(f);
-		str[3] = '\0';
-		proc_put("/proc/stb/avs/0/volume", str, strlen(str));
+		if (ioctl(fd, AUDIO_SET_MUTE, enable) < 0)
+			perror("AUDIO_SET_MUTE");
 	}
+
 	return 0;
 }
 
@@ -102,23 +101,28 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
-#if 0
-	if (clipfd != -1 && mixer_fd != -1) {
-		int tmp = 0;
-		/* not sure if left / right is correct here, but it is always the same anyways ;-) */
-		if (! Muted)
-			tmp = left << 8 | right;
-		int ret = ioctl(mixer_fd, MIXER_WRITE(mixer_num), &tmp);
-		if (ret == -1)
-			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
-		return ret;
+
+	// convert to -1dB steps
+	left = map_volume(volume);
+	right = map_volume(volume);
+	//now range is 63..0, where 0 is loudest
+
+	audio_mixer_t mixer;
+
+	mixer.volume_left = left;
+	mixer.volume_right = right;
+
+	if (fd > 0)
+	{
+		if (ioctl(fd, AUDIO_SET_MIXER, &mixer) < 0)
+			perror("AUDIO_SET_MIXER");
 	}
-#endif
 
 	char str[4];
 	sprintf(str, "%d", v);
 
 	proc_put("/proc/stb/avs/0/volume", str, strlen(str));
+
 	return 0;
 }
 
@@ -146,41 +150,36 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 }
 
-#define AUDIO_STREAMTYPE_AC3	0
-#define AUDIO_STREAMTYPE_MPEG	1
-#define AUDIO_STREAMTYPE_DTS	2
-#define AUDIO_STREAMTYPE_AAC	8
-#define AUDIO_STREAMTYPE_AACHE	9
-
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
-	int bypass = AUDIO_STREAMTYPE_MPEG;
-	lt_debug("%s %d\n", __FUNCTION__, type);
-	StreamType = type;
+	const char *AF[] = {
+		"AUDIO_STREAMTYPE_AC3",
+		"AUDIO_STREAMTYPE_MPEG",
+		"AUDIO_STREAMTYPE_DTS",
+		"AUDIO_STREAMTYPE_LPCM",
+		"AUDIO_STREAMTYPE_AAC",
+		"AUDIO_STREAMTYPE_AAC_HE",
+		"AUDIO_STREAMTYPE_MP3",
+		"AUDIO_STREAMTYPE_AAC_PLUS",
+		"AUDIO_STREAMTYPE_DTS_HD",
+		"AUDIO_STREAMTYPE_WMA",
+		"AUDIO_STREAMTYPE_WMA_PRO",
+		"AUDIO_STREAMTYPE_AC3_PLUS",
+		"AUDIO_STREAMTYPE_AMR",
+		"AUDIO_STREAMTYPE_RAW"
+	};
 
-	switch (type)
+	lt_info("%s - type=%s\n", __FUNCTION__, AF[type]);
+
+	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, type) < 0)
 	{
-		case AUDIO_FMT_DD_PLUS:
-		case AUDIO_FMT_DOLBY_DIGITAL:
-			bypass = AUDIO_STREAMTYPE_AC3;
-			break;
-		case AUDIO_FMT_AAC:
-			bypass = AUDIO_STREAMTYPE_AAC;
-			break;
-		case AUDIO_FMT_AAC_PLUS:
-			bypass = AUDIO_STREAMTYPE_AACHE;
-			break;
-		case AUDIO_FMT_DTS:
-			bypass = AUDIO_STREAMTYPE_DTS;
-			break;
-		default:
-			break;
+		perror("AUDIO_SET_BYPASS_MODE");
+		return;
 	}
 
-	// Normaly the encoding should be set using AUDIO_SET_ENCODING
-	// But as we implemented the behavior to bypass (cause of e2) this is correct here
-	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
-		lt_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
+	StreamType = type;
+
+	return;
 }
 
 int cAudio::setChannel(int channel)
@@ -310,6 +309,7 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 int cAudio::StopClip()
 {
 	lt_debug("%s\n", __FUNCTION__);
+#if 0
 	if (clipfd < 0) {
 		lt_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
@@ -321,6 +321,7 @@ int cAudio::StopClip()
 		mixer_fd = -1;
 	}
 	setVolume(volume, volume);
+#endif
 	return 0;
 };
 

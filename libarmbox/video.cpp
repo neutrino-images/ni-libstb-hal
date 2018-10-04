@@ -140,15 +140,6 @@ static const char *vid_modes[] = {
 	"720p50"	// VIDEO_STD_AUTO
 };
 
-#define VIDEO_STREAMTYPE_MPEG2 0
-#define VIDEO_STREAMTYPE_MPEG4_H264 1
-#define VIDEO_STREAMTYPE_VC1 3
-#define VIDEO_STREAMTYPE_MPEG4_Part2 4
-#define VIDEO_STREAMTYPE_VC1_SM 5
-#define VIDEO_STREAMTYPE_MPEG1 6
-#define VIDEO_STREAMTYPE_H265_HEVC 7
-#define VIDEO_STREAMTYPE_AVS 16
-
 ssize_t write_all(int fd, const void *buf, size_t count)
 {
 	int retval;
@@ -760,39 +751,26 @@ void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 
 int cVideo::SetStreamType(VIDEO_FORMAT type)
 {
-	static const char *VF[] = {
-		"VIDEO_FORMAT_MPEG2",
-		"VIDEO_FORMAT_MPEG4",
-		"VIDEO_FORMAT_VC1",
-		"VIDEO_FORMAT_JPEG",
-		"VIDEO_FORMAT_GIF",
-		"VIDEO_FORMAT_PNG"
+	const char *VF[] = {
+		"VIDEO_STREAMTYPE_MPEG2",
+		"VIDEO_STREAMTYPE_MPEG4_H264",
+		"VIDEO_STREAMTYPE_MPEG4_H263",
+		"VIDEO_STREAMTYPE_VC1",
+		"VIDEO_STREAMTYPE_MPEG4_Part2",
+		"VIDEO_STREAMTYPE_VC1_SM",
+		"VIDEO_STREAMTYPE_MPEG1",
+		"VIDEO_STREAMTYPE_DIVX311"
+		"VIDEO_STREAMTYPE_H265_HEVC",
+		"VIDEO_STREAMTYPE_AVS"
 	};
-	int t;
-	lt_debug("#%d: %s type=%s\n", devnum, __func__, VF[type]);
 
-	switch (type)
-	{
-		case VIDEO_FORMAT_MPEG4_H264:
-			t = VIDEO_STREAMTYPE_MPEG4_H264;
-			break;
-		case VIDEO_FORMAT_MPEG4_H265:
-			t = VIDEO_STREAMTYPE_H265_HEVC;
-			break;
-		case VIDEO_FORMAT_AVS:
-			t = VIDEO_STREAMTYPE_AVS;
-			break;
-		case VIDEO_FORMAT_VC1:
-			t = VIDEO_STREAMTYPE_VC1;
-			break;
-		case VIDEO_FORMAT_MPEG2:
-		default:
-			t = VIDEO_STREAMTYPE_MPEG2;
-			break;
-	}
+	lt_info("%s - type=%s\n", __FUNCTION__, VF[type]);
 
-	if (ioctl(fd, VIDEO_SET_STREAMTYPE, t) < 0)
-		lt_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
+	if (ioctl( fd, VIDEO_SET_STREAMTYPE, type) < 0)
+		perror("VIDEO_SET_STREAMTYPE");
+
+	StreamType = type;
+
 	return 0;
 }
 
@@ -809,7 +787,8 @@ void cVideo::SetDemux(cDemux *)
 	lt_debug("#%d %s not implemented yet\n", devnum, __func__);
 }
 
-void cVideo::SetControl(int control, int value) {
+void cVideo::SetControl(int control, int value)
+{
 	const char *p = NULL;
 	switch (control) {
 	case VIDEO_CONTROL_BRIGHTNESS:
@@ -828,16 +807,54 @@ void cVideo::SetControl(int control, int value) {
 		hue = value;
 		p = "/proc/stb/vmpeg/0/pep_hue";
 		break;
+	case VIDEO_CONTROL_SHARPNESS:
+		sharpness = value;
+		p = "/proc/stb/vmpeg/0/pep_sharpness";
+		break;
+	case VIDEO_CONTROL_BLOCK_NOISE_REDUCTION:
+		block_noise_reduction = value;
+		p = "/proc/stb/vmpeg/0/pep_block_noise_reduction";
+		break;
+	case VIDEO_CONTROL_MOSQUITO_NOISE_REDUCTION:
+		mosquito_noise_reduction = value;
+		p = "/proc/stb/vmpeg/0/pep_mosquito_noise_reduction";
+		break;
+	case VIDEO_CONTROL_DIGITAL_CONTOUR_REMOVAL:
+		digital_contour_removal = value;
+		p = "/proc/stb/vmpeg/0/pep_digital_contour_removal";
+		break;
+	case VIDEO_CONTROL_AUTO_FLESH:
+		auto_flesh = value;
+		p = "/proc/stb/vmpeg/0/pep_auto_flesh";
+		break;
+	case VIDEO_CONTROL_GREEN_BOOST:
+		green_boost = value;
+		p = "/proc/stb/vmpeg/0/pep_green_boost";
+		break;
+	case VIDEO_CONTROL_BLUE_BOOST:
+		blue_boost = value;
+		p = "/proc/stb/vmpeg/0/pep_blue_boost";
+		break;
+	case VIDEO_CONTROL_DYNAMIC_CONTRAST:
+		dynamic_contrast = value;
+		p = "/proc/stb/vmpeg/0/pep_dynamic_contrast";
+		break;
+	case VIDEO_CONTROL_SCALER_SHARPNESS:
+		scaler_sharpness = value;
+		p = "/proc/stb/vmpeg/0/pep_scaler_sharpness";
+		break;
 	}
 	if (p) {
 		char buf[20];
-		int len = snprintf(buf, sizeof(buf), "%x00\n", value);
+		int fix_value = value * 256;
+		int len = snprintf(buf, sizeof(buf), "%0.8X", fix_value);
 		if (len < (int) sizeof(buf))
 			proc_put(p, buf, len);
 	}
 }
 
-void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
+void cVideo::SetColorFormat(COLOR_FORMAT color_format)
+{
 	const char *p = NULL;
 	switch(color_format) {
 	case COLORFORMAT_RGB:
@@ -852,14 +869,20 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format) {
 	case COLORFORMAT_SVIDEO:
 		p = "svideo";
 		break;
+	case COLORFORMAT_HDMI_AUTO:
+		p = "Edid(Auto)";
+		break;
 	case COLORFORMAT_HDMI_RGB:
-		p = "hdmi_rgb";
+		p = "Hdmi_Rgb";
 		break;
 	case COLORFORMAT_HDMI_YCBCR444:
-		p = "hdmi_yuv";
+		p = "444";
 		break;
 	case COLORFORMAT_HDMI_YCBCR422:
-		p = "hdmi_422";
+		p = "422";
+		break;
+	case COLORFORMAT_HDMI_YCBCR420:
+		p = "420";
 		break;
 	}
 	if (p)

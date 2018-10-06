@@ -140,6 +140,15 @@ static const char *vid_modes[] = {
 	"720p50"	// VIDEO_STD_AUTO
 };
 
+#define VIDEO_STREAMTYPE_MPEG2 0
+#define VIDEO_STREAMTYPE_MPEG4_H264 1
+#define VIDEO_STREAMTYPE_VC1 3
+#define VIDEO_STREAMTYPE_MPEG4_Part2 4
+#define VIDEO_STREAMTYPE_VC1_SM 5
+#define VIDEO_STREAMTYPE_MPEG1 6
+#define VIDEO_STREAMTYPE_H265_HEVC 7
+#define VIDEO_STREAMTYPE_AVS 16
+
 ssize_t write_all(int fd, const void *buf, size_t count)
 {
 	int retval;
@@ -751,26 +760,39 @@ void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 
 int cVideo::SetStreamType(VIDEO_FORMAT type)
 {
-	const char *VF[] = {
-		"VIDEO_STREAMTYPE_MPEG2",
-		"VIDEO_STREAMTYPE_MPEG4_H264",
-		"VIDEO_STREAMTYPE_MPEG4_H263",
-		"VIDEO_STREAMTYPE_VC1",
-		"VIDEO_STREAMTYPE_MPEG4_Part2",
-		"VIDEO_STREAMTYPE_VC1_SM",
-		"VIDEO_STREAMTYPE_MPEG1",
-		"VIDEO_STREAMTYPE_DIVX311"
-		"VIDEO_STREAMTYPE_H265_HEVC",
-		"VIDEO_STREAMTYPE_AVS"
+	static const char *VF[] = {
+		"VIDEO_FORMAT_MPEG2",
+		"VIDEO_FORMAT_MPEG4",
+		"VIDEO_FORMAT_VC1",
+		"VIDEO_FORMAT_JPEG",
+		"VIDEO_FORMAT_GIF",
+		"VIDEO_FORMAT_PNG"
 	};
+	int t;
+	lt_debug("#%d: %s type=%s\n", devnum, __func__, VF[type]);
 
-	lt_info("%s - type=%s\n", __FUNCTION__, VF[type]);
+	switch (type)
+	{
+		case VIDEO_FORMAT_MPEG4_H264:
+			t = VIDEO_STREAMTYPE_MPEG4_H264;
+			break;
+		case VIDEO_FORMAT_MPEG4_H265:
+			t = VIDEO_STREAMTYPE_H265_HEVC;
+			break;
+		case VIDEO_FORMAT_AVS:
+			t = VIDEO_STREAMTYPE_AVS;
+			break;
+		case VIDEO_FORMAT_VC1:
+			t = VIDEO_STREAMTYPE_VC1;
+			break;
+		case VIDEO_FORMAT_MPEG2:
+		default:
+			t = VIDEO_STREAMTYPE_MPEG2;
+			break;
+	}
 
-	if (ioctl( fd, VIDEO_SET_STREAMTYPE, type) < 0)
-		perror("VIDEO_SET_STREAMTYPE");
-
-	StreamType = type;
-
+	if (ioctl(fd, VIDEO_SET_STREAMTYPE, t) < 0)
+		lt_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
 	return 0;
 }
 

@@ -150,36 +150,41 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 }
 
+#define AUDIO_STREAMTYPE_AC3	0
+#define AUDIO_STREAMTYPE_MPEG	1
+#define AUDIO_STREAMTYPE_DTS	2
+#define AUDIO_STREAMTYPE_AAC	8
+#define AUDIO_STREAMTYPE_AACHE	9
+
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
-	const char *AF[] = {
-		"AUDIO_STREAMTYPE_AC3",
-		"AUDIO_STREAMTYPE_MPEG",
-		"AUDIO_STREAMTYPE_DTS",
-		"AUDIO_STREAMTYPE_LPCM",
-		"AUDIO_STREAMTYPE_AAC",
-		"AUDIO_STREAMTYPE_AAC_HE",
-		"AUDIO_STREAMTYPE_MP3",
-		"AUDIO_STREAMTYPE_AAC_PLUS",
-		"AUDIO_STREAMTYPE_DTS_HD",
-		"AUDIO_STREAMTYPE_WMA",
-		"AUDIO_STREAMTYPE_WMA_PRO",
-		"AUDIO_STREAMTYPE_AC3_PLUS",
-		"AUDIO_STREAMTYPE_AMR",
-		"AUDIO_STREAMTYPE_RAW"
-	};
-
-	lt_info("%s - type=%s\n", __FUNCTION__, AF[type]);
-
-	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, type) < 0)
-	{
-		perror("AUDIO_SET_BYPASS_MODE");
-		return;
-	}
-
+	int bypass = AUDIO_STREAMTYPE_MPEG;
+	lt_debug("%s %d\n", __FUNCTION__, type);
 	StreamType = type;
 
-	return;
+	switch (type)
+	{
+		case AUDIO_FMT_DD_PLUS:
+		case AUDIO_FMT_DOLBY_DIGITAL:
+			bypass = AUDIO_STREAMTYPE_AC3;
+			break;
+		case AUDIO_FMT_AAC:
+			bypass = AUDIO_STREAMTYPE_AAC;
+			break;
+		case AUDIO_FMT_AAC_PLUS:
+			bypass = AUDIO_STREAMTYPE_AACHE;
+			break;
+		case AUDIO_FMT_DTS:
+			bypass = AUDIO_STREAMTYPE_DTS;
+			break;
+		default:
+			break;
+	}
+
+	// Normaly the encoding should be set using AUDIO_SET_ENCODING
+	// But as we implemented the behavior to bypass (cause of e2) this is correct here
+	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
+		lt_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
 }
 
 int cAudio::setChannel(int channel)

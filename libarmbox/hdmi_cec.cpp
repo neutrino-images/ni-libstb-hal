@@ -31,6 +31,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <linux/input.h>
+
 #include "linux-uapi-cec.h"
 #include "hdmi_cec.h"
 #include "hdmi_cec_types.h"
@@ -309,113 +311,113 @@ long hdmi_cec::translateKey(unsigned char code)
 	long key = 0;
 	switch (code)
 	{
-	case 0x32:
-		key = 0x8b;
+	case CEC_USER_CONTROL_CODE_PREVIOUS_CHANNEL:
+		key = KEY_MENU;
 		break;
-	case 0x20:
-		key = 0x0b;
+	case CEC_USER_CONTROL_CODE_NUMBER0:
+		key = KEY_0;
 		break;
-	case 0x21:
-		key = 0x02;
+	case CEC_USER_CONTROL_CODE_NUMBER1:
+		key = KEY_1;
 		break;
-	case 0x22:
-		key = 0x03;
+	case CEC_USER_CONTROL_CODE_NUMBER2:
+		key = KEY_2;
 		break;
-	case 0x23:
-		key = 0x04;
+	case CEC_USER_CONTROL_CODE_NUMBER3:
+		key = KEY_3;
 		break;
-	case 0x24:
-		key = 0x05;
+	case CEC_USER_CONTROL_CODE_NUMBER4:
+		key = KEY_4;
 		break;
-	case 0x25:
-		key = 0x06;
+	case CEC_USER_CONTROL_CODE_NUMBER5:
+		key = KEY_5;
 		break;
-	case 0x26:
-		key = 0x07;
+	case CEC_USER_CONTROL_CODE_NUMBER6:
+		key = KEY_6;
 		break;
-	case 0x27:
-		key = 0x08;
+	case CEC_USER_CONTROL_CODE_NUMBER7:
+		key = KEY_7;
 		break;
-	case 0x28:
-		key = 0x09;
+	case CEC_USER_CONTROL_CODE_NUMBER8:
+		key = KEY_8;
 		break;
-	case 0x29:
-		key = 0x0a;
+	case CEC_USER_CONTROL_CODE_NUMBER9:
+		key = KEY_9;
 		break;
-	case 0x30:
-		key = 0x192;
+	case CEC_USER_CONTROL_CODE_CHANNEL_UP:
+		key = KEY_CHANNELUP;
 		break;
-	case 0x31:
-		key = 0x193;
+	case CEC_USER_CONTROL_CODE_CHANNEL_DOWN:
+		key = KEY_CHANNELDOWN;
 		break;
-	case 0x44:
-		key = 0xcf;
+	case CEC_USER_CONTROL_CODE_PLAY:
+		key = KEY_PLAY;
 		break;
-	case 0x45:
-		key = 0x80;
+	case CEC_USER_CONTROL_CODE_STOP:
+		key = KEY_STOP;
 		break;
-	case 0x46:
-		key = 0x77;
+	case CEC_USER_CONTROL_CODE_PAUSE:
+		key = KEY_PAUSE;
 		break;
-	case 0x47:
-		key = 0xa7;
+	case CEC_USER_CONTROL_CODE_RECORD:
+		key = KEY_RECORD;
 		break;
-	case 0x48:
-		key = 0xa8;
+	case CEC_USER_CONTROL_CODE_REWIND:
+		key = KEY_REWIND;
 		break;
-	case 0x49:
-		key = 0xd0;
+	case CEC_USER_CONTROL_CODE_FAST_FORWARD:
+		key = KEY_FASTFORWARD;
 		break;
-	case 0x53:
-		key = 0x166;
+	case CEC_USER_CONTROL_CODE_ELECTRONIC_PROGRAM_GUIDE:
+		key = KEY_INFO;
 		break;
-	case 0x54:
-		key = 0x16a;
+	case CEC_USER_CONTROL_CODE_TIMER_PROGRAMMING:
+		key = KEY_PROGRAM;
 		break;
-	case 0x60:
-		key = 0xcf;
+	case CEC_USER_CONTROL_CODE_PLAY_FUNCTION:
+		key = KEY_PLAY;
 		break;
-	case 0x61:
-		key = 0xa4;
+	case CEC_USER_CONTROL_CODE_PAUSE_PLAY_FUNCTION:
+		key = KEY_PLAYPAUSE;
 		break;
-	case 0x62:
-		key = 0xa7;
+	case CEC_USER_CONTROL_CODE_RECORD_FUNCTION:
+		key = KEY_RECORD;
 		break;
-	case 0x64:
-		key = 0x80;
+	case CEC_USER_CONTROL_CODE_STOP_FUNCTION:
+		key = KEY_STOP;
 		break;
-	case 0x00:
-		key = 0x160;
+	case CEC_USER_CONTROL_CODE_SELECT:
+		key = KEY_OK;
 		break;
-	case 0x03:
-		key = 0x69;
+	case CEC_USER_CONTROL_CODE_LEFT:
+		key = KEY_LEFT;
 		break;
-	case 0x04:
-		key = 0x6a;
+	case CEC_USER_CONTROL_CODE_RIGHT:
+		key = KEY_RIGHT;
 		break;
-	case 0x01:
-		key = 0x67;
+	case CEC_USER_CONTROL_CODE_UP:
+		key = KEY_UP;
 		break;
-	case 0x02:
-		key = 0x6c;
+	case CEC_USER_CONTROL_CODE_DOWN:
+		key = KEY_DOWN;
 		break;
-	case 0x0d:
-		key = 0xae;
+	case CEC_USER_CONTROL_CODE_EXIT:
+		key = KEY_EXIT;
 		break;
-	case 0x72:
-		key = 0x18e;
+	case CEC_USER_CONTROL_CODE_F2_RED:
+		key = KEY_RED;
 		break;
-	case 0x71:
-		key = 0x191;
+	case CEC_USER_CONTROL_CODE_F3_GREEN:
+		key = KEY_GREEN;
 		break;
-	case 0x73:
-		key = 0x18f;
+	case CEC_USER_CONTROL_CODE_F4_YELLOW:
+		key = KEY_YELLOW;
 		break;
-	case 0x74:
-		key = 0x190;
+	case CEC_USER_CONTROL_CODE_F1_BLUE:
+		key = KEY_BLUE;
 		break;
 	default:
-		key = 0x8b;
+		key = KEY_MENU;
 		break;
 	}
 	return key;

@@ -60,9 +60,6 @@ hdmi_cec::hdmi_cec()
 {
 	standby_cec_activ = autoview_cec_activ = false;
 	hdmiFd = -1;
-	if (hdmiFd == -1)
-		hdmiFd = open(CEC_DEVICE, O_RDWR | O_CLOEXEC);
-	Start();
 }
 
 hdmi_cec::~hdmi_cec()
@@ -89,21 +86,18 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
-		if (hdmiFd >= 0)
-		{
-			close(hdmiFd);
-			hdmiFd = -1;
-			Stop();
-		}
+		Stop();
+		lt_debug("CEC OFF %s\n", __func__);
 		return false;
 	}
 	else
 		deviceType = _deviceType;
 
+	lt_debug("CEC ON %s\n", __func__);
+
 	if (hdmiFd == -1)
 	{
-		hdmiFd = open(CEC_DEVICE, O_RDWR | O_CLOEXEC);
-		Start();
+		hdmiFd = open(CEC_DEVICE, O_RDWR | O_NONBLOCK);
 	}
 
 	if (hdmiFd >= 0)
@@ -180,6 +174,7 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 		if(autoview_cec_activ)
 			SetCECState(false);
 
+		Start();
 		return true;
 
 	}
@@ -441,12 +436,18 @@ bool hdmi_cec::Stop()
 
 	running = false;
 
+	if (hdmiFd >= 0)
+	{
+		close(hdmiFd);
+		hdmiFd = -1;
+	}
+
 	return (OpenThreads::Thread::join() == 0);
 }
 
 void hdmi_cec::run()
 {
-	while (running)
+	while (running && (hdmiFd >= 0))
 	{
 		Receive();
 	}

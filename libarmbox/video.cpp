@@ -36,7 +36,7 @@
 #include <linux/fb.h>
 #include "video_lib.h"
 #include "lt_debug.h"
-#include "linux-uapi-cec.h"
+#include "hdmi_cec.h"
 
 #include <proc_tools.h>
 
@@ -326,8 +326,6 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	} else
 		devnum = unit;
 	fd = -1;
-	hdmiFd = -1;
-	standby_cec_activ = autoview_cec_activ = false;
 	openDevice();
 	setAVInput(ENCODER);
 }
@@ -336,8 +334,8 @@ cVideo::~cVideo(void)
 {
 	if(fd >= 0)
 		setAVInput(AUX);
-	if (standby_cec_activ && fd >= 0)
-		SetCECState(true);
+	if (hdmi_cec::getInstance()->standby_cec_activ && fd >= 0)
+		hdmi_cec::getInstance()->SetCECState(true);
 
 	closeDevice();
 }
@@ -640,7 +638,7 @@ void cVideo::Standby(unsigned int bOn)
 		setAVInput(ENCODER);
 	}
 	video_standby = bOn;
-	SetCECState(video_standby);
+	hdmi_cec::getInstance()->SetCECState(video_standby);
 }
 
 int cVideo::getBlank(void)
@@ -1171,220 +1169,15 @@ bool cVideo::GetScreenImage(unsigned char * &out_data, int &xres, int &yres, boo
 
 bool cVideo::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 {
-	physicalAddress[0] = 0x10;
-	physicalAddress[1] = 0x00;
-	logicalAddress = 1;
-
-	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
-	{
-		if (hdmiFd >= 0) {
-			close(hdmiFd);
-			hdmiFd = -1;
-		}
-		return false;
-	}
-	else
-		deviceType = _deviceType;
-
-	if (hdmiFd == -1)
-		hdmiFd = open("/dev/cec0", O_RDWR | O_CLOEXEC);
-
-	if (hdmiFd >= 0)
-	{
-		__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
-		struct cec_caps caps = {};
-
-		if (ioctl(hdmiFd, CEC_ADAP_G_CAPS, &caps) < 0)
-			lt_info("%s: CEC get caps failed (%m)\n", __func__);
-
-		if (caps.capabilities & CEC_CAP_LOG_ADDRS)
-		{
-			struct cec_log_addrs laddrs = {};
-
-			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_info("%s: CEC reset log addr failed (%m)\n", __func__);
-
-			memset(&laddrs, 0, sizeof(laddrs));
-
-			/*
-			 * NOTE: cec_version, osd_name and deviceType should be made configurable,
-			 * CEC_ADAP_S_LOG_ADDRS delayed till the desired values are available
-			 * (saves us some startup speed as well, polling for a free logical address
-			 * takes some time)
-			 */
-			laddrs.cec_version = CEC_OP_CEC_VERSION_2_0;
-			strcpy(laddrs.osd_name, "neutrino");
-			laddrs.vendor_id = CEC_VENDOR_ID_NONE;
-
-			switch (deviceType)
-			{
-			case CEC_LOG_ADDR_TV:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TV;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TV;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TV;
-				break;
-			case CEC_LOG_ADDR_RECORD_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_RECORD;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_RECORD;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_RECORD;
-				break;
-			case CEC_LOG_ADDR_TUNER_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TUNER;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TUNER;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TUNER;
-				break;
-			case CEC_LOG_ADDR_PLAYBACK_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_PLAYBACK;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_PLAYBACK;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_PLAYBACK;
-				break;
-			case CEC_LOG_ADDR_AUDIOSYSTEM:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_AUDIOSYSTEM;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
-				break;
-			default:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_UNREGISTERED;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_SWITCH;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_SWITCH;
-				break;
-			}
-			laddrs.num_log_addrs++;
-
-			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_info("%s: CEC set log addr failed (%m)\n", __func__);
-		}
-
-		if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
-			lt_info("%s: CEC monitor failed (%m)\n", __func__);
-
-		GetCECAddressInfo();
-
-		if(autoview_cec_activ)
-			SetCECState(false);
-
-		return true;
-
-	}
-	return false;
-}
-
-void cVideo::GetCECAddressInfo()
-{
-	if (hdmiFd >= 0)
-	{
-		struct addressinfo addressinfo;
-
-		__u16 phys_addr;
-		struct cec_log_addrs laddrs = {};
-
-		::ioctl(hdmiFd, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
-		addressinfo.physical[0] = (phys_addr >> 8) & 0xff;
-		addressinfo.physical[1] = phys_addr & 0xff;
-
-		::ioctl(hdmiFd, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		addressinfo.logical = laddrs.log_addr[0];
-
-		switch (laddrs.log_addr_type[0])
-		{
-		case CEC_LOG_ADDR_TYPE_TV:
-			addressinfo.type = CEC_LOG_ADDR_TV;
-			break;
-		case CEC_LOG_ADDR_TYPE_RECORD:
-			addressinfo.type = CEC_LOG_ADDR_RECORD_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_TUNER:
-			addressinfo.type = CEC_LOG_ADDR_TUNER_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_PLAYBACK:
-			addressinfo.type = CEC_LOG_ADDR_PLAYBACK_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_AUDIOSYSTEM:
-			addressinfo.type = CEC_LOG_ADDR_AUDIOSYSTEM;
-			break;
-		case CEC_LOG_ADDR_TYPE_UNREGISTERED:
-		default:
-			addressinfo.type = CEC_LOG_ADDR_UNREGISTERED;
-			break;
-		}
-
-		deviceType = addressinfo.type;
-		logicalAddress = addressinfo.logical;
-		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
-		{
-			lt_info("%s: detected physical address change: %02X%02X --> %02X%02X", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
-			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
-			ReportPhysicalAddress();
-			// addressChanged((physicalAddress[0] << 8) | physicalAddress[1]);
-		}
-	}
-}
-
-void cVideo::ReportPhysicalAddress()
-{
-	struct cec_message txmessage;
-	txmessage.address = 0x0f; /* broadcast */
-	txmessage.data[0] = CEC_MSG_REPORT_PHYSICAL_ADDR;
-	txmessage.data[1] = physicalAddress[0];
-	txmessage.data[2] = physicalAddress[1];
-	txmessage.data[3] = deviceType;
-	txmessage.length = 4;
-	SendCECMessage(txmessage);
-}
-
-void cVideo::SendCECMessage(struct cec_message &message)
-{
-	if (hdmiFd >= 0)
-	{
-		lt_info("[CEC] send message");
-		for (int i = 0; i < message.length; i++)
-		{
-			lt_info(" %02X", message.data[i]);
-		}
-		lt_info("\n");
-		struct cec_msg msg;
-		cec_msg_init(&msg, logicalAddress, message.address);
-		memcpy(&msg.msg[1], message.data, message.length);
-		msg.len = message.length + 1;
-		ioctl(hdmiFd, CEC_TRANSMIT, &msg);
-	}
+	return hdmi_cec::getInstance()->SetCECMode(_deviceType);
 }
 
 void cVideo::SetCECAutoStandby(bool state)
 {
-	standby_cec_activ = state;
+	hdmi_cec::getInstance()->SetCECAutoStandby(state);
 }
 
 void cVideo::SetCECAutoView(bool state)
 {
-	autoview_cec_activ = state;	
-}
-
-void cVideo::SetCECState(bool state)
-{
-	struct cec_message message;
-
-	if ((standby_cec_activ) && state){
-		message.address = CEC_OP_PRIM_DEVTYPE_TV;
-		message.data[0] = CEC_MSG_STANDBY;
-		message.length = 1;
-		SendCECMessage(message);
-	}
-
-	if ((autoview_cec_activ) && !state){
-		message.address = CEC_OP_PRIM_DEVTYPE_TV;
-		message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
-		message.length = 1;
-		SendCECMessage(message);
-		usleep(10000);
-		message.address = 0x0f; /* broadcast */
-		message.data[0] = CEC_MSG_ACTIVE_SOURCE;
-		//message.data[1] = ((((int)physicalAddress >> 12) & 0xf) << 4) + (((int)physicalAddress >> 8) & 0xf);
-		//message.data[2] = ((((int)physicalAddress >> 4) & 0xf) << 4)  + (((int)physicalAddress >> 0) & 0xf);
-		message.data[1] = physicalAddress[0];
-		message.data[2] = physicalAddress[1];
-		message.length = 3;
-		SendCECMessage(message);
-	}
-
+	hdmi_cec::getInstance()->SetCECAutoView(state);
 }

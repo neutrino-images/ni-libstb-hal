@@ -144,20 +144,6 @@ typedef enum
 	VIDEO_CONTROL_MAX = VIDEO_CONTROL_SHARPNESS
 } VIDEO_CONTROL;
 
-struct cec_message
-{
-	unsigned char address;
-	unsigned char length;
-	unsigned char data[256];
-}__attribute__((packed));
-#define cec_rx_message cec_message
-struct addressinfo
-{
-	unsigned char logical;
-	unsigned char physical[2];
-	unsigned char type;
-};
-
 class cDemux;
 class cPlayback;
 
@@ -200,11 +186,6 @@ class cVideo
 
 		/* used internally by dmx */
 		int64_t GetPTS(void);
-
-		unsigned char physicalAddress[2];
-		bool standby_cec_activ,autoview_cec_activ;
-		unsigned char deviceType, logicalAddress;
-		int hdmiFd;
 
 	public:
 		/* constructor & destructor */
@@ -250,10 +231,6 @@ class cVideo
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE);
 		void SetCECAutoView(bool);
 		void SetCECAutoStandby(bool);
-		void GetCECAddressInfo();
-		void SendCECMessage(struct cec_message &message);
-		void SetCECState(bool state);
-		void ReportPhysicalAddress();
 		void ShowPicture(const char * fname);
 		void StopPicture();
 		void Standby(unsigned int bOn);

@@ -33,7 +33,11 @@
 
 #include "linux-uapi-cec.h"
 #include "hdmi_cec.h"
+#include "hdmi_cec_types.h"
 #include "lt_debug.h"
+
+#define RED "\x1B[31m"
+#define NORMAL "\x1B[0m"
 
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
 #define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
@@ -250,9 +254,9 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 		char str[txmessage.length*6];
 		for (int i = 0; i < txmessage.length; i++)
 		{
-			sprintf(str+(i*6),"(0x%02X)", txmessage.data[i]);
+			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
-		lt_info("[CEC] send message %s\n",str);
+		lt_info("[CEC] send message '%s' (%s)\n", ToString((cec_opcode)txmessage.data[0]), str);
 		struct cec_msg msg;
 		cec_msg_init(&msg, logicalAddress, txmessage.address);
 		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
@@ -474,21 +478,29 @@ void hdmi_cec::Receive()
 		char str[rxmessage.length*6];
 		for (int i = 0; i < rxmessage.length; i++)
 		{
-			sprintf(str+(i*6),"(0x%02X)", rxmessage.data[i]);
+			sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
 		}
-		lt_info("[CEC] received message %s\n", str);
+		lt_info("[CEC] received message '%s' (%s)\n", ToString((cec_opcode)rxmessage.data[0]), str);
 
 		switch (rxmessage.data[0])
 		{
-		case 0x44: /* key pressed */
+		case CEC_MSG_DEVICE_VENDOR_ID:
+		{
+			uint64_t iVendorId =	((uint64_t)rxmessage.data[1] << 16) +
+									((uint64_t)rxmessage.data[2] << 8) +
+									(uint64_t)rxmessage.data[3];
+			lt_info("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.data[0]), ToString((cec_vendor_id)iVendorId));
+			break;
+		}
+		case CEC_MSG_USER_CONTROL_PRESSED: /* key pressed */
 			keypressed = true;
 			pressedkey = rxmessage.data[1];
-		case 0x45: /* key released */
+		case CEC_MSG_USER_CONTROL_RELEASED: /* key released */
 		{
 			long code = translateKey(pressedkey);
 			if (keypressed)
 				code |= 0x80000000;
-			lt_info("[CEC] received key %ld\n",code);
+			lt_info("[CEC] decoded key %s (%ld)\n",ToString((cec_user_control_code)pressedkey), code);
 			break;
 		}
 		}

@@ -22,6 +22,26 @@
 
 #include "video_lib.h"
 
+#ifndef KEY_OK
+#define KEY_OK           0x160
+#endif
+
+#ifndef KEY_RED
+#define KEY_RED          0x18e
+#endif
+
+#ifndef KEY_GREEN
+#define KEY_GREEN        0x18f
+#endif
+
+#ifndef KEY_YELLOW
+#define KEY_YELLOW       0x190
+#endif
+
+#ifndef KEY_BLUE
+#define KEY_BLUE         0x191
+#endif
+
 struct cec_message
 {
 	unsigned char address;

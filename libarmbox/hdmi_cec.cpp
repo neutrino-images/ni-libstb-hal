@@ -62,6 +62,9 @@
 
 hdmi_cec * hdmi_cec::hdmi_cec_instance = NULL;
 
+//hack to get an instance before first call
+hdmi_cec * CEC = hdmi_cec::getInstance();
+
 hdmi_cec::hdmi_cec()
 {
 	standby_cec_activ = autoview_cec_activ = false;
@@ -80,7 +83,10 @@ hdmi_cec::~hdmi_cec()
 hdmi_cec* hdmi_cec::getInstance()
 {
 	if (hdmi_cec_instance == NULL)
+	{
 		hdmi_cec_instance = new hdmi_cec();
+		lt_debug("[CEC] new instance created \n");
+	}
 	return hdmi_cec_instance;
 }
 
@@ -93,13 +99,13 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
 		Stop();
-		lt_debug("CEC OFF %s\n", __func__);
+		lt_debug("[CEC] switch off %s\n", __func__);
 		return false;
 	}
 	else
 		deviceType = _deviceType;
 
-	lt_debug("CEC ON %s\n", __func__);
+	lt_debug("[CEC] switch on %s\n", __func__);
 
 	if (hdmiFd == -1)
 	{
@@ -112,14 +118,14 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 		struct cec_caps caps = {};
 
 		if (ioctl(hdmiFd, CEC_ADAP_G_CAPS, &caps) < 0)
-			lt_info("%s: CEC get caps failed (%m)\n", __func__);
+			lt_info("[CEC] %s: get caps failed (%m)\n", __func__);
 
 		if (caps.capabilities & CEC_CAP_LOG_ADDRS)
 		{
 			struct cec_log_addrs laddrs = {};
 
 			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_info("%s: CEC reset log addr failed (%m)\n", __func__);
+				lt_info("[CEC] %s: reset log addr failed (%m)\n", __func__);
 
 			memset(&laddrs, 0, sizeof(laddrs));
 
@@ -169,11 +175,11 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 			laddrs.num_log_addrs++;
 
 			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_info("%s: CEC set log addr failed (%m)\n", __func__);
+				lt_info("[CEC] %s: et log addr failed (%m)\n", __func__);
 		}
 
 		if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
-			lt_info("%s: CEC monitor failed (%m)\n", __func__);
+			lt_info("[CEC] %s: monitor failed (%m)\n", __func__);
 
 		GetCECAddressInfo();
 
@@ -230,7 +236,7 @@ void hdmi_cec::GetCECAddressInfo()
 		logicalAddress = addressinfo.logical;
 		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
 		{
-			lt_info("%s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
+			lt_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
 			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
 			ReportPhysicalAddress();
 		}

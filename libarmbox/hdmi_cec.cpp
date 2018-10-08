@@ -85,7 +85,7 @@ hdmi_cec* hdmi_cec::getInstance()
 	if (hdmi_cec_instance == NULL)
 	{
 		hdmi_cec_instance = new hdmi_cec();
-		lt_debug("[CEC] new instance created \n");
+		lt_debug_c("[CEC] new instance created \n");
 	}
 	return hdmi_cec_instance;
 }

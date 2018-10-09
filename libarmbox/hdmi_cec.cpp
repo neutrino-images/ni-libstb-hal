@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -110,7 +111,7 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 
 	if (hdmiFd == -1)
 	{
-		hdmiFd = open(CEC_DEVICE, O_RDWR | O_NONBLOCK);
+		hdmiFd = open(CEC_DEVICE, O_RDWR | O_CLOEXEC);
 	}
 
 	if (hdmiFd >= 0)
@@ -462,6 +463,8 @@ bool hdmi_cec::Stop()
 		return false;
 
 	running = false;
+	
+	OpenThreads::Thread::cancel();
 
 	if (hdmiFd >= 0)
 	{
@@ -474,9 +477,16 @@ bool hdmi_cec::Stop()
 
 void hdmi_cec::run()
 {
-	while (running && (hdmiFd >= 0))
+	OpenThreads::Thread::setCancelModeAsynchronous();
+	struct pollfd pfd;
+
+	pfd.fd = hdmiFd;
+	pfd.events = (POLLIN | POLLPRI);
+
+	while (running)
 	{
-		Receive();
+		if (poll(&pfd, 1, 0) > 0)
+			Receive();
 	}
 }
 

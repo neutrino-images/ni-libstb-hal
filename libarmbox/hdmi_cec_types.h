@@ -207,6 +207,37 @@ typedef enum cec_opcode
 	CEC_OPCODE_NONE                          = 0xFD
 } cec_opcode;
 
+typedef enum cec_logical_address
+{
+	CECDEVICE_UNKNOWN          = -1, //not a valid logical address
+	CECDEVICE_TV               = 0,
+	CECDEVICE_RECORDINGDEVICE1 = 1,
+	CECDEVICE_RECORDINGDEVICE2 = 2,
+	CECDEVICE_TUNER1           = 3,
+	CECDEVICE_PLAYBACKDEVICE1  = 4,
+	CECDEVICE_AUDIOSYSTEM      = 5,
+	CECDEVICE_TUNER2           = 6,
+	CECDEVICE_TUNER3           = 7,
+	CECDEVICE_PLAYBACKDEVICE2  = 8,
+	CECDEVICE_RECORDINGDEVICE3 = 9,
+	CECDEVICE_TUNER4           = 10,
+	CECDEVICE_PLAYBACKDEVICE3  = 11,
+	CECDEVICE_RESERVED1        = 12,
+	CECDEVICE_RESERVED2        = 13,
+	CECDEVICE_FREEUSE          = 14,
+	CECDEVICE_UNREGISTERED     = 15,
+	CECDEVICE_BROADCAST        = 15
+} cec_logical_address;
+
+typedef enum cec_power_status
+{
+	CEC_POWER_STATUS_ON                          = 0x00,
+	CEC_POWER_STATUS_STANDBY                     = 0x01,
+	CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON = 0x02,
+	CEC_POWER_STATUS_IN_TRANSITION_ON_TO_STANDBY = 0x03,
+	CEC_POWER_STATUS_UNKNOWN                     = 0x99
+} cec_power_status;
+
 static const char *ToString(const cec_opcode opcode)
 {
 	switch (opcode)
@@ -597,4 +628,41 @@ static const char *ToString(const cec_user_control_code key)
 	default:
 		return "unknown";
 	}
+}
+
+static cec_opcode GetResponseOpcode(cec_opcode opcode)
+{
+	switch (opcode)
+	{
+	case CEC_OPCODE_REQUEST_ACTIVE_SOURCE:
+		return CEC_OPCODE_ACTIVE_SOURCE;
+	case CEC_OPCODE_GET_CEC_VERSION:
+		return CEC_OPCODE_CEC_VERSION;
+	case CEC_OPCODE_GIVE_PHYSICAL_ADDRESS:
+		return CEC_OPCODE_REPORT_PHYSICAL_ADDRESS;
+	case CEC_OPCODE_GET_MENU_LANGUAGE:
+		return CEC_OPCODE_SET_MENU_LANGUAGE;
+	case CEC_OPCODE_GIVE_DECK_STATUS:
+		return CEC_OPCODE_DECK_STATUS;
+	case CEC_OPCODE_GIVE_TUNER_DEVICE_STATUS:
+		return CEC_OPCODE_TUNER_DEVICE_STATUS;
+	case CEC_OPCODE_GIVE_DEVICE_VENDOR_ID:
+		return CEC_OPCODE_DEVICE_VENDOR_ID;
+	case CEC_OPCODE_GIVE_OSD_NAME:
+		return CEC_OPCODE_SET_OSD_NAME;
+	case CEC_OPCODE_MENU_REQUEST:
+		return CEC_OPCODE_MENU_STATUS;
+	case CEC_OPCODE_GIVE_DEVICE_POWER_STATUS:
+		return CEC_OPCODE_REPORT_POWER_STATUS;
+	case CEC_OPCODE_GIVE_AUDIO_STATUS:
+		return CEC_OPCODE_REPORT_AUDIO_STATUS;
+	case CEC_OPCODE_GIVE_SYSTEM_AUDIO_MODE_STATUS:
+		return CEC_OPCODE_SYSTEM_AUDIO_MODE_STATUS;
+	case CEC_OPCODE_SYSTEM_AUDIO_MODE_REQUEST:
+		return CEC_OPCODE_SET_SYSTEM_AUDIO_MODE;
+	default:
+		break;
+	}
+
+	return CEC_OPCODE_NONE;
 }

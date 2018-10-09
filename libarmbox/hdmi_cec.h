@@ -22,31 +22,13 @@
 
 #include "video_lib.h"
 
-#ifndef KEY_OK
-#define KEY_OK           0x160
-#endif
-
-#ifndef KEY_RED
-#define KEY_RED          0x18e
-#endif
-
-#ifndef KEY_GREEN
-#define KEY_GREEN        0x18f
-#endif
-
-#ifndef KEY_YELLOW
-#define KEY_YELLOW       0x190
-#endif
-
-#ifndef KEY_BLUE
-#define KEY_BLUE         0x191
-#endif
-
 struct cec_message
 {
-	unsigned char address;
-	unsigned char length;
+	unsigned char initiator;
+	unsigned char destination;
+	unsigned char opcode;
 	unsigned char data[256];
+	unsigned char length;
 } __attribute__((packed));
 
 struct addressinfo
@@ -54,6 +36,12 @@ struct addressinfo
 	unsigned char logical;
 	unsigned char physical[2];
 	unsigned char type;
+};
+
+enum {
+	KEY_RELEASED = 0,
+	KEY_PRESSED,
+	KEY_AUTOREPEAT
 };
 
 class hdmi_cec : public OpenThreads::Thread
@@ -70,6 +58,10 @@ private:
 	unsigned char deviceType, logicalAddress;
 	int hdmiFd;
 	long translateKey(unsigned char code);
+	void handleCode(long code, bool keypressed);
+	int rc_send(int fd, unsigned int code, unsigned int value);
+	void rc_sync(int fd);
+	bool standby;
 protected:
 	bool running;
 public:

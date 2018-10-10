@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -59,6 +60,7 @@
 })
 
 #define CEC_DEVICE "/dev/cec0"
+#define RC_DEVICE  "/dev/input/event1"
 
 hdmi_cec * hdmi_cec::hdmi_cec_instance = NULL;
 
@@ -67,7 +69,7 @@ hdmi_cec * CEC = hdmi_cec::getInstance();
 
 hdmi_cec::hdmi_cec()
 {
-	standby_cec_activ = autoview_cec_activ = false;
+	standby_cec_activ = autoview_cec_activ = standby = false;
 	hdmiFd = -1;
 }
 
@@ -109,7 +111,7 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 
 	if (hdmiFd == -1)
 	{
-		hdmiFd = open(CEC_DEVICE, O_RDWR | O_NONBLOCK);
+		hdmiFd = open(CEC_DEVICE, O_RDWR | O_CLOEXEC);
 	}
 
 	if (hdmiFd >= 0)
@@ -246,7 +248,8 @@ void hdmi_cec::GetCECAddressInfo()
 void hdmi_cec::ReportPhysicalAddress()
 {
 	struct cec_message txmessage;
-	txmessage.address = 0x0f; /* broadcast */
+	txmessage.initiator = logicalAddress;
+	txmessage.destination = CEC_LOG_ADDR_BROADCAST;
 	txmessage.data[0] = CEC_MSG_REPORT_PHYSICAL_ADDR;
 	txmessage.data[1] = physicalAddress[0];
 	txmessage.data[2] = physicalAddress[1];
@@ -264,9 +267,9 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 		{
 			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
-		lt_info("[CEC] send message '%s' (%s)\n", ToString((cec_opcode)txmessage.data[0]), str);
+		lt_info("[CEC] send message 0x%02X >> 0x%02X '%s' (%s)\n", txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
 		struct cec_msg msg;
-		cec_msg_init(&msg, logicalAddress, txmessage.address);
+		cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
 		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
 		msg.len = txmessage.length + 1;
 		ioctl(hdmiFd, CEC_TRANSMIT, &msg);
@@ -287,9 +290,12 @@ void hdmi_cec::SetCECState(bool state)
 {
 	struct cec_message message;
 
+	standby = state;
+
 	if ((standby_cec_activ) && state)
 	{
-		message.address = CEC_OP_PRIM_DEVTYPE_TV;
+		message.initiator = logicalAddress;
+		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
 		message.data[0] = CEC_MSG_STANDBY;
 		message.length = 1;
 		SendCECMessage(message);
@@ -297,12 +303,22 @@ void hdmi_cec::SetCECState(bool state)
 
 	if ((autoview_cec_activ) && !state)
 	{
-		message.address = CEC_OP_PRIM_DEVTYPE_TV;
+		message.initiator = logicalAddress;
+		message.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+		message.data[0] = CEC_MSG_GIVE_SYSTEM_AUDIO_MODE_STATUS;
+		message.length = 1;
+		SendCECMessage(message);
+		usleep(10000);
+
+		message.initiator = logicalAddress;
+		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
 		message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
 		message.length = 1;
 		SendCECMessage(message);
 		usleep(10000);
-		message.address = 0x0f; /* broadcast */
+
+		message.initiator = logicalAddress;
+		message.destination = CEC_LOG_ADDR_BROADCAST;
 		message.data[0] = CEC_MSG_ACTIVE_SOURCE;
 		message.data[1] = physicalAddress[0];
 		message.data[2] = physicalAddress[1];
@@ -447,6 +463,8 @@ bool hdmi_cec::Stop()
 		return false;
 
 	running = false;
+	
+	OpenThreads::Thread::cancel();
 
 	if (hdmiFd >= 0)
 	{
@@ -459,9 +477,16 @@ bool hdmi_cec::Stop()
 
 void hdmi_cec::run()
 {
-	while (running && (hdmiFd >= 0))
+	OpenThreads::Thread::setCancelModeAsynchronous();
+	struct pollfd pfd;
+
+	pfd.fd = hdmiFd;
+	pfd.events = (POLLIN | POLLPRI);
+
+	while (running)
 	{
-		Receive();
+		if (poll(&pfd, 1, 0) > 0)
+			Receive();
 	}
 }
 
@@ -469,11 +494,15 @@ void hdmi_cec::Receive()
 {
 	bool hasdata = false;
 	struct cec_message rxmessage;
+	struct cec_message txmessage;
 
 	struct cec_msg msg;
 	if (::ioctl(hdmiFd, CEC_RECEIVE, &msg) >= 0)
 	{
 		rxmessage.length = msg.len - 1;
+		rxmessage.initiator = cec_msg_initiator(&msg);
+		rxmessage.destination = cec_msg_destination(&msg);
+		rxmessage.opcode = cec_msg_opcode(&msg);
 		memcpy(&rxmessage.data, &msg.msg[1], rxmessage.length);
 		hasdata = true;
 	}
@@ -488,29 +517,91 @@ void hdmi_cec::Receive()
 		{
 			sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
 		}
-		lt_info("[CEC] received message '%s' (%s)\n", ToString((cec_opcode)rxmessage.data[0]), str);
+		lt_info("[CEC] received message 0x%02X << 0x%02X '%s' (%s)\n", rxmessage.destination, rxmessage.initiator, ToString((cec_opcode)rxmessage.opcode), str);
 
-		switch (rxmessage.data[0])
+		switch (rxmessage.opcode)
 		{
-		case CEC_MSG_DEVICE_VENDOR_ID:
+		case CEC_OPCODE_DEVICE_VENDOR_ID:
+		case CEC_OPCODE_VENDOR_COMMAND_WITH_ID:
 		{
 			uint64_t iVendorId =	((uint64_t)rxmessage.data[1] << 16) +
-									((uint64_t)rxmessage.data[2] << 8) +
-									(uint64_t)rxmessage.data[3];
-			lt_info("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.data[0]), ToString((cec_vendor_id)iVendorId));
+			                        ((uint64_t)rxmessage.data[2] << 8) +
+			                        (uint64_t)rxmessage.data[3];
+			lt_info("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
 			break;
 		}
-		case CEC_MSG_USER_CONTROL_PRESSED: /* key pressed */
+		case CEC_OPCODE_GIVE_DEVICE_POWER_STATUS:
+		{
+			txmessage.destination = rxmessage.initiator;
+			txmessage.initiator = rxmessage.destination;
+			txmessage.data[0] = GetResponseOpcode((cec_opcode)rxmessage.opcode);
+			txmessage.data[1] = standby ? CEC_POWER_STATUS_STANDBY : CEC_POWER_STATUS_ON;
+			txmessage.length = 2;
+			SendCECMessage(txmessage);
+			break;
+		}
+		case CEC_OPCODE_USER_CONTROL_PRESSED: /* key pressed */
 			keypressed = true;
 			pressedkey = rxmessage.data[1];
-		case CEC_MSG_USER_CONTROL_RELEASED: /* key released */
+		case CEC_OPCODE_USER_CONTROL_RELEASE: /* key released */
 		{
 			long code = translateKey(pressedkey);
-			if (keypressed)
-				code |= 0x80000000;
 			lt_info("[CEC] decoded key %s (%ld)\n",ToString((cec_user_control_code)pressedkey), code);
+			handleCode(code,keypressed);
 			break;
 		}
 		}
 	}
+}
+
+void hdmi_cec::handleCode(long code, bool keypressed)
+{
+	int evd = open(RC_DEVICE, O_RDWR);
+	if (evd < 0)
+	{
+		perror("opening " RC_DEVICE " failed");
+		return;
+	}
+	if (keypressed)
+	{
+		if (rc_send(evd, code, KEY_PRESSED) < 0)
+		{
+			perror("writing 'KEY_PRESSED' event failed");
+			close(evd);
+			return;
+		}
+		rc_sync(evd);
+	}
+	else
+	{
+		if (rc_send(evd, code, KEY_RELEASED) < 0)
+		{
+			perror("writing 'KEY_RELEASED' event failed");
+			close(evd);
+			return;
+		}
+		rc_sync(evd);
+	}
+	close(evd);
+}
+
+int hdmi_cec::rc_send(int fd, unsigned int code, unsigned int value)
+{
+	struct input_event ev;
+
+	ev.type = EV_KEY;
+	ev.code = code;
+	ev.value = value;
+	return write(fd, &ev, sizeof(ev));
+}
+
+void hdmi_cec::rc_sync(int fd)
+{
+	struct input_event ev;
+
+	gettimeofday(&ev.time, NULL);
+	ev.type = EV_SYN;
+	ev.code = SYN_REPORT;
+	ev.value = 0;
+	write(fd, &ev, sizeof(ev));
 }

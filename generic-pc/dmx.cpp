@@ -70,10 +70,6 @@ static const char *devname[] = {
 	"/dev/dvb/adapter0/demux0"
 };
 
-#define NUM_DEMUX 1
-static int dmx_source[NUM_DEMUX] = { 0 };
-// static bool init[NUM_DEMUXDEV] = { false };
-
 /* uuuugly */
 static int dmx_tp_count = 0;
 #define MAX_TS_COUNT 8

@@ -20,7 +20,8 @@ libarmbox_la_SOURCES = \
 	video.cpp \
 	audio.cpp \
 	init.cpp \
-	record.cpp
+	record.cpp \
+	hdmi_cec.cpp
 
 if ENABLE_GSTREAMER_10
 libarmbox_la_SOURCES += \

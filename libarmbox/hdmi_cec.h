@@ -38,10 +38,11 @@ struct addressinfo
 	unsigned char type;
 };
 
-enum {
-	KEY_RELEASED = 0,
-	KEY_PRESSED,
-	KEY_AUTOREPEAT
+enum
+{
+	CEC_KEY_RELEASED = 0,
+	CEC_KEY_PRESSED,
+	CEC_KEY_AUTOREPEAT
 };
 
 class hdmi_cec : public OpenThreads::Thread
@@ -62,6 +63,10 @@ private:
 	int rc_send(int fd, unsigned int code, unsigned int value);
 	void rc_sync(int fd);
 	bool standby;
+	void send_key(unsigned char key, unsigned char destination);
+	void request_audio_status();
+	bool muted;
+	int volume;
 protected:
 	bool running;
 public:
@@ -75,4 +80,15 @@ public:
 	void SetCECState(bool state);
 	void ReportPhysicalAddress();
 	bool standby_cec_activ;
+	void vol_up();
+	void vol_down();
+	void toggle_mute();
+	int GetVolume()
+	{
+		return volume;
+	};
+	bool isMuted()
+	{
+		return muted;
+	};
 };

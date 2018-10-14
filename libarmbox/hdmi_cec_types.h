@@ -630,6 +630,46 @@ static const char *ToString(const cec_user_control_code key)
 	}
 }
 
+static const char *ToString(cec_logical_address la)
+{
+	switch (la & 0xf)
+	{
+	case CECDEVICE_TV:
+		return "TV";
+	case CECDEVICE_RECORDINGDEVICE1:
+		return "Recording Device 1";
+	case CECDEVICE_RECORDINGDEVICE2:
+		return "Recording Device 2";
+	case CECDEVICE_TUNER1:
+		return "Tuner 1";
+	case CECDEVICE_PLAYBACKDEVICE1:
+		return "Playback Device 1";
+	case CECDEVICE_AUDIOSYSTEM:
+		return "Audio System";
+	case CECDEVICE_TUNER2:
+		return "Tuner 2";
+	case CECDEVICE_TUNER3:
+		return "Tuner 3";
+	case CECDEVICE_PLAYBACKDEVICE2:
+		return "Playback Device 2";
+	case CECDEVICE_RECORDINGDEVICE3:
+		return "Recording Device 3";
+	case CECDEVICE_TUNER4:
+		return "Tuner 4";
+	case CECDEVICE_PLAYBACKDEVICE3:
+		return "Playback Device 3";
+	case CECDEVICE_RESERVED1:
+		return "Reserved 1";
+	case CECDEVICE_RESERVED2:
+		return "Reserved 2";
+	case CECDEVICE_FREEUSE:
+		return "Free use";
+	case CECDEVICE_UNREGISTERED:
+	default:
+		return "Unregistered";
+	}
+}
+
 static cec_opcode GetResponseOpcode(cec_opcode opcode)
 {
 	switch (opcode)

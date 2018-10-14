@@ -69,8 +69,9 @@ hdmi_cec * CEC = hdmi_cec::getInstance();
 
 hdmi_cec::hdmi_cec()
 {
-	standby_cec_activ = autoview_cec_activ = standby = false;
+	standby_cec_activ = autoview_cec_activ = standby = muted = false;
 	hdmiFd = -1;
+	volume = 0;
 }
 
 hdmi_cec::~hdmi_cec()
@@ -267,7 +268,7 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 		{
 			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
-		lt_info("[CEC] send message 0x%02X >> 0x%02X '%s' (%s)\n", txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
+		lt_info("[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
 		struct cec_msg msg;
 		cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
 		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
@@ -324,6 +325,9 @@ void hdmi_cec::SetCECState(bool state)
 		message.data[2] = physicalAddress[1];
 		message.length = 3;
 		SendCECMessage(message);
+		usleep(10000);
+
+		request_audio_status();
 	}
 
 }
@@ -517,10 +521,20 @@ void hdmi_cec::Receive()
 		{
 			sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
 		}
-		lt_info("[CEC] received message 0x%02X << 0x%02X '%s' (%s)\n", rxmessage.destination, rxmessage.initiator, ToString((cec_opcode)rxmessage.opcode), str);
+		lt_info("[CEC] received message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)rxmessage.initiator), rxmessage.destination == 0xf ? "all" : ToString((cec_logical_address)rxmessage.destination), rxmessage.initiator, rxmessage.destination, ToString((cec_opcode)rxmessage.opcode), str);
 
 		switch (rxmessage.opcode)
 		{
+		case CEC_OPCODE_REPORT_AUDIO_STATUS:
+		{
+			muted = ((rxmessage.data[1] & 0x80) == 0x80);
+			volume = rxmessage.data[1] & 0x7F;
+			if (muted)
+				lt_debug("[CEC] %s volume muted\n", ToString((cec_logical_address)rxmessage.initiator));
+			else
+				lt_debug("[CEC] %s volume %d \n", ToString((cec_logical_address)rxmessage.initiator), volume);
+			break;
+		}
 		case CEC_OPCODE_DEVICE_VENDOR_ID:
 		case CEC_OPCODE_VENDOR_COMMAND_WITH_ID:
 		{
@@ -564,7 +578,7 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	}
 	if (keypressed)
 	{
-		if (rc_send(evd, code, KEY_PRESSED) < 0)
+		if (rc_send(evd, code, CEC_KEY_PRESSED) < 0)
 		{
 			lt_debug("[CEC] writing 'KEY_PRESSED' event failed");
 			close(evd);
@@ -574,7 +588,7 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	}
 	else
 	{
-		if (rc_send(evd, code, KEY_RELEASED) < 0)
+		if (rc_send(evd, code, CEC_KEY_RELEASED) < 0)
 		{
 			lt_debug("[CEC] writing 'KEY_RELEASED' event failed");
 			close(evd);
@@ -604,4 +618,52 @@ void hdmi_cec::rc_sync(int fd)
 	ev.code = SYN_REPORT;
 	ev.value = 0;
 	write(fd, &ev, sizeof(ev));
+}
+
+void hdmi_cec::send_key(unsigned char key, unsigned char destination)
+{
+	struct cec_message txmessage;
+	txmessage.destination = destination;
+	txmessage.initiator = logicalAddress;
+	txmessage.data[0] = CEC_OPCODE_USER_CONTROL_PRESSED;
+	txmessage.data[1] = key;
+	txmessage.length = 2;
+	SendCECMessage(txmessage);
+	usleep(10000);
+
+	txmessage.destination = destination;
+	txmessage.initiator = logicalAddress;
+	txmessage.data[0] = CEC_OPCODE_USER_CONTROL_RELEASE;
+	txmessage.data[1] = key;
+	txmessage.length = 2;
+	SendCECMessage(txmessage);
+}
+
+void hdmi_cec::request_audio_status()
+{
+	struct cec_message txmessage;
+	txmessage.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+	txmessage.initiator = logicalAddress;
+	txmessage.data[0] = CEC_OPCODE_GIVE_AUDIO_STATUS;
+	txmessage.length = 1;
+	SendCECMessage(txmessage);
+}
+
+void hdmi_cec::vol_up()
+{
+	send_key(CEC_USER_CONTROL_CODE_VOLUME_UP, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	usleep(50000);
+	request_audio_status();
+}
+void hdmi_cec::vol_down()
+{
+	send_key(CEC_USER_CONTROL_CODE_VOLUME_DOWN, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	usleep(50000);
+	request_audio_status();
+}
+void hdmi_cec::toggle_mute()
+{
+	send_key(CEC_USER_CONTROL_CODE_MUTE, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	usleep(50000);
+	request_audio_status();
 }

@@ -894,6 +894,7 @@ static void FFMPEGThread(Context_t *context)
 						avOut.width      = videoTrack->width;
 						avOut.height     = videoTrack->height;
 						avOut.type       = "video";
+						avOut.infoFlags  = 0;
 
 						if (avContextTab[cAVIdx]->iformat->flags & AVFMT_TS_DISCONT)
 						{

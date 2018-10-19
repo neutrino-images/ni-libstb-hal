@@ -528,7 +528,7 @@ void hdmi_cec::Receive()
 		case CEC_OPCODE_REPORT_AUDIO_STATUS:
 		{
 			muted = ((rxmessage.data[1] & 0x80) == 0x80);
-			volume = rxmessage.data[1] & 0x7F;
+			volume = ((rxmessage.data[1] & 0x7F) / 127.0) * 100.0;
 			if (muted)
 				lt_debug("[CEC] %s volume muted\n", ToString((cec_logical_address)rxmessage.initiator));
 			else
@@ -634,8 +634,7 @@ void hdmi_cec::send_key(unsigned char key, unsigned char destination)
 	txmessage.destination = destination;
 	txmessage.initiator = logicalAddress;
 	txmessage.data[0] = CEC_OPCODE_USER_CONTROL_RELEASE;
-	txmessage.data[1] = key;
-	txmessage.length = 2;
+	txmessage.length = 1;
 	SendCECMessage(txmessage);
 }
 

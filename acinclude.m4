@@ -154,74 +154,10 @@ dnl end workaround
 
 AC_DEFUN([TUXBOX_BOXTYPE], [
 AC_ARG_WITH(boxtype,
-	AS_HELP_STRING([--with-boxtype], [valid values: tripledragon, spark, azbox, generic, armbox, duckbox, spark7162]),
+	AS_HELP_STRING([--with-boxtype], [valid values: tripledragon, spark, azbox, generic, armbox, duckbox]),
 	[case "${withval}" in
-		tripledragon|azbox|generic|armbox)
+		tripledragon|spark|azbox|generic|armbox|duckbox)
 			BOXTYPE="$withval"
-		;;
-		spark|spark7162)
-			BOXTYPE="spark"
-			BOXMODEL="$withval"
-		;;
-		dm*)
-			BOXTYPE="dreambox"
-			BOXMODEL="$withval"
-		;;
-		ufs*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		atevio*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		fortis*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		octagon*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		hs7*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		dp*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		cuberevo*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		ipbox*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		arivalink200)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		tf*)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		hl101)
-			BOXTYPE="duckbox"
-			BOXMODEL="$withval"
-		;;
-		vusolo4k)
-			BOXTYPE="armbox"
-			BOXMODEL="$withval"
-		;;
-		hd51)
-			BOXTYPE="armbox"
-			BOXMODEL="$withval"
-		;;
-		hd60)
-			BOXTYPE="armbox"
-			BOXMODEL="$withval"
 		;;
 		*)
 			AC_MSG_ERROR([bad value $withval for --with-boxtype])
@@ -249,21 +185,7 @@ AS_HELP_STRING([], [valid for armbox: hd51, hd60, vusolo4k]),
 				AC_MSG_ERROR([unknown model $withval for boxtype $BOXTYPE])
 			fi
 		;;
-		vusolo4k)
-			if test "$BOXTYPE" = "armbox"; then
-				BOXMODEL="$withval"
-			else
-				AC_MSG_ERROR([unknown model $withval for boxtype $BOXTYPE])
-			fi
-		;;
-		hd51)
-			if test "$BOXTYPE" = "armbox"; then
-				BOXMODEL="$withval"
-			else
-				AC_MSG_ERROR([unknown model $withval for boxtype $BOXTYPE])
-			fi
-		;;
-		hd60)
+		hd51|hd60|vusolo4k)
 			if test "$BOXTYPE" = "armbox"; then
 				BOXMODEL="$withval"
 			else

@@ -78,5 +78,21 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "HD60");
 	strcpy(caps.boxarch, "HI3798M");
 #endif
+#if BOXMODEL_BRE2ZE4K
+	initialized = 1;
+	caps.has_CI = 1;
+	caps.can_cec = 1;
+	caps.can_shutdown = 1;
+	caps.display_xres = 4;
+	caps.display_type = HW_DISPLAY_LED_NUM;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_has_statusline = 0;
+	caps.has_button_timer = 1;
+	caps.has_HDMI = 1;
+	strcpy(caps.boxvendor, "WWIO");
+	strcpy(caps.boxname, "BRE2ZE4K");
+	strcpy(caps.boxarch, "BCM7251S");
+#endif
 	return &caps;
 }

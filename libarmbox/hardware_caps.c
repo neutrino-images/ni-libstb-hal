@@ -41,6 +41,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_can_set_brightness = 1;
 	caps.display_has_statusline = 1;
 	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "VU");
 	strcpy(caps.boxname, "SOLO4K");
@@ -57,6 +58,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_can_set_brightness = 1;
 	caps.display_has_statusline = 0;
 	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "AX-Technologies");
 	strcpy(caps.boxname, "HD51");
@@ -73,6 +75,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_can_set_brightness = 1;
 	caps.display_has_statusline = 0;
 	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "AX-Technologies");
 	strcpy(caps.boxname, "HD60");
@@ -89,6 +92,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_can_set_brightness = 1;
 	caps.display_has_statusline = 0;
 	caps.has_button_timer = 1;
+	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "WWIO");
 	strcpy(caps.boxname, "BRE2ZE4K");

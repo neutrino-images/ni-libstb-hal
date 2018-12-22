@@ -72,16 +72,13 @@ pkginclude_HEADERS = \
 	include/cs_api.h \
 	include/ca_ci.h \
 	include/cs_types.h \
-	include/dmx_cs.h \
 	include/dmx_hal.h \
 	include/glfb.h \
 	include/hardware_caps.h \
-	include/init_cs.h \
 	include/init_td.h \
 	include/mmi.h \
 	include/playback.h \
 	include/playback_hal.h \
 	include/pwrmngr.h \
 	include/record_hal.h \
-	include/video_cs.h \
 	include/video_hal.h

@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "dvbci_mmi.h"
-#include <ca_cs.h>
+#include <ca_hal.h>
 
 eDVBCIMMISession::eDVBCIMMISession(eDVBCISlot *tslot)
 {

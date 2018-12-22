@@ -4,8 +4,8 @@
 #if HAVE_DUCKBOX_HARDWARE || HAVE_ARM_HARDWARE
 #include "ca_ci.h"
 #else
-#ifndef __CA_LIBTRIPLE_H_
-#define __CA_LIBTRIPLE_H_
+#ifndef __ca_hal__
+#define __ca_hal__
 
 #include <stdint.h>
 #include "cs_types.h"
@@ -122,5 +122,5 @@ public:
 	virtual ~cCA();
 };
 
-#endif // __CA_LIBTRIPLE_H_
+#endif // __ca_hal__
 #endif // HAVE_DUCKBOX_HARDWARE

@@ -67,8 +67,7 @@ endif
 
 pkginclude_HEADERS = \
 	include/audio_hal.h \
-	include/ca_cs.h \
-	include/ca.h \
+	include/ca_hal.h \
 	include/cs_api.h \
 	include/ca_ci.h \
 	include/cs_types.h \

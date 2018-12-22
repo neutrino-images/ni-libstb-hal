@@ -76,7 +76,6 @@ pkginclude_HEADERS = \
 	include/hardware_caps.h \
 	include/init_td.h \
 	include/mmi.h \
-	include/playback.h \
 	include/playback_hal.h \
 	include/pwrmngr.h \
 	include/record_hal.h \

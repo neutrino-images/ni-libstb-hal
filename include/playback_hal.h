@@ -12,15 +12,15 @@
 #include "../libarmbox/playback_libeplayer3.h"
 #endif
 #elif HAVE_AZBOX_HARDWARE
-#include "../azbox/playback.h"
+#include "../azbox/playback_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
-#include "../raspi/playback.h"
+#include "../raspi/playback_lib.h"
 #else
 #if ENABLE_GSTREAMER
 #include "../generic-pc/playback_gst.h"
 #else
-#include "../generic-pc/playback.h"
+#include "../generic-pc/playback_lib.h"
 #endif
 #endif
 #else

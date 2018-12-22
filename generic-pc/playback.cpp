@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "playback.h"
+#include "playback_lib.h"
 
 static const char * FILENAME = "playback-dummy";
 

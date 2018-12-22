@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "ca.h"
+#include "ca_hal.h"
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_CA, this, args)
 

@@ -74,7 +74,7 @@ pkginclude_HEADERS = \
 	include/dmx_hal.h \
 	include/glfb.h \
 	include/hardware_caps.h \
-	include/init_td.h \
+	include/init.h \
 	include/mmi.h \
 	include/playback_hal.h \
 	include/pwrmngr.h \

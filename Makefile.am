@@ -35,17 +35,17 @@ endif
 endif
 if BOXTYPE_SPARK
 #libstb_hal_test_LDADD += -lasound
-SUBDIRS += libspark libeplayer3
+SUBDIRS += libspark libeplayer3-sh4
 libstb_hal_la_LIBADD += \
 	libspark/libspark.la \
-	libeplayer3/libeplayer3.la
+	libeplayer3-sh4/libeplayer3_sh4.la
 endif
 if BOXTYPE_DUCKBOX
 #libstb_hal_test_LDADD += -lasound
-SUBDIRS += libduckbox libeplayer3 libdvbci
+SUBDIRS += libduckbox libeplayer3-sh4 libdvbci
 libstb_hal_la_LIBADD += \
 	libduckbox/libduckbox.la \
-	libeplayer3/libeplayer3.la \
+	libeplayer3-sh4/libeplayer3_sh4.la \
 	libdvbci/libdvbci.la
 endif
 if BOXTYPE_ARMBOX

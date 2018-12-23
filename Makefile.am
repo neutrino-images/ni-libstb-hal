@@ -29,7 +29,7 @@ SUBDIRS += libraspi
 libstb_hal_la_LIBADD += \
 	libraspi/libraspi.la
 else
-SUBDIRS += generic-pc
+SUBDIRS += libgeneric-pc
 libstb_hal_la_LIBADD += \
 	generic-pc/libgeneric.la
 endif

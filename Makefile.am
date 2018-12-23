@@ -25,9 +25,9 @@ libstb_hal_la_LIBADD += \
 endif
 if BOXTYPE_GENERIC
 if BOXMODEL_RASPI
-SUBDIRS += raspi
+SUBDIRS += libraspi
 libstb_hal_la_LIBADD += \
-	raspi/libraspi.la
+	libraspi/libraspi.la
 else
 SUBDIRS += generic-pc
 libstb_hal_la_LIBADD += \

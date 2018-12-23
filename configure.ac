@@ -93,8 +93,8 @@ libarmbox/Makefile
 libazbox/Makefile
 libduckbox/Makefile
 libdvbci/Makefile
-libeplayer3/Makefile
 libeplayer3-arm/Makefile
+libeplayer3-sh4/Makefile
 libgeneric-pc/Makefile
 libraspi/Makefile
 libspark/Makefile

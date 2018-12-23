@@ -19,9 +19,9 @@ libstb_hal_la_LIBADD += \
 	libtriple/libtriple.la
 endif
 if BOXTYPE_AZBOX
-SUBDIRS += azbox
+SUBDIRS += libazbox
 libstb_hal_la_LIBADD += \
-	azbox/libazbox.la
+	libazbox/libazbox.la
 endif
 if BOXTYPE_GENERIC
 if BOXMODEL_RASPI

@@ -30,7 +30,7 @@ libstb_hal_la_LIBADD += \
 else
 SUBDIRS += libgeneric-pc
 libstb_hal_la_LIBADD += \
-	generic-pc/libgeneric.la
+	libgeneric-pc/libgeneric.la
 endif
 endif
 if BOXTYPE_SPARK

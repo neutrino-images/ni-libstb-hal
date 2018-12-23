@@ -10,12 +10,12 @@
 #elif HAVE_ARM_HARDWARE
 #include "../libarmbox/audio_lib.h"
 #elif HAVE_AZBOX_HARDWARE
-#include "../azbox/audio_lib.h"
+#include "../libazbox/audio_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
-#include "../raspi/audio_lib.h"
+#include "../libraspi/audio_lib.h"
 #else
-#include "../generic-pc/audio_lib.h"
+#include "../libgeneric-pc/audio_lib.h"
 #endif
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined

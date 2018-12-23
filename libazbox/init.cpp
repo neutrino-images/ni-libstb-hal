@@ -1,6 +1,6 @@
 #include <unistd.h>
 
-#include "init_td.h"
+#include "init.h"
 
 #include "lt_debug.h"
 #define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)

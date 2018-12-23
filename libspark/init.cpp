@@ -13,7 +13,7 @@
 
 #include <linux/dvb/dmx.h>
 
-#include "init_td.h"
+#include "init.h"
 #include "pwrmngr.h"
 
 #include "lt_debug.h"

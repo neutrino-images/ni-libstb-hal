@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "init_td.h"
+#include "init.h"
 #include "pwrmngr.h"
 #include <proc_tools.h>
 

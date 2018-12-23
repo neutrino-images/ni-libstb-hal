@@ -1,1 +1,1 @@
-../generic-pc/playback.cpp
+../libgeneric-pc/playback.cpp

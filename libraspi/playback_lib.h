@@ -1,1 +1,1 @@
-../generic-pc/playback_lib.h
+../libgeneric-pc/playback_lib.h

@@ -40,7 +40,6 @@ typedef struct hw_caps
 	int display_can_deepstandby;
 	int display_has_statusline;
 	int has_button_timer;
-	int has_button_vformat;
 	char boxvendor[64];
 	char boxname[64];
 	char boxarch[64];

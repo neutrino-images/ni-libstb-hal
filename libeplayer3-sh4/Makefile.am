@@ -1,13 +1,13 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-noinst_LTLIBRARIES = libeplayer3.la
+noinst_LTLIBRARIES = libeplayer3_sh4.la
 
 AM_CPPFLAGS = -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 AM_CPPFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 AM_CPPFLAGS += -I$(srcdir)/include
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
-libeplayer3_la_SOURCES = \
+libeplayer3_sh4_la_SOURCES = \
 	input.cpp output.cpp manager.cpp player.cpp \
 	writer/writer.cpp \
 	writer/pes.cpp \
@@ -18,6 +18,6 @@ libeplayer3_la_SOURCES = \
 # writer/h264.cpp
 # writer/h263.cpp writer/vc1.cpp writer/pcm.cpp writer/aac.cpp
 
-LIBEPLAYER3_LIBS = libeplayer3.la
+LIBEPLAYER3_LIBS = libeplayer3_sh4.la
 # -lpthread -lavformat -lavcodec -lavutil -lswresample -lm
 

@@ -50,7 +50,7 @@
 #define IN_FILE  "/tmp/rmfp.in2"
 #define OUT_FILE "/tmp/rmfp.out2"
 
-#include "playback.h"
+#include "playback_lib.h"
 
 extern "C"{
 #include "e2mruainclude.h"

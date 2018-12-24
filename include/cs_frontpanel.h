@@ -1,5 +1,5 @@
-#ifndef __DUCKBOX_VFD__
-#define __DUCKBOX_VFD__
+#ifndef __CS_FRONTPANEL_H_
+#define __CS_FRONTPANEL_H_
 
 #define VFDDISPLAYCHARS      0xc0425a00
 #define VFDWRITECGRAM        0x40425a01
@@ -317,4 +317,4 @@ typedef struct {
 	bool			number_support;
 } fp_display_caps_t;
 
-#endif /* __DUCKBOX_VFD__ */
+#endif // __CS_FRONTPANEL_H_

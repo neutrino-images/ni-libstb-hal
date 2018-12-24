@@ -4,7 +4,7 @@
 #ifndef __CS_API_H_
 #define __CS_API_H_
 
-#include "init_td.h"
+#include "init.h"
 #include <config.h>
 
 typedef void (*cs_messenger) (unsigned int msg, unsigned int data);

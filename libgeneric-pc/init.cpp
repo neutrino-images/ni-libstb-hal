@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include "init_td.h"
+#include "init.h"
 #include "glfb.h"
 
 #include "lt_debug.h"

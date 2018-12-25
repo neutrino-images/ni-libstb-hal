@@ -15,10 +15,10 @@ extern ContainerHandler_t   ContainerHandler;
 extern ManagerHandler_t     ManagerHandler;
 
 #include "playback_libeplayer3.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 
-#define lt_debug(args...) _lt_debug(HAL_DEBUG_PLAYBACK, this, args)
-#define lt_info(args...)  _lt_info(HAL_DEBUG_PLAYBACK, this, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_PLAYBACK, this, args)
+#define hal_info(args...)  _hal_info(HAL_DEBUG_PLAYBACK, this, args)
 
 static Context_t *player = NULL;
 
@@ -63,7 +63,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 		player->container   = &ContainerHandler;
 		player->manager     = &ManagerHandler;
 
-		lt_info("%s - player output name: %s PlayMode: %s\n", __func__, player->output->Name, aPLAYMODE[PlayMode]);
+		hal_info("%s - player output name: %s PlayMode: %s\n", __func__, player->output->Name, aPLAYMODE[PlayMode]);
 	}
 
 	//Registration of output devices
@@ -79,7 +79,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 
 void cPlayback::Close(void)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	//Dagobert: movieplayer does not call stop, it calls close ;)
 	if(playing)
@@ -104,7 +104,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	bool isHTTP = false;
 	no_probe = false;
 
-	lt_info("%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n", __func__, filename, vpid, vtype, apid, ac3);
+	hal_info("%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n", __func__, filename, vpid, vtype, apid, ac3);
 
 	init_jump = -1;
 	//create playback path
@@ -240,7 +240,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 
 bool cPlayback::Stop(void)
 {
-	lt_info("%s playing %d\n", __func__, playing);
+	hal_info("%s playing %d\n", __func__, playing);
 
 	if (player && player->playback)
 		player->playback->Command(player, PLAYBACK_STOP, NULL);
@@ -264,7 +264,7 @@ bool cPlayback::Stop(void)
 
 bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	int i = pid;
 
 	if (pid != mAudioStream)
@@ -278,13 +278,13 @@ bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 
 bool cPlayback::SetVPid(int /*pid*/)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	return true;
 }
 
 bool cPlayback::SetSubtitlePid(int pid)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	int i = pid;
 
 	if (pid != mSubtitleStream)
@@ -298,7 +298,7 @@ bool cPlayback::SetSubtitlePid(int pid)
 
 bool cPlayback::SetTeletextPid(int pid)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	//int i = pid;
 
@@ -313,7 +313,7 @@ bool cPlayback::SetTeletextPid(int pid)
 
 bool cPlayback::SetSpeed(int speed)
 {
-	lt_info("%s playing %d speed %d\n", __func__, playing, speed);
+	hal_info("%s playing %d speed %d\n", __func__, playing, speed);
 
 	if (!decoders_closed)
 	{
@@ -391,7 +391,7 @@ bool cPlayback::SetSpeed(int speed)
 
 bool cPlayback::GetSpeed(int &speed) const
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	speed = nPlaybackSpeed;
 	return true;
 }
@@ -406,7 +406,7 @@ void cPlayback::GetPts(uint64_t &pts)
 bool cPlayback::GetPosition(int &position, int &duration)
 {
 	bool got_duration = false;
-	lt_debug("%s %d %d\n", __func__, position, duration);
+	hal_debug("%s %d %d\n", __func__, position, duration);
 
 	/* hack: if the file is growing (timeshift), then determine its length
 	 * by comparing the mtime with the mtime of the xml file */
@@ -435,7 +435,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	if (player && player->playback && !player->playback->isPlaying)
 	{
-		lt_info("%s !!!!EOF!!!! < -1\n", __func__);
+		hal_info("%s !!!!EOF!!!! < -1\n", __func__);
 		position = duration + 1000;
 		return false;
 	}
@@ -485,7 +485,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 bool cPlayback::SetPosition(int position, bool absolute)
 {
-	lt_info("%s %d\n", __func__, position);
+	hal_info("%s %d\n", __func__, position);
 
 	if (playing && first)
 	{
@@ -510,7 +510,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 
 void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	int max_numpida = *numpida;
 	*numpida = 0;
 
@@ -573,7 +573,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 
 void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	int max_numpids = *numpids;
 	*numpids = 0;
@@ -610,7 +610,7 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 
 void cPlayback::FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpids, std::string */*language*/, int */*mags*/, int */*pages*/)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	//int max_numpids = *numpids;
 	*numpids = 0;
 
@@ -648,7 +648,7 @@ void cPlayback::FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpids
 
 int cPlayback::GetTeletextPid(void)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	int pid = -1;
 
 /*	if (player && player->manager && player->manager->teletext)
@@ -755,7 +755,7 @@ void cPlayback::GetMetadata(std::vector<std::string> &keys, std::vector<std::str
 
 cPlayback::cPlayback(int num __attribute__((unused)))
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	playing = false;
 	decoders_closed = false;
 	first = false;
@@ -763,7 +763,7 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 
 cPlayback::~cPlayback()
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	if (player)
 		free(player);
@@ -774,7 +774,7 @@ void cPlayback::RequestAbort()
 {
 	if (player && player->playback && player->playback->isPlaying)
 	{
-		lt_info("%s\n", __func__);
+		hal_info("%s\n", __func__);
 		Stop();
 		//player->playback->abortRequested = 1;
 		while (player->playback->isPlaying)
@@ -810,7 +810,7 @@ void cPlayback::ReleaseAVFormatContext()
 #if 0
 bool cPlayback::IsPlaying(void) const
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	/* konfetti: there is no event/callback mechanism in libeplayer2
 	 * so in case of ending playback we have no information on a

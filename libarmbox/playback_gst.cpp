@@ -35,11 +35,11 @@
 
 #include "playback_gst.h"
 
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(HAL_DEBUG_PLAYBACK, this, args)
-#define lt_info(args...) _lt_info(HAL_DEBUG_PLAYBACK, this, args)
-#define lt_debug_c(args...) _lt_debug(HAL_DEBUG_PLAYBACK, NULL, args)
-#define lt_info_c(args...) _lt_info(HAL_DEBUG_PLAYBACK, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_PLAYBACK, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_PLAYBACK, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_PLAYBACK, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_PLAYBACK, NULL, args)
 
 static const char * FILENAME = "[playback_gst.cpp]";
 extern cVideo * videoDecoder;
@@ -102,7 +102,7 @@ void processMpegTsSection(GstMpegtsSection* section)
         for (guint i = 0; i < pmt->streams->len; ++i) {
             const GstMpegtsPMTStream* stream = static_cast<const GstMpegtsPMTStream*>(g_ptr_array_index(pmt->streams, i));
 			if (stream->stream_type == 0x05 || stream->stream_type >= 0x80) {
-				lt_info_c( "%s:%s Audio Stream pid: %d\n", FILENAME, __FUNCTION__, stream->pid);
+				hal_info_c( "%s:%s Audio Stream pid: %d\n", FILENAME, __FUNCTION__, stream->pid);
 				real_apids[cnt] = stream->pid;
 				cnt++;
 			}
@@ -166,7 +166,7 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 				if (!name.empty() && !value.empty())
 				{
 					GValue header;
-					lt_info_c( "%s:%s setting extra-header '%s:%s'\n", FILENAME, __FUNCTION__, name.c_str(), value.c_str());
+					hal_info_c( "%s:%s setting extra-header '%s:%s'\n", FILENAME, __FUNCTION__, name.c_str(), value.c_str());
 					memset(&header, 0, sizeof(GValue));
 					g_value_init(&header, G_TYPE_STRING);
 					g_value_set_string(&header, value.c_str());
@@ -174,7 +174,7 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 				}
 				else
 				{
-					lt_info_c( "%s:%s Invalid header format %s\n", FILENAME, __FUNCTION__, _this->extra_headers.c_str());
+					hal_info_c( "%s:%s Invalid header format %s\n", FILENAME, __FUNCTION__, _this->extra_headers.c_str());
 					break;
 				}
 			}
@@ -213,15 +213,15 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		gst_message_parse_error(msg, &err, &debug);
 		g_free (debug);
 		gchar * sourceName = gst_object_get_name(source);
-		lt_info_c( "%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName );
+		hal_info_c( "%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName );
 		if ( err->domain == GST_STREAM_ERROR )
 		{
 			if ( err->code == GST_STREAM_ERROR_CODEC_NOT_FOUND )
 			{
 				if ( g_strrstr(sourceName, "videosink") )
-					lt_info_c( "%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+					hal_info_c( "%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
 				else if ( g_strrstr(sourceName, "audiosink") )
-					lt_info_c( "%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+					hal_info_c( "%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
 			}
 		}
 		g_error_free(err);
@@ -244,7 +244,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 		{
 			gchar * sourceName = gst_object_get_name(source);
 			if ( g_strrstr(sourceName, "videosink") )
-				lt_info_c( "%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
+				hal_info_c( "%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__ ); //FIXME: how shall playback handle this event???
 			if(sourceName)
 				g_free(sourceName);
 
@@ -303,12 +303,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				int ret = write(fd, data, size);
 				gst_buffer_unmap(buf_image, &map);
 				close(fd);
-				lt_info_c("%s:%s - /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
+				hal_info_c("%s:%s - /tmp/.id3coverart %d bytes written\n", FILENAME, __FUNCTION__, ret);
 			}
 		}
 		if (tags)
 			gst_tag_list_unref(tags);
-		lt_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
+		hal_debug_c( "%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);  //FIXME: how shall playback handle this event???
 		break;
 	}
     case GST_MESSAGE_ELEMENT:
@@ -329,7 +329,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 		if(old_state == new_state)
 			break;
-		lt_info_c( "%s:%s - GST_MESSAGE_STATE_CHANGED: state transition %s -> %s\n", FILENAME, __FUNCTION__, gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+		hal_info_c( "%s:%s - GST_MESSAGE_STATE_CHANGED: state transition %s -> %s\n", FILENAME, __FUNCTION__, gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
 
 		GstStateChange transition = (GstStateChange)GST_STATE_TRANSITION(old_state, new_state);
 
@@ -359,7 +359,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				audioSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);
-				lt_info_c( "%s %s - audio sink created\n", FILENAME, __FUNCTION__);
+				hal_info_c( "%s %s - audio sink created\n", FILENAME, __FUNCTION__);
 			}
 
 			gst_iterator_free(children);
@@ -368,7 +368,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				videoSink = GST_ELEMENT_CAST(g_value_dup_object (&r));
 				g_value_unset (&r);
-				lt_info_c( "%s %s - video sink created\n", FILENAME, __FUNCTION__);
+				hal_info_c( "%s %s - video sink created\n", FILENAME, __FUNCTION__);
 			}
 			gst_iterator_free(children);
 
@@ -411,7 +411,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 
 cPlayback::cPlayback(int num)
 {
-	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
+	hal_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	const gchar *nano_str;
 	guint major, minor, micro, nano;
 
@@ -430,7 +430,7 @@ cPlayback::cPlayback(int num)
 	else
 		nano_str = "";
 
-	lt_info( "%s:%s - This program is linked against GStreamer %d.%d.%d %s\n",
+	hal_info( "%s:%s - This program is linked against GStreamer %d.%d.%d %s\n",
 	         FILENAME, __FUNCTION__,
 	         major, minor, micro, nano_str);
 
@@ -445,7 +445,7 @@ cPlayback::cPlayback(int num)
 
 cPlayback::~cPlayback()
 {
-	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
+	hal_info( "%s:%s\n", FILENAME, __FUNCTION__);
 	//FIXME: all deleting stuff is done in Close()
 	pthread_mutex_lock (&mutex_tag_ist);
 	if (m_stream_tags)
@@ -456,7 +456,7 @@ cPlayback::~cPlayback()
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
 {
-	lt_info("%s: PlayMode %d\n", __func__, PlayMode);
+	hal_info("%s: PlayMode %d\n", __func__, PlayMode);
 
 	if (PlayMode != PLAYMODE_TS)
 	{
@@ -472,7 +472,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 // used by movieplay
 void cPlayback::Close(void)
 {
-	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
+	hal_info( "%s:%s\n", FILENAME, __FUNCTION__);
 
 	Stop();
 
@@ -484,7 +484,7 @@ void cPlayback::Close(void)
 		gst_bus_set_sync_handler(bus, NULL, NULL, NULL);
 		if (bus)
 			gst_object_unref(bus);
-		lt_info( "%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
+		hal_info( "%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
 	}
 
 	// close gst
@@ -495,7 +495,7 @@ void cPlayback::Close(void)
 			gst_object_unref(GST_OBJECT(audioSink));
 			audioSink = NULL;
 
-			lt_info( "%s:%s - GST audio Sink closed\n", FILENAME, __FUNCTION__);
+			hal_info( "%s:%s - GST audio Sink closed\n", FILENAME, __FUNCTION__);
 		}
 
 		if (videoSink)
@@ -503,12 +503,12 @@ void cPlayback::Close(void)
 			gst_object_unref(GST_OBJECT(videoSink));
 			videoSink = NULL;
 
-			lt_info( "%s:%s - GST video Sink closed\n", FILENAME, __FUNCTION__);
+			hal_info( "%s:%s - GST video Sink closed\n", FILENAME, __FUNCTION__);
 		}
 
 		// unref m_gst_playbin
 		gst_object_unref (GST_OBJECT (m_gst_playbin));
-		lt_info( "%s:%s - GST playbin closed\n", FILENAME, __FUNCTION__);
+		hal_info( "%s:%s - GST playbin closed\n", FILENAME, __FUNCTION__);
 
 		m_gst_playbin = NULL;
 
@@ -530,7 +530,7 @@ bool cPlayback::Start(std::string filename, std::string headers)
 
 bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/, int /*ac3*/, int /*duration*/, std::string headers)
 {
-	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
+	hal_info( "%s:%s\n", FILENAME, __FUNCTION__);
 
 	if (!headers.empty())
 		extra_headers = headers;
@@ -587,7 +587,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	else
 		uri = g_filename_to_uri(filename, NULL, NULL);
 
-	lt_info("%s:%s - filename=%s\n", FILENAME, __FUNCTION__, filename);
+	hal_info("%s:%s - filename=%s\n", FILENAME, __FUNCTION__, filename);
 
 	guint flags =	GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_NATIVE_VIDEO;
 
@@ -599,7 +599,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	if(m_gst_playbin)
 	{
-		lt_info("%s:%s - m_gst_playbin\n", FILENAME, __FUNCTION__);
+		hal_info("%s:%s - m_gst_playbin\n", FILENAME, __FUNCTION__);
 
 		if(isHTTP)
 		{
@@ -639,7 +639,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	}
 	else
 	{
-		lt_info("%s:%s - failed to create GStreamer pipeline!, sorry we can not play\n", FILENAME, __FUNCTION__);
+		hal_info("%s:%s - failed to create GStreamer pipeline!, sorry we can not play\n", FILENAME, __FUNCTION__);
 		playing = false;
 
 		return false;
@@ -652,7 +652,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 bool cPlayback::Play(void)
 {
-	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	if(playing == true)
 		return true;
@@ -664,7 +664,7 @@ bool cPlayback::Play(void)
 		playing = true;
 		playstate = STATE_PLAY;
 	}
-	lt_info("%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info("%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	return playing;
 }
@@ -673,7 +673,7 @@ bool cPlayback::Stop(void)
 {
 	if(playing == false)
 		return false;
-	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	// stop
 	if(m_gst_playbin)
@@ -683,7 +683,7 @@ bool cPlayback::Stop(void)
 
 	playing = false;
 
-	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	playstate = STATE_STOP;
 
@@ -692,7 +692,7 @@ bool cPlayback::Stop(void)
 
 bool cPlayback::SetAPid(int pid, bool /*ac3*/)
 {
-	lt_info("%s: pid %i\n", __func__, pid);
+	hal_info("%s: pid %i\n", __func__, pid);
 
 	int to_audio = pid;
 
@@ -730,7 +730,7 @@ void cPlayback::trickSeek(int ratio)
 
 bool cPlayback::SetSpeed(int speed)
 {
-	lt_info( "%s:%s speed %d\n", FILENAME, __FUNCTION__, speed);
+	hal_info( "%s:%s speed %d\n", FILENAME, __FUNCTION__, speed);
 
 	if (!decoders_closed)
 	{
@@ -789,7 +789,7 @@ bool cPlayback::SetSpeed(int speed)
 
 bool cPlayback::SetSlow(int slow)
 {
-	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	if(playing == false)
 		return false;
@@ -836,14 +836,14 @@ bool cPlayback::GetPosition(int &position, int &duration)
 			g_signal_emit_by_name(audioSink ? audioSink : videoSink, "get-decoder-time", &pts);
 			if (!GST_CLOCK_TIME_IS_VALID(pts))
 			{
-				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+				hal_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
 			}
 		}
 		else
 		{
 			if(!gst_element_query_position(m_gst_playbin, fmt, &pts))
 			{
-				lt_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
+				hal_info( "%s - %d failed\n", __FUNCTION__, __LINE__);
 			}
 		}
 		position = pts /  1000000.0;
@@ -865,7 +865,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 bool cPlayback::SetPosition(int position, bool absolute)
 {
-	lt_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
+	hal_info("%s: pos %d abs %d playing %d\n", __func__, position, absolute, playing);
 
 
 	if(m_gst_playbin)
@@ -904,7 +904,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 
 void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string * language)
 {
-	lt_info( "%s:%s\n", FILENAME, __FUNCTION__);
+	hal_info( "%s:%s\n", FILENAME, __FUNCTION__);
 
 	language->clear();
 	*numpida = 0;
@@ -915,7 +915,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 
 		// get audio
 		g_object_get (m_gst_playbin, "n-audio", &n_audio, NULL);
-		lt_info("%s: %d audio\n", __FUNCTION__, n_audio);
+		hal_info("%s: %d audio\n", __FUNCTION__, n_audio);
 
 		if(n_audio == 0)
 			return;
@@ -991,7 +991,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 						language[i] = "unk";
 					else
 						language[i] = slang.c_str();
-					lt_info("%s: language:%s\n", __FUNCTION__, language[i].c_str());
+					hal_info("%s: language:%s\n", __FUNCTION__, language[i].c_str());
 					g_free(g_lang);
 				}
 				gst_tag_list_free(tags);
@@ -1009,7 +1009,7 @@ void cPlayback::getMeta()
 
 bool cPlayback::SyncAV(void)
 {
-	lt_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
+	hal_info( "%s:%s playing %d\n", FILENAME, __FUNCTION__, playing);
 
 	if(playing == false )
 		return false;
@@ -1164,7 +1164,7 @@ int cPlayback::GetAPid(void)
 {
 	gint current_audio = 0;
 	g_object_get (m_gst_playbin, "current-audio", &current_audio, NULL);
-	lt_info("%s: %d audio\n", __FUNCTION__, current_audio);
+	hal_info("%s: %d audio\n", __FUNCTION__, current_audio);
 	return real_apids[current_audio] ? real_apids[current_audio] : current_audio;
 }
 
@@ -1172,7 +1172,7 @@ int cPlayback::GetVPid(void)
 {
 	gint current_video = 0;
 	g_object_get (m_gst_playbin, "current-video", &current_video, NULL);
-	lt_info("%s: %d video\n", __FUNCTION__, current_video);
+	hal_info("%s: %d video\n", __FUNCTION__, current_video);
 	return current_video;
 }
 

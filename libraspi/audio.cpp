@@ -22,54 +22,54 @@
 
 #include "audio_lib.h"
 #include "dmx_hal.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 
-#define lt_debug(args...) _lt_debug(HAL_DEBUG_AUDIO, this, args)
-#define lt_info(args...) _lt_info(HAL_DEBUG_AUDIO, this, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
 cAudio * audioDecoder = NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 }
 
 cAudio::~cAudio(void)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 }
 
 void cAudio::openDevice(void)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 }
 
 void cAudio::closeDevice(void)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 }
 
 int cAudio::do_mute(bool enable, bool remember)
 {
-	lt_debug("%s(%d, %d)\n", __func__, enable, remember);
+	hal_debug("%s(%d, %d)\n", __func__, enable, remember);
 	return 0;
 }
 
 int cAudio::setVolume(unsigned int left, unsigned int right)
 {
-	lt_debug("%s(%d, %d)\n", __func__, left, right);
+	hal_debug("%s(%d, %d)\n", __func__, left, right);
 	return 0;
 }
 
 int cAudio::Start(void)
 {
-	lt_debug("%s >\n", __func__);
+	hal_debug("%s >\n", __func__);
 	return 0;
 }
 
 int cAudio::Stop(void)
 {
-	lt_debug("%s >\n", __func__);
+	hal_debug("%s >\n", __func__);
 	return 0;
 }
 
@@ -80,12 +80,12 @@ bool cAudio::Pause(bool /*Pcm*/)
 
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
-	lt_debug("%s %d\n", __func__, Mode);
+	hal_debug("%s %d\n", __func__, Mode);
 };
 
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
-	lt_debug("%s %d\n", __func__, type);
+	hal_debug("%s %d\n", __func__, type);
 };
 
 int cAudio::setChannel(int /*channel*/)
@@ -95,19 +95,19 @@ int cAudio::setChannel(int /*channel*/)
 
 int cAudio::PrepareClipPlay(int ch, int srate, int bits, int le)
 {
-	lt_debug("%s ch %d srate %d bits %d le %d\n", __func__, ch, srate, bits, le);;
+	hal_debug("%s ch %d srate %d bits %d le %d\n", __func__, ch, srate, bits, le);;
 	return 0;
 };
 
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
-	lt_debug("cAudio::%s buf 0x%p size %d\n", __func__, buffer, size);
+	hal_debug("cAudio::%s buf 0x%p size %d\n", __func__, buffer, size);
 	return size;
 };
 
 int cAudio::StopClip()
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	return 0;
 };
 
@@ -118,36 +118,36 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 	freq = 0;
 	bitrate = 0;	/* not used, but easy to get :-) */
 	mode = 0;	/* default: stereo */
-	lt_debug("%s t: %d l: %d f: %d b: %d m: %d\n",
+	hal_debug("%s t: %d l: %d f: %d b: %d m: %d\n",
 		  __func__, type, layer, freq, bitrate, mode);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 };
 
 void cAudio::SetHdmiDD(bool enable)
 {
-	lt_debug("%s %d\n", __func__, enable);
+	hal_debug("%s %d\n", __func__, enable);
 };
 
 void cAudio::SetSpdifDD(bool enable)
 {
-	lt_debug("%s %d\n", __func__, enable);
+	hal_debug("%s %d\n", __func__, enable);
 };
 
 void cAudio::ScheduleMute(bool On)
 {
-	lt_debug("%s %d\n", __func__, On);
+	hal_debug("%s %d\n", __func__, On);
 };
 
 void cAudio::EnableAnalogOut(bool enable)
 {
-	lt_debug("%s %d\n", __func__, enable);
+	hal_debug("%s %d\n", __func__, enable);
 };
 
 void cAudio::setBypassMode(bool disable)
 {
-	lt_debug("%s %d\n", __func__, disable);
+	hal_debug("%s %d\n", __func__, disable);
 }

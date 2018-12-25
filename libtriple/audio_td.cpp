@@ -9,9 +9,9 @@
 #include <avs/avs_inf.h>
 #define AUDIO_DEVICE "/dev/" DEVICE_NAME_AUDIO
 #include "audio_td.h"
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_AUDIO, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_AUDIO, this, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
 #include <linux/soundcard.h>
 
@@ -36,12 +36,12 @@ void cAudio::openDevice(void)
 	if (fd < 0)
 	{
 		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
-			lt_info("openDevice: open failed (%m)\n");
+			hal_info("openDevice: open failed (%m)\n");
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
 		do_mute(true, false);
 	}
 	else
-		lt_info("openDevice: already open (fd = %d)\n", fd);
+		hal_info("openDevice: already open (fd = %d)\n", fd);
 }
 
 void cAudio::closeDevice(void)
@@ -59,14 +59,14 @@ void cAudio::closeDevice(void)
 
 int cAudio::do_mute(bool enable, bool remember)
 {
-	lt_debug("%s(%d, %d)\n", __FUNCTION__, enable, remember);
+	hal_debug("%s(%d, %d)\n", __FUNCTION__, enable, remember);
 	int avsfd;
 	int ret;
 	if (remember)
 		Muted = enable;
 	ret = ioctl(fd, MPEG_AUD_SET_MUTE, enable);
 	if (ret < 0)
-		lt_info("%s(%d) failed (%m)\n", __FUNCTION__, (int)enable);
+		hal_info("%s(%d) failed (%m)\n", __FUNCTION__, (int)enable);
 
 	/* are we using alternative DSP / mixer? */
 	if (clipfd != -1 || mixer_fd != -1)
@@ -110,7 +110,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 			tmp = left << 8 | right;
 		ret = ioctl(mixer_fd, MIXER_WRITE(mixer_num), &tmp);
 		if (ret == -1)
-			lt_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
+			hal_info("%s: MIXER_WRITE(%d),%04x: %m\n", __func__, mixer_num, tmp);
 		return ret;
 	}
 //	if (settings.volume_type == CControld::TYPE_OST || forcetype == (int)CControld::TYPE_OST)
@@ -124,7 +124,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 		vol.lfe        = v;
 		ret = ioctl(fd, MPEG_AUD_SET_VOL, &vol);
 		if (ret < 0)
-			lt_info("setVolume MPEG_AUD_SET_VOL failed (%m)\n");
+			hal_info("setVolume MPEG_AUD_SET_VOL failed (%m)\n");
 		return ret;
 	}
 #if 0
@@ -166,7 +166,7 @@ bool cAudio::Pause(bool /*Pcm*/)
 
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
-	lt_debug("%s %d\n", __FUNCTION__, Mode);
+	hal_debug("%s %d\n", __FUNCTION__, Mode);
 	switch (Mode)
 	{
 		case 0:
@@ -181,11 +181,11 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 void cAudio::SetStreamType(AUDIO_FORMAT type)
 {
 	int bypass_disable;
-	lt_debug("%s %d\n", __FUNCTION__, type);
+	hal_debug("%s %d\n", __FUNCTION__, type);
 	StreamType = type;
 
 	if (StreamType != AUDIO_FMT_DOLBY_DIGITAL && StreamType != AUDIO_FMT_MPEG && StreamType != AUDIO_FMT_MPG1)
-		lt_info("%s unhandled AUDIO_FORMAT %d\n", __FUNCTION__, StreamType);
+		hal_info("%s unhandled AUDIO_FORMAT %d\n", __FUNCTION__, StreamType);
 
 	bypass_disable = (StreamType != AUDIO_FMT_DOLBY_DIGITAL);
 	setBypassMode(bypass_disable);
@@ -198,7 +198,7 @@ void cAudio::SetStreamType(AUDIO_FORMAT type)
 
 int cAudio::setChannel(int channel)
 {
-	lt_debug("%s %d\n", __FUNCTION__, channel);
+	hal_debug("%s %d\n", __FUNCTION__, channel);
 	return 0;
 };
 
@@ -208,9 +208,9 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	unsigned int devmask, stereo, usable;
 	const char *dsp_dev = getenv("DSP_DEVICE");
 	const char *mix_dev = getenv("MIX_DEVICE");
-	lt_debug("%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
+	hal_debug("%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
 	if (clipfd >= 0) {
-		lt_info("%s: clipfd already opened (%d)\n", __FUNCTION__, clipfd);
+		hal_info("%s: clipfd already opened (%d)\n", __FUNCTION__, clipfd);
 		return -1;
 	}
 	mixer_num = -1;
@@ -226,17 +226,17 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	 */
 	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
 		if (dsp_dev)
-			lt_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
+			hal_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
 				" fall back to /dev/sound/dsp\n", __func__, dsp_dev);
 		dsp_dev = "/dev/sound/dsp";
 	}
-	lt_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
+	hal_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
 	clipfd = open(dsp_dev, O_WRONLY);
 	close(clipfd);
 	clipfd = open(dsp_dev, O_WRONLY);
 	if (clipfd < 0) {
-		lt_info("%s open %s: %m\n", dsp_dev, __FUNCTION__);
+		hal_info("%s open %s: %m\n", dsp_dev, __FUNCTION__);
 		return -1;
 	}
 	fcntl(clipfd, F_SETFD, FD_CLOEXEC);
@@ -259,21 +259,21 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 
 	mixer_fd = open(mix_dev, O_RDWR);
 	if (mixer_fd < 0) {
-		lt_info("%s: open mixer %s failed (%m)\n", __func__, mix_dev);
+		hal_info("%s: open mixer %s failed (%m)\n", __func__, mix_dev);
 		/* not a real error */
 		return 0;
 	}
 	if (ioctl(mixer_fd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1) {
-		lt_info("%s: SOUND_MIXER_READ_DEVMASK %m\n", __func__);
+		hal_info("%s: SOUND_MIXER_READ_DEVMASK %m\n", __func__);
 		devmask = 0;
 	}
 	if (ioctl(mixer_fd, SOUND_MIXER_READ_STEREODEVS, &stereo) == -1) {
-		lt_info("%s: SOUND_MIXER_READ_STEREODEVS %m\n", __func__);
+		hal_info("%s: SOUND_MIXER_READ_STEREODEVS %m\n", __func__);
 		stereo = 0;
 	}
 	usable = devmask & stereo;
 	if (usable == 0) {
-		lt_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
+		hal_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
 			__func__, devmask, stereo);
 		close(mixer_fd);
 		mixer_fd = -1;
@@ -282,13 +282,13 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	/* __builtin_popcount needs GCC, it counts the set bits... */
 	if (__builtin_popcount (usable) != 1) {
 		/* TODO: this code is not yet tested as I have only single-mixer devices... */
-		lt_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
+		hal_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
 			"%s: querying MIX_NUMBER environment variable...\n",
 			__func__, devmask, stereo, __func__);
 		const char *tmp = getenv("MIX_NUMBER");
 		if (tmp)
 			mixer_num = atoi(tmp);
-		lt_info("%s: mixer_num is %d -> device %08x\n",
+		hal_info("%s: mixer_num is %d -> device %08x\n",
 			__func__, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
 	} else {
@@ -306,22 +306,22 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
 	int ret;
-	// lt_debug("cAudio::%s\n", __FUNCTION__);
+	// hal_debug("cAudio::%s\n", __FUNCTION__);
 	if (clipfd <= 0) {
-		lt_info("%s: clipfd not yet opened\n", __FUNCTION__);
+		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
 	ret = write(clipfd, buffer, size);
 	if (ret < 0)
-		lt_info("%s: write error (%m)\n", __FUNCTION__);
+		hal_info("%s: write error (%m)\n", __FUNCTION__);
 	return ret;
 };
 
 int cAudio::StopClip()
 {
-	lt_debug("%s\n", __FUNCTION__);
+	hal_debug("%s\n", __FUNCTION__);
 	if (clipfd <= 0) {
-		lt_info("%s: clipfd not yet opened\n", __FUNCTION__);
+		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
 	close(clipfd);
@@ -335,7 +335,7 @@ int cAudio::StopClip()
 
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
-	lt_debug("%s\n", __FUNCTION__);
+	hal_debug("%s\n", __FUNCTION__);
 	unsigned int atype;
 	static const int freq_mpg[] = {44100, 48000, 32000, 0};
 	static const int freq_ac3[] = {48000, 44100, 32000, 0};
@@ -377,27 +377,27 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
 {
-	lt_debug("%s\n", __FUNCTION__);
+	hal_debug("%s\n", __FUNCTION__);
 };
 
 void cAudio::SetSpdifDD(bool enable)
 {
-	lt_debug("%s %d\n", __FUNCTION__, enable);
+	hal_debug("%s %d\n", __FUNCTION__, enable);
 };
 
 void cAudio::ScheduleMute(bool On)
 {
-	lt_debug("%s %d\n", __FUNCTION__, On);
+	hal_debug("%s %d\n", __FUNCTION__, On);
 };
 
 void cAudio::EnableAnalogOut(bool enable)
 {
-	lt_debug("%s %d\n", __FUNCTION__, enable);
+	hal_debug("%s %d\n", __FUNCTION__, enable);
 };
 
 void cAudio::setBypassMode(bool disable)
 {
-	lt_debug("%s %d\n", __FUNCTION__, disable);
+	hal_debug("%s %d\n", __FUNCTION__, disable);
 	/* disable = true: audio is MPEG, disable = false: audio is AC3 */
 	if (disable)
 	{

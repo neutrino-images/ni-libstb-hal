@@ -19,9 +19,9 @@ extern "C" {
 #include "lt_dfbinput.h"
 #include "pwrmngr.h"
 
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 static bool initialized = false;
 
@@ -116,14 +116,14 @@ static void rc_init()
 	   "key up" events during zapping */
 	//ioctl(fd, IOC_IR_SET_DELAY, 1);  TODO: needs more work in rcinput
 	close(fd);
-	lt_info("%s rc_addr=0x%02hx\n", __FUNCTION__, rc_addr);
+	hal_info("%s rc_addr=0x%02hx\n", __FUNCTION__, rc_addr);
 }
 
 void init_td_api()
 {
 	if (!initialized)
-		lt_debug_init();
-	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __FUNCTION__, (int)initialized, debuglevel);
+		hal_debug_init();
+	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __FUNCTION__, (int)initialized, debuglevel);
 	if (!initialized)
 	{
 		/* leave standby early, this avoids popping noise on audio device */
@@ -144,12 +144,12 @@ void init_td_api()
 	/* load the module which converts the TD tuner to a Linux-DVB frontend... */
 	system("/sbin/modprobe td-dvb-frontend");
 	initialized = true;
-	lt_info("%s end\n", __FUNCTION__);
+	hal_info("%s end\n", __FUNCTION__);
 }
 
 void shutdown_td_api()
 {
-	lt_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
+	hal_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
 	if (initialized)
 		dfb_deinit();
 	if (gfxfd > -1)

@@ -24,17 +24,17 @@
 #include <cstdlib>
 
 #include "video_lib.h"
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_VIDEO, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
 
 cVideo *videoDecoder = NULL;
 int system_rev = 0;
 
 cVideo::cVideo(int, void *, void *, unsigned int)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	display_aspect = DISPLAY_AR_16_9;
 	display_crop = DISPLAY_AR_MODE_LETTERBOX;
 	v_format = VIDEO_FORMAT_MPEG2;
@@ -46,7 +46,7 @@ cVideo::~cVideo(void)
 
 int cVideo::setAspectRatio(int vformat, int cropping)
 {
-	lt_info("%s(%d, %d)\n", __func__, vformat, cropping);
+	hal_info("%s(%d, %d)\n", __func__, vformat, cropping);
 	return 0;
 }
 
@@ -63,13 +63,13 @@ int cVideo::setCroppingMode(int)
 
 int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
-	lt_debug("%s running %d >\n", __func__, thread_running);
+	hal_debug("%s running %d >\n", __func__, thread_running);
 	return 0;
 }
 
 int cVideo::Stop(bool)
 {
-	lt_debug("%s running %d >\n", __func__, thread_running);
+	hal_debug("%s running %d >\n", __func__, thread_running);
 	return 0;
 }
 
@@ -100,7 +100,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			h = 720;
 			break;
 		case VIDEO_STD_AUTO:
-			lt_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
+			hal_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
 			// fallthrough
 		case VIDEO_STD_SECAM:
 		case VIDEO_STD_PAL:
@@ -108,7 +108,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			h = 576;
 			break;
 		default:
-			lt_info("%s: unhandled value %d\n", __func__, system);
+			hal_info("%s: unhandled value %d\n", __func__, system);
 			return 0;
 	}
 	v_std = (VIDEO_STD) system;
@@ -127,7 +127,7 @@ void cVideo::SetVideoMode(analog_mode_t)
 
 void cVideo::ShowPicture(const char *fname)
 {
-	lt_info("%s(%s)\n", __func__, fname);
+	hal_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))
 		return;
 }
@@ -172,7 +172,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT v)
 
 bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
-	lt_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
+	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
 		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	return false;
 }
@@ -185,5 +185,5 @@ int64_t cVideo::GetPTS(void)
 
 void cVideo::SetDemux(cDemux *)
 {
-	lt_debug("%s: not implemented yet\n", __func__);
+	hal_debug("%s: not implemented yet\n", __func__);
 }

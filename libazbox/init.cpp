@@ -2,22 +2,22 @@
 
 #include "init.h"
 
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 static bool initialized = false;
 
 void init_td_api()
 {
 	if (!initialized)
-		lt_debug_init();
-	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
+		hal_debug_init();
+	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
 	initialized = true;
 }
 
 void shutdown_td_api()
 {
-	lt_info("%s, initialized = %d\n", __func__, (int)initialized);
+	hal_info("%s, initialized = %d\n", __func__, (int)initialized);
 	initialized = false;
 }

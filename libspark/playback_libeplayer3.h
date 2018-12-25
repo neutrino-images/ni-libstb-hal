@@ -1,5 +1,5 @@
-#ifndef __HAL_PLAYBACK_H
-#define __HAL_PLAYBACK_H
+#ifndef __PLAYBACK_LIBEPLAYER3_H__
+#define __PLAYBACK_LIBEPLAYER3_H__
 
 #include <string>
 #include <vector>
@@ -89,4 +89,5 @@ class cPlayback
 		void DMNotify(int Event, void *pTsBuf, void *Tag);
 #endif
 };
-#endif
+
+#endif // __PLAYBACK_LIBEPLAYER3_H__

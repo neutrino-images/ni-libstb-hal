@@ -1,5 +1,5 @@
-#ifndef __PLAYBACK_H
-#define __PLAYBACK_H
+#ifndef __PLAYBACK_LIB_H__
+#define __PLAYBACK_LIB_H__
 
 #include <string>
 #include <stdint.h>
@@ -57,4 +57,5 @@ class cPlayback
 		AVFormatContext *GetAVFormatContext(){ return NULL; }
 		void ReleaseAVFormatContext() {}
 };
-#endif
+
+#endif // __PLAYBACK_LIB_H__

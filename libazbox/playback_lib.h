@@ -1,5 +1,5 @@
-#ifndef __PLAYBACK_LIB_H_
-#define __PLAYBACK_LIB_H_
+#ifndef __PLAYBACK_LIB_H__
+#define __PLAYBACK_LIB_H__
 
 #include <string>
 #include <stdint.h>
@@ -59,4 +59,4 @@ class cPlayback
 		void DMNotify(int Event, void *pTsBuf, void *Tag);
 #endif
 };
-#endif // __PLAYBACK_LIB_H_
+#endif // __PLAYBACK_LIB_H__

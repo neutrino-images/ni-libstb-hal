@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef __PLAYBACK_CS_H
-#define __PLAYBACK_CS_H
+#ifndef __PLAYBACK_GST_H__
+#define __PLAYBACK_GST_H__
 
 #include <string>
 #include <stdint.h>
@@ -103,5 +103,4 @@ public:
 	void getMeta();
 };
 
-#endif
-
+#endif // __PLAYBACK_GST_H__

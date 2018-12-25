@@ -1,5 +1,5 @@
-#ifndef __CS_FRONTPANEL_H_
-#define __CS_FRONTPANEL_H_
+#ifndef __CS_FRONTPANEL_H__
+#define __CS_FRONTPANEL_H__
 
 #define VFDDISPLAYCHARS      0xc0425a00
 #define VFDWRITECGRAM        0x40425a01
@@ -317,4 +317,4 @@ typedef struct {
 	bool			number_support;
 } fp_display_caps_t;
 
-#endif // __CS_FRONTPANEL_H_
+#endif // __CS_FRONTPANEL_H__

@@ -1,5 +1,5 @@
-#ifndef __RECORD_TD_H
-#define __RECORD_TD_H
+#ifndef __RECORD_TD_H__
+#define __RECORD_TD_H__
 
 #include <pthread.h>
 #include "dmx_hal.h"
@@ -40,4 +40,5 @@ class cRecord
 
 		void RecordThread();
 };
-#endif
+
+#endif // __RECORD_TD_H__

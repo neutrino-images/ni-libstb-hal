@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __dmx_hal__
-#define __dmx_hal__
+#ifndef __DMX_HAL_H__
+#define __DMX_HAL_H__
 
 #include <config.h>
 #include <cstdlib>
@@ -99,4 +99,4 @@ class cDemux
 		void *pdata;
 };
 
-#endif //__dmx_hal__
+#endif // __DMX_HAL_H__

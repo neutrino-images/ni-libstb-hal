@@ -24,5 +24,5 @@
 #endif
 #endif
 #else
-#error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined
+#error no valid hardware defined
 #endif

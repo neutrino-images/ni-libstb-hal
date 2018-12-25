@@ -13,17 +13,17 @@
 #include "init.h"
 #include "pwrmngr.h"
 
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 static bool initialized = false;
 
 void init_td_api()
 {
 	if (!initialized)
-		lt_debug_init();
-	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __FUNCTION__, (int)initialized, debuglevel);
+		hal_debug_init();
+	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __FUNCTION__, (int)initialized, debuglevel);
 	if (!initialized)
 	{
 		/* this is a strange hack: the drivers seem to only work correctly after
@@ -31,7 +31,7 @@ void init_td_api()
 		struct dmx_pes_filter_params p;
 		int dmx = open("/dev/dvb/adapter0/demux0", O_RDWR|O_CLOEXEC);
 		if (dmx < 0)
-			lt_info("%s: ERROR open /dev/dvb/adapter0/demux0 (%m)\n", __func__);
+			hal_info("%s: ERROR open /dev/dvb/adapter0/demux0 (%m)\n", __func__);
 		else
 		{
 			memset(&p, 0, sizeof(p));
@@ -45,11 +45,11 @@ void init_td_api()
 		}
 	}
 	initialized = true;
-	lt_info("%s end\n", __FUNCTION__);
+	hal_info("%s end\n", __FUNCTION__);
 }
 
 void shutdown_td_api()
 {
-	lt_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
+	hal_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
 	initialized = false;
 }

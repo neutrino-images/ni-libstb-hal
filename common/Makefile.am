@@ -31,6 +31,6 @@ endif
 endif
 
 libcommon_la_SOURCES += \
-	lt_debug.cpp \
+	hal_debug.cpp \
 	proc_tools.c \
 	pwrmngr.cpp

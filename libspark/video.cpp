@@ -37,7 +37,7 @@
 #include <linux/stmfb.h>
 #include <bpamem.h>
 #include "video_lib.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 
 #include <proc_tools.h>
 
@@ -48,18 +48,18 @@ extern "C"
 #include <libswscale/swscale.h>
 }
 
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_VIDEO, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_VIDEO, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
 
 #define fop(cmd, args...) ({				\
 	int _r;						\
 	if (fd >= 0) { 					\
 		if ((_r = ::cmd(fd, args)) < 0)		\
-			lt_info(#cmd"(fd, "#args")\n");	\
+			hal_info(#cmd"(fd, "#args")\n");	\
 		else					\
-			lt_debug(#cmd"(fd, "#args")\n");\
+			hal_debug(#cmd"(fd, "#args")\n");\
 	}						\
 	else { _r = fd; } 				\
 	_r;						\
@@ -133,17 +133,17 @@ static int hdmi_out(bool enable)
 {
 	struct stmfbio_output_configuration out;
 	int ret = -1;
-	lt_info_c("%s(%d)\n", __func__, enable);
+	hal_info_c("%s(%d)\n", __func__, enable);
 	int fb = open("/dev/fb0", O_RDWR);
 	if (fb < 0)
 	{
-		lt_debug_c("%s: can't open /dev/fb0 (%m)\n", __func__);
+		hal_debug_c("%s: can't open /dev/fb0 (%m)\n", __func__);
 		return -1;
 	}
 	out.outputid = STMFBIO_OUTPUTID_MAIN;
 	if (ioctl(fb, STMFBIO_GET_OUTPUT_CONFIG, &out) < 0)
 	{
-		lt_debug_c("%s: STMFBIO_GET_OUTPUT_CONFIG (%m)\n", __func__);
+		hal_debug_c("%s: STMFBIO_GET_OUTPUT_CONFIG (%m)\n", __func__);
 		goto out;
 	}
 	hdmi_enabled = enable;
@@ -157,7 +157,7 @@ static int hdmi_out(bool enable)
 
 	ret = ioctl(fb, STMFBIO_SET_OUTPUT_CONFIG, &out);
 	if (ret < 0)
-		_lt_debug(TRIPLE_DEBUG_VIDEO, NULL, "%s: STMFBIO_SET_OUTPUT_CONFIG (%m)\n", __func__);
+		_hal_debug(HAL_DEBUG_VIDEO, NULL, "%s: STMFBIO_SET_OUTPUT_CONFIG (%m)\n", __func__);
 out:
 	close(fb);
 	return ret;
@@ -300,7 +300,7 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)
 {
-	lt_debug("%s unit %u\n", __func__, unit);
+	hal_debug("%s unit %u\n", __func__, unit);
 
 	brightness = -1;
 	contrast = -1;
@@ -310,7 +310,7 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	scartvoltage = -1;
 	video_standby = 0;
 	if (unit > 1) {
-		lt_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
+		hal_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
 		devnum = 0;
 	} else
 		devnum = unit;
@@ -326,7 +326,7 @@ cVideo::~cVideo(void)
 void cVideo::openDevice(void)
 {
 	int n = 0;
-	lt_debug("#%d: %s\n", devnum, __func__);
+	hal_debug("#%d: %s\n", devnum, __func__);
 	/* todo: this fd checking is racy, should be protected by a lock */
 	if (fd != -1) /* already open */
 		return;
@@ -340,14 +340,14 @@ retry:
 			if (++n < 10)
 				goto retry;
 		}
-		lt_info("#%d: %s cannot open %s: %m, retries %d\n", devnum, __func__, VDEV[devnum], n);
+		hal_info("#%d: %s cannot open %s: %m, retries %d\n", devnum, __func__, VDEV[devnum], n);
 	}
 	playstate = VIDEO_STOPPED;
 }
 
 void cVideo::closeDevice(void)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	/* looks like sometimes close is unhappy about non-empty buffers */
 	Start();
 	if (fd >= 0)
@@ -363,22 +363,22 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	int n;
 
 	int mo = (mode < 0||mode > 3) ? 4 : mode;
-	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[mo]);
+	hal_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[mo]);
 
 	if (aspect > 3 || aspect == 0)
-		lt_info("%s: invalid aspect: %d\n", __func__, aspect);
+		hal_info("%s: invalid aspect: %d\n", __func__, aspect);
 	else if (aspect > 0) /* -1 == don't set */
 	{
-		lt_debug("%s: /proc/stb/video/aspect -> %s\n", __func__, a[aspect]);
+		hal_debug("%s: /proc/stb/video/aspect -> %s\n", __func__, a[aspect]);
 		n = proc_put("/proc/stb/video/aspect", a[aspect], strlen(a[aspect]));
 		if (n < 0)
-			lt_info("%s: proc_put /proc/stb/video/aspect (%m)\n", __func__);
+			hal_info("%s: proc_put /proc/stb/video/aspect (%m)\n", __func__);
 	}
 
 	if (mode == -1)
 		return 0;
 
-	lt_debug("%s: /proc/stb/video/policy -> %s\n", __func__, m[mo]);
+	hal_debug("%s: /proc/stb/video/policy -> %s\n", __func__, m[mo]);
 	n = proc_put("/proc/stb/video/policy", m[mo], strlen(m[mo]));
 	if (n < 0)
 		return 1;
@@ -396,10 +396,10 @@ int cVideo::getAspectRatio(void)
 	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
 	{
-		lt_info("%s: VIDEO_GET_SIZE %m\n", __func__);
+		hal_info("%s: VIDEO_GET_SIZE %m\n", __func__);
 		return -1;
 	}
-	lt_debug("#%d: %s: %d\n", devnum, __func__, s.aspect_ratio);
+	hal_debug("#%d: %s: %d\n", devnum, __func__, s.aspect_ratio);
 	return s.aspect_ratio * 2 + 1;
 }
 
@@ -414,14 +414,14 @@ int cVideo::setCroppingMode(int /*vidDispMode_t format*/)
 		f = format_string[format];
 	else
 		f = "ILLEGAL format!";
-	lt_debug("%s(%d) => %s\n", __FUNCTION__, format, f);
+	hal_debug("%s(%d) => %s\n", __FUNCTION__, format, f);
 	return fop(ioctl, MPEG_VID_SET_DISPMODE, format);
 #endif
 }
 
 int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned short /*VideoPid*/, void * /*hChannel*/)
 {
-	lt_debug("#%d: %s playstate=%d\n", devnum, __func__, playstate);
+	hal_debug("#%d: %s playstate=%d\n", devnum, __func__, playstate);
 #if 0
 	if (playstate == VIDEO_PLAYING)
 		return 0;
@@ -430,7 +430,7 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 #endif
 	/* implicitly do StopPicture() on video->Start() */
 	if (stillpicture) {
-		lt_info("%s: stillpicture == true, doing implicit StopPicture()\n", __func__);
+		hal_info("%s: stillpicture == true, doing implicit StopPicture()\n", __func__);
 		stillpicture = false;
 		Stop(1);
 	}
@@ -458,10 +458,10 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 
 int cVideo::Stop(bool blank)
 {
-	lt_debug("#%d: %s(%d)\n", devnum, __func__, blank);
+	hal_debug("#%d: %s(%d)\n", devnum, __func__, blank);
 	if (stillpicture)
 	{
-		lt_debug("%s: stillpicture == true\n", __func__);
+		hal_debug("%s: stillpicture == true\n", __func__);
 		return -1;
 	}
 	playstate = blank ? VIDEO_STOPPED : VIDEO_FREEZED;
@@ -479,25 +479,25 @@ int cVideo::setBlank(int)
 
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
-	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
+	hal_debug("%s(%d, %d)\n", __func__, video_system, remember);
 	char current[32];
 
 	if (video_system > VIDEO_STD_MAX)
 	{
-		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
+		hal_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
 		return -1;
 	}
 	int ret = proc_get("/proc/stb/video/videomode", current, 32);
 	if (strcmp(current, vid_modes[video_system]) == 0)
 	{
-		lt_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
+		hal_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
 		return 0;
 	}
-	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, vid_modes[video_system]);
+	hal_info("%s: old: '%s' new: '%s'\n", __func__, current, vid_modes[video_system]);
 	bool stopped = false;
 	if (playstate == VIDEO_PLAYING)
 	{
-		lt_info("%s: playstate == VIDEO_PLAYING, stopping video\n", __func__);
+		hal_info("%s: playstate == VIDEO_PLAYING, stopping video\n", __func__);
 		Stop();
 		stopped = true;
 	}
@@ -519,7 +519,7 @@ int cVideo::GetVideoSystem(void)
 		if (strcmp(current, vid_modes[i]) == 0)
 			return i;
 	}
-	lt_info("%s: could not find '%s' mode, returning VIDEO_STD_720P50\n", __func__, current);
+	hal_info("%s: could not find '%s' mode, returning VIDEO_STD_720P50\n", __func__, current);
 	return VIDEO_STD_720P50;
 }
 
@@ -528,7 +528,7 @@ void cVideo::GetVideoSystemFormatName(cs_vs_format_t *format, int system)
 	if (system == -1)
 		system = GetVideoSystem();
 	if (system < 0 || system > VIDEO_STD_1080P50) {
-		lt_info("%s: invalid system %d\n", __func__, system);
+		hal_info("%s: invalid system %d\n", __func__, system);
 		strcpy(format->format, "invalid");
 	} else
 		strcpy(format->format, vid_modes[system]);
@@ -541,10 +541,10 @@ int cVideo::getPlayState(void)
 
 void cVideo::SetVideoMode(analog_mode_t mode)
 {
-	lt_debug("#%d: %s(%d)\n", devnum, __func__, mode);
+	hal_debug("#%d: %s(%d)\n", devnum, __func__, mode);
 	if (!(mode & ANALOG_SCART_MASK))
 	{
-		lt_debug("%s: non-SCART mode ignored\n", __func__);
+		hal_debug("%s: non-SCART mode ignored\n", __func__);
 		return;
 	}
 	const char *m;
@@ -557,7 +557,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 			m = "rgb";
 			break;
 		default:
-			lt_info("%s unknown mode %d\n", __func__, mode);
+			hal_info("%s unknown mode %d\n", __func__, mode);
 			m = "rgb";
 			break; /* default to rgb */
 	}
@@ -566,7 +566,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 
 void cVideo::ShowPicture(const char * fname, const char *_destname)
 {
-	lt_debug("%s(%s)\n", __func__, fname);
+	hal_debug("%s(%s)\n", __func__, fname);
 	//static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
 	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
 	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
@@ -577,7 +577,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */
-		lt_info("%s: video_standby == true\n", __func__);
+		hal_info("%s: video_standby == true\n", __func__);
 		return;
 	}
 	const char *lastDot = strrchr(fname, '.');
@@ -590,7 +590,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			strcpy(destname, "/tmp/cache");
 			if (stat(fname, &st2))
 			{
-				lt_info("%s: could not stat %s (%m)\n", __func__, fname);
+				hal_info("%s: could not stat %s (%m)\n", __func__, fname);
 				return;
 			}
 			mkdir(destname, 0755);
@@ -618,7 +618,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 	mfd = open(destname, O_RDONLY);
 	if (mfd < 0)
 	{
-		lt_info("%s cannot open %s: %m\n", __func__, destname);
+		hal_info("%s cannot open %s: %m\n", __func__, destname);
 		goto out;
 	}
 	fstat(mfd, &st);
@@ -631,13 +631,13 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 		stillpicture = true;
 
 		if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
-			lt_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
+			hal_info("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
 		bool seq_end_avail = false;
 		off_t pos=0;
 		unsigned char *iframe = (unsigned char *)malloc((st.st_size < 8192) ? 8192 : st.st_size);
 		if (! iframe)
 		{
-			lt_info("%s: malloc failed (%m)\n", __func__);
+			hal_info("%s: malloc failed (%m)\n", __func__);
 			goto out;
 		}
 		read(mfd, iframe, st.st_size);
@@ -665,14 +665,14 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 
 void cVideo::StopPicture()
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	stillpicture = false;
 	Stop(1);
 }
 
 void cVideo::Standby(unsigned int bOn)
 {
-	lt_debug("%s(%d)\n", __func__, bOn);
+	hal_debug("%s(%d)\n", __func__, bOn);
 	if (bOn)
 	{
 		closeDevice();
@@ -721,7 +721,7 @@ int cVideo::getBlank(void)
 	free(line);
 	fclose(f);
 	int ret = (count == lastcount); /* no new decode -> return 1 */
-	lt_debug("#%d: %s: %d (irq++: %d)\n", devnum, __func__, ret, count - lastcount);
+	hal_debug("#%d: %s: %d (irq++: %d)\n", devnum, __func__, ret, count - lastcount);
 	lastcount = count;
 	return ret;
 }
@@ -738,7 +738,7 @@ void cVideo::VideoParamWatchdog(void)
 	ioctl(fd, MPEG_VID_GET_V_INFO_RAW, &v_info);
 	if (_v_info != v_info)
 	{
-		lt_debug("%s params changed. old: %08x new: %08x\n", __FUNCTION__, _v_info, v_info);
+		hal_debug("%s params changed. old: %08x new: %08x\n", __FUNCTION__, _v_info, v_info);
 		setAspectRatio(-1, -1);
 	}
 	_v_info = v_info;
@@ -753,7 +753,7 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 	 * TODO: check this in the driver sources */
 	int xres = 720; /* proc_get_hex("/proc/stb/vmpeg/0/xres") */
 	int yres = 576; /* proc_get_hex("/proc/stb/vmpeg/0/yres") */
-	lt_debug("#%d %s: x:%d y:%d w:%d h:%d ow:%d oh:%d\n", devnum, __func__, x, y, w, h, osd_w, osd_h);
+	hal_debug("#%d %s: x:%d y:%d w:%d h:%d ow:%d oh:%d\n", devnum, __func__, x, y, w, h, osd_w, osd_h);
 	if (x == -1 && y == -1 && w == -1 && h == -1)
 	{
 		_w = xres;
@@ -779,7 +779,7 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 		_w /= 1280;
 		_h /= 720;
 	}
-	lt_debug("#%d %s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", devnum, __func__, _x, _y, _w, _h, xres, yres);
+	hal_debug("#%d %s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", devnum, __func__, _x, _y, _w, _h, xres, yres);
 	sprintf(buffer, "%x %x %x %x", _x, _y, _w, _h);
 	proc_put(VMPEG_dst_all[devnum], buffer, strlen(buffer));
 }
@@ -828,12 +828,12 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	rate = rate2csapi(r);
 	height = s.h;
 	width = s.w;
-	lt_debug("#%d: %s: rate: %d, width: %d height: %d\n", devnum, __func__, rate, width, height);
+	hal_debug("#%d: %s: rate: %d, width: %d height: %d\n", devnum, __func__, rate, width, height);
 }
 
 void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 {
-	lt_debug("%s %d\n", __func__, mode);
+	hal_debug("%s %d\n", __func__, mode);
 	/*
 	 * { 0, LOCALE_OPTIONS_OFF },
 	 * { 1, LOCALE_OPTIONS_ON  },
@@ -858,7 +858,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 		"VIDEO_FORMAT_PNG"
 	};
 	int t;
-	lt_debug("#%d: %s type=%s\n", devnum, __func__, VF[type]);
+	hal_debug("#%d: %s type=%s\n", devnum, __func__, VF[type]);
 
 	switch (type)
 	{
@@ -881,7 +881,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 	}
 
 	if (ioctl(fd, VIDEO_SET_STREAMTYPE, t) < 0)
-		lt_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
+		hal_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
 	return 0;
 }
 
@@ -889,13 +889,13 @@ int64_t cVideo::GetPTS(void)
 {
 	int64_t pts = 0;
 	if (ioctl(fd, VIDEO_GET_PTS, &pts) < 0)
-		lt_info("%s: GET_PTS failed (%m)\n", __func__);
+		hal_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
 }
 
 void cVideo::SetDemux(cDemux *)
 {
-	lt_debug("#%d %s not implemented yet\n", devnum, __func__);
+	hal_debug("#%d %s not implemented yet\n", devnum, __func__);
 }
 
 void cVideo::SetControl(int control, int value) {
@@ -1174,7 +1174,7 @@ static const uint32_t yuv2rgbtable_bv[256] = {
 /* TODO: aspect ratio correction and PIP */
 bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
-	lt_info("%s: get_video: %d get_osd: %d scale_to_video: %d\n",
+	hal_info("%s: get_video: %d get_osd: %d scale_to_video: %d\n",
 		 __func__, get_video, get_osd, scale_to_video);
 
 	int fbfd = -1, bpafd = -1;
@@ -1186,26 +1186,26 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 
 	/* this hints at incorrect usage */
 	if (video != NULL)
-		lt_info("%s: WARNING, video != NULL?\n", __func__);
+		hal_info("%s: WARNING, video != NULL?\n", __func__);
 
 	fbfd = open("/dev/fb0", O_RDWR);
 	if (fbfd < 0) {
-		lt_info("%s: cannot open open /dev/fb0 (%m)\n", __func__);
+		hal_info("%s: cannot open open /dev/fb0 (%m)\n", __func__);
 		return false;
 	}
 	if (ioctl(fbfd, FBIOGET_FSCREENINFO, &fix_screeninfo) == -1)
-		lt_info("%s: FBIOGET_FSCREENINFO (%m)\n", __func__);
+		hal_info("%s: FBIOGET_FSCREENINFO (%m)\n", __func__);
 
 	if (ioctl(fbfd, FBIOGET_VSCREENINFO, &var_screeninfo) == -1)
-		lt_info("%s: FBIOGET_VSCREENINFO (%m)\n", __func__);
+		hal_info("%s: FBIOGET_VSCREENINFO (%m)\n", __func__);
 
 	if (var_screeninfo.bits_per_pixel != 32) {
-		lt_info("%s: only 32bit framebuffer supported.\n", __func__);
+		hal_info("%s: only 32bit framebuffer supported.\n", __func__);
 		close(fbfd);
 		return false;
 	}
 	if (fix_screeninfo.line_length - (var_screeninfo.xres * 4) != 0) {
-		lt_info("%s: framebuffer with offset not supported.\n", __func__);
+		hal_info("%s: framebuffer with offset not supported.\n", __func__);
 		close(fbfd);
 		return false;
 	}
@@ -1252,7 +1252,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	bpafd = open("/dev/bpamem0", O_RDWR | O_CLOEXEC);
 	if (bpafd < 0)
 	{
-		lt_info("%s: cannot open /dev/bpamem0: %m\n", __func__);
+		hal_info("%s: cannot open /dev/bpamem0: %m\n", __func__);
 		goto error_cleanup;
 	}
 	BPAMemAllocMemData bpa_data;
@@ -1260,7 +1260,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	bpa_data.mem_size = outmem + osdmem + vidmem + 4096;
 	if (ioctl(bpafd, BPAMEMIO_ALLOCMEM, &bpa_data))
 	{
-		lt_info("%s: cannot allocate %lu bytes of BPA2 memory\n", __func__, bpa_data.mem_size);
+		hal_info("%s: cannot allocate %lu bytes of BPA2 memory\n", __func__, bpa_data.mem_size);
 		goto error_cleanup;
 	}
 	close(bpafd);
@@ -1270,13 +1270,13 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	bpafd = open(bpa_mem_device, O_RDWR | O_CLOEXEC);
 	if (bpafd < 0)
 	{
-		lt_info("%s: cannot open secondary bpamem device %s: %m\n", __func__, bpa_mem_device);
+		hal_info("%s: cannot open secondary bpamem device %s: %m\n", __func__, bpa_mem_device);
 		goto error_cleanup;
 	}
 	bpa = (uint8_t *)mmap(0, bpa_data.mem_size, PROT_WRITE|PROT_READ, MAP_SHARED, bpafd, 0);
 	if (bpa == MAP_FAILED)
 	{
-		lt_info("%s: cannot map from bpamem: %m\n", __func__);
+		hal_info("%s: cannot map from bpamem: %m\n", __func__);
 		ioctl(bpafd, BPAMEMIO_FREEMEM);
 		goto error_cleanup;
 	}
@@ -1315,19 +1315,19 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 			fclose(pipe);
 		}
 		if (vid_phys_addr == 0) {
-			lt_info("%s: primary display pane not found in /proc/bpa2\n", __func__);
+			hal_info("%s: primary display pane not found in /proc/bpa2\n", __func__);
 		}
 
 		mfd = open("/dev/mem", O_RDWR | O_CLOEXEC);
 		if (mfd < 0) {
-			lt_info("%s: cannot open open /dev/mem (%m)\n", __func__);
+			hal_info("%s: cannot open open /dev/mem (%m)\n", __func__);
 			goto error_cleanup;
 		}
 
-		lt_info("%s: Using bpa2 part LMI_VID - 0x%lx %lu\n", __func__, vid_phys_addr, vid_mem_size);
+		hal_info("%s: Using bpa2 part LMI_VID - 0x%lx %lu\n", __func__, vid_phys_addr, vid_mem_size);
 		decode_surface = (uint8_t *)mmap(0, vid_mem_size, PROT_READ, MAP_SHARED, mfd, vid_phys_addr);
 		if (decode_surface == MAP_FAILED) {
-			lt_info("%s: cannot mmap /dev/mem for VIDEO (%m)\n", __func__);
+			hal_info("%s: cannot mmap /dev/mem for VIDEO (%m)\n", __func__);
 			close(mfd);
 			goto error_cleanup;
 		}
@@ -1500,7 +1500,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	{
 		uint8_t *lfb = (uint8_t *)mmap(0, fix_screeninfo.smem_len, PROT_READ, MAP_SHARED, fbfd, 0);
 		if (lfb == MAP_FAILED)
-			lt_info("%s: mmap fb memory failed (%m)\n", __func__);
+			hal_info("%s: mmap fb memory failed (%m)\n", __func__);
 		else {
 			memcpy(osd, lfb, fix_screeninfo.line_length*var_screeninfo.yres);
 			munmap(lfb, fix_screeninfo.smem_len);
@@ -1563,7 +1563,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 		blt_data.srcMemSize = vidmem;
 		blt_data.dstMemSize = outmem;
 		if (ioctl(fbfd, STMFBIO_BLT_EXTERN, &blt_data) < 0)
-			lt_info("%s: STMFBIO_BLT_EXTERN video: %m\n", __func__);
+			hal_info("%s: STMFBIO_BLT_EXTERN video: %m\n", __func__);
 	}
 	if (get_osd)
 	{
@@ -1592,7 +1592,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 		blt_data.srcMemSize = osdmem;
 		blt_data.dstMemSize = outmem;
 		if (ioctl(fbfd, STMFBIO_BLT_EXTERN, &blt_data) < 0)
-			lt_info("%s: STMFBIO_BLT_EXTERN osd: %m\n", __func__);
+			hal_info("%s: STMFBIO_BLT_EXTERN osd: %m\n", __func__);
 	}
 	ioctl(fbfd, STMFBIO_SYNC_BLITTER);
 
@@ -1600,7 +1600,7 @@ bool cVideo::GetScreenImage(unsigned char * &video, int &xres, int &yres, bool g
 	if (video)
 		memcpy(video, bpa, outmem);
 	else
-		lt_info("%s: could not allocate screenshot buffer (%d bytes)\n", __func__, xres * yres * 4);
+		hal_info("%s: could not allocate screenshot buffer (%d bytes)\n", __func__, xres * yres * 4);
 	munmap(bpa, bpa_data.mem_size);
 	ioctl(bpafd, BPAMEMIO_FREEMEM);
 	close(bpafd);

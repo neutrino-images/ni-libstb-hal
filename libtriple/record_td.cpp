@@ -11,9 +11,9 @@
 
 #include "record_td.h"
 #include "dmx_hal.h"
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_RECORD, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_RECORD, this, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_RECORD, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_RECORD, this, args)
 
 /* helper function to call the cpp thread loop */
 void *execute_record_thread(void *c)
@@ -25,7 +25,7 @@ void *execute_record_thread(void *c)
 
 cRecord::cRecord(int /*num*/)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	dmx = NULL;
 	record_thread_running = false;
 	file_fd = -1;
@@ -34,14 +34,14 @@ cRecord::cRecord(int /*num*/)
 
 cRecord::~cRecord()
 {
-	lt_info("%s: calling ::Stop()\n", __func__);
+	hal_info("%s: calling ::Stop()\n", __func__);
 	Stop();
-	lt_info("%s: end\n", __func__);
+	hal_info("%s: end\n", __func__);
 }
 
 bool cRecord::Open(void)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	exit_flag = RECORD_STOPPED;
 	return true;
 }
@@ -50,13 +50,13 @@ bool cRecord::Open(void)
 // unused
 void cRecord::Close(void)
 {
-	lt_info("%s: \n", __func__);
+	hal_info("%s: \n", __func__);
 }
 #endif
 
 bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int numpids, uint64_t)
 {
-	lt_info("%s: fd %d, vpid 0x%03x\n", __func__, fd, vpid);
+	hal_info("%s: fd %d, vpid 0x%03x\n", __func__, fd, vpid);
 	int i;
 
 	if (!dmx)
@@ -78,7 +78,7 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 	{
 		exit_flag = RECORD_FAILED_READ;
 		errno = i;
-		lt_info("%s: error creating thread! (%m)\n", __func__);
+		hal_info("%s: error creating thread! (%m)\n", __func__);
 		delete dmx;
 		dmx = NULL;
 		return false;
@@ -89,10 +89,10 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 
 bool cRecord::Stop(void)
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 
 	if (exit_flag != RECORD_RUNNING)
-		lt_info("%s: status not RUNNING? (%d)\n", __func__, exit_flag);
+		hal_info("%s: status not RUNNING? (%d)\n", __func__, exit_flag);
 
 	exit_flag = RECORD_STOPPED;
 	if (record_thread_running)
@@ -101,7 +101,7 @@ bool cRecord::Stop(void)
 
 	/* We should probably do that from the destructor... */
 	if (!dmx)
-		lt_info("%s: dmx == NULL?\n", __func__);
+		hal_info("%s: dmx == NULL?\n", __func__);
 	else
 		delete dmx;
 	dmx = NULL;
@@ -109,7 +109,7 @@ bool cRecord::Stop(void)
 	if (file_fd != -1)
 		close(file_fd);
 	else
-		lt_info("%s: file_fd not open??\n", __func__);
+		hal_info("%s: file_fd not open??\n", __func__);
 	file_fd = -1;
 	return true;
 }
@@ -120,9 +120,9 @@ bool cRecord::ChangePids(unsigned short /*vpid*/, unsigned short *apids, int num
 	int j;
 	bool found;
 	unsigned short pid;
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	if (!dmx) {
-		lt_info("%s: DMX = NULL\n", __func__);
+		hal_info("%s: DMX = NULL\n", __func__);
 		return false;
 	}
 	pids = dmx->pesfds;
@@ -156,9 +156,9 @@ bool cRecord::ChangePids(unsigned short /*vpid*/, unsigned short *apids, int num
 bool cRecord::AddPid(unsigned short pid)
 {
 	std::vector<pes_pids> pids;
-	lt_info("%s: \n", __func__);
+	hal_info("%s: \n", __func__);
 	if (!dmx) {
-		lt_info("%s: DMX = NULL\n", __func__);
+		hal_info("%s: DMX = NULL\n", __func__);
 		return false;
 	}
 	pids = dmx->pesfds;
@@ -171,7 +171,7 @@ bool cRecord::AddPid(unsigned short pid)
 
 void cRecord::RecordThread()
 {
-	lt_info("%s: begin\n", __func__);
+	hal_info("%s: begin\n", __func__);
 #define BUFSIZE (1 << 19) /* 512 kB */
 	ssize_t r = 0;
 	int buf_pos = 0;
@@ -181,7 +181,7 @@ void cRecord::RecordThread()
 	if (!buf)
 	{
 		exit_flag = RECORD_FAILED_MEMORY;
-		lt_info("%s: unable to allocate buffer! (out of memory)\n", __func__);
+		hal_info("%s: unable to allocate buffer! (out of memory)\n", __func__);
 	}
 
 	dmx->Start();
@@ -190,23 +190,23 @@ void cRecord::RecordThread()
 		if (buf_pos < BUFSIZE)
 		{
 			r = dmx->Read(buf + buf_pos, BUFSIZE - 1 - buf_pos, 100);
-			lt_debug("%s: buf_pos %6d r %6d / %6d\n", __func__,
+			hal_debug("%s: buf_pos %6d r %6d / %6d\n", __func__,
 				buf_pos, (int)r, BUFSIZE - 1 - buf_pos);
 			if (r < 0)
 			{
 				if (errno != EAGAIN)
 				{
-					lt_info("%s: read failed: %m\n", __func__);
+					hal_info("%s: read failed: %m\n", __func__);
 					exit_flag = RECORD_FAILED_READ;
 					break;
 				}
-				lt_info("%s: EAGAIN\n", __func__);
+				hal_info("%s: EAGAIN\n", __func__);
 			}
 			else
 				buf_pos += r;
 		}
 		else
-			lt_info("%s: buffer full! Overflow?\n", __func__);
+			hal_info("%s: buffer full! Overflow?\n", __func__);
 		if (buf_pos > (BUFSIZE / 3)) /* start writeout */
 		{
 			size_t towrite = BUFSIZE / 2;
@@ -216,12 +216,12 @@ void cRecord::RecordThread()
 			if (r < 0)
 			{
 				exit_flag = RECORD_FAILED_FILE;
-				lt_info("%s: write error: %m\n", __func__);
+				hal_info("%s: write error: %m\n", __func__);
 				break;
 			}
 			buf_pos -= r;
 			memmove(buf, buf + r, buf_pos);
-			lt_debug("%s: buf_pos %6d w %6d / %6d\n", __func__, buf_pos, (int)r, (int)towrite);
+			hal_debug("%s: buf_pos %6d w %6d / %6d\n", __func__, buf_pos, (int)r, (int)towrite);
 #if 0
 			if (fdatasync(file_fd))
 				perror("cRecord::FileThread() fdatasync");
@@ -237,7 +237,7 @@ void cRecord::RecordThread()
 		if (r < 0)
 		{
 			exit_flag = RECORD_FAILED_FILE;
-			lt_info("%s: write error: %m\n", __func__);
+			hal_info("%s: write error: %m\n", __func__);
 			break;
 		}
 		buf_pos -= r;
@@ -259,7 +259,7 @@ void cRecord::RecordThread()
 	printf("[stream2file]: pthreads exit code: %i, dir: '%s', filename: '%s' myfilename: '%s'\n", exit_flag, s.dir, s.filename, myfilename);
 #endif
 
-	lt_info("%s: end", __func__);
+	hal_info("%s: end", __func__);
 	pthread_exit(NULL);
 }
 

@@ -35,10 +35,10 @@
 #include <OpenThreads/Thread>
 
 #include "init.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 #include "glfb.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 static bool initialized = false;
 GLFramebuffer *glfb = NULL;
@@ -113,11 +113,11 @@ void Input::run()
 	mkfifo("/tmp/neutrino.input", 0600);
 	out_fd = open("/tmp/neutrino.input", O_RDWR|O_CLOEXEC|O_NONBLOCK);
 	if (out_fd < 0)
-		lt_info("could not create /tmp/neutrino.input. good luck. error: %m\n");
+		hal_info("could not create /tmp/neutrino.input. good luck. error: %m\n");
 
 	n = scandir("/dev/input", &namelist, dirfilter, NULL);
 	if (n < 0)
-		lt_info("no input devices /dev/input/eventX??\n");
+		hal_info("no input devices /dev/input/eventX??\n");
 	else
 	{
 		while (n--) {
@@ -125,7 +125,7 @@ void Input::run()
 			free(namelist[n]);
 			int fd = open(inputstr, O_RDWR|O_CLOEXEC|O_NONBLOCK);
 			if (fd < 0) {
-				lt_info("could not open %s:%m\n", inputstr);
+				hal_info("could not open %s:%m\n", inputstr);
 				continue;
 			}
 			ioctl(fd, EVIOCGBIT(0, EV_MAX), &bit);
@@ -133,7 +133,7 @@ void Input::run()
 				close(fd);
 				continue;
 			}
-			lt_info("input dev: %s bit: 0x%08lx fd: %d\n", inputstr, bit, fd);
+			hal_info("input dev: %s bit: 0x%08lx fd: %d\n", inputstr, bit, fd);
 			in_fds.insert(fd);
 			if (fd > fd_max)
 				fd_max = fd;
@@ -155,7 +155,7 @@ void Input::run()
 		if (ret == 0) /* timed out */
 			continue;
 		if (ret < 0) {
-			lt_info("input: select returned %d (%m)\n", ret);
+			hal_info("input: select returned %d (%m)\n", ret);
 			continue;
 		}
 
@@ -167,7 +167,7 @@ void Input::run()
 			if (ret != sizeof(in)) {
 				if (errno == ENODEV) {
 					close(*i);
-					lt_info("input fd %d vanished?\n", *i);
+					hal_info("input fd %d vanished?\n", *i);
 					in_fds.erase(i);
 				}
 				continue;
@@ -177,7 +177,7 @@ void Input::run()
 			keymap_t::const_iterator j = kmap.find(in.code);
 			if (j != kmap.end())
 				in.code = j->second;
-			lt_debug("GLFB::%s:(fd %d) pushing 0x%x, value %d\n", __func__, *i, in.code, in.value);
+			hal_debug("GLFB::%s:(fd %d) pushing 0x%x, value %d\n", __func__, *i, in.code, in.value);
 			write(out_fd, &in, sizeof(in));
 		}
 	}
@@ -191,8 +191,8 @@ static Input *thread = NULL;
 void init_td_api()
 {
 	if (!initialized)
-		lt_debug_init();
-	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
+		hal_debug_init();
+	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
 	if (! glfb) {
 		int x = 1280, y = 720; /* default OSD FB resolution */
 		/*
@@ -207,9 +207,9 @@ void init_td_api()
 			x = atoi(tmp);
 			y = atoi(p + 1);
 		}
-		lt_info("%s: setting Framebuffer size to %dx%d\n", __func__, x, y);
+		hal_info("%s: setting Framebuffer size to %dx%d\n", __func__, x, y);
 		if (!p)
-			lt_info("%s: export GLFB_RESOLUTION=\"<w>,<h>\" to set another resolution\n", __func__);
+			hal_info("%s: export GLFB_RESOLUTION=\"<w>,<h>\" to set another resolution\n", __func__);
 
 		glfb = new GLFramebuffer(x, y); /* hard coded to PAL resolution for now */
 	}
@@ -220,7 +220,7 @@ void init_td_api()
 
 void shutdown_td_api()
 {
-	lt_info("%s, initialized = %d\n", __func__, (int)initialized);
+	hal_info("%s, initialized = %d\n", __func__, (int)initialized);
 	if (glfb)
 		delete glfb;
 	if (thread)

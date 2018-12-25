@@ -5,9 +5,9 @@
 #include "init.h"
 #include "glfb.h"
 
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 static bool initialized = false;
 GLFramebuffer *glfb = NULL;
@@ -16,8 +16,8 @@ bool HAL_nodec = false;
 void init_td_api()
 {
 	if (!initialized)
-		lt_debug_init();
-	lt_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
+		hal_debug_init();
+	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
 	if (! glfb) {
 		int x = 1280, y = 720; /* default OSD FB resolution */
 		/*
@@ -32,9 +32,9 @@ void init_td_api()
 			x = atoi(tmp);
 			y = atoi(p + 1);
 		}
-		lt_info("%s: setting GL Framebuffer size to %dx%d\n", __func__, x, y);
+		hal_info("%s: setting GL Framebuffer size to %dx%d\n", __func__, x, y);
 		if (!p)
-			lt_info("%s: export GLFB_RESOLUTION=\"<w>,<h>\" to set another resolution\n", __func__);
+			hal_info("%s: export GLFB_RESOLUTION=\"<w>,<h>\" to set another resolution\n", __func__);
 
 		glfb = new GLFramebuffer(x, y); /* hard coded to PAL resolution for now */
 	}
@@ -49,7 +49,7 @@ void init_td_api()
 
 void shutdown_td_api()
 {
-	lt_info("%s, initialized = %d\n", __func__, (int)initialized);
+	hal_info("%s, initialized = %d\n", __func__, (int)initialized);
 	if (glfb)
 		delete glfb;
 	glfb = NULL;

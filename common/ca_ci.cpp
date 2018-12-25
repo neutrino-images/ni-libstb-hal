@@ -17,7 +17,7 @@
 #include <queue>
 
 #include "ca_ci.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 #include <cs_api.h>
 #include <hardware_caps.h>
 
@@ -34,7 +34,7 @@
 #define tsb_debug 0
 #define wd_debug 0
 
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_CA, this, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_CA, this, args)
 
 static const char * FILENAME = "[ca_ci]";
 #if HAVE_DUCKBOX_HARDWARE
@@ -477,7 +477,7 @@ void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int
 
 bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	if(cam_messenger)
 		cam_messenger(EVT_CA_MESSAGE, (uint32_t) msg);
 #if z_debug

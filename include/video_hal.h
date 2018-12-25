@@ -9,12 +9,12 @@
 #include "../libarmbox/video_lib.h"
 #include "../libarmbox/hdmi_cec.h"
 #elif HAVE_AZBOX_HARDWARE
-#include "../azbox/video_lib.h"
+#include "../libazbox/video_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
-#include "../raspi/video_lib.h"
+#include "../libraspi/video_lib.h"
 #else
-#include "../generic-pc/video_lib.h"
+#include "../libgeneric-pc/video_lib.h"
 #endif
 #else
 #error neither HAVE_TRIPLEDRAGON nor HAVE_SPARK_HARDWARE defined

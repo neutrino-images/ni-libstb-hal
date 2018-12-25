@@ -1,11 +1,5 @@
-/*
- * dummy functions to implement ca_cs.h interface
- */
-#if HAVE_DUCKBOX_HARDWARE || HAVE_ARM_HARDWARE
-#include "ca_ci.h"
-#else
-#ifndef __CA_LIBTRIPLE_H_
-#define __CA_LIBTRIPLE_H_
+#ifndef __ca__
+#define __ca__
 
 #include <stdint.h>
 #include "cs_types.h"
@@ -122,5 +116,4 @@ public:
 	virtual ~cCA();
 };
 
-#endif // __CA_LIBTRIPLE_H_
-#endif // HAVE_DUCKBOX_HARDWARE
+#endif // __ca__

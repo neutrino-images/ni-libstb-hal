@@ -8,7 +8,7 @@
 #include <config.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <include/init_td.h>
+#include <include/init.h>
 #if HAVE_GENERIC_HARDWARE
 #include <include/glfb.h>
 

@@ -89,16 +89,16 @@ fi
 AC_OUTPUT([
 Makefile
 common/Makefile
-libeplayer3/Makefile
-libeplayer3-arm/Makefile
-azbox/Makefile
-generic-pc/Makefile
+libarmbox/Makefile
+libazbox/Makefile
 libduckbox/Makefile
 libdvbci/Makefile
-libtriple/Makefile
+libeplayer3-arm/Makefile
+libeplayer3-sh4/Makefile
+libgeneric-pc/Makefile
+libraspi/Makefile
 libspark/Makefile
-libarmbox/Makefile
-raspi/Makefile
+libtriple/Makefile
 tools/Makefile
 ])
 

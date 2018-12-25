@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "init_td.h"
+#include "init.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>

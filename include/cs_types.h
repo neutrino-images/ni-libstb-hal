@@ -1,8 +1,8 @@
 /* pretty useless, but we don't need to work around this if
  * we just copy it over... */
 
-#ifndef __CS_TYPES_H_
-#define __CS_TYPES_H_
+#ifndef __CS_TYPES_H__
+#define __CS_TYPES_H__
 
 typedef enum
 {
@@ -20,4 +20,4 @@ typedef signed int		s32;
 typedef signed short		s16;
 typedef signed char		 s8;
 
-#endif // __CS_TYPES_H_
+#endif // __CS_TYPES_H__

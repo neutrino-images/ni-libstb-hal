@@ -1,5 +1,5 @@
-#ifndef _VIDEO_TD_H
-#define _VIDEO_TD_H
+#ifndef __VIDEO_TD_H__
+#define __VIDEO_TD_H__
 
 #include <hardware/vid/vid_inf.h>
 #define video_format_t          vidDispSize_t
@@ -193,4 +193,4 @@ class cVideo
 		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 
-#endif
+#endif // __VIDEO_TD_H__

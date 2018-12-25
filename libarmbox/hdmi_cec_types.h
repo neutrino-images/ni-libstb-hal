@@ -1,3 +1,6 @@
+#ifndef __HDMI_CEC_TYPES_H__
+#define __HDMI_CEC_TYPES_H__
+
 typedef enum cec_vendor_id
 {
 	CEC_VENDOR_TOSHIBA        = 0x000039,
@@ -706,3 +709,5 @@ static cec_opcode GetResponseOpcode(cec_opcode opcode)
 
 	return CEC_OPCODE_NONE;
 }
+
+#endif // __HDMI_CEC_TYPES_H__

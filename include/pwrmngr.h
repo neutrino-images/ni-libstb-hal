@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __pwrmngr_hal__
-#define __pwrmngr_hal__
+#ifndef __PWRMNGR_H__
+#define __PWRMNGR_H__
 
 class cCpuFreqManager
 {
@@ -44,4 +44,4 @@ public:
 	bool SetStandby(bool Active, bool Passive);
 };
 
-#endif
+#endif // __PWRMNGR_H__

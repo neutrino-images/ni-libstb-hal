@@ -1,7 +1,7 @@
 /* compatibility header for tripledragon. I'm lazy, so I just left it
    as "cs_api.h" so that I don't need too many ifdefs in the code */
 
-#ifndef __CS_API_H_
+#ifndef __CS_API_H__
 #define __CS_API_H_
 
 #include "init.h"
@@ -34,4 +34,5 @@ static inline void cs_deregister_messenger(void) { return; };
 static inline unsigned int cs_get_revision(void) { return 1; };
 static inline unsigned int cs_get_chip_type(void) { return 0; };
 extern int cnxt_debug;
-#endif //__CS_API_H_
+
+#endif // __CS_API_H__

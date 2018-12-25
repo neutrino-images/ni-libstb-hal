@@ -19,6 +19,7 @@
 
 #ifndef __AUDIO_MIXER_H__
 #define __AUDIO_MIXER_H__
+
 #include <alsa/asoundlib.h>
 
 class mixerVolume
@@ -32,5 +33,5 @@ class mixerVolume
 		~mixerVolume(void);
 		bool setVolume(long volume);
 };
-#endif
 
+#endif // __AUDIO_MIXER_H__

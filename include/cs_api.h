@@ -11,12 +11,12 @@ typedef void (*cs_messenger) (unsigned int msg, unsigned int data);
 
 inline void cs_api_init()
 {
-	init_td_api();
+	hal_api_init();
 };
 
 inline void cs_api_exit()
 {
-	shutdown_td_api();
+	hal_api_exit();
 };
 
 #define cs_malloc_uncached	malloc

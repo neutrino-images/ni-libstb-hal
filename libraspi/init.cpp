@@ -188,7 +188,7 @@ void Input::run()
 
 static Input *thread = NULL;
 
-void init_td_api()
+void hal_api_init()
 {
 	if (!initialized)
 		hal_debug_init();
@@ -218,7 +218,7 @@ void init_td_api()
 	initialized = true;
 }
 
-void shutdown_td_api()
+void hal_api_exit()
 {
 	hal_info("%s, initialized = %d\n", __func__, (int)initialized);
 	if (glfb)

@@ -262,7 +262,7 @@ void stop_inmux_thread(void)
 
 static bool initialized = false;
 
-void init_td_api()
+void hal_api_init()
 {
 	if (!initialized)
 		hal_debug_init();
@@ -298,7 +298,7 @@ void init_td_api()
 	hal_info("%s end\n", __FUNCTION__);
 }
 
-void shutdown_td_api()
+void hal_api_exit()
 {
 	hal_info("%s, initialized = %d\n", __FUNCTION__, (int)initialized);
 	if (initialized) {

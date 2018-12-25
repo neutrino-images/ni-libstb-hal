@@ -71,9 +71,17 @@ static const char *DMX_T[] = {
 
 /* this is the number of different cDemux() units, not the number of
  * /dev/dvb/.../demuxX devices! */
+#if BOXMODEL_VUSOLO4K
+#define NUM_DEMUX 16
+#else
 #define NUM_DEMUX 4
+#endif
 /* the current source of each cDemux unit */
+#if BOXMODEL_VUSOLO4K
+static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+#else
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
+#endif
 
 /* map the device numbers. */
 #if BOXMODEL_VUSOLO4K

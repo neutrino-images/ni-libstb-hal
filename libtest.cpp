@@ -18,7 +18,7 @@ extern GLFramebuffer *glfb;
 
 int main(int argc __attribute__((unused)), char ** argv __attribute__((unused)))
 {
-	init_td_api();
+	hal_api_init();
 #if HAVE_GENERIC_HARDWARE
 	int available = glfb->getOSDBuffer()->size(); /* allocated in glfb constructor */
 	fb_pixel_t *lfb = reinterpret_cast<fb_pixel_t*>(glfb->getOSDBuffer()->data());
@@ -41,6 +41,6 @@ int main(int argc __attribute__((unused)), char ** argv __attribute__((unused)))
 			break;
 		}
 	};
-	shutdown_td_api();
+	hal_api_exit();
 	return 0;
 }

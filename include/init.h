@@ -1,5 +1,5 @@
 #ifndef __init__
 #define __init__
-void init_td_api();
-void shutdown_td_api();
+void hal_api_init();
+void hal_api_exit();
 #endif // __init__

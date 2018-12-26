@@ -2,7 +2,7 @@
    as "cs_api.h" so that I don't need too many ifdefs in the code */
 
 #ifndef __CS_API_H__
-#define __CS_API_H_
+#define __CS_API_H__
 
 #include "init.h"
 #include <config.h>

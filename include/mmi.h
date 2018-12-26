@@ -1,5 +1,5 @@
-#ifndef __MMI_H_
-#define __MMI_H_
+#ifndef __MMI_H__
+#define __MMI_H__
 
 #define MAX_MMI_ITEMS			40
 #define MAX_MMI_TEXT_LEN		255
@@ -47,5 +47,5 @@ typedef struct {
 #define enguiryText      enquiryText
 #define MMI_ENGUIRY_INFO MMI_ENQUIRY_INFO
 
-#endif // __MMI_H_
+#endif // __MMI_H__
 

@@ -42,12 +42,12 @@
 #include "video_lib.h"
 #include "audio_lib.h"
 
-#include "lt_debug.h"
+#include "hal_debug.h"
 
-#define lt_debug_c(args...) _lt_debug(HAL_DEBUG_INIT, NULL, args)
-#define lt_info_c(args...) _lt_info(HAL_DEBUG_INIT, NULL, args)
-#define lt_debug(args...) _lt_debug(HAL_DEBUG_INIT, this, args)
-#define lt_info(args...) _lt_info(HAL_DEBUG_INIT, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
 
 
 extern cVideo *videoDecoder;
@@ -121,7 +121,7 @@ GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mS
 	mkfifo("/tmp/neutrino.input", 0600);
 	input_fd = open("/tmp/neutrino.input", O_RDWR|O_CLOEXEC|O_NONBLOCK);
 	if (input_fd < 0)
-		lt_info("%s: could not open /tmp/neutrino.input FIFO: %m\n", __func__);
+		hal_info("%s: could not open /tmp/neutrino.input FIFO: %m\n", __func__);
 	initKeys();
 }
 
@@ -208,7 +208,7 @@ void GLFramebuffer::run()
 	int y = glfb_priv->mState.height;
 	/* some dummy commandline for GLUT to be happy */
 	char const *argv[2] = { "neutrino", 0 };
-	lt_info("GLFB: GL thread starting x %d y %d\n", x, y);
+	hal_info("GLFB: GL thread starting x %d y %d\n", x, y);
 	glutInit(&argc, const_cast<char **>(argv));
 	glutInitWindowSize(x, y);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -216,7 +216,7 @@ void GLFramebuffer::run()
 	/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
 	int fbmem = x * y * 4 * 2;
 	osd_buf.resize(fbmem);
-	lt_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf.data());
+	hal_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf.data());
 	glfb_priv->mInitDone = true; /* signal that setup is finished */
 
 	/* init the good stuff */
@@ -225,9 +225,9 @@ void GLFramebuffer::run()
 	{
 		if((!GLEW_VERSION_1_5)||(!GLEW_EXT_pixel_buffer_object)||(!GLEW_ARB_texture_non_power_of_two))
 		{
-			lt_info("GLFB: Sorry, your graphics card is not supported. "
+			hal_info("GLFB: Sorry, your graphics card is not supported. "
 				"Needs at least OpenGL 1.5, pixel buffer objects and NPOT textures.\n");
-			lt_info("incompatible graphics card: %m");
+			hal_info("incompatible graphics card: %m");
 			_exit(1); /* Life is hard */
 		}
 		else
@@ -244,8 +244,8 @@ void GLFramebuffer::run()
 		}
 	}
 	else
-		lt_info("GLFB: error initializing glew: %d\n", err);
-	lt_info("GLFB: GL thread stopping\n");
+		hal_info("GLFB: error initializing glew: %d\n", err);
+	hal_info("GLFB: GL thread stopping\n");
 }
 
 #if 0
@@ -254,7 +254,7 @@ void GLFbPC::setupCtx()
 	int argc = 1;
 	/* some dummy commandline for GLUT to be happy */
 	char const *argv[2] = { "neutrino", 0 };
-	lt_info("GLFB: GL thread starting x %d y %d\n", mX[0], mY[0]);
+	hal_info("GLFB: GL thread starting x %d y %d\n", mX[0], mY[0]);
 	glutInit(&argc, const_cast<char **>(argv));
 	glutInitWindowSize(mX[0], mY[0]);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -271,7 +271,7 @@ void GLFbPC::setupOSDBuffer()
 		/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
 		int fbmem = mState.width * mState.height * 4 * 2;
 		osd_buf->resize(fbmem);
-		lt_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf->data());
+		hal_info("GLFB: OSD buffer set to %d bytes at 0x%p\n", fbmem, osd_buf->data());
 	}
 }
 #endif
@@ -321,11 +321,11 @@ void GLFbPC::releaseGLObjects()
 
 /* static */ void GLFbPC::keyboardcb(unsigned char key, int /*x*/, int /*y*/)
 {
-	lt_debug_c("GLFB::%s: 0x%x\n", __func__, key);
+	hal_debug_c("GLFB::%s: 0x%x\n", __func__, key);
 	struct input_event ev;
 	if (key == 'f')
 	{
-		lt_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, glfb_priv->mFullscreen?"off":"on");
+		hal_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, glfb_priv->mFullscreen?"off":"on");
 		glfb_priv->mFullscreen = !(glfb_priv->mFullscreen);
 		glfb_priv->mReInit = true;
 		return;
@@ -337,7 +337,7 @@ void GLFbPC::releaseGLObjects()
 	ev.value = 1; /* key own */
 	ev.type  = EV_KEY;
 	gettimeofday(&ev.time, NULL);
-	lt_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
+	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
 	ev.value = 0; /* neutrino is stupid, so push key up directly after key down */
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
@@ -345,7 +345,7 @@ void GLFbPC::releaseGLObjects()
 
 /* static */ void GLFbPC::specialcb(int key, int /*x*/, int /*y*/)
 {
-	lt_debug_c("GLFB::%s: 0x%x\n", __func__, key);
+	hal_debug_c("GLFB::%s: 0x%x\n", __func__, key);
 	struct input_event ev;
 	std::map<int, int>::const_iterator i = glfb_priv->mSpecialMap.find(key);
 	if (i == glfb_priv->mSpecialMap.end())
@@ -354,7 +354,7 @@ void GLFbPC::releaseGLObjects()
 	ev.value = 1;
 	ev.type  = EV_KEY;
 	gettimeofday(&ev.time, NULL);
-	lt_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
+	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
 	ev.value = 0;
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
@@ -391,7 +391,7 @@ void GLFbPC::render()
 			glutFullScreen();
 		} else
 			*mX = *mY * mOA.num / mOA.den;
-		lt_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
+		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
 			__func__, *mX, *mY, xoff, yoff, mFullscreen);
 		glViewport(xoff, yoff, *mX, *mY);
 		glMatrixMode(GL_PROJECTION);
@@ -417,7 +417,7 @@ void GLFbPC::render()
 	if (mState.blit) {
 		/* only blit manually after fb->blit(), this helps to find missed blit() calls */
 		mState.blit = false;
-		lt_debug("GLFB::%s blit!\n", __func__);
+		hal_debug("GLFB::%s blit!\n", __func__);
 		bltOSDBuffer(); /* OSD */
 	}
 
@@ -435,10 +435,10 @@ void GLFbPC::render()
 			default:
 			case INT_MIN:	/* invalid */
 			case 0:		/* identical */
-				lt_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
+				hal_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
 				break;
 			case 1:		/* mVA > mOA -- video is wider than display */
-				lt_debug("%s: mVA > mOA\n", __func__);
+				hal_debug("%s: mVA > mOA\n", __func__);
 				xscale = av_q2d(mVA) / av_q2d(mOA);
 				switch (mCrop) {
 					case DISPLAY_AR_MODE_PANSCAN:
@@ -454,7 +454,7 @@ void GLFbPC::render()
 				}
 				break;
 			case -1:	/* mVA < mOA -- video is taller than display */
-				lt_debug("%s: mVA < mOA\n", __func__);
+				hal_debug("%s: mVA < mOA\n", __func__);
 				xscale = av_q2d(mVA) / av_q2d(mOA);
 				switch (mCrop) {
 					case DISPLAY_AR_MODE_LETTERBOX:
@@ -484,7 +484,7 @@ void GLFbPC::render()
 
 	GLuint err = glGetError();
 	if (err != 0)
-		lt_info("GLFB::%s: GLError:%d 0x%04x\n", __func__, err, err);
+		hal_info("GLFB::%s: GLError:%d 0x%04x\n", __func__, err, err);
 	if (sleep_us > 0)
 		usleep(sleep_us);
 	glutPostRedisplay();
@@ -591,7 +591,7 @@ void GLFbPC::bltDisplayBuffer()
 	cVideo::SWFramebuffer *buf = videoDecoder->getDecBuf();
 	if (!buf) {
 		if (warn)
-			lt_info("GLFB::%s did not get a buffer...\n", __func__);
+			hal_info("GLFB::%s did not get a buffer...\n", __func__);
 		warn = false;
 		return;
 	}
@@ -641,6 +641,6 @@ void GLFbPC::bltDisplayBuffer()
 		else if (sleep_us < 1)
 			sleep_us = 1;
 	}
-	lt_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
+	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
 			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);
 }

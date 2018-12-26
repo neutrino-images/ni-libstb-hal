@@ -24,15 +24,15 @@
 #include "glfb.h"
 #include "bcm_host.h"
 
-#include "lt_debug.h"
+#include "hal_debug.h"
 
-#define lt_debug_c(args...) _lt_debug(HAL_DEBUG_INIT, NULL, args)
-#define lt_info_c(args...) _lt_info(HAL_DEBUG_INIT, NULL, args)
-#define lt_debug(args...) _lt_debug(HAL_DEBUG_INIT, this, args)
-#define lt_info(args...) _lt_info(HAL_DEBUG_INIT, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
 
 /* I don't want to assert right now */
-#define CHECK(x) if (!(x)) { lt_info("GLFB: %s:%d warning: %s\n", __func__, __LINE__, #x); }
+#define CHECK(x) if (!(x)) { hal_info("GLFB: %s:%d warning: %s\n", __func__, __LINE__, #x); }
 
 /* TODO: encapsulate this into pdata? */
 static DISPMANX_RESOURCE_HANDLE_T res[2];
@@ -95,7 +95,7 @@ void GLFramebuffer::run()
 		blit_osd();
 	}
 	blit_mutex.unlock();
-	lt_info("GLFB: GL thread stopping\n");
+	hal_info("GLFB: GL thread stopping\n");
 }
 
 void GLFramebuffer::blit()
@@ -107,13 +107,13 @@ void GLFramebuffer::blit()
 
 void GLFramebuffer::setup()
 {
-	lt_info("GLFB: raspi OMX fb setup\n");
+	hal_info("GLFB: raspi OMX fb setup\n");
 	int ret;
 	VC_RECT_T src_rect, dsp_rect; /* source and display size will not change. period. */
 	pitch = ALIGN_UP(width * 4, 32);
 	/* broadcom example code has this ALIGN_UP in there for a reasin, I suppose */
 	if (pitch != width * 4)
-		lt_info("GLFB: WARNING: width not a multiple of 8? I doubt this will work...\n");
+		hal_info("GLFB: WARNING: width not a multiple of 8? I doubt this will work...\n");
 
 	/* global alpha nontransparent (255) */
 	VC_DISPMANX_ALPHA_T alpha = { DISPMANX_FLAGS_ALPHA_FROM_SOURCE, 255, 0 };
@@ -125,7 +125,7 @@ void GLFramebuffer::setup()
 	CHECK(ret == 0);
 	/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
 	osd_buf.resize(pitch * height * 2);
-	lt_info("GLFB: Display is %d x %d, FB is %d x %d, memory size %d\n",
+	hal_info("GLFB: Display is %d x %d, FB is %d x %d, memory size %d\n",
 		info.width, info.height, width, height, osd_buf.size());
 	image = &osd_buf[0];
 	/* initialize to half-transparent grey */

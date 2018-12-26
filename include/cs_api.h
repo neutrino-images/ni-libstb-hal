@@ -1,8 +1,8 @@
 /* compatibility header for tripledragon. I'm lazy, so I just left it
    as "cs_api.h" so that I don't need too many ifdefs in the code */
 
-#ifndef __CS_API_H_
-#define __CS_API_H_
+#ifndef __CS_API_H__
+#define __CS_API_H__
 
 #include "init.h"
 #include <config.h>
@@ -11,12 +11,12 @@ typedef void (*cs_messenger) (unsigned int msg, unsigned int data);
 
 inline void cs_api_init()
 {
-	init_td_api();
+	hal_api_init();
 };
 
 inline void cs_api_exit()
 {
-	shutdown_td_api();
+	hal_api_exit();
 };
 
 #define cs_malloc_uncached	malloc
@@ -34,4 +34,5 @@ static inline void cs_deregister_messenger(void) { return; };
 static inline unsigned int cs_get_revision(void) { return 1; };
 static inline unsigned int cs_get_chip_type(void) { return 0; };
 extern int cnxt_debug;
-#endif //__CS_API_H_
+
+#endif // __CS_API_H__

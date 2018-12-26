@@ -1,5 +1,5 @@
-#ifndef __record_hal__
-#define __record_hal__
+#ifndef __RECORD_LIB_H__
+#define __RECORD_LIB_H__
 
 #include <semaphore.h>
 #include "dmx_hal.h"
@@ -53,4 +53,5 @@ class cRecord
 		void RecordThread();
 		void WriterThread();
 };
-#endif
+
+#endif // __RECORD_LIB_H__

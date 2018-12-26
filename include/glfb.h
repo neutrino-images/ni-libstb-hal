@@ -16,8 +16,9 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __glfb__
-#define __glfb__
+#ifndef __GLFB_H__
+#define __GLFB_H__
+
 #include <OpenThreads/Thread>
 #include <vector>
 #include <linux/fb.h> /* for screeninfo etc. */
@@ -39,4 +40,5 @@ private:
 	void blit_osd();
 	void *pdata;	/* not yet used */
 };
-#endif
+
+#endif // __GLFB_H__

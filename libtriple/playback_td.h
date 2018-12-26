@@ -1,5 +1,5 @@
-#ifndef __PLAYBACK_TD_H
-#define __PLAYBACK_TD_H
+#ifndef __PLAYBACK_TD_H__
+#define __PLAYBACK_TD_H__
 
 #include <inttypes.h>
 #include <string>
@@ -125,4 +125,5 @@ class cPlayback
 		void DMNotify(int Event, void *pTsBuf, void *Tag);
 #endif
 };
-#endif
+
+#endif // __PLAYBACK_TD_H__

@@ -1,3 +1,6 @@
+#ifndef __HDMI_CEC_H__
+#define __HDMI_CEC_H__
+
 /*
 	Copyright (C) 2018 TangoCash
 
@@ -92,3 +95,5 @@ public:
 		return muted;
 	};
 };
+
+#endif // __HDMI_CEC_H__

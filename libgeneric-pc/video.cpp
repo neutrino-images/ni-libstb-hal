@@ -50,10 +50,10 @@ extern "C" {
 #include "video_lib.h"
 #include "dmx_hal.h"
 #include "glfb_priv.h"
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_VIDEO, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
 
 cVideo *videoDecoder = NULL;
 extern cDemux *videoDemux;
@@ -76,7 +76,7 @@ static const AVRational aspect_ratios[6] = {
 
 cVideo::cVideo(int, void *, void *, unsigned int)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	av_register_all();
 	if (!HAL_nodec)
 		dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
@@ -105,7 +105,7 @@ cVideo::~cVideo(void)
 
 int cVideo::setAspectRatio(int vformat, int cropping)
 {
-	lt_info("%s(%d, %d)\n", __func__, vformat, cropping);
+	hal_info("%s(%d, %d)\n", __func__, vformat, cropping);
 	if (vformat >= 0)
 		display_aspect = (DISPLAY_AR) vformat;
 	if (cropping >= 0)
@@ -151,21 +151,21 @@ int cVideo::setCroppingMode(int)
 
 int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
-	lt_debug("%s running %d >\n", __func__, thread_running);
+	hal_debug("%s running %d >\n", __func__, thread_running);
 	if (!thread_running && !HAL_nodec)
 		OpenThreads::Thread::start();
-	lt_debug("%s running %d <\n", __func__, thread_running);
+	hal_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
 
 int cVideo::Stop(bool)
 {
-	lt_debug("%s running %d >\n", __func__, thread_running);
+	hal_debug("%s running %d >\n", __func__, thread_running);
 	if (thread_running) {
 		thread_running = false;
 		OpenThreads::Thread::join();
 	}
-	lt_debug("%s running %d <\n", __func__, thread_running);
+	hal_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
 
@@ -208,7 +208,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			h = 720;
 			break;
 		case VIDEO_STD_AUTO:
-			lt_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
+			hal_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
 			// fallthrough
 		case VIDEO_STD_SECAM:
 		case VIDEO_STD_PAL:
@@ -216,7 +216,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			h = 576;
 			break;
 		default:
-			lt_info("%s: unhandled value %d\n", __func__, system);
+			hal_info("%s: unhandled value %d\n", __func__, system);
 			return 0;
 	}
 //	v_std = (VIDEO_STD) system;
@@ -237,7 +237,7 @@ void cVideo::SetVideoMode(analog_mode_t)
 
 void cVideo::ShowPicture(const char *fname)
 {
-	lt_info("%s(%s)\n", __func__, fname);
+	hal_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))
 		return;
 	still_m.lock();
@@ -259,12 +259,12 @@ void cVideo::ShowPicture(const char *fname)
 	AVPacket avpkt;
 
 	if (avformat_open_input(&avfc, fname, NULL, NULL) < 0) {
-		lt_info("%s: Could not open file %s\n", __func__, fname);
+		hal_info("%s: Could not open file %s\n", __func__, fname);
 		return;
 	}
 
 	if (avformat_find_stream_info(avfc, NULL) < 0) {
-		lt_info("%s: Could not find file info %s\n", __func__, fname);
+		hal_info("%s: Could not find file info %s\n", __func__, fname);
 		goto out_close;
 	}
 	for (i = 0; i < avfc->nb_streams; i++) {
@@ -279,35 +279,35 @@ void cVideo::ShowPicture(const char *fname)
 	codec = avcodec_find_decoder(p->codec_id);
 	c = avcodec_alloc_context3(codec);
 	if (avcodec_open2(c, codec, NULL) < 0) {
-		lt_info("%s: Could not find/open the codec, id 0x%x\n", __func__, p->codec_id);
+		hal_info("%s: Could not find/open the codec, id 0x%x\n", __func__, p->codec_id);
 		goto out_close;
 	}
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
 	if (!frame || !rgbframe) {
-		lt_info("%s: Could not allocate video frame\n", __func__);
+		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out_free;
 	}
 	av_init_packet(&avpkt);
 	if (av_read_frame(avfc, &avpkt) < 0) {
-		lt_info("%s: av_read_frame < 0\n", __func__);
+		hal_info("%s: av_read_frame < 0\n", __func__);
 		goto out_free;
 	}
 	len = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
 	if (len < 0) {
-		lt_info("%s: avcodec_decode_video2 %d\n", __func__, len);
+		hal_info("%s: avcodec_decode_video2 %d\n", __func__, len);
 		av_packet_unref(&avpkt);
 		goto out_free;
 	}
 	if (avpkt.size > len)
-		lt_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
+		hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
 	if (got_frame) {
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
 							    c->width, c->height, VDEC_PIXFMT,
 							    SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
-			lt_info("%s: ERROR setting up SWS context\n", __func__);
+			hal_info("%s: ERROR setting up SWS context\n", __func__);
 		else {
 			buf_m.lock();
 			SWFramebuffer *f = &buffers[buf_in];
@@ -327,7 +327,7 @@ void cVideo::ShowPicture(const char *fname)
 			buf_in %= VDEC_MAXBUFS;
 			buf_num++;
 			if (buf_num > (VDEC_MAXBUFS - 1)) {
-				lt_debug("%s: buf_num overflow\n", __func__);
+				hal_debug("%s: buf_num overflow\n", __func__);
 				buf_out++;
 				buf_out %= VDEC_MAXBUFS;
 				buf_num--;
@@ -343,12 +343,12 @@ void cVideo::ShowPicture(const char *fname)
 	av_frame_free(&rgbframe);
  out_close:
 	avformat_close_input(&avfc);
-	lt_debug("%s(%s) end\n", __func__, fname);
+	hal_debug("%s(%s) end\n", __func__, fname);
 }
 
 void cVideo::StopPicture()
 {
-	lt_info("%s\n", __func__);
+	hal_info("%s\n", __func__);
 	still_m.lock();
 	stillpicture = false;
 	still_m.unlock();
@@ -455,7 +455,7 @@ static int my_read(void *, uint8_t *buf, int buf_size)
 
 void cVideo::run(void)
 {
-	lt_info("====================== start decoder thread ================================\n");
+	hal_info("====================== start decoder thread ================================\n");
 	AVCodec *codec;
 	AVCodecParameters *p = NULL;
 	AVCodecContext *c= NULL;
@@ -490,14 +490,14 @@ void cVideo::run(void)
 
 	thread_running = true;
 	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0) {
-		lt_info("%s: Could not open input\n", __func__);
+		hal_info("%s: Could not open input\n", __func__);
 		goto out;
 	}
 	while (avfc->nb_streams < 1)
 	{
-		lt_info("%s: nb_streams %d, should be 1 => retry\n", __func__, avfc->nb_streams);
+		hal_info("%s: nb_streams %d, should be 1 => retry\n", __func__, avfc->nb_streams);
 		if (av_read_frame(avfc, &avpkt) < 0)
-			lt_info("%s: av_read_frame < 0\n", __func__);
+			hal_info("%s: av_read_frame < 0\n", __func__);
 		av_packet_unref(&avpkt);
 		if (! thread_running)
 			goto out;
@@ -505,29 +505,29 @@ void cVideo::run(void)
 
 	p = avfc->streams[0]->codecpar;
 	if (p->codec_type != AVMEDIA_TYPE_VIDEO)
-		lt_info("%s: no video codec? 0x%x\n", __func__, p->codec_type);
+		hal_info("%s: no video codec? 0x%x\n", __func__, p->codec_type);
 
 	codec = avcodec_find_decoder(p->codec_id);
 	if (!codec) {
-		lt_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(p->codec_id));
+		hal_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(p->codec_id));
 		goto out;
 	}
 	c = avcodec_alloc_context3(codec);
 	if (avcodec_open2(c, codec, NULL) < 0) {
-		lt_info("%s: Could not open codec\n", __func__);
+		hal_info("%s: Could not open codec\n", __func__);
 		goto out;
 	}
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
 	if (!frame || !rgbframe) {
-		lt_info("%s: Could not allocate video frame\n", __func__);
+		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out2;
 	}
-	lt_info("decoding %s\n", avcodec_get_name(c->codec_id));
+	hal_info("decoding %s\n", avcodec_get_name(c->codec_id));
 	while (thread_running) {
 		if (av_read_frame(avfc, &avpkt) < 0) {
 			if (warn_r - time(NULL) > 4) {
-				lt_info("%s: av_read_frame < 0\n", __func__);
+				hal_info("%s: av_read_frame < 0\n", __func__);
 				warn_r = time(NULL);
 			}
 			usleep(10000);
@@ -537,14 +537,14 @@ void cVideo::run(void)
 		int len = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
 		if (len < 0) {
 			if (warn_d - time(NULL) > 4) {
-				lt_info("%s: avcodec_decode_video2 %d\n", __func__, len);
+				hal_info("%s: avcodec_decode_video2 %d\n", __func__, len);
 				warn_d = time(NULL);
 			}
 			av_packet_unref(&avpkt);
 			continue;
 		}
 		if (avpkt.size > len)
-			lt_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
+			hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
 		still_m.lock();
 		if (got_frame && ! stillpicture) {
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
@@ -553,7 +553,7 @@ void cVideo::run(void)
 						       c->width, c->height, VDEC_PIXFMT,
 						       SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
-				lt_info("%s: ERROR setting up SWS context\n", __func__);
+				hal_info("%s: ERROR setting up SWS context\n", __func__);
 			else {
 				buf_m.lock();
 				SWFramebuffer *f = &buffers[buf_in];
@@ -564,7 +564,7 @@ void cVideo::run(void)
 				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
 						rgbframe->data, rgbframe->linesize);
 				if (dec_w != c->width || dec_h != c->height) {
-					lt_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
+					hal_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
 							dec_w, dec_h, c->width, c->height);
 					dec_w = c->width;
 					dec_h = c->height;
@@ -592,7 +592,7 @@ void cVideo::run(void)
 				buf_in %= VDEC_MAXBUFS;
 				buf_num++;
 				if (buf_num > (VDEC_MAXBUFS - 1)) {
-					lt_debug("%s: buf_num overflow\n", __func__);
+					hal_debug("%s: buf_num overflow\n", __func__);
 					buf_out++;
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;
@@ -600,11 +600,11 @@ void cVideo::run(void)
 				dec_r = c->time_base.den/(c->time_base.num * c->ticks_per_frame);
 				buf_m.unlock();
 			}
-			lt_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
+			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
 					c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
 					av_frame_get_best_effort_timestamp(frame));
 		} else
-			lt_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
+			hal_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
 		still_m.unlock();
 		av_packet_unref(&avpkt);
 	}
@@ -627,7 +627,7 @@ void cVideo::run(void)
 		buf_out = 0;
 	}
 	still_m.unlock();
-	lt_info("======================== end decoder thread ================================\n");
+	hal_info("======================== end decoder thread ================================\n");
 }
 
 static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int dw, int dh, AVPixelFormat sfmt)
@@ -637,7 +637,7 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 	struct SwsContext *scale = NULL;
 	scale = sws_getCachedContext(scale, sw, sh, sfmt, dw, dh, AV_PIX_FMT_RGB32, SWS_BICUBIC, 0, 0, 0);
 	if (!scale) {
-		lt_info_c("%s: ERROR setting up SWS context\n", __func__);
+		hal_info_c("%s: ERROR setting up SWS context\n", __func__);
 		return ret;
 	}
 	AVFrame *sframe = av_frame_alloc();
@@ -655,7 +655,7 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 		else
 			ret = true;
 	}else{
-		lt_info_c("%s: could not alloc sframe (%p) or dframe (%p)\n", __func__, sframe, dframe);
+		hal_info_c("%s: could not alloc sframe (%p) or dframe (%p)\n", __func__, sframe, dframe);
 		ret = false;
 	}
 
@@ -671,14 +671,14 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 		sws_freeContext(scale);
 		scale = NULL;
 	}
-	lt_info_c("%s: %s scale %ix%i to %ix%i ,len %i\n",ret?" ":"ERROR",__func__, sw, sh, dw, dh,len);
+	hal_info_c("%s: %s scale %ix%i to %ix%i ,len %i\n",ret?" ":"ERROR",__func__, sw, sh, dw, dh,len);
 
 	return ret;
 }
 
 bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
-	lt_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
+	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
 		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	SWFramebuffer video;
 	std::vector<unsigned char> *osd = NULL;
@@ -784,5 +784,5 @@ int64_t cVideo::GetPTS(void)
 
 void cVideo::SetDemux(cDemux *)
 {
-	lt_debug("%s: not implemented yet\n", __func__);
+	hal_debug("%s: not implemented yet\n", __func__);
 }

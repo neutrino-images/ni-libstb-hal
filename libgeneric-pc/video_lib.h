@@ -1,5 +1,5 @@
-#ifndef _VIDEO_LIB_H
-#define _VIDEO_LIB_H
+#ifndef __VIDEO_LIB_H__
+#define __VIDEO_LIB_H__
 
 #include <OpenThreads/Thread>
 #include <OpenThreads/Mutex>
@@ -224,4 +224,4 @@ class cVideo : public OpenThreads::Thread
 		bool stillpicture;
 };
 
-#endif
+#endif // __VIDEO_LIB_H__

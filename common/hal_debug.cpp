@@ -27,7 +27,7 @@ static const char* hal_facility[] = {
 void _hal_info(int facility, const void *func, const char *fmt, ...)
 {
 	/* %p does print "(nil)" instead of 0x00000000 for NULL */
-	fprintf(stderr, "[LT:%08lx:%s] ", (long) func, hal_facility[facility]);
+	fprintf(stderr, "[HAL:%08lx:%s] ", (long) func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
@@ -43,7 +43,7 @@ void _hal_debug(int facility, const void *func, const char *fmt, ...)
 	if (! ((1 << facility) & debuglevel))
 		return;
 
-	fprintf(stderr, "[LT:%08lx:%s] ", (long)func, hal_facility[facility]);
+	fprintf(stderr, "[HAL:%08lx:%s] ", (long)func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);

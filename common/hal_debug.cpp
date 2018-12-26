@@ -38,7 +38,7 @@ void _hal_info(int facility, const void *func, const char *fmt, ...)
 void _hal_debug(int facility, const void *func, const char *fmt, ...)
 {
 	if (debuglevel < 0)
-		fprintf(stderr, "lt_debug: debuglevel not initialized!\n");
+		fprintf(stderr, "hal_debug: debuglevel not initialized!\n");
 
 	if (! ((1 << facility) & debuglevel))
 		return;

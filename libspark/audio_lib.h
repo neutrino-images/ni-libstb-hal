@@ -1,7 +1,8 @@
 /* public header file */
 
-#ifndef _AUDIO_TD_H_
-#define _AUDIO_TD_H_
+#ifndef __AUDIO_LIB_H__
+#define __AUDIO_LIB_H__
+
 #include "cs_types.h"
 
 typedef enum
@@ -106,4 +107,4 @@ class cAudio
 		void muteMixers(bool m = true);
 };
 
-#endif
+#endif // __AUDIO_LIB_H__

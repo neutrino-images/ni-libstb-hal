@@ -1,7 +1,7 @@
 /* public header file */
 
-#ifndef _AUDIO_TD_H_
-#define _AUDIO_TD_H_
+#ifndef __AUDIO_TD_H__
+#define __AUDIO_TD_H__
 
 #include <hardware/aud/aud_inf.h>
 #include "cs_types.h"
@@ -95,5 +95,4 @@ class cAudio
 		void EnableAnalogOut(bool enable);
 };
 
-#endif
-
+#endif // __AUDIO_TD_H__

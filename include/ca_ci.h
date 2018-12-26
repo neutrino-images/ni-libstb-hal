@@ -1,5 +1,5 @@
-#ifndef __ca_ci__
-#define __ca_ci__
+#ifndef __CA_CI_H__
+#define __CA_CI_H__
 
 #include <config.h>
 #include <stdint.h>
@@ -362,4 +362,4 @@ public:
 	virtual ~cCA();
 };
 
-#endif // __ca_ci__
+#endif // __CA_CI_H__

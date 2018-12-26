@@ -23,8 +23,8 @@ HAL_DEBUG=... - controls various debugging levels in libtriple
 		record  0x80
 		all     0xff
 	multiple levels are added / ORed together, so if you want to
-	debug record and playback code, do "export TRIPLE_DEBUG=0x88"
-	for audio & video use TRIPLE_DEBUG=0x3
+	debug record and playback code, do "export HAL_DEBUG=0x88"
+	for audio & video use HAL_DEBUG=0x3
 
 DSP_DEVICE
 MIX_DEVICE - alternative audio devices for the audioplayer and internet 

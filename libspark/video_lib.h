@@ -1,5 +1,5 @@
-#ifndef _VIDEO_LIB_H
-#define _VIDEO_LIB_H
+#ifndef __VIDEO_LIB_H__
+#define __VIDEO_LIB_H__
 
 #include <linux/dvb/video.h>
 #include "cs_types.h"
@@ -219,4 +219,4 @@ class cVideo
 		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 
-#endif
+#endif // __VIDEO_LIB_H__

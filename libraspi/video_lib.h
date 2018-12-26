@@ -1,5 +1,5 @@
-#ifndef _VIDEO_LIB_H
-#define _VIDEO_LIB_H
+#ifndef __VIDEO_LIB_H__
+#define __VIDEO_LIB_H__
 
 #include <vector>
 #include <linux/dvb/video.h>
@@ -213,4 +213,4 @@ class cVideo
 		int pig_h;
 };
 
-#endif
+#endif // __VIDEO_LIB_H__

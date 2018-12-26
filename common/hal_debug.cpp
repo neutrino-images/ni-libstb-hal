@@ -1,4 +1,4 @@
-/* libtriple debug functions */
+/* libstb-hal debug functions */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,7 +12,7 @@ int cnxt_debug = 0; /* compat, unused */
 
 int debuglevel = -1;
 
-static const char* lt_facility[] = {
+static const char* hal_facility[] = {
 	"audio ",
 	"video ",
 	"demux ",
@@ -24,10 +24,10 @@ static const char* lt_facility[] = {
 	NULL
 };
 
-void _lt_info(int facility, const void *func, const char *fmt, ...)
+void _hal_info(int facility, const void *func, const char *fmt, ...)
 {
 	/* %p does print "(nil)" instead of 0x00000000 for NULL */
-	fprintf(stderr, "[LT:%08lx:%s] ", (long) func, lt_facility[facility]);
+	fprintf(stderr, "[LT:%08lx:%s] ", (long) func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
@@ -35,22 +35,22 @@ void _lt_info(int facility, const void *func, const char *fmt, ...)
 }
 
 
-void _lt_debug(int facility, const void *func, const char *fmt, ...)
+void _hal_debug(int facility, const void *func, const char *fmt, ...)
 {
 	if (debuglevel < 0)
-		fprintf(stderr, "lt_debug: debuglevel not initialized!\n");
+		fprintf(stderr, "hal_debug: debuglevel not initialized!\n");
 
 	if (! ((1 << facility) & debuglevel))
 		return;
 
-	fprintf(stderr, "[LT:%08lx:%s] ", (long)func, lt_facility[facility]);
+	fprintf(stderr, "[LT:%08lx:%s] ", (long)func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 }
 
-void lt_debug_init(void)
+void hal_debug_init(void)
 {
 	int i = 0;
 	char *tmp = getenv("HAL_DEBUG");
@@ -65,16 +65,16 @@ void lt_debug_init(void)
 	{
 		fprintf(stderr, "libstb-hal debug options can be set by exporting HAL_DEBUG.\n");
 		fprintf(stderr, "The following values (or bitwise OR combinations) are valid:\n");
-		while (lt_facility[i]) {
-			fprintf(stderr, "\tcomponent: %s  0x%02x\n", lt_facility[i], 1 << i);
+		while (hal_facility[i]) {
+			fprintf(stderr, "\tcomponent: %s  0x%02x\n", hal_facility[i], 1 << i);
 			i++;
 		}
 		fprintf(stderr, "\tall components:    0x%02x\n", (1 << i) - 1);
 	} else {
 		fprintf(stderr, "libstb-hal debug is active for the following components:\n");
-		while (lt_facility[i]) {
+		while (hal_facility[i]) {
 			if (debuglevel & (1 << i))
-				fprintf(stderr, "%s ", lt_facility[i]);
+				fprintf(stderr, "%s ", hal_facility[i]);
 			i++;
 		}
 		fprintf(stderr, "\n");

@@ -32,18 +32,18 @@
 #include <string>
 #include <sys/ioctl.h>
 #include "dmx_hal.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 
 #include "video_lib.h"
 /* needed for getSTC... */
 extern cVideo *videoDecoder;
 
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_DEMUX, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_DEMUX, this, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_DEMUX, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_DEMUX, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_DEMUX, this, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_DEMUX, NULL, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
-	lt_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
+	hal_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
 		__func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
 } while(0);
 
@@ -77,7 +77,7 @@ cDemux::cDemux(int n)
 {
 	if (n < 0 || n > 2)
 	{
-		lt_info("%s ERROR: n invalid (%d)\n", __FUNCTION__, n);
+		hal_info("%s ERROR: n invalid (%d)\n", __FUNCTION__, n);
 		num = 0;
 	}
 	else
@@ -87,7 +87,7 @@ cDemux::cDemux(int n)
 
 cDemux::~cDemux()
 {
-	lt_debug("%s #%d fd: %d\n", __FUNCTION__, num, fd);
+	hal_debug("%s #%d fd: %d\n", __FUNCTION__, num, fd);
 	Close();
 	/* in zapit.cpp, videoDemux is deleted after videoDecoder
 	 * in the video watchdog, we access videoDecoder
@@ -108,7 +108,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	int devnum = num;
 	int flags = O_RDWR|O_CLOEXEC;
 	if (fd > -1)
-		lt_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
+		hal_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
 	if (pes_type != DMX_PSI_CHANNEL)
 		flags |= O_NONBLOCK;
@@ -116,28 +116,28 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 	fd = open(devname[devnum], flags);
 	if (fd < 0)
 	{
-		lt_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
+		hal_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
 		return false;
 	}
-	lt_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
+	hal_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
 		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	dmx_type = pes_type;
 #if 0
 	if (!pesfds.empty())
 	{
-		lt_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
+		hal_info("%s ERROR! pesfds not empty!\n", __FUNCTION__); /* TODO: error handling */
 		return false;
 	}
 	int n = DMX_SOURCE_FRONT0;
 	if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
-		lt_info("%s DMX_SET_SOURCE failed!\n", __func__);
+		hal_info("%s DMX_SET_SOURCE failed!\n", __func__);
 #endif
 	if (uBufferSize > 0)
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
 		if (ioctl(fd, DMX_SET_BUFFER_SIZE, uBufferSize) < 0)
-			lt_info("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
+			hal_info("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
 	}
 	buffersize = uBufferSize;
 
@@ -146,10 +146,10 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 
 void cDemux::Close(void)
 {
-	lt_debug("%s #%d, fd = %d\n", __FUNCTION__, num, fd);
+	hal_debug("%s #%d, fd = %d\n", __FUNCTION__, num, fd);
 	if (fd < 0)
 	{
-		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
+		hal_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return;
 	}
 
@@ -162,7 +162,7 @@ void cDemux::Close(void)
 		dmx_tp_count--;
 		if (dmx_tp_count < 0)
 		{
-			lt_info("%s dmx_tp_count < 0!!\n", __func__);
+			hal_info("%s dmx_tp_count < 0!!\n", __func__);
 			dmx_tp_count = 0;
 		}
 	}
@@ -170,10 +170,10 @@ void cDemux::Close(void)
 
 bool cDemux::Start(bool)
 {
-	lt_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
+	hal_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
 	if (fd < 0)
 	{
-		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
+		hal_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
 	ioctl(fd, DMX_START);
@@ -182,10 +182,10 @@ bool cDemux::Start(bool)
 
 bool cDemux::Stop(void)
 {
-	lt_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
+	hal_debug("%s #%d fd: %d type: %s\n", __func__, num, fd, DMX_T[dmx_type]);
 	if (fd < 0)
 	{
-		lt_info("%s #%d: not open!\n", __FUNCTION__, num);
+		hal_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
 	ioctl(fd, DMX_STOP);
@@ -229,7 +229,7 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 		else if (rc < 0)
 		{
 			dmx_err("poll: %s,", strerror(errno), 0)
-			//lt_info("%s poll: %m\n", __FUNCTION__);
+			//hal_info("%s poll: %m\n", __FUNCTION__);
 			/* happens, when running under gdb... */
 			if (errno == EINTR)
 				goto retry;
@@ -273,7 +273,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 
 	if (len > DMX_FILTER_SIZE)
 	{
-		lt_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
+		hal_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
 		len = DMX_FILTER_SIZE;
 	}
 	s_flt.pid = pid;
@@ -367,7 +367,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 	if (timeout == 0 && negmask == NULL)
 		s_flt.timeout = to;
 
-	lt_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
+	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
 		pid, fd, DMX_T[dmx_type], len, s_flt.timeout,s_flt.flags, s_flt.filter.filter[0]);
 #if 0
 	fprintf(stderr,"filt: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.filter[i]);fprintf(stderr,"\n");
@@ -396,7 +396,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 	if ((pid >= 0x0002 && pid <= 0x000f) || pid >= 0x1fff)
 		return false;
 
-	lt_debug("%s #%d pid: 0x%04hx fd: %d type: %s\n", __FUNCTION__, num, pid, fd, DMX_T[dmx_type]);
+	hal_debug("%s #%d pid: 0x%04hx fd: %d type: %s\n", __FUNCTION__, num, pid, fd, DMX_T[dmx_type]);
 
 	memset(&p_flt, 0, sizeof(p_flt));
 	p_flt.pid = pid;
@@ -422,7 +422,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
 		break;
 	default:
-		lt_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);
+		hal_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);
 		return false;
 	}
 	return (ioctl(fd, DMX_SET_PES_FILTER, &p_flt) >= 0);
@@ -430,39 +430,39 @@ bool cDemux::pesFilter(const unsigned short _pid)
 
 void cDemux::SetSyncMode(AVSYNC_TYPE /*mode*/)
 {
-	lt_debug("%s #%d\n", __FUNCTION__, num);
+	hal_debug("%s #%d\n", __FUNCTION__, num);
 }
 
 void *cDemux::getBuffer()
 {
-	lt_debug("%s #%d\n", __FUNCTION__, num);
+	hal_debug("%s #%d\n", __FUNCTION__, num);
 	return NULL;
 }
 
 void *cDemux::getChannel()
 {
-	lt_debug("%s #%d\n", __FUNCTION__, num);
+	hal_debug("%s #%d\n", __FUNCTION__, num);
 	return NULL;
 }
 
 bool cDemux::addPid(unsigned short Pid)
 {
-	lt_debug("%s: pid 0x%04hx\n", __func__, Pid);
+	hal_debug("%s: pid 0x%04hx\n", __func__, Pid);
 	pes_pids pfd;
 	int ret;
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
-		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
+		hal_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
 		return false;
 	}
 	if (fd == -1)
-		lt_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
+		hal_info("%s bucketfd not yet opened? pid=%hx\n", __FUNCTION__, Pid);
 	pfd.fd = fd; /* dummy */
 	pfd.pid = Pid;
 	pesfds.push_back(pfd);
 	ret = (ioctl(fd, DMX_ADD_PID, &Pid));
 	if (ret < 0)
-		lt_info("%s: DMX_ADD_PID (%m)\n", __func__);
+		hal_info("%s: DMX_ADD_PID (%m)\n", __func__);
 	return (ret != -1);
 }
 
@@ -470,27 +470,27 @@ void cDemux::removePid(unsigned short Pid)
 {
 	if (dmx_type != DMX_TP_CHANNEL)
 	{
-		lt_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
+		hal_info("%s pes_type %s not implemented yet! pid=%hx\n", __FUNCTION__, DMX_T[dmx_type], Pid);
 		return;
 	}
 	for (std::vector<pes_pids>::iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
 		if ((*i).pid == Pid) {
-			lt_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
+			hal_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
 			if (ioctl(fd, DMX_REMOVE_PID, Pid) < 0)
-				lt_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
+				hal_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
 			pesfds.erase(i);
 			return; /* TODO: what if the same PID is there multiple times */
 		}
 	}
-	lt_info("%s pid 0x%04x not found\n", __FUNCTION__, Pid);
+	hal_info("%s pid 0x%04x not found\n", __FUNCTION__, Pid);
 }
 
 void cDemux::getSTC(int64_t * STC)
 {
 	/* apparently I can only get the PTS of the video decoder,
 	 * but that's good enough for dvbsub */
-	lt_debug("%s #%d\n", __func__, num);
+	hal_debug("%s #%d\n", __func__, num);
 	int64_t pts = 0;
 	if (videoDecoder)
 		pts = videoDecoder->GetPTS();
@@ -499,7 +499,7 @@ void cDemux::getSTC(int64_t * STC)
 
 int cDemux::getUnit(void)
 {
-	lt_debug("%s #%d\n", __FUNCTION__, num);
+	hal_debug("%s #%d\n", __FUNCTION__, num);
 	/* just guessed that this is the right thing to do.
 	   right now this is only used by the CA code which is stubbed out
 	   anyway */
@@ -508,12 +508,12 @@ int cDemux::getUnit(void)
 
 bool cDemux::SetSource(int unit, int source)
 {
-	lt_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
+	hal_info_c("%s(%d, %d): not implemented yet\n", __func__, unit, source);
 	return true;
 }
 
 int cDemux::GetSource(int unit)
 {
-	lt_info_c("%s(%d): not implemented yet\n", __func__, unit);
+	hal_info_c("%s(%d): not implemented yet\n", __func__, unit);
 	return 0;
 }

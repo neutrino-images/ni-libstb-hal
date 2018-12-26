@@ -1,7 +1,7 @@
 /* public header file */
 
-#ifndef _AUDIO_LIB_H_
-#define _AUDIO_LIB_H_
+#ifndef __AUDIO_LIB_H__
+#define __AUDIO_LIB_H__
 
 #include <stdint.h>
 #include "cs_types.h"
@@ -100,5 +100,4 @@ class cAudio
 		int my_read(uint8_t *buf, int buf_size);
 };
 
-#endif
-
+#endif // __AUDIO_LIB_H__

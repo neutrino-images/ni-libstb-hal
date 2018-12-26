@@ -1,7 +1,7 @@
 /* public header file */
 
-#ifndef _AUDIO_LIB_H_
-#define _AUDIO_LIB_H_
+#ifndef __AUDIO_LIB_H__
+#define __AUDIO_LIB_H__
 
 #include "../common/cs_types.h"
 
@@ -94,5 +94,4 @@ class cAudio
 		void EnableAnalogOut(bool enable);
 };
 
-#endif
-
+#endif // __AUDIO_LIB_H__

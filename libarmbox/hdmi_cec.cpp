@@ -37,23 +37,23 @@
 #include "linux-uapi-cec.h"
 #include "hdmi_cec.h"
 #include "hdmi_cec_types.h"
-#include "lt_debug.h"
+#include "hal_debug.h"
 
 #define RED "\x1B[31m"
 #define NORMAL "\x1B[0m"
 
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, this, args)
-#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 #define fop(cmd, args...) ({				\
 	int _r;						\
 	if (fd >= 0) { 					\
 		if ((_r = ::cmd(fd, args)) < 0)		\
-			lt_info(#cmd"(fd, "#args")\n");	\
+			hal_info(#cmd"(fd, "#args")\n");	\
 		else					\
-			lt_debug(#cmd"(fd, "#args")\n");\
+			hal_debug(#cmd"(fd, "#args")\n");\
 	}						\
 	else { _r = fd; } 				\
 	_r;						\
@@ -88,7 +88,7 @@ hdmi_cec* hdmi_cec::getInstance()
 	if (hdmi_cec_instance == NULL)
 	{
 		hdmi_cec_instance = new hdmi_cec();
-		lt_debug_c("[CEC] new instance created \n");
+		hal_debug_c("[CEC] new instance created \n");
 	}
 	return hdmi_cec_instance;
 }
@@ -102,13 +102,13 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
 		Stop();
-		lt_debug("[CEC] switch off %s\n", __func__);
+		hal_debug("[CEC] switch off %s\n", __func__);
 		return false;
 	}
 	else
 		deviceType = _deviceType;
 
-	lt_debug("[CEC] switch on %s\n", __func__);
+	hal_debug("[CEC] switch on %s\n", __func__);
 
 	if (hdmiFd == -1)
 	{
@@ -121,14 +121,14 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 		struct cec_caps caps = {};
 
 		if (ioctl(hdmiFd, CEC_ADAP_G_CAPS, &caps) < 0)
-			lt_debug("[CEC] %s: get caps failed (%m)\n", __func__);
+			hal_debug("[CEC] %s: get caps failed (%m)\n", __func__);
 
 		if (caps.capabilities & CEC_CAP_LOG_ADDRS)
 		{
 			struct cec_log_addrs laddrs = {};
 
 			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_debug("[CEC] %s: reset log addr failed (%m)\n", __func__);
+				hal_debug("[CEC] %s: reset log addr failed (%m)\n", __func__);
 
 			memset(&laddrs, 0, sizeof(laddrs));
 
@@ -178,11 +178,11 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 			laddrs.num_log_addrs++;
 
 			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				lt_debug("[CEC] %s: et log addr failed (%m)\n", __func__);
+				hal_debug("[CEC] %s: et log addr failed (%m)\n", __func__);
 		}
 
 		if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
-			lt_debug("[CEC] %s: monitor failed (%m)\n", __func__);
+			hal_debug("[CEC] %s: monitor failed (%m)\n", __func__);
 
 		GetCECAddressInfo();
 
@@ -239,7 +239,7 @@ void hdmi_cec::GetCECAddressInfo()
 		logicalAddress = addressinfo.logical;
 		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
 		{
-			lt_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
+			hal_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
 			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
 			ReportPhysicalAddress();
 		}
@@ -268,7 +268,7 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 		{
 			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
-		lt_info("[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
+		hal_info("[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
 		struct cec_msg msg;
 		cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
 		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
@@ -521,7 +521,7 @@ void hdmi_cec::Receive()
 		{
 			sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
 		}
-		lt_info("[CEC] received message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)rxmessage.initiator), rxmessage.destination == 0xf ? "all" : ToString((cec_logical_address)rxmessage.destination), rxmessage.initiator, rxmessage.destination, ToString((cec_opcode)rxmessage.opcode), str);
+		hal_info("[CEC] received message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)rxmessage.initiator), rxmessage.destination == 0xf ? "all" : ToString((cec_logical_address)rxmessage.destination), rxmessage.initiator, rxmessage.destination, ToString((cec_opcode)rxmessage.opcode), str);
 
 		switch (rxmessage.opcode)
 		{
@@ -530,9 +530,9 @@ void hdmi_cec::Receive()
 			muted = ((rxmessage.data[1] & 0x80) == 0x80);
 			volume = ((rxmessage.data[1] & 0x7F) / 127.0) * 100.0;
 			if (muted)
-				lt_debug("[CEC] %s volume muted\n", ToString((cec_logical_address)rxmessage.initiator));
+				hal_debug("[CEC] %s volume muted\n", ToString((cec_logical_address)rxmessage.initiator));
 			else
-				lt_debug("[CEC] %s volume %d \n", ToString((cec_logical_address)rxmessage.initiator), volume);
+				hal_debug("[CEC] %s volume %d \n", ToString((cec_logical_address)rxmessage.initiator), volume);
 			break;
 		}
 		case CEC_OPCODE_DEVICE_VENDOR_ID:
@@ -541,7 +541,7 @@ void hdmi_cec::Receive()
 			uint64_t iVendorId =	((uint64_t)rxmessage.data[1] << 16) +
 			                        ((uint64_t)rxmessage.data[2] << 8) +
 			                        (uint64_t)rxmessage.data[3];
-			lt_debug("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
+			hal_debug("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
 			break;
 		}
 		case CEC_OPCODE_GIVE_DEVICE_POWER_STATUS:
@@ -560,7 +560,7 @@ void hdmi_cec::Receive()
 		case CEC_OPCODE_USER_CONTROL_RELEASE: /* key released */
 		{
 			long code = translateKey(pressedkey);
-			lt_debug("[CEC] decoded key %s (%ld)\n",ToString((cec_user_control_code)pressedkey), code);
+			hal_debug("[CEC] decoded key %s (%ld)\n",ToString((cec_user_control_code)pressedkey), code);
 			handleCode(code,keypressed);
 			break;
 		}
@@ -573,14 +573,14 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	int evd = open(RC_DEVICE, O_RDWR);
 	if (evd < 0)
 	{
-		lt_debug("[CEC] opening " RC_DEVICE " failed");
+		hal_debug("[CEC] opening " RC_DEVICE " failed");
 		return;
 	}
 	if (keypressed)
 	{
 		if (rc_send(evd, code, CEC_KEY_PRESSED) < 0)
 		{
-			lt_debug("[CEC] writing 'KEY_PRESSED' event failed");
+			hal_debug("[CEC] writing 'KEY_PRESSED' event failed");
 			close(evd);
 			return;
 		}
@@ -590,7 +590,7 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	{
 		if (rc_send(evd, code, CEC_KEY_RELEASED) < 0)
 		{
-			lt_debug("[CEC] writing 'KEY_RELEASED' event failed");
+			hal_debug("[CEC] writing 'KEY_RELEASED' event failed");
 			close(evd);
 			return;
 		}

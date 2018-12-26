@@ -46,9 +46,9 @@ extern "C" {
 }
 static uint8_t IRMP_PIN;
 
-#include <lt_debug.h>
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_INIT, NULL, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_INIT, NULL, args)
+#include <hal_debug.h>
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 /* same defines as in neutrino's rcinput.h */
 #define KEY_TTTV	KEY_FN_1
@@ -197,7 +197,7 @@ static void *input_thread(void *)
 	int aotom_fd = -1;
 	IRMP_DATA d;
 
-	lt_info("LIRC/IRMP input converter thread starting...\n");
+	hal_info("LIRC/IRMP input converter thread starting...\n");
 
 	/* modprobe does not complain if the module is already loaded... */
 	system("/sbin/modprobe uinput");
@@ -208,7 +208,7 @@ static void *input_thread(void *)
 
 	if (uinput < 0)
 	{
-		lt_info("LIRC/IRMP input thread: unable to open /dev/uinput (%m)\n");
+		hal_info("LIRC/IRMP input thread: unable to open /dev/uinput (%m)\n");
 		thread_running = 2;
 		return NULL;
 	}
@@ -234,7 +234,7 @@ static void *input_thread(void *)
 
 	if (ioctl(uinput, UI_DEV_CREATE))
 	{
-		lt_info("LIRC/IRMP input thread UI_DEV_CREATE: %m\n");
+		hal_info("LIRC/IRMP input thread UI_DEV_CREATE: %m\n");
 		close(uinput);
 		return NULL;
 	}
@@ -270,7 +270,7 @@ static void *input_thread(void *)
 					}
 					evdev = atoi(p + 6);
 					sprintf(newdev, "event%d", evdev);
-					lt_info("LIRC/IRMP input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
+					hal_info("LIRC/IRMP input thread: symlink /dev/input/nevis_ir to %s\n", newdev);
 					unlink("/dev/input/nevis_ir");
 					symlink(newdev, "/dev/input/nevis_ir");
 					break;
@@ -290,7 +290,7 @@ static void *input_thread(void *)
 	lircfd = open("/dev/lirc", O_RDONLY);
 	if (lircfd < 0)
 	{
-		lt_info("%s: open /dev/lirc: %m\n", __func__);
+		hal_info("%s: open /dev/lirc: %m\n", __func__);
 		goto out;
 	}
 	IRMP_PIN = 0xFF;
@@ -299,7 +299,7 @@ static void *input_thread(void *)
 #define POLL_MS		(100 * 1000)
 #define LIRC_PULSE	0x01000000
 #define LIRC_PULSE_MASK	0x00FFFFFF
-	lt_info("LIRC/IRMP input converter going into main loop...\n");
+	hal_info("LIRC/IRMP input converter going into main loop...\n");
 
 	aotom_fd = open("/dev/vfd", O_RDONLY);
 
@@ -323,7 +323,7 @@ static void *input_thread(void *)
 
 		if (ret == -1) {
 			/* errno != EINTR... */
-			lt_info("%s: lirmp: lircfd select: %m\n", __func__);
+			hal_info("%s: lirmp: lircfd select: %m\n", __func__);
 			break;
 		}
 
@@ -375,7 +375,7 @@ static void *input_thread(void *)
 			if (irmp_get_data (&d))
 			{
 				nodec = 0;
-				lt_debug("irmp_get_data proto: %2d addr: 0x%04x cmd: 0x%04x fl: %d\n",
+				hal_debug("irmp_get_data proto: %2d addr: 0x%04x cmd: 0x%04x fl: %d\n",
 					d.protocol, d.address, d.command, d.flags);
 
 				/* todo: do we need to complete the loop if we already
@@ -394,7 +394,7 @@ static void *input_thread(void *)
 							}
 							u.code = key_map[i].code;
 							u.value = (d.flags & 0x1) + 1;
-							//lt_debug("uinput write: value: %d code: %d\n", u.value, u.code);
+							//hal_debug("uinput write: value: %d code: %d\n", u.value, u.code);
 							last_code = u.code;
 							write(uinput, &u, sizeof(u));
 							if (aotom_fd > -1) {
@@ -425,7 +425,7 @@ void start_input_thread(void)
 {
 	if (pthread_create(&thread, 0, input_thread, NULL) != 0)
 	{
-		lt_info("%s: LIRC/IRMP input thread pthread_create: %m\n", __func__);
+		hal_info("%s: LIRC/IRMP input thread pthread_create: %m\n", __func__);
 		thread_running = 0;
 		return;
 	}

@@ -1,5 +1,5 @@
-#ifndef _VIDEO_LIB_H
-#define _VIDEO_LIB_H
+#ifndef __VIDEO_LIB_H__
+#define __VIDEO_LIB_H__
 
 #include <linux/dvb/video.h>
 #include "cs_types.h"
@@ -193,4 +193,4 @@ class cVideo
 		void SetDemux(cDemux *dmx);
 };
 
-#endif
+#endif // __VIDEO_LIB_H__

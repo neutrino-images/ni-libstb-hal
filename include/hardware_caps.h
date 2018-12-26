@@ -53,4 +53,5 @@ hw_caps_t *get_hwcaps(void);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // __HARDWARE_CAPS_H__

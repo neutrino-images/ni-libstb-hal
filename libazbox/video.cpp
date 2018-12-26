@@ -39,19 +39,19 @@
 
 #include "video_lib.h"
 #define VIDEO_DEVICE "/dev/dvb/adapter0/video0"
-#include "lt_debug.h"
-#define lt_debug(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_info(args...) _lt_info(TRIPLE_DEBUG_VIDEO, this, args)
-#define lt_debug_c(args...) _lt_debug(TRIPLE_DEBUG_VIDEO, NULL, args)
-#define lt_info_c(args...) _lt_info(TRIPLE_DEBUG_VIDEO, NULL, args)
+#include "hal_debug.h"
+#define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
+#define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
+#define hal_debug_c(args...) _hal_debug(HAL_DEBUG_VIDEO, NULL, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
 
 #define fop(cmd, args...) ({				\
 	int _r;						\
 	if (fd >= 0) { 					\
 		if ((_r = ::cmd(fd, args)) < 0)		\
-			lt_info(#cmd"(fd, "#args")\n");	\
+			hal_info(#cmd"(fd, "#args")\n");	\
 		else					\
-			lt_debug(#cmd"(fd, "#args")\n");\
+			hal_debug(#cmd"(fd, "#args")\n");\
 	}						\
 	else { _r = fd; } 				\
 	_r;						\
@@ -76,7 +76,7 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size);
 
 cVideo::cVideo(int, void *, void *, unsigned int)
 {
-	lt_debug("%s\n", __FUNCTION__);
+	hal_debug("%s\n", __FUNCTION__);
 
 	//croppingMode = VID_DISPMODE_NORM;
 	//outputformat = VID_OUTFMT_RGBC_SVIDEO;
@@ -92,7 +92,7 @@ cVideo::cVideo(int, void *, void *, unsigned int)
 	blank_size = 0;
 	blankfd = open(blankname, O_RDONLY|O_CLOEXEC);
 	if (blankfd < 0)
-		lt_info("%s cannot open %s: %m", __func__, blankname);
+		hal_info("%s cannot open %s: %m", __func__, blankname);
 	else
 	{
 		if (fstat(blankfd, &st) != -1 && st.st_size > 0)
@@ -100,10 +100,10 @@ cVideo::cVideo(int, void *, void *, unsigned int)
 			blank_size = st.st_size;
 			blank_data = (unsigned char *)malloc(blank_size);
 			if (! blank_data)
-				lt_info("%s malloc failed (%m)\n", __func__);
+				hal_info("%s malloc failed (%m)\n", __func__);
 			else if (read(blankfd, blank_data, blank_size) != blank_size)
 			{
-				lt_info("%s short read (%m)\n", __func__);
+				hal_info("%s short read (%m)\n", __func__);
 				free(blank_data); /* don't leak... */
 				blank_data = NULL;
 			}
@@ -124,7 +124,7 @@ cVideo::~cVideo(void)
 void cVideo::openDevice(void)
 {
 	int n = 0;
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	/* todo: this fd checking is racy, should be protected by a lock */
 	if (fd != -1) /* already open */
 		return;
@@ -138,14 +138,14 @@ retry:
 			if (++n < 10)
 				goto retry;
 		}
-		lt_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
+		hal_info("%s cannot open %s: %m, retries %d\n", __func__, VIDEO_DEVICE, n);
 	}
 	playstate = VIDEO_STOPPED;
 }
 
 void cVideo::closeDevice(void)
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	if (fd >= 0)
 		close(fd);
 	fd = -1;
@@ -160,22 +160,22 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	int n;
 
 	int mo = (mode < 0||mode > 3) ? 4 : mode;
-	lt_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mo]);
+	hal_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mo]);
 
 	if (aspect > 3 || aspect == 0)
-		lt_info("%s: invalid aspect: %d\n", __func__, aspect);
+		hal_info("%s: invalid aspect: %d\n", __func__, aspect);
 	else if (aspect > 0) /* -1 == don't set */
 	{
-		lt_debug("%s: /proc/stb/video/aspect -> %s\n", __func__, a[aspect]);
+		hal_debug("%s: /proc/stb/video/aspect -> %s\n", __func__, a[aspect]);
 		n = proc_put("/proc/stb/video/aspect", a[aspect], strlen(a[aspect]));
 		if (n < 0)
-			lt_info("%s: proc_put /proc/stb/video/aspect (%m)\n", __func__);
+			hal_info("%s: proc_put /proc/stb/video/aspect (%m)\n", __func__);
 	}
 
 	if (mode == -1)
 		return 0;
 
-	lt_debug("%s: /proc/scalingmode -> %s\n", __func__, m[mo]);
+	hal_debug("%s: /proc/scalingmode -> %s\n", __func__, m[mo]);
 	n = proc_put("/proc/scalingmode", m[mo], strlen(m[mo]));
 	if (n < 0)
 		return 1;
@@ -193,10 +193,10 @@ int cVideo::getAspectRatio(void)
 	}
 	if (fop(ioctl, VIDEO_GET_SIZE, &s) < 0)
 	{
-		lt_info("%s: VIDEO_GET_SIZE %m\n", __func__);
+		hal_info("%s: VIDEO_GET_SIZE %m\n", __func__);
 		return -1;
 	}
-	lt_debug("%s: %d\n", __func__, s.aspect_ratio);
+	hal_debug("%s: %d\n", __func__, s.aspect_ratio);
 	return s.aspect_ratio * 2 + 1;
 }
 
@@ -211,14 +211,14 @@ int cVideo::setCroppingMode(int /*vidDispMode_t format*/)
 		f = format_string[format];
 	else
 		f = "ILLEGAL format!";
-	lt_debug("%s(%d) => %s\n", __FUNCTION__, format, f);
+	hal_debug("%s(%d) => %s\n", __FUNCTION__, format, f);
 	return fop(ioctl, MPEG_VID_SET_DISPMODE, format);
 #endif
 }
 
 int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned short /*VideoPid*/, void * /*hChannel*/)
 {
-	lt_debug("%s playstate=%d\n", __FUNCTION__, playstate);
+	hal_debug("%s playstate=%d\n", __FUNCTION__, playstate);
 #if 0
 	if (playstate == VIDEO_PLAYING)
 		return 0;
@@ -231,10 +231,10 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 
 int cVideo::Stop(bool blank)
 {
-	lt_debug("%s(%d)\n", __FUNCTION__, blank);
+	hal_debug("%s(%d)\n", __FUNCTION__, blank);
 	if (stillpicture)
 	{
-		lt_debug("%s: stillpicture == true\n", __func__);
+		hal_debug("%s: stillpicture == true\n", __func__);
 		return -1;
 	}
 	/* blank parameter seems to not work on VIDEO_STOP */
@@ -255,7 +255,7 @@ int cVideo::setBlank(int)
 
 int cVideo::SetVideoSystem(int video_system, bool remember)
 {
-	lt_debug("%s(%d, %d)\n", __func__, video_system, remember);
+	hal_debug("%s(%d, %d)\n", __func__, video_system, remember);
 	char current[32];
 	static const char *modes[] = {
 		"480i",		// VIDEO_STD_NTSC
@@ -276,16 +276,16 @@ int cVideo::SetVideoSystem(int video_system, bool remember)
 
 	if (video_system > VIDEO_STD_MAX)
 	{
-		lt_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
+		hal_info("%s: video_system (%d) > VIDEO_STD_MAX (%d)\n", __func__, video_system, VIDEO_STD_MAX);
 		return -1;
 	}
 	int ret = proc_get("/proc/stb/video/videomode", current, 32);
 	if (strcmp(current,  modes[video_system]) == 0)
 	{
-		lt_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
+		hal_info("%s: video_system %d (%s) already set, skipping\n", __func__, video_system, current);
 		return 0;
 	}
-	lt_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
+	hal_info("%s: old: '%s' new: '%s'\n", __func__, current, modes[video_system]);
 	ret = proc_put("/proc/stb/video/videomode", modes[video_system],strlen(modes[video_system]));
 
 	return ret;
@@ -298,10 +298,10 @@ int cVideo::getPlayState(void)
 
 void cVideo::SetVideoMode(analog_mode_t mode)
 {
-	lt_debug("%s(%d)\n", __func__, mode);
+	hal_debug("%s(%d)\n", __func__, mode);
 	if (!(mode & ANALOG_SCART_MASK))
 	{
-		lt_debug("%s: non-SCART mode ignored\n", __func__);
+		hal_debug("%s: non-SCART mode ignored\n", __func__);
 		return;
 	}
 	const char *m;
@@ -314,7 +314,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 			m = "rgb";
 			break;
 		default:
-			lt_info("%s unknown mode %d\n", __func__, mode);
+			hal_info("%s unknown mode %d\n", __func__, mode);
 			m = "rgb";
 			break; /* default to rgb */
 	}
@@ -323,7 +323,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 
 void cVideo::ShowPicture(const char * fname)
 {
-	lt_debug("%s(%s)\n", __func__, fname);
+	hal_debug("%s(%s)\n", __func__, fname);
 	char destname[512];
 	char cmd[512];
 	char *p;
@@ -333,18 +333,18 @@ void cVideo::ShowPicture(const char * fname)
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */
-		lt_info("%s: video_standby == true\n", __func__);
+		hal_info("%s: video_standby == true\n", __func__);
 		return;
 	}
 	if (fd < 0)
 	{
-		lt_info("%s: decoder not opened?\n", __func__);
+		hal_info("%s: decoder not opened?\n", __func__);
 		return;
 	}
 	strcpy(destname, "/var/cache");
 	if (stat(fname, &st2))
 	{
-		lt_info("%s: could not stat %s (%m)\n", __func__, fname);
+		hal_info("%s: could not stat %s (%m)\n", __func__, fname);
 		return;
 	}
 	mkdir(destname, 0755);
@@ -379,7 +379,7 @@ void cVideo::ShowPicture(const char * fname)
 	mfd = open(destname, O_RDONLY|O_CLOEXEC);
 	if (mfd < 0)
 	{
-		lt_info("%s cannot open %s: %m", __func__, destname);
+		hal_info("%s cannot open %s: %m", __func__, destname);
 		goto out;
 	}
 	fstat(mfd, &st);
@@ -389,7 +389,7 @@ void cVideo::ShowPicture(const char * fname)
 	iframe = (unsigned char *)malloc(st.st_size);
 	if (! iframe)
 	{
-		lt_info("%s: malloc failed (%m)\n", __func__);
+		hal_info("%s: malloc failed (%m)\n", __func__);
 		goto out;
 	}
 	read(mfd, iframe, st.st_size);
@@ -403,13 +403,13 @@ void cVideo::ShowPicture(const char * fname)
 
 void cVideo::StopPicture()
 {
-	lt_debug("%s\n", __func__);
+	hal_debug("%s\n", __func__);
 	stillpicture = false;
 }
 
 void cVideo::Standby(unsigned int bOn)
 {
-	lt_debug("%s(%d)\n", __func__, bOn);
+	hal_debug("%s(%d)\n", __func__, bOn);
 	if (bOn)
 	{
 		closeDevice();
@@ -426,7 +426,7 @@ void cVideo::Standby(unsigned int bOn)
 int cVideo::getBlank(void)
 {
 	int ret = proc_get_hex("/proc/stb/vmpeg/0/xres");
-	lt_debug("%s => %d\n", __func__, !ret);
+	hal_debug("%s => %d\n", __func__, !ret);
 	return !ret;
 }
 
@@ -442,7 +442,7 @@ void cVideo::VideoParamWatchdog(void)
 	ioctl(fd, MPEG_VID_GET_V_INFO_RAW, &v_info);
 	if (_v_info != v_info)
 	{
-		lt_debug("%s params changed. old: %08x new: %08x\n", __FUNCTION__, _v_info, v_info);
+		hal_debug("%s params changed. old: %08x new: %08x\n", __FUNCTION__, _v_info, v_info);
 		setAspectRatio(-1, -1);
 	}
 	_v_info = v_info;
@@ -457,7 +457,7 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 	 * TODO: check this in the driver sources */
 	int xres = 720; /* proc_get_hex("/proc/stb/vmpeg/0/xres") */
 	int yres = 576; /* proc_get_hex("/proc/stb/vmpeg/0/yres") */
-	lt_debug("%s: x:%d y:%d w:%d h:%d ow:%d oh:%d\n", __func__, x, y, w, h, osd_w, osd_h);
+	hal_debug("%s: x:%d y:%d w:%d h:%d ow:%d oh:%d\n", __func__, x, y, w, h, osd_w, osd_h);
 	if (x == -1 && y == -1 && w == -1 && h == -1)
 	{
 		_w = xres;
@@ -472,7 +472,7 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h)
 		_y = y * yres / osd_h;
 		_h = h * yres / osd_h;
 	}
-	lt_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
+	hal_debug("%s: x:%d y:%d w:%d h:%d xr:%d yr:%d\n", __func__, _x, _y, _w, _h, xres, yres);
 	sprintf(buffer, "%x", _x);
 	proc_put("/proc/stb/vmpeg/0/dst_left", buffer, strlen(buffer));
 	sprintf(buffer, "%x", _y);
@@ -528,12 +528,12 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 	rate = rate2csapi(r);
 	height = s.h;
 	width = s.w;
-	lt_debug("%s: rate: %d, width: %d height: %d\n", __func__, rate, width, height);
+	hal_debug("%s: rate: %d, width: %d height: %d\n", __func__, rate, width, height);
 }
 
 void cVideo::SetSyncMode(AVSYNC_TYPE mode)
 {
-	lt_debug("%s %d\n", __func__, mode);
+	hal_debug("%s %d\n", __func__, mode);
 	/*
 	 * { 0, LOCALE_OPTIONS_OFF },
 	 * { 1, LOCALE_OPTIONS_ON  },
@@ -566,7 +566,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 		"VIDEO_FORMAT_PNG"
 	};
 	int t;
-	lt_debug("%s type=%s\n", __FUNCTION__, VF[type]);
+	hal_debug("%s type=%s\n", __FUNCTION__, VF[type]);
 
 	switch (type)
 	{
@@ -583,7 +583,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT type)
 	}
 
 	if (ioctl(fd, VIDEO_SET_STREAMTYPE, t) < 0)
-		lt_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
+		hal_info("%s VIDEO_SET_STREAMTYPE(%d) failed: %m\n", __func__, t);
 	return 0;
 }
 
@@ -591,7 +591,7 @@ int64_t cVideo::GetPTS(void)
 {
 	int64_t pts = 0;
 	if (ioctl(fd, VIDEO_GET_PTS, &pts) < 0)
-		lt_info("%s: GET_PTS failed (%m)\n", __func__);
+		hal_info("%s: GET_PTS failed (%m)\n", __func__);
 	return pts;
 }
 
@@ -604,7 +604,7 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size)
 	size_t pos = 0;
 	int count = 7;
 	if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
-		lt_info_c("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
+		hal_info_c("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
 	ioctl(fd, VIDEO_SET_STREAMTYPE, VIDEO_FORMAT_MPEG2);
 	ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY);
 	ioctl(fd, VIDEO_PLAY);
@@ -633,5 +633,5 @@ static void show_iframe(int fd, unsigned char *iframe, size_t st_size)
 
 void cVideo::SetDemux(cDemux *)
 {
-	lt_debug("%s: not implemented yet\n", __func__);
+	hal_debug("%s: not implemented yet\n", __func__);
 }

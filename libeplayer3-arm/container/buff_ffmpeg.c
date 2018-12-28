@@ -53,10 +53,10 @@ static int64_t update_max_injected_pts(int64_t pts)
 {
 	if (pts > 0 && pts != INVALID_PTS_VALUE)
 	{
-		if (maxInjectedPTS == INVALID_PTS_VALUE || pts > maxInjectedPTS)
-		{
+		//if (maxInjectedPTS == INVALID_PTS_VALUE || pts > maxInjectedPTS)
+		//{
 			maxInjectedPTS = pts;
-		}
+		//}
 	}
 	return maxInjectedPTS;
 }

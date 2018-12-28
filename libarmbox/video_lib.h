@@ -141,6 +141,7 @@ typedef enum
 	VIDEO_CONTROL_BLUE_BOOST,
 	VIDEO_CONTROL_DYNAMIC_CONTRAST,
 	VIDEO_CONTROL_SCALER_SHARPNESS,
+	VIDEO_CONTROL_ZAPPING_MODE,
 	VIDEO_CONTROL_MAX = VIDEO_CONTROL_SHARPNESS
 } VIDEO_CONTROL;
 
@@ -183,6 +184,7 @@ class cVideo
 		int blue_boost;
 		int dynamic_contrast;
 		int scaler_sharpness;
+		int zapping_mode;
 
 		/* used internally by dmx */
 		int64_t GetPTS(void);

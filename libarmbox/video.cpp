@@ -863,6 +863,11 @@ void cVideo::SetControl(int control, int value)
 		scaler_sharpness = value;
 		p = "/proc/stb/vmpeg/0/pep_scaler_sharpness";
 		break;
+	case VIDEO_CONTROL_ZAPPING_MODE:
+		zapping_mode = value;
+		const char *mode_zapping[] = { "hold", "mute" };
+		proc_put("/proc/stb/video/zapping_mode", mode_zapping[zapping_mode], strlen(mode_zapping[zapping_mode]));
+		break;
 	}
 	if (p) {
 		char buf[20];

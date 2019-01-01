@@ -11,7 +11,7 @@ define(ver_git, m4_esyscmd([
 ]))
 
 AC_PACKAGE_NAME, PACKAGE_NAME_LIBSTB_HAL
-AC_INIT([Tuxbox-libstb-hal], [ver_major.ver_minor.ver_micro])
+AC_INIT([NI-libstb-hal], [ver_major.ver_minor.ver_micro])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([include/libstb-hal-config.h])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])

@@ -1,8 +1,27 @@
-AC_INIT([libstb-hal], [1.0.3])
+# explicit defines for separate revision handling
+define(ver_major, 1)
+define(ver_minor, 0)
+define(ver_micro, 8)
+
+# sync with current git
+define(ver_git, m4_esyscmd([
+	GITBRANCH=$(git rev-parse --abbrev-ref HEAD);
+	GITDESCRIBE=$(git describe --always --tags --dirty);
+	printf "$GITDESCRIBE $GITBRANCH"
+]))
+
+AC_PACKAGE_NAME, PACKAGE_NAME_LIBSTB_HAL
+AC_INIT([Tuxbox-libstb-hal], [ver_major.ver_minor.ver_micro])
 AM_INIT_AUTOMAKE
+AC_CONFIG_HEADERS([include/libstb-hal-config.h])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_MACRO_DIR([m4])
 AC_GNU_SOURCE
+
+AC_DEFINE(PACKAGE_VERSION_MAJOR, ver_major, [Major version number])
+AC_DEFINE(PACKAGE_VERSION_MINOR, ver_minor, [Minor version number])
+AC_DEFINE(PACKAGE_VERSION_MICRO, ver_micro, [Micro version number])
+AC_DEFINE(PACKAGE_VERSION_GIT, "ver_git", [internal vcs version info])
 
 TUXBOX_APPS
 TUXBOX_APPS_DIRECTORY

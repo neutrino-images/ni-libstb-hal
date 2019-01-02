@@ -19,37 +19,33 @@
 #include <version_hal.h>
 
 
-std::string getPackageVersion()
+void hal_get_lib_version(hal_libversion_t *ver)
 {
-	return PACKAGE_VERSION;
-}
+	if (!ver)
+		return;
 
-int getPackageVersionMajor()
-{
-	return PACKAGE_VERSION_MAJOR;
-}
+	//init struct
+	*ver = {"",0,0,0,"","",""};
 
-int getPackageVersionMinor()
-{
-	return PACKAGE_VERSION_MINOR;
-}
-
-int getPackageVersionMicro()
-{
-	return PACKAGE_VERSION_MICRO;
-}
-
-std::string getPackagenName()
-{
-	return PACKAGE_NAME;
-}
-
-std::string getPackageString()
-{
-	return PACKAGE_STRING;
-}
-
-std::string getPackageVersionGit()
-{
-	return PACKAGE_VERSION_GIT;
+#ifdef VERSION
+	ver->vVersion = VERSION;
+#endif
+#ifdef PACKAGE_VERSION_MAJOR
+	ver->vMajor = PACKAGE_VERSION_MAJOR;
+#endif
+#ifdef PACKAGE_VERSION_MAJOR
+	ver->vMinor = PACKAGE_VERSION_MINOR;
+#endif
+#ifdef PACKAGE_VERSION_MINOR
+	ver->vPatch = PACKAGE_VERSION_MICRO;
+#endif
+#ifdef PACKAGE_NAME
+	ver->vName = PACKAGE_NAME;
+#endif
+#ifdef PACKAGE_STRING
+	ver->vStr = PACKAGE_STRING;
+#endif
+#ifdef PACKAGE_VERSION_GIT
+	ver->vGitDescribe = PACKAGE_VERSION_GIT;
+#endif
 }

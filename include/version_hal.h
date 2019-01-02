@@ -3,13 +3,19 @@
 
 #include <string>
 
-std::string getPackageVersion();
-int getPackageVersionMajor();
-int getPackageVersionMinor();
-int getPackageVersionMicro();
-std::string getPackagenName();
-std::string getPackageString();
-std::string getPackageVersionGit();
+// library version functions
+typedef struct hal_libversion_t
+{
+	std::string	vVersion;
+	int			vMajor;
+	int			vMinor;
+	int			vPatch;;
+	std::string	vName;
+	std::string	vStr;
+	std::string	vGitDescribe;
+} hal_libversion_struct_t;
+
+void hal_get_lib_version(hal_libversion_t *ver);
 
 
 #endif //__VERSION_HAL_H__

@@ -1006,6 +1006,7 @@ PlaybackHandler_t PlaybackHandler =
 	0,          //BackWard
 	0,          //SlowMotion
 	0,          //Speed
+	0,          //readCount
 	0,          //AVSync
 	0,          //isVideo
 	0,          //isAudio

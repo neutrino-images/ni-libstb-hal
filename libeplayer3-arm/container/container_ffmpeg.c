@@ -782,6 +782,8 @@ static void FFMPEGThread(Context_t *context)
 			Track_t *audioTrack    = NULL;
 			Track_t *subtitleTrack = NULL;
 
+			context->playback->readCount += packet.size;
+
 			int32_t pid = avContextTab[cAVIdx]->streams[packet.stream_index]->id;
 
 			reset_finish_timeout();

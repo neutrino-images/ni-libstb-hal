@@ -782,10 +782,10 @@ bool cPlayback::IsPlaying()
 
 uint64_t cPlayback::GetReadCount()
 {
-	//if (player && player->playback)
-	//{
-	//	return player->playback->readCount;
-	//}
+	if (player && player->playback)
+	{
+		return player->playback->readCount;
+	}
 	return 0;
 }
 

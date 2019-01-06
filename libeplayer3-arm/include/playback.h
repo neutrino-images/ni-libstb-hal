@@ -51,6 +51,7 @@ typedef struct PlaybackHandler_s
 	int32_t BackWard;
 	int32_t SlowMotion;
 	int32_t Speed;
+	uint64_t readCount;
 	int32_t AVSync;
 
 	uint8_t isVideo;

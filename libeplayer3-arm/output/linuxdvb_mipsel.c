@@ -502,6 +502,11 @@ int LinuxDvbFastForward(Context_t *context, char *type)
 			linuxdvb_err("VIDEO_FAST_FORWARD: ERROR %d, %s\n", errno, strerror(errno));
 			ret = cERR_LINUXDVB_ERROR;
 		}
+		if (ioctl(videofd, VIDEO_CONTINUE, NULL) == -1)
+		{
+			linuxdvb_err("VIDEO_CONTINUE: ERROR %d, %s\n", errno, strerror(errno));
+			ret = cERR_LINUXDVB_ERROR;
+		}
 		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
 	}
 

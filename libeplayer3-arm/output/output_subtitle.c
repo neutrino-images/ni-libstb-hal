@@ -232,6 +232,10 @@ static int Write(Context_t *context, void *data)
 	{
 		fprintf(stderr, "{\"s_a\":{\"id\":%d,\"s\":%lld,\"e\":%lld,\"t\":\"%s\"}}\n", out->trackId, out->pts / 90, out->pts / 90 + out->durationMS, ass_get_text((char *)out->data));
 	}
+	else if (!strncmp("D_WEBVTT/SUBTITLES", Encoding, 18))
+	{
+		fprintf(stderr, "{\"s_a\":{\"id\":%d,\"s\":%lld,\"e\":%lld,\"t\":\"%s\"}}\n", out->trackId, out->pts / 90, out->pts / 90 + out->durationMS, json_string_escape((char *)out->data));
+	}
 	else
 	{
 		subtitle_err("unknown encoding %s\n", Encoding);

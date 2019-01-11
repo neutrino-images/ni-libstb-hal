@@ -28,7 +28,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -41,6 +40,7 @@
 #include <sys/poll.h>
 #include <pthread.h>
 #include <sys/prctl.h>
+#include <stdint.h>
 
 #include <ffmpeg/mpeg4audio.h>
 
@@ -462,6 +462,8 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 			return "S_TEXT/SRT";
 		case AV_CODEC_ID_SUBRIP:
 			return "S_TEXT/SUBRIP";
+		case AV_CODEC_ID_WEBVTT:
+			return "D_WEBVTT/SUBTITLES";
 		default:
 			ffmpeg_err("Codec ID %d (%.8lx) not found\n", codec_id, codec_id);
 			// Default to injected-pcm for unhandled audio types.
@@ -2527,7 +2529,8 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 #endif
 					    get_codecpar(stream)->codec_id != AV_CODEC_ID_SUBRIP &&
 					    get_codecpar(stream)->codec_id != AV_CODEC_ID_TEXT &&
-					    get_codecpar(stream)->codec_id != AV_CODEC_ID_SRT)
+					    get_codecpar(stream)->codec_id != AV_CODEC_ID_SRT &&
+					    get_codecpar(stream)->codec_id != AV_CODEC_ID_WEBVTT)
 					{
 						ffmpeg_printf(10, "subtitle with not supported codec codec_id[%u]\n", (uint32_t)get_codecpar(stream)->codec_id);
 					}

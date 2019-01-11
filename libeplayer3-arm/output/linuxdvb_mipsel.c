@@ -22,6 +22,7 @@
 /* ***************************** */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,6 +42,7 @@
 #include "bcm_ioctls.h"
 
 #include "common.h"
+#include "debug.h"
 #include "output.h"
 #include "writer.h"
 #include "misc.h"
@@ -49,29 +51,6 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-//#define SAM_WITH_DEBUG
-#ifdef SAM_WITH_DEBUG
-#define LINUXDVB_DEBUG
-static unsigned short debug_level = 20;
-#else
-#define LINUXDVB_SILENT
-#endif
-
-static const char FILENAME[] = __FILE__;
-
-#ifdef LINUXDVB_DEBUG
-#define linuxdvb_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define linuxdvb_printf(x...)
-#endif
-
-#ifndef LINUXDVB_SILENT
-#define linuxdvb_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define linuxdvb_err(x...)
-#endif
 
 #define cERR_LINUXDVB_NO_ERROR      0
 #define cERR_LINUXDVB_ERROR        -1
@@ -114,15 +93,8 @@ int LinuxDvbStop(Context_t *context, char *type);
 /* MISC Functions                */
 /* ***************************** */
 
-void getLinuxDVBMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused)))
-{
-	pthread_mutex_lock(&LinuxDVBmutex);
-}
-
-void releaseLinuxDVBMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused)))
-{
-	pthread_mutex_unlock(&LinuxDVBmutex);
-}
+#define getLinuxDVBMutex() pthread_mutex_lock(&LinuxDVBmutex)
+#define releaseLinuxDVBMutex() pthread_mutex_unlock(&LinuxDVBmutex)
 
 static int LinuxDvbMapBypassMode(int bypass)
 {
@@ -214,7 +186,7 @@ int LinuxDvbClose(Context_t *context, char *type)
 	 */
 	LinuxDvbStop(context, type);
 
-	getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	getLinuxDVBMutex();
 
 	if (isBufferedOutput)
 		LinuxDvbBuffClose(context);
@@ -230,7 +202,7 @@ int LinuxDvbClose(Context_t *context, char *type)
 		audiofd = -1;
 	}
 
-	releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	releaseLinuxDVBMutex();
 	return cERR_LINUXDVB_NO_ERROR;
 }
 
@@ -335,7 +307,7 @@ int LinuxDvbStop(Context_t *context __attribute__((unused)), char *type)
 
 	linuxdvb_printf(10, "v%d a%d\n", video, audio);
 
-	getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	getLinuxDVBMutex();
 
 	if (video && videofd != -1)
 	{
@@ -370,7 +342,7 @@ int LinuxDvbStop(Context_t *context __attribute__((unused)), char *type)
 		ioctl(audiofd, AUDIO_SELECT_SOURCE, AUDIO_SOURCE_DEMUX);
 	}
 
-	releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	releaseLinuxDVBMutex();
 
 	return ret;
 }
@@ -383,7 +355,7 @@ int LinuxDvbPause(Context_t *context __attribute__((unused)), char *type)
 
 	linuxdvb_printf(10, "v%d a%d\n", video, audio);
 
-	getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	getLinuxDVBMutex();
 
 	if (video && videofd != -1)
 	{
@@ -403,7 +375,7 @@ int LinuxDvbPause(Context_t *context __attribute__((unused)), char *type)
 		}
 	}
 
-	releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+	releaseLinuxDVBMutex();
 
 	return ret;
 }
@@ -495,19 +467,20 @@ int LinuxDvbFastForward(Context_t *context, char *type)
 
 	if (video && videofd != -1)
 	{
-		getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		getLinuxDVBMutex();
 		// konfetti comment: speed is a value given in skipped frames
 		if (ioctl(videofd, VIDEO_FAST_FORWARD, context->playback->Speed) == -1)
 		{
 			linuxdvb_err("VIDEO_FAST_FORWARD: ERROR %d, %s\n", errno, strerror(errno));
 			ret = cERR_LINUXDVB_ERROR;
 		}
+
 		if (ioctl(videofd, VIDEO_CONTINUE, NULL) == -1)
 		{
 			linuxdvb_err("VIDEO_CONTINUE: ERROR %d, %s\n", errno, strerror(errno));
 			ret = cERR_LINUXDVB_ERROR;
 		}
-		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		releaseLinuxDVBMutex();
 	}
 
 	linuxdvb_printf(10, "exiting with value %d\n", ret);
@@ -525,7 +498,7 @@ int LinuxDvbSlowMotion(Context_t *context, char *type)
 
 	if ((video && videofd != -1) || (audio && audiofd != -1))
 	{
-		getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		getLinuxDVBMutex();
 
 		if (video && videofd != -1)
 		{
@@ -536,7 +509,7 @@ int LinuxDvbSlowMotion(Context_t *context, char *type)
 			}
 		}
 
-		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		releaseLinuxDVBMutex();
 	}
 
 	linuxdvb_printf(10, "exiting with value %d\n", ret);
@@ -555,7 +528,7 @@ int LinuxDvbAVSync(Context_t *context __attribute__((unused)), char *type __attr
 	 */
 	if (audiofd != -1)
 	{
-		getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		getLinuxDVBMutex();
 
 		if (ioctl(audiofd, AUDIO_SET_AV_SYNC, 0) == -1) //context->playback->AVSync) == -1)
 		{
@@ -563,7 +536,7 @@ int LinuxDvbAVSync(Context_t *context __attribute__((unused)), char *type __attr
 			ret = cERR_LINUXDVB_ERROR;
 		}
 
-		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		releaseLinuxDVBMutex();
 	}
 
 	return ret;
@@ -579,7 +552,7 @@ int LinuxDvbClear(Context_t *context __attribute__((unused)), char *type)
 
 	if ((video && videofd != -1) || (audio && audiofd != -1))
 	{
-		getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		getLinuxDVBMutex();
 
 		if (video && videofd != -1)
 		{
@@ -598,7 +571,7 @@ int LinuxDvbClear(Context_t *context __attribute__((unused)), char *type)
 			}
 		}
 
-		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		releaseLinuxDVBMutex();
 	}
 
 	linuxdvb_printf(10, "exiting\n");
@@ -659,7 +632,7 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 
 	if ((video && videofd != -1) || (audio && audiofd != -1))
 	{
-		getLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		getLinuxDVBMutex();
 
 		if (audio && audiofd != -1)
 		{
@@ -756,7 +729,7 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 			}
 		}
 
-		releaseLinuxDVBMutex(FILENAME, __FUNCTION__, __LINE__);
+		releaseLinuxDVBMutex();
 
 	}
 
@@ -784,7 +757,7 @@ static int Write(Context_t *context, void *_out)
 	video = !strcmp("video", out->type);
 	audio = !strcmp("audio", out->type);
 
-	linuxdvb_printf(20, "DataLength=%u PrivateLength=%u Pts=%llu FrameRate=%f\n",
+	linuxdvb_printf(20, "DataLength=%u PrivateLength=%u Pts=%" PRIu64 " FrameRate=%d\n",
 	                out->len, out->extralen, out->pts, out->frameRate);
 	linuxdvb_printf(20, "v%d a%d\n", video, audio);
 
@@ -826,7 +799,7 @@ static int Write(Context_t *context, void *_out)
 				{
 					if (evt.type == VIDEO_EVENT_SIZE_CHANGED)
 					{
-						linuxdvb_printf(10, "VIDEO_EVENT_SIZE_CHANGED\n", evt.type);
+						linuxdvb_printf(10, "VIDEO_EVENT_SIZE_CHANGED type: 0x%x\n", evt.type);
 						linuxdvb_printf(10, "width  : %d\n", evt.u.size.w);
 						linuxdvb_printf(10, "height : %d\n", evt.u.size.h);
 						linuxdvb_printf(10, "aspect : %d\n", evt.u.size.aspect_ratio);
@@ -836,13 +809,13 @@ static int Write(Context_t *context, void *_out)
 					}
 					else if (evt.type == VIDEO_EVENT_FRAME_RATE_CHANGED)
 					{
-						linuxdvb_printf(10, "VIDEO_EVENT_FRAME_RATE_CHANGED\n", evt.type);
+						linuxdvb_printf(10, "VIDEO_EVENT_FRAME_RATE_CHANGED type: 0x%x\n", evt.type);
 						linuxdvb_printf(10, "framerate : %d\n", evt.u.frame_rate);
 						videoInfo.frame_rate = evt.u.frame_rate;
 					}
 					else if (evt.type == 16 /*VIDEO_EVENT_PROGRESSIVE_CHANGED*/)
 					{
-						linuxdvb_printf(10, "VIDEO_EVENT_PROGRESSIVE_CHANGED\n", evt.type);
+						linuxdvb_printf(10, "VIDEO_EVENT_PROGRESSIVE_CHANGED type: 0x%x\n", evt.type);
 						linuxdvb_printf(10, "progressive : %d\n", evt.u.frame_rate);
 						videoInfo.progressive = evt.u.frame_rate;
 						context->manager->video->Command(context, MANAGER_UPDATED_TRACK_INFO, NULL);
@@ -889,7 +862,7 @@ static int Write(Context_t *context, void *_out)
 		char *Encoding = NULL;
 		context->manager->audio->Command(context, MANAGER_GETENCODING, &Encoding);
 
-		linuxdvb_printf(20, "%s::%s Encoding = %s\n", FILENAME, __FUNCTION__, Encoding);
+		linuxdvb_printf(20, "Encoding = %s\n", Encoding);
 
 		writer = getWriter(Encoding);
 

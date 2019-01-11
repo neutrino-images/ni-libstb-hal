@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <sched.h>
 #include <signal.h>
+#include <inttypes.h>
 
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
@@ -39,6 +40,8 @@
 
 #include "common.h"
 #include "misc.h"
+
+#include "debug.h"
 
 #define DUMP_BOOL(x) 0 == x ? "false"  : "true"
 #define IPTV_MAX_FILE_PATH 1024
@@ -692,7 +695,7 @@ int main(int argc, char *argv[])
 	memset(argvBuff, '\0', sizeof(argvBuff));
 	int commandRetVal = -1;
 	/* inform client that we can handle additional commands */
-	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 49);
+	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 50);
 
 	PlayFiles_t playbackFiles;
 	memset(&playbackFiles, 0x00, sizeof(playbackFiles));
@@ -939,7 +942,7 @@ int main(int argc, char *argv[])
 					if (0 <= gotoPos || force)
 					{
 						commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void *)&length);
-						fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%lld, \"sts\":%d}}\n", length, commandRetVal);
+						fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%" PRId64 ", \"sts\":%d}}\n", length, commandRetVal);
 
 						lengthInt = (int32_t)length;
 						if (10 <= lengthInt || force)
@@ -951,7 +954,7 @@ int main(int argc, char *argv[])
 							}
 
 							commandRetVal = g_player->playback->Command(g_player, PLAYBACK_SEEK_ABS, (void *)&sec);
-							fprintf(stderr, "{\"PLAYBACK_SEEK_ABS\":{\"sec\":%lld, \"sts\":%d}}\n", sec, commandRetVal);
+							fprintf(stderr, "{\"PLAYBACK_SEEK_ABS\":{\"sec\":%" PRId64 ", \"sts\":%d}}\n", sec, commandRetVal);
 						}
 					}
 					break;
@@ -973,13 +976,13 @@ int main(int argc, char *argv[])
 
 					if (0 == commandRetVal)
 					{
-						fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90);
+						fprintf(stderr, "{\"J\":{\"ms\":%" PRId64 "}}\n", pts / 90);
 					}
 
 					if (0 == commandRetVal || force)
 					{
 						commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void *)&length);
-						fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%lld, \"sts\":%d}}\n", length, commandRetVal);
+						fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%" PRId64 ", \"sts\":%d}}\n", length, commandRetVal);
 
 						lengthInt = (int32_t)length;
 						if (10 <= lengthInt || force)
@@ -1003,7 +1006,7 @@ int main(int argc, char *argv[])
 							}
 						}
 						commandRetVal = g_player->playback->Command(g_player, PLAYBACK_SEEK, (void *)&sec);
-						fprintf(stderr, "{\"PLAYBACK_SEEK\":{\"sec\":%lld, \"sts\":%d}}\n", sec, commandRetVal);
+						fprintf(stderr, "{\"PLAYBACK_SEEK\":{\"sec\":%" PRId64 ", \"sts\":%d}}\n", sec, commandRetVal);
 					}
 					break;
 				}
@@ -1011,7 +1014,7 @@ int main(int argc, char *argv[])
 				{
 					int64_t length = 0;
 					commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void *)&length);
-					fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%lld, \"sts\":%d}}\n", length, commandRetVal);
+					fprintf(stderr, "{\"PLAYBACK_LENGTH\":{\"length\":%" PRId64 ", \"sts\":%d}}\n", length, commandRetVal);
 					break;
 				}
 				case 'j':
@@ -1030,11 +1033,11 @@ int main(int argc, char *argv[])
 
 						if (0 == commandRetVal && lastPts != INVALID_PTS_VALUE)
 						{
-							fprintf(stderr, "{\"J\":{\"ms\":%lld,\"lms\":%lld}}\n", pts / 90, lastPts / 90);
+							fprintf(stderr, "{\"J\":{\"ms\":%" PRId64 ",\"lms\":%" PRId64 "}}\n", pts / 90, lastPts / 90);
 						}
 						else
 						{
-							fprintf(stderr, "{\"J\":{\"ms\":%lld}}\n", pts / 90);
+							fprintf(stderr, "{\"J\":{\"ms\":%" PRId64 "}}\n", pts / 90);
 						}
 					}
 					break;

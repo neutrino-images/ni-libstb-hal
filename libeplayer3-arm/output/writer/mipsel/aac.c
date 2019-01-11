@@ -45,6 +45,7 @@
 #include "stm_ioctls.h"
 #include "bcm_ioctls.h"
 
+#include "debug.h"
 #include "common.h"
 #include "output.h"
 #include "debug.h"
@@ -56,30 +57,6 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-//#define SAM_WITH_DEBUG
-
-#ifdef SAM_WITH_DEBUG
-#define AAC_DEBUG
-#else
-#define AAC_SILENT
-#endif
-
-#ifdef AAC_DEBUG
-
-static short debug_level = 0;
-
-#define aac_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define aac_printf(level, fmt, x...)
-#endif
-
-#ifndef AAC_SILENT
-#define aac_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define aac_err(fmt, x...)
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -180,7 +157,7 @@ static int _writeData(WriterAVCallData_t *call, int type)
 			aac_err("parsing Data with missing syncword. ignoring...\n");
 			return 0;
 		}
-		
+
 		// STB can handle only AAC LC profile
 		if (0 == (call->data[2] & 0xC0))
 		{

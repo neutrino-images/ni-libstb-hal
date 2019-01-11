@@ -55,29 +55,6 @@
 
 #define WMV_FRAME_START_CODE 0x0d
 
-//#define SAM_WITH_DEBUG
-#ifdef SAM_WITH_DEBUG
-#define WMV_DEBUG
-#else
-#define WMV_SILENT
-#endif
-
-#ifdef WMV_DEBUG
-
-static short debug_level = 10;
-
-#define wmv_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_printf(level, fmt, x...)
-#endif
-
-#ifndef WMV_SILENT
-#define wmv_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_err(fmt, x...)
-#endif
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */

@@ -26,34 +26,13 @@
 
 #include "manager.h"
 #include "common.h"
+#include "debug.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
 
 #define TRACKWRAP 4
-
-#ifdef SAM_WITH_DEBUG
-#define VIDEO_MGR_DEBUG
-#else
-#define VIDEO_MGR_SILENT
-#endif
-
-#ifdef VIDEO_MGR_DEBUG
-
-static short debug_level = 0;
-
-#define video_mgr_printf(level, x...) do { \
-if (debug_level >= level) printf(x); } while (0)
-#else
-#define video_mgr_printf(level, x...)
-#endif
-
-#ifndef VIDEO_MGR_SILENT
-#define video_mgr_err(x...) do { printf(x); } while (0)
-#else
-#define video_mgr_err(x...)
-#endif
 
 /* Error Constants */
 #define cERR_VIDEO_MGR_NO_ERROR        0
@@ -83,7 +62,7 @@ static void (* updatedTrackInfoFnc)(void) = NULL;
 
 static int ManagerAdd(Context_t *context, Track_t track)
 {
-	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "\n");
 
 	if (Tracks == NULL)
 	{
@@ -97,7 +76,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 
 	if (Tracks == NULL)
 	{
-		video_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
+		video_mgr_err("malloc failed\n");
 		return cERR_VIDEO_MGR_ERROR;
 	}
 
@@ -118,7 +97,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	}
 	else
 	{
-		video_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
+		video_mgr_err("TrackCount out if range %d - %d\n", TrackCount, TRACKWRAP);
 		return cERR_VIDEO_MGR_ERROR;
 	}
 
@@ -127,7 +106,7 @@ static int ManagerAdd(Context_t *context, Track_t track)
 		context->playback->isVideo = 1;
 	}
 
-	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "\n");
 
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
@@ -137,7 +116,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 	int i = 0, j = 0;
 	char **tracklist = NULL;
 
-	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "\n");
 
 	if (Tracks != NULL)
 	{
@@ -145,7 +124,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 
 		if (tracklist == NULL)
 		{
-			video_mgr_err("%s::%s malloc failed\n", __FILE__, __FUNCTION__);
+			video_mgr_err("malloc failed\n");
 			return NULL;
 		}
 
@@ -164,7 +143,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 		tracklist[j] = NULL;
 	}
 
-	video_mgr_printf(10, "%s::%s return %p (%d - %d)\n", __FILE__, __FUNCTION__, tracklist, j, TrackCount);
+	video_mgr_printf(10, "return %p (%d - %d)\n", tracklist, j, TrackCount);
 
 	return tracklist;
 }
@@ -173,7 +152,7 @@ static int ManagerDel(Context_t *context)
 {
 	int i = 0;
 
-	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "\n");
 
 	if (Tracks != NULL)
 	{
@@ -186,7 +165,7 @@ static int ManagerDel(Context_t *context)
 	}
 	else
 	{
-		video_mgr_err("%s::%s nothing to delete!\n", __FILE__, __FUNCTION__);
+		video_mgr_err("nothing to delete!\n");
 		return cERR_VIDEO_MGR_ERROR;
 	}
 
@@ -194,7 +173,7 @@ static int ManagerDel(Context_t *context)
 	CurrentTrack = 0;
 	context->playback->isVideo = 0;
 
-	video_mgr_printf(10, "%s::%s return no error\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "return no error\n");
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
@@ -202,7 +181,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
 	int ret = cERR_VIDEO_MGR_NO_ERROR;
 
-	video_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	video_mgr_printf(10, "\n");
 
 	switch (command)
 	{
@@ -258,7 +237,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET_TRACK:
 		{
-			video_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
+			video_mgr_printf(20, "MANAGER_GET_TRACK\n");
 
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
@@ -308,7 +287,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 
 			if (i == TrackCount)
 			{
-				video_mgr_err("%s::%s track id %d unknown\n", __FILE__, __FUNCTION__, *((int *)argument));
+				video_mgr_err("track id %d unknown\n", *((int *)argument));
 				ret = cERR_VIDEO_MGR_ERROR;
 			}
 			break;
@@ -339,12 +318,12 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 			break;
 		}
 		default:
-			video_mgr_err("%s::%s ContainerCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
+			video_mgr_err("ContainerCmd %d not supported!\n", command);
 			ret = cERR_VIDEO_MGR_ERROR;
 			break;
 	}
 
-	video_mgr_printf(10, "%s::%s returning %d\n", __FILE__, __FUNCTION__, ret);
+	video_mgr_printf(10, "returning %d\n", ret);
 	return ret;
 }
 

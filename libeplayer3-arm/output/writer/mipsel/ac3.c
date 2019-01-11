@@ -42,6 +42,7 @@
 #include "stm_ioctls.h"
 #include "bcm_ioctls.h"
 
+#include "debug.h"
 #include "common.h"
 #include "output.h"
 #include "debug.h"
@@ -53,24 +54,6 @@
 /* Makros/Constants              */
 /* ***************************** */
 #define AC3_HEADER_LENGTH       7
-
-#define AC3_DEBUG
-
-#ifdef AC3_DEBUG
-
-static short debug_level = 0;
-
-#define ac3_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define ac3_printf(level, fmt, x...)
-#endif
-
-#ifndef AC3_SILENT
-#define ac3_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define ac3_err(fmt, x...)
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -124,7 +107,7 @@ static int writeData(WriterAVCallData_t *call)
 	struct iovec iov[3];
 
 	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0); //+ sizeof(AC3_SYNC_HEADER)
+	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);  //+ sizeof(AC3_SYNC_HEADER)
 
 	//PesHeader[6] = 0x81;
 	//PesHeader[7] = 0x80;
@@ -135,7 +118,7 @@ static int writeData(WriterAVCallData_t *call)
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
 
-	ac3_printf(40, "PES HEADER LEN %d\n", iov[0].iov_len);
+	ac3_printf(40, "PES HEADER LEN %d\n", (int)iov[0].iov_len);
 
 	return call->WriteV(call->fd, iov, 2);
 }

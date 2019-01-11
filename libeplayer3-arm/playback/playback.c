@@ -8,6 +8,7 @@
 /* ***************************** */
 
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -21,35 +22,13 @@
 #include <stdint.h>
 
 #include "playback.h"
+#include "debug.h"
 #include "common.h"
 #include "misc.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-// SULGE DEBUG
-//#define SAM_WITH_DEBUG
-
-#ifdef SAM_WITH_DEBUG
-#define PLAYBACK_DEBUG
-static short debug_level = 20;
-#else
-#define PLAYBACK_SILENT
-#endif
-
-#ifdef PLAYBACK_DEBUG
-#define playback_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define playback_printf(level, fmt, x...)
-#endif
-
-#ifndef PLAYBACK_SILENT
-#define playback_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define playback_err(fmt, x...)
-#endif
 
 #define cERR_PLAYBACK_NO_ERROR      0
 #define cERR_PLAYBACK_ERROR        -1
@@ -71,6 +50,7 @@ static int hasThreadStarted = 0;
 /* ***************************** */
 
 static int32_t PlaybackTerminate(Context_t *context);
+
 static int8_t dieNow = 0;
 static PlaybackDieNowCallback playbackDieNowCallbacks[MAX_PLAYBACK_DIE_NOW_CALLBACKS] = {NULL};
 
@@ -651,7 +631,7 @@ static int32_t PlaybackSeek(Context_t *context, int64_t *pos, uint8_t absolute)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
-	playback_printf(10, "pos: %lldd\n", *pos);
+	playback_printf(10, "pos: %" PRIu64 "\n", *pos);
 
 	if (context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused)
 	{

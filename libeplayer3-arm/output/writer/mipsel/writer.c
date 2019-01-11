@@ -30,28 +30,11 @@
 #include "misc.h"
 #include "writer.h"
 #include "common.h"
+#include "debug.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-#define WRITER_DEBUG
-
-#ifdef WRITER_DEBUG
-
-static short debug_level = 0;
-
-#define writer_printf(level, x...) do { \
-if (debug_level >= level) printf(x); } while (0)
-#else
-#define writer_printf(level, x...)
-#endif
-
-#ifndef WRITER_SILENT
-#define writer_err(x...) do { printf(x); } while (0)
-#else
-#define writer_err(x...)
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -110,8 +93,8 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, 
 	int retval = -1;
 	int maxFd = pipefd > fd ? pipefd : fd;
 	struct timeval tv;
-	
-	while(size > 0 && 0 == PlaybackDieNow(0) && !context->playback->isSeeking)
+
+	while (size > 0 && 0 == PlaybackDieNow(0) && !context->playback->isSeeking)
 	{
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
@@ -143,19 +126,19 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, 
 		//	continue;
 		//}
 
-		if(FD_ISSET(pipefd, &rfds))
+		if (FD_ISSET(pipefd, &rfds))
 		{
 			FlushPipe(pipefd);
 			//printf("RETURN FROM SELECT DUE TO pipefd SET\n");
 			continue;
 		}
 
-		if(FD_ISSET(fd, &wfds))
+		if (FD_ISSET(fd, &wfds))
 		{
 			ret = write(fd, buf, size);
 			if (ret < 0)
 			{
-				switch(errno)
+				switch (errno)
 				{
 					case EINTR:
 					case EAGAIN:

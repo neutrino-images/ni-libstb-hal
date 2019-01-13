@@ -1066,7 +1066,6 @@ void get_osd_size(int &xres, int &yres, int &bits_per_pixel)
 }
 void get_osd_buf(unsigned char *osd_data)
 {
-	unsigned char *lfb = NULL;
 	struct fb_fix_screeninfo fix_screeninfo;
 	struct fb_var_screeninfo var_screeninfo;
 
@@ -1091,7 +1090,8 @@ void get_osd_buf(unsigned char *osd_data)
 		return;
 	}
 
-	if(!(lfb = (unsigned char*)mmap(0, fix_screeninfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0)))
+	void *lfb = (unsigned char*)mmap(0, fix_screeninfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+	if(lfb == MAP_FAILED)
 	{
 		fprintf(stderr, "Framebuffer: <Memmapping failed>\n");
 		close(fb);

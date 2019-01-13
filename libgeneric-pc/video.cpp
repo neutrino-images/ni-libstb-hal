@@ -240,7 +240,7 @@ bool cVideo::ShowPicture(const char *fname)
 	bool ret = false;
 	hal_info("%s(%s)\n", __func__, fname);
 	if (access(fname, R_OK))
-		return;
+		return ret;
 	still_m.lock();
 	stillpicture = true;
 	buf_num = 0;

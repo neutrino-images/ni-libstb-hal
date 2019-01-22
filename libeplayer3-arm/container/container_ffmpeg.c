@@ -100,7 +100,7 @@ static int32_t hasPlayThreadStarted = 0;
 
 static AVFormatContext *avContextTab[IPTV_AV_CONTEXT_MAX_NUM] = {NULL, NULL};
 static int32_t use_custom_io[IPTV_AV_CONTEXT_MAX_NUM] = {0, 0};
-static AVDictionary *avio_opts = NULL;
+static AVDictionary *g_avio_opts = NULL;
 
 static int64_t latestPts = 0;
 
@@ -294,7 +294,7 @@ void flv2mpeg4_converter_set(const int32_t val)
 
 int32_t ffmpeg_av_dict_set(const char *key, const char *value, int32_t flags)
 {
-	return av_dict_set(&avio_opts, key, value, flags);
+	return av_dict_set(&g_avio_opts, key, value, flags);
 }
 
 static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extradata, int extradata_size, int profile __attribute__((unused)), int32_t *version)
@@ -1529,7 +1529,10 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	}
 #endif
 
+	AVDictionary *avio_opts = NULL;
 	AVDictionary **pavio_opts = NULL;
+	av_dict_copy(&avio_opts, g_avio_opts, 0);
+
 	eRTMPProtoImplType rtmpProtoImplType = RTMP_NONE;
 	uint8_t numOfRTMPImpl = 0;
 	if (0 == strncmp(filename, "ffrtmp", 6))
@@ -2709,9 +2712,9 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 		}
 	}
 
-	if (avio_opts != NULL)
+	if (g_avio_opts != NULL)
 	{
-		av_dict_free(&avio_opts);
+		av_dict_free(&g_avio_opts);
 	}
 
 	avformat_network_deinit();

@@ -1,6 +1,10 @@
 #include <stdio.h>
-#define log_error(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#define log_printf(maxlevel, level, fmt, x...) do { if (maxlevel >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
+#include <string.h>
+
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define log_error(fmt, x...) do { printf("[%s:%s] " fmt, __FILENAME__, __FUNCTION__, ## x); } while (0)
+#define log_printf(maxlevel, level, fmt, x...) do { if (maxlevel >= level) printf("[%s:%s] " fmt, __FILENAME__, __FUNCTION__, ## x); } while (0)
 
 
 /*******************************************

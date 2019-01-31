@@ -49,6 +49,11 @@ libstb_hal_la_LIBADD += \
 	libdvbci/libdvbci.la
 endif
 if BOXTYPE_ARMBOX
+if BOXMODEL_HD60
+SUBDIRS += libarmbox
+libstb_hal_la_LIBADD += \
+	libarmbox/libarmbox.la
+else
 #libstb_hal_test_LDADD += -lasound
 SUBDIRS += libarmbox libdvbci
 libstb_hal_la_LIBADD += \
@@ -60,6 +65,8 @@ SUBDIRS += libeplayer3-arm
 
 libstb_hal_la_LIBADD += \
 	libeplayer3-arm/libeplayer3_arm.la
+endif
+
 endif
 
 endif

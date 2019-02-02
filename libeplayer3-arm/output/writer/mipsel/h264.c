@@ -283,6 +283,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 	{
 		*NalLength = 0;
 	}
+
 	return ret;
 }
 

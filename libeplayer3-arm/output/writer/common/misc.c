@@ -132,12 +132,12 @@ stb_type_t GetSTBType()
 	static stb_type_t type = STB_UNKNOWN;
 	if (type == STB_UNKNOWN)
 	{
-		struct stat buffer;
+//		struct stat buffer;
 		if (access("/proc/stb/tpm/0/serial", F_OK) != -1)
 		{
 			type = STB_DREAMBOX;
 		}
-		else if (access("/proc/stb/info/vumodel", F_OK) != -1 && \
+		else if (access("/proc/stb/info/vumodel", F_OK) != -1 &&
 		         access("/proc/stb/info/boxtype", F_OK) == -1)
 		{
 			// some STB like Octagon SF4008 has also /proc/stb/info/vumodel

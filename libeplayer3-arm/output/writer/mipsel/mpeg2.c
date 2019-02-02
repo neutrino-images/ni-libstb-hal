@@ -82,11 +82,7 @@ static int reset()
 
 static int writeData(WriterAVCallData_t *call)
 {
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE];
-
 	static uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	int32_t len = 0;
-	uint32_t Position = 0;
 
 	mpeg2_printf(10, "\n");
 
@@ -206,7 +202,7 @@ static int writeData(WriterAVCallData_t *call)
 			codec_data_size = call->private_size;
 		}
 
-		while (pos <= data_len - 4)
+		while ((unsigned)pos <= data_len - 4)
 		{
 			if (memcmp(&data[pos], "\x00\x00\x01\xb8", 4)) /* find group start code */
 			{
@@ -243,8 +239,8 @@ static int writeData(WriterAVCallData_t *call)
 	PesHeader[6] = 0x81;
 
 	UpdatePesHeaderPayloadSize(PesHeader, data_len + iov[0].iov_len - 6);
-	if (iov[0].iov_len != WriteExt(call->WriteV, call->fd, iov[0].iov_base, iov[0].iov_len)) return -1;
-	if (iov[1].iov_len != WriteExt(call->WriteV, call->fd, iov[1].iov_base, iov[1].iov_len)) return -1;
+	if (iov[0].iov_len != (unsigned)WriteExt(call->WriteV, call->fd, iov[0].iov_base, iov[0].iov_len)) return -1;
+	if (iov[1].iov_len != (unsigned)WriteExt(call->WriteV, call->fd, iov[1].iov_base, iov[1].iov_len)) return -1;
 
 	return 1;
 }

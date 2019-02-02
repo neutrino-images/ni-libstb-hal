@@ -58,13 +58,10 @@
 /* ***************************** */
 
 /* ***************************** */
-/* Varaibles                     */
+/* Variables                     */
 /* ***************************** */
 
 static bool must_send_header = true;
-static uint8_t *private_data = NULL;
-static uint32_t private_size = 0;
-
 
 /* ***************************** */
 /* Prototypes                    */
@@ -80,13 +77,9 @@ static int reset()
 	return 0;
 }
 
-static int writeData(void *_call)
+static int writeData(WriterAVCallData_t *call)
 {
-	WriterAVCallData_t *call = (WriterAVCallData_t *) _call;
-
 	static uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	int32_t len = 0;
-	uint32_t Position = 0;
 
 	mjpeg_printf(10, "\n");
 

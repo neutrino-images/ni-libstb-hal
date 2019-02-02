@@ -55,6 +55,7 @@ typedef enum
 	STREAMTYPE_DIVX5 = 15,
 	STREAMTYPE_VB6 = 18,
 	STREAMTYPE_SPARK = 21,
+	STREAMTYPE_MJPEG = 30,
 } video_stream_type_t;
 
 

@@ -85,6 +85,7 @@ static Writer_t *AvailableWriter[] =
 	&WriterVideoVP9,
 	&WriterVideoSPARK,
 	&WriterVideoWMV,
+	&WriterVideoMJPEG,
 	NULL
 };
 

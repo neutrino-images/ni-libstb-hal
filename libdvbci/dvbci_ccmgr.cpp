@@ -14,6 +14,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
+#include <openssl/opensslv.h>
 
 #include "misc.h"
 #include "_dh_params.h"
@@ -240,7 +241,11 @@ static bool certificate_validate(struct cert_ctx *ctx, X509 *cert)
 	ret = X509_verify_cert(store_ctx);
 
 	if (ret != 1)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		fprintf(stderr, "%s\n", X509_verify_cert_error_string(store_ctx->error));
+#else
+		fprintf(stderr, "%s\n", X509_verify_cert_error_string(ret));
+#endif
 
 	X509_STORE_CTX_free(store_ctx);
 

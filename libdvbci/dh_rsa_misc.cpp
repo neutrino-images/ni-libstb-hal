@@ -161,17 +161,18 @@ int dh_gen_exp(uint8_t *dest, int dest_len, uint8_t *dh_g, int dh_g_len, uint8_t
 
 	DH_generate_key(dh);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	len = BN_num_bytes(dh->priv_key);
+#else
 	const BIGNUM *pub_key, *priv_key;
 	DH_get0_key(dh, &pub_key, &priv_key);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	len = BN_num_bytes(priv_key);
-#else
+#endif
 	if (len > dest_len) {
 		printf("len > dest_len\n");
 		return -1;
 	}
-#endif
+
 	gap = dest_len - len;
 	memset(dest, 0, gap);
 

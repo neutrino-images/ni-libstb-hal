@@ -85,6 +85,10 @@ static int ManagerAdd(Context_t *context, Track_t track)
 		if (Tracks[i].Id == track.Id)
 		{
 			Tracks[i].pending = 0;
+			if(track.aacbuf){
+				free(track.aacbuf);
+				track.aacbuf = NULL;
+			}
 			return cERR_AUDIO_MGR_NO_ERROR;
 		}
 	}

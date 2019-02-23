@@ -55,29 +55,6 @@
 
 #define WMV_FRAME_START_CODE 0x0d
 
-//#define SAM_WITH_DEBUG
-#ifdef SAM_WITH_DEBUG
-#define WMV_DEBUG
-#else
-#define WMV_SILENT
-#endif
-
-#ifdef WMV_DEBUG
-
-static short debug_level = 10;
-
-#define wmv_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_printf(level, fmt, x...)
-#endif
-
-#ifndef WMV_SILENT
-#define wmv_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wmv_err(fmt, x...)
-#endif
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -159,7 +136,7 @@ static int writeData(WriterAVCallData_t *call)
 		*(data++) = (call->Height >> 8) & 0xff;
 		*(data++) = call->Height & 0xff;
 		if (call->private_data && codec_size) memcpy(data, call->private_data, codec_size);
-		if (IsDreambox() || 0 != ioctl(call->fd, VIDEO_SET_CODEC_DATA, &videocodecdata))
+		if (STB_DREAMBOX == GetSTBType() || 0 != ioctl(call->fd, VIDEO_SET_CODEC_DATA, &videocodecdata))
 		{
 			iov[ic].iov_base  = videocodecdata.data;
 			iov[ic++].iov_len = videocodecdata.length;

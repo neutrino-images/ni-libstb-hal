@@ -56,30 +56,6 @@
 #define VC1_SEQUENCE_LAYER_METADATA_START_CODE 0x80
 #define VC1_FRAME_START_CODE 0x0d
 
-#define SAM_WITH_DEBUG
-#ifdef SAM_WITH_DEBUG
-#define VC1_DEBUG
-#else
-#define VC1_SILENT
-#endif
-
-#ifdef VC1_DEBUG
-
-static short debug_level = 10;
-
-#define vc1_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define vc1_printf(level, fmt, x...)
-#endif
-
-#ifndef VC1_SILENT
-#define vc1_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define vc1_err(fmt, x...)
-#endif
-
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -153,7 +129,7 @@ static int writeData(WriterAVCallData_t *call)
 		videocodecdata.data  = malloc(videocodecdata.length);
 		memset(videocodecdata.data, 0, videocodecdata.length);
 		memcpy(videocodecdata.data + 8, call->private_data, call->private_size);
-		if (IsDreambox() || 0 != ioctl(call->fd, VIDEO_SET_CODEC_DATA, &videocodecdata))
+		if (STB_DREAMBOX == GetSTBType() || 0 != ioctl(call->fd, VIDEO_SET_CODEC_DATA, &videocodecdata))
 		{
 			iov[ic].iov_base  = videocodecdata.data;
 			iov[ic++].iov_len = videocodecdata.length;

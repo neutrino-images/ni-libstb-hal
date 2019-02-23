@@ -1,7 +1,7 @@
 /*
  * linuxdvb output/writer handling.
  *
- * crow 2010
+ * konfetti 2010 based on linuxdvb.c code from libeplayer2
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,13 +31,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <memory.h>
 #include <asm/types.h>
 #include <pthread.h>
 #include <errno.h>
-#include <sys/uio.h>
 
 #include "stm_ioctls.h"
 #include "bcm_ioctls.h"
@@ -52,23 +52,6 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-//#define H263_DEBUG
-
-#ifdef H263_DEBUG
-
-static short debug_level = 0;
-
-#define h263_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define h263_printf(level, fmt, x...)
-#endif
-
-#ifndef H263_SILENT
-#define h263_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define h263_err(fmt, x...)
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -78,6 +61,8 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 /* Variables                     */
 /* ***************************** */
 
+static bool must_send_header = true;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
@@ -86,93 +71,54 @@ if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); 
 /* MISC Functions                */
 /* ***************************** */
 
-static int32_t reset()
+static int reset()
 {
+	must_send_header = true;
 	return 0;
 }
 
 static int writeData(WriterAVCallData_t *call)
 {
-	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	int32_t len = 0;
+	static uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
-	h263_printf(10, "\n");
+	mjpeg_printf(10, "\n");
 
 	if (call == NULL)
 	{
-		h263_err("call data is NULL...\n");
+		mjpeg_err("call data is NULL...\n");
 		return 0;
 	}
 
-	h263_printf(10, "VideoPts %lld\n", call->Pts);
-
-	if ((call->data == NULL) || (call->len <= 0))
-	{
-		h263_err("NULL Data. ignoring...\n");
-		return 0;
-	}
-
-	if (call->fd < 0)
-	{
-		h263_err("file pointer < 0. ignoring ...\n");
-		return 0;
-	}
-
-	int32_t HeaderLength = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
-	int32_t PrivateHeaderLength = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->len);
-	int32_t PesLength = PesHeader[PES_LENGTH_BYTE_0] + (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
-
-	PesHeader[PES_LENGTH_BYTE_0]            = PesLength & 0xff;
-	PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
-	PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;
-	PesHeader[PES_FLAGS_BYTE]              |= PES_EXTENSION_DATA_PRESENT;
-	HeaderLength                           += PrivateHeaderLength;
+	mjpeg_printf(10, "VideoPts %lld\n", call->Pts);
 
 	struct iovec iov[2];
+
 	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = HeaderLength;
+	iov[0].iov_len = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
+
 	iov[1].iov_base = call->data;
 	iov[1].iov_len = call->len;
-	len = call->WriteV(call->fd, iov, 2);
 
-	h263_printf(10, "< len %d\n", len);
-	return len;
+	return call->WriteV(call->fd, iov, 2);;
 }
 
 /* ***************************** */
 /* Writer  Definition            */
 /* ***************************** */
 
-static WriterCaps_t caps_h263 =
+static WriterCaps_t caps =
 {
-	"h263",
+	"mjpeg",
 	eVideo,
-	"V_H263",
-	VIDEO_ENCODING_H263,
-	STREAMTYPE_H263,
-	CT_MPEG4_PART2
+	"V_MJPEG",
+	VIDEO_ENCODING_AUTO,
+	STREAMTYPE_MJPEG,
+	-1
 };
 
-struct Writer_s WriterVideoH263 =
+struct Writer_s WriterVideoMJPEG =
 {
 	&reset,
 	&writeData,
-	&caps_h263
-};
-
-static WriterCaps_t caps_flv =
-{
-	"FLV",
-	eVideo,
-	"V_FLV",
-	VIDEO_ENCODING_FLV1,
-	STREAMTYPE_H263,
-	CT_MPEG4_PART2
-};
-
-struct Writer_s WriterVideoFLV =
-{
-	&reset,
-	&writeData,
-	&caps_flv
+	&caps
 };

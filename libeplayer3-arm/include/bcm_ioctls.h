@@ -55,6 +55,7 @@ typedef enum
 	STREAMTYPE_DIVX5 = 15,
 	STREAMTYPE_VB6 = 18,
 	STREAMTYPE_SPARK = 21,
+	STREAMTYPE_MJPEG = 30,
 } video_stream_type_t;
 
 
@@ -75,7 +76,7 @@ typedef enum
 	AUDIOTYPE_WMA_PRO = 0x21,
 	AUDIOTYPE_AC3_PLUS = 0x22,
 	AUDIOTYPE_AMR = 0x23,
-	AUDIOTYPE_RAW = 0xf
+	AUDIOTYPE_RAW = 0x30
 } audio_stream_type_t;
 
 

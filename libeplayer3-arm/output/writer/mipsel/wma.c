@@ -53,28 +53,6 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#ifdef SAM_WITH_DEBUG
-#define WMA_DEBUG
-#else
-#define WMA_SILENT
-#endif
-
-#ifdef WMA_DEBUG
-
-static short debug_level = 0;
-
-#define wma_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wma_printf(level, fmt, x...)
-#endif
-
-#ifndef WMA_SILENT
-#define wma_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define wma_err(fmt, x...)
-#endif
-
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
@@ -129,7 +107,7 @@ static int writeData(WriterAVCallData_t *call)
 
 	uint32_t packetLength = 4 + call->private_size + call->len;
 
-	if (IsDreambox())
+	if (STB_DREAMBOX == GetSTBType())
 	{
 		packetLength += 4;
 	}
@@ -145,7 +123,7 @@ static int writeData(WriterAVCallData_t *call)
 	}
 
 	uint32_t headerSize = InsertPesHeader(PesHeader, packetLength, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
-	if (IsDreambox())
+	if (STB_DREAMBOX == GetSTBType())
 	{
 		PesHeader[headerSize++] = 0x42; // B
 		PesHeader[headerSize++] = 0x43; // C

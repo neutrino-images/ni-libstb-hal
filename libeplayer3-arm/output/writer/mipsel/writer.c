@@ -26,36 +26,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "misc.h"
 #include "writer.h"
 #include "common.h"
+#include "debug.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
 
-#define WRITER_DEBUG
-
-#ifdef WRITER_DEBUG
-
-static short debug_level = 0;
-
-#define writer_printf(level, x...) do { \
-if (debug_level >= level) printf(x); } while (0)
-#else
-#define writer_printf(level, x...)
-#endif
-
-#ifndef WRITER_SILENT
-#define writer_err(x...) do { printf(x); } while (0)
-#else
-#define writer_err(x...)
-#endif
+#define getDVBMutex(pmtx) do { if (pmtx) pthread_mutex_lock(pmtx);} while(false);
+#define releaseDVBMutex(pmtx) do { if (pmtx) pthread_mutex_unlock(pmtx);} while(false);
 
 /* ***************************** */
 /* Types                         */
 /* ***************************** */
+
+typedef enum
+{
+	DVB_STS_UNKNOWN,
+	DVB_STS_SEEK,
+	DVB_STS_PAUSE,
+	DVB_STS_EXIT
+} DVBState_t;
 
 /* ***************************** */
 /* Variables                     */
@@ -88,8 +83,9 @@ static Writer_t *AvailableWriter[] =
 	&WriterVideoVP6,
 	&WriterVideoVP8,
 	&WriterVideoVP9,
-	&WriterVideoSPARK,
+	&WriterVideoFLV,
 	&WriterVideoWMV,
+	&WriterVideoMJPEG,
 	NULL
 };
 
@@ -101,7 +97,7 @@ static Writer_t *AvailableWriter[] =
 /*  Functions                    */
 /* ***************************** */
 
-ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, int size)
+ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx __attribute__((unused)), const void *buf, int size)
 {
 	fd_set rfds;
 	fd_set wfds;
@@ -110,8 +106,17 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, 
 	int retval = -1;
 	int maxFd = pipefd > fd ? pipefd : fd;
 	struct timeval tv;
-	
-	while(size > 0 && 0 == PlaybackDieNow(0) && !context->playback->isSeeking)
+
+	static bool first = true;
+	if (first && STB_HISILICON == GetSTBType())
+	{
+		// workaround: playback of some files does not start
+		//             if injection of the frist frame is to fast
+		usleep(100000);
+	}
+	first = false;
+
+	while (size > 0 && 0 == PlaybackDieNow(0) && !context->playback->isSeeking)
 	{
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
@@ -119,15 +124,15 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, 
 		FD_SET(pipefd, &rfds);
 		FD_SET(fd, &wfds);
 
-		/* When we PAUSE LINUX DVB outputs buffers, then audio/video buffers 
-		* will continue to be filled. Unfortunately, in such case after resume 
-		* select() will never return with fd set - bug in DVB drivers?
-		* There are to workarounds possible:
-		*   1. write to pipe at resume to return from select() immediately
-		*   2. make timeout select(), limit max time spend in the select()
-		*	 to for example 0,1s 
-		*   (at now first workaround is used)
-		*/
+		/* When we PAUSE LINUX DVB outputs buffers, then audio/video buffers
+		 * will continue to be filled. Unfortunately, in such case after resume
+		 * select() will never return with fd set - bug in DVB drivers?
+		 * There are to workarounds possible:
+		 *   1. write to pipe at resume to return from select() immediately
+		 *   2. make timeout select(), limit max time spend in the select()
+		 *      to for example 0,1s
+		 *   (at now first workaround is used)
+		 */
 		//tv.tv_sec = 0;
 		//tv.tv_usec = 100000; // 100ms
 
@@ -143,19 +148,19 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, const void *buf, 
 		//	continue;
 		//}
 
-		if(FD_ISSET(pipefd, &rfds))
+		if (FD_ISSET(pipefd, &rfds))
 		{
 			FlushPipe(pipefd);
 			//printf("RETURN FROM SELECT DUE TO pipefd SET\n");
 			continue;
 		}
 
-		if(FD_ISSET(fd, &wfds))
+		if (FD_ISSET(fd, &wfds))
 		{
 			ret = write(fd, buf, size);
 			if (ret < 0)
 			{
-				switch(errno)
+				switch (errno)
 				{
 					case EINTR:
 					case EAGAIN:

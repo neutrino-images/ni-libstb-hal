@@ -28,29 +28,12 @@
 
 #include "misc.h"
 #include "writer.h"
+#include "debug.h"
 #include "common.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-//#define WRITER_DEBUG
-
-#ifdef WRITER_DEBUG
-
-static short debug_level = 0;
-
-#define writer_printf(level, x...) do { \
-if (debug_level >= level) printf(x); } while (0)
-#else
-#define writer_printf(level, x...)
-#endif
-
-#ifndef WRITER_SILENT
-#define writer_err(x...) do { printf(x); } while (0)
-#else
-#define writer_err(x...)
-#endif
 
 /* ***************************** */
 /* Types                         */
@@ -71,4 +54,12 @@ void FlushPipe(int pipefd)
 {
 	char tmp;
 	while (1 == read(pipefd, &tmp, 1));
+}
+
+ssize_t WriteExt(WriteV_t _call, int fd, void *data, size_t size)
+{
+	struct iovec iov[1];
+	iov[0].iov_base = data;
+	iov[0].iov_len = size;
+	return _call(fd, iov, 1);
 }

@@ -38,10 +38,10 @@
 #include <pthread.h>
 #include <errno.h>
 
+#include "stm_ioctls.h"
 #include "common.h"
 #include "output.h"
 #include "debug.h"
-#include "stm_ioctls.h"
 #include "misc.h"
 #include "pes.h"
 #include "writer.h"
@@ -49,28 +49,6 @@
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-
-#ifdef SAM_WITH_DEBUG
-#define VORBIS_DEBUG
-#else
-#define VORBIS_SILENT
-#endif
-
-#ifdef VORBIS_DEBUG
-
-static short debug_level = 1;
-
-#define vorbis_printf(level, fmt, x...) do { \
-if (debug_level >= level) printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define vorbis_printf(level, fmt, x...)
-#endif
-
-#ifndef VORBIS_SILENT
-#define vorbis_err(fmt, x...) do { printf("[%s:%s] " fmt, __FILE__, __FUNCTION__, ## x); } while (0)
-#else
-#define vorbis_err(fmt, x...)
-#endif
 
 /* ***************************** */
 /* Types                         */

@@ -126,3 +126,34 @@ void FlushBits(BitPacker_t *ld)
 	ld->Remaining = 32;
 	ld->BitBuffer = 0;
 }
+
+stb_type_t GetSTBType()
+{
+	static stb_type_t type = STB_UNKNOWN;
+	if (type == STB_UNKNOWN)
+	{
+//		struct stat buffer;
+		if (access("/proc/stb/tpm/0/serial", F_OK) != -1)
+		{
+			type = STB_DREAMBOX;
+		}
+		else if (access("/proc/stb/info/vumodel", F_OK) != -1 &&
+		         access("/proc/stb/info/boxtype", F_OK) == -1)
+		{
+			// some STB like Octagon SF4008 has also /proc/stb/info/vumodel
+			// but VU PLUS does not have /proc/stb/info/boxtype
+			// please see: https://gitlab.com/e2i/e2iplayer/issues/282
+			type = STB_VUPLUS;
+		}
+		else if (access("/sys/firmware/devicetree/base/soc/hisilicon_clock/name", F_OK) != -1)
+		{
+			type = STB_HISILICON;
+		}
+		else
+		{
+			type = STB_OTHER;
+		}
+	}
+
+	return type;
+}

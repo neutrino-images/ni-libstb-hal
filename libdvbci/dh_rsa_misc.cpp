@@ -4,6 +4,7 @@
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
+#include <openssl/opensslv.h>
 
 #include "misc.h"
 
@@ -148,13 +149,25 @@ int dh_gen_exp(uint8_t *dest, int dest_len, uint8_t *dh_g, int dh_g_len, uint8_t
 
 	dh = DH_new();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	dh->p = BN_bin2bn(dh_p, dh_p_len, 0);
 	dh->g = BN_bin2bn(dh_g, dh_g_len, 0);
 	dh->flags |= DH_FLAG_NO_EXP_CONSTTIME;
+#else
+	BIGNUM *p = BN_bin2bn(dh_p, dh_p_len, 0);
+	BIGNUM *g = BN_bin2bn(dh_g, dh_g_len, 0);
+	DH_set0_pqg(dh, p, NULL, g);
+#endif
 
 	DH_generate_key(dh);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	len = BN_num_bytes(dh->priv_key);
+#else
+	const BIGNUM *pub_key, *priv_key;
+	DH_get0_key(dh, &pub_key, &priv_key);
+	len = BN_num_bytes(priv_key);
+#endif
 	if (len > dest_len) {
 		printf("len > dest_len\n");
 		return -1;
@@ -162,7 +175,12 @@ int dh_gen_exp(uint8_t *dest, int dest_len, uint8_t *dh_g, int dh_g_len, uint8_t
 
 	gap = dest_len - len;
 	memset(dest, 0, gap);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	BN_bn2bin(dh->priv_key, &dest[gap]);
+#else
+	BN_bn2bin(priv_key, &dest[gap]);
+#endif
 
 	DH_free(dh);
 

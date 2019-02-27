@@ -322,7 +322,7 @@ int cAudio::StopClip()
 	}
 	close(clipfd);
 	clipfd = -1;
-	if (mixer_fd >= -1) {
+	if (mixer_fd > -1) {
 		close(mixer_fd);
 		mixer_fd = -1;
 	}

@@ -276,8 +276,10 @@ AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext
 int image_to_mpeg2(const char *image_name, int fd)
 {
 	int ret = 0;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	av_register_all();
 	avcodec_register_all();
+#endif
 
 	AVFormatContext *formatContext = avformat_alloc_context();
 	if (formatContext && (ret = avformat_open_input(&formatContext, image_name, NULL, NULL)) == 0){

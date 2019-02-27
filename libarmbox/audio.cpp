@@ -97,7 +97,7 @@ int map_volume(const int volume)
 
 int cAudio::setVolume(unsigned int left, unsigned int right)
 {
-	hal_debug("%s(%d, %d)\n", __func__, left, right);
+	hal_info("cAudio::%s(%d, %d)\n", __func__, left, right);
 
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
@@ -199,7 +199,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	unsigned int devmask, stereo, usable;
 	const char *dsp_dev = getenv("DSP_DEVICE");
 	const char *mix_dev = getenv("MIX_DEVICE");
-	hal_debug("%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
+	hal_info("cAudio::%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
 	if (clipfd > -1) {
 		hal_info("%s: clipfd already opened (%d)\n", __func__, clipfd);
 		return -1;
@@ -226,7 +226,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 					" fall back to /dev/mixer\n", __func__, dsp_dev);
 		mix_dev = "/dev/mixer";
 	}
-	hal_info("%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
+	hal_info("cAudio::%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
 	clipfd = open(dsp_dev, O_WRONLY);
 	if (clipfd < 0) {
@@ -313,7 +313,7 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 
 int cAudio::StopClip()
 {
-	hal_debug("%s\n", __FUNCTION__);
+	hal_info("cAudio::%s\n", __FUNCTION__);
 
 	if (clipfd < 0) {
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
@@ -321,7 +321,7 @@ int cAudio::StopClip()
 	}
 	close(clipfd);
 	clipfd = -1;
-	if (mixer_fd >= -1) {
+	if (mixer_fd > -1) {
 		close(mixer_fd);
 		mixer_fd = -1;
 	}

@@ -126,7 +126,6 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 static int32_t container_ffmpeg_get_length(Context_t *context, int64_t *length);
 static int64_t calcPts(uint32_t avContextIdx, AVStream *stream, int64_t pts);
 static int64_t doCalcPts(int64_t start_time, const AVRational time_base, int64_t pts);
-static int32_t container_ffmpeg_stop(Context_t *context);
 
 /* Progressive playback means that we play local file
  * but this local file can grows up, for example
@@ -1353,11 +1352,6 @@ static void FFMPEGThread(Context_t *context)
 	do_seek_target_seconds = 0;
 	PlaybackDieNow(1);
 
-	if(context && context->playback)
-	{
-		container_ffmpeg_stop(context);
-	}
-
 	ffmpeg_printf(10, "terminating\n");
 }
 
@@ -1540,7 +1534,6 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	{
 		AVIOContext *avio_ctx = NULL;
 		custom_io_tab[AVIdx] = malloc(sizeof(CustomIOCtx_t));
-
 		memset(custom_io_tab[AVIdx], 0x00, sizeof(CustomIOCtx_t));
 
 		custom_io_tab[AVIdx]->szFile = filename;
@@ -2738,11 +2731,7 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 					fclose(io->pFile);
 				if (io->pMoovFile)
 					fclose(io->pMoovFile);
-				if(custom_io_tab[i] != NULL)
-				{
-					free(custom_io_tab[i]);
-					custom_io_tab[i] = NULL;
-				}
+				free(custom_io_tab[i]);
 				av_freep(&(avContextTab[i]->pb->buffer));
 				av_freep(&(avContextTab[i]->pb));
 				use_custom_io[i] = 0;

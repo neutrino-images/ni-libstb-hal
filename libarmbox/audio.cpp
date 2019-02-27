@@ -314,7 +314,7 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 int cAudio::StopClip()
 {
 	hal_debug("%s\n", __FUNCTION__);
-#if 0
+
 	if (clipfd < 0) {
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
@@ -326,7 +326,6 @@ int cAudio::StopClip()
 		mixer_fd = -1;
 	}
 	setVolume(volume, volume);
-#endif
 	return 0;
 };
 

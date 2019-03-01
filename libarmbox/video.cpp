@@ -257,13 +257,17 @@ int decode_frame(AVCodecContext *codecContext,AVPacket &packet, int fd)
 
 AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext)
 {
-	int stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
-	if (stream_index >=0 ){
-		AVCodecContext * codecContext = formatContext->streams[stream_index]->codec;
-		if(codecContext){
-			AVCodec *codec = avcodec_find_decoder(codecContext->codec_id);
-			if(codec){
-				if ((avcodec_open2(codecContext, codec, NULL)) != 0){
+	AVCodec * codec = NULL;
+	AVCodecContext * codecContext = NULL;
+	int stream_index;
+#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 57,25,101 ))
+	stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
+	if (stream_index >= 0) {
+		codecContext = formatContext->streams[stream_index]->codec;
+		if (codecContext) {
+			codec = avcodec_find_decoder(codecContext->codec_id);
+			if (codec) {
+				if ((avcodec_open2(codecContext, codec, NULL)) != 0) {
 					return NULL;
 				}
 			}
@@ -271,6 +275,22 @@ AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext
 		}
 	}
 	return NULL;
+#else
+	stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, &codec, 0);
+	if (stream_index >= 0) {
+		codec = avcodec_find_decoder(formatContext->streams[stream_index]->codecpar->codec_id);
+		if (codec) {
+			codecContext = avcodec_alloc_context3(codec);
+		}
+		if (codecContext) {
+			if ((avcodec_open2(codecContext, codec, NULL)) != 0) {
+				return NULL;
+			}
+			return codecContext;
+		}
+	}
+	return NULL;
+#endif
 }
 
 int image_to_mpeg2(const char *image_name, int fd)

@@ -201,14 +201,28 @@ void write_frame(AVFrame* in_frame, int fd)
 				AVPacket pkt;
 				av_init_packet(&pkt);
 				/* encode the image */
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 				int got_output = 0;
 				int ret = avcodec_encode_video2(codec_context, &pkt, in_frame, &got_output);
 				if (ret != -1){
-					int i =1;
+#else
+				int ret = avcodec_send_frame(codec_context, in_frame);
+				if (!ret) {
+					/* signalling end of stream */
+					ret = avcodec_send_frame(codec_context, NULL);
+				}
+				if (!ret) {
+#endif
+					int i = 1;
 					/* get the delayed frames */
 					in_frame->pts = i;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 					ret = avcodec_encode_video2(codec_context, &pkt, 0, &got_output);
 					if (ret != -1 && got_output){
+#else
+					ret = avcodec_receive_packet(codec_context, &pkt);
+					if (!ret) {
+#endif
 						if ((pkt.data[3] >> 4) != 0xE){
 							write_all(fd, pes_header, sizeof(pes_header));
 						}else{
@@ -227,13 +241,29 @@ void write_frame(AVFrame* in_frame, int fd)
 
 int decode_frame(AVCodecContext *codecContext,AVPacket &packet, int fd)
 {
-	int decode_ok = 0;
 	AVFrame *frame = av_frame_alloc();
 	if(frame){
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
+		int decode_ok = 0;
 		if ((avcodec_decode_video2(codecContext, frame, &decode_ok, &packet)) < 0 || !decode_ok){
 			av_frame_free(&frame);
 			return -1;
 		}
+#else
+		int ret;
+		ret = avcodec_send_packet(codecContext, &packet);
+		// In particular, we don't expect AVERROR(EAGAIN), because we read all
+		// decoded frames with avcodec_receive_frame() until done.
+		if (ret < 0) {
+			av_frame_free(&frame);
+			return -1;
+		}
+		ret = avcodec_receive_frame(codecContext, frame);
+		if (ret < 0) {
+			av_frame_free(&frame);
+			return -1;
+		}
+#endif
 		AVFrame *dest_frame = av_frame_alloc();
 		if(dest_frame){
 			dest_frame->height = (frame->height/2)*2;
@@ -604,7 +634,7 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 
 void cVideo::ShowPicture(const char * fname)
 {
-	hal_debug("%s(%s)\n", __func__, fname);
+	hal_info("%s(%s)\n", __func__, fname);
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */

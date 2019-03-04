@@ -223,7 +223,7 @@ static int32_t flv2mpeg4_converter = 0;
 /* MISC Functions                */
 /* ***************************** */
 
-static void ffmpeg_silen_callback(void *avcl __attribute__((unused)), int level __attribute__((unused)), const char *fmt __attribute__((unused)), va_list vl __attribute__((unused)))
+static void __attribute__ ((unused)) ffmpeg_silen_callback(void *avcl __attribute__((unused)), int level __attribute__((unused)), const char *fmt __attribute__((unused)), va_list vl __attribute__((unused)))
 {
 	return;
 }
@@ -1915,9 +1915,12 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 	avformat_network_init();
 
 #if FFMPEG_DEBUG_LEVEL >= 10
+	av_log_set_flags(AV_LOG_SKIP_REPEATED);
 	av_log_set_level(AV_LOG_DEBUG);
 #else
-	av_log_set_callback(ffmpeg_silen_callback);
+	av_log_set_flags(AV_LOG_SKIP_REPEATED);
+	av_log_set_level(AV_LOG_INFO);
+	//av_log_set_callback(ffmpeg_silen_callback);
 #endif
 
 	context->playback->abortRequested = 0;

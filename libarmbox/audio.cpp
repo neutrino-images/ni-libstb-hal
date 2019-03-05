@@ -319,6 +319,9 @@ int cAudio::StopClip()
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
+#if BOXMODEL_VUSOLO4K
+	ioctl(clipfd, SNDCTL_DSP_RESET);
+#endif
 	close(clipfd);
 	clipfd = -1;
 	if (mixer_fd > -1) {

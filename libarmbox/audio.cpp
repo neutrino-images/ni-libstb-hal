@@ -12,6 +12,7 @@
 
 #include "audio_lib.h"
 #include "hal_debug.h"
+#include <config.h>
 
 #define AUDIO_DEVICE	"/dev/dvb/adapter0/audio0"
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
@@ -245,8 +246,10 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 		perror("SNDCTL_DSP_CHANNELS");
 	if (ioctl(clipfd, SNDCTL_DSP_SPEED, &srate))
 		perror("SNDCTL_DSP_SPEED");
+#if !BOXMODEL_HD51
 	if (ioctl(clipfd, SNDCTL_DSP_RESET))
 		perror("SNDCTL_DSP_RESET");
+#endif
 
 	if (!mix_dev)
 		return 0;
@@ -299,15 +302,30 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
-	int ret;
+	int ret, __attribute__ ((unused)) count = 1;
 	// hal_debug("cAudio::%s\n", __FUNCTION__);
 	if (clipfd < 0) {
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
+#if BOXMODEL_HD51
+again:
+#endif
 	ret = write(clipfd, buffer, size);
-	if (ret < 0)
+	if (ret < 0) {
 		hal_info("%s: write error (%m)\n", __FUNCTION__);
+		return ret;
+	}
+#if BOXMODEL_HD51
+	if (ret != size) {
+		hal_info("cAudio::%s: difference > to write (%d) != written (%d) try (%d) > reset dsp and restart write\n", __FUNCTION__, size, ret, count);
+		if (ioctl(clipfd, SNDCTL_DSP_RESET))
+			perror("SNDCTL_DSP_RESET");
+		count++;
+		if (count < 3)
+			goto again;
+	}
+#endif
 	return ret;
 };
 

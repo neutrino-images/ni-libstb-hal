@@ -160,7 +160,7 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	int n;
 
 	int mo = (mode < 0||mode > 3) ? 4 : mode;
-	hal_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mo]);
+	hal_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[(mo)]);
 
 	if (aspect > 3 || aspect == 0)
 		hal_info("%s: invalid aspect: %d\n", __func__, aspect);

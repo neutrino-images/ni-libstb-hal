@@ -564,8 +564,9 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
-void cVideo::ShowPicture(const char * fname, const char *_destname)
+bool cVideo::ShowPicture(const char * fname, const char *_destname)
 {
+	bool ret = false;
 	hal_debug("%s(%s)\n", __func__, fname);
 	//static const unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
 	static const unsigned char pes_header[] = {0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1};
@@ -578,8 +579,15 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 	{
 		/* does not work and the driver does not seem to like it */
 		hal_info("%s: video_standby == true\n", __func__);
-		return;
+		return ret;
 	}
+	if (fd == -1)
+	{
+		/* in movieplayer mode, fd is not opened */
+		hal_info("%s: decoder not opened\n", __func__);
+		return ret;
+	}
+
 	const char *lastDot = strrchr(fname, '.');
 	if (lastDot && !strcasecmp(lastDot + 1, "m2v"))
 		strncpy(destname, fname, sizeof(destname));
@@ -591,7 +599,7 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 			if (stat(fname, &st2))
 			{
 				hal_info("%s: could not stat %s (%m)\n", __func__, fname);
-				return;
+				return ret;
 			}
 			mkdir(destname, 0755);
 			/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
@@ -657,10 +665,11 @@ void cVideo::ShowPicture(const char * fname, const char *_destname)
 		write(fd, iframe, 8192);
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 		free(iframe);
+		ret = true;
 	}
  out:
 	close(mfd);
-	return;
+	return ret;
 }
 
 void cVideo::StopPicture()

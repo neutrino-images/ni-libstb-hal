@@ -389,8 +389,9 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	fop(ioctl, MPEG_VID_SET_OUTFMT, outputformat);
 }
 
-void cVideo::ShowPicture(const char * fname)
+bool cVideo::ShowPicture(const char * fname)
 {
+	bool ret = false;
 	hal_debug("%s(%s)\n", __FUNCTION__, fname);
 	char destname[512];
 	char cmd[512];
@@ -402,7 +403,7 @@ void cVideo::ShowPicture(const char * fname)
 	if (stat(fname, &st2))
 	{
 		hal_info("%s: could not stat %s (%m)\n", __func__, fname);
-		return;
+		return ret;
 	}
 	mkdir(destname, 0755);
 	/* the cache filename is (example for /share/tuxbox/neutrino/icons/radiomode.jpg):
@@ -451,13 +452,14 @@ void cVideo::ShowPicture(const char * fname)
 			buf.ulStartAdrOff = (int)data;
 			Stop(false);
 			fop(ioctl, MPEG_VID_STILLP_WRITE, &buf);
+			ret = true;
 		}
 		free(data);
 	}
 	close(mfd);
  out:
 	pthread_mutex_unlock(&stillp_mutex);
-	return;
+	return ret;
 #if 0
 	/* DirectFB based picviewer: works, but is slow and the infobar
 	   draws in the same plane */

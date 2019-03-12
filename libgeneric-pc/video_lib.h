@@ -180,7 +180,7 @@ class cVideo : public OpenThreads::Thread
 		bool Pause(void);
 
 		int SetStreamType(VIDEO_FORMAT type);
-		void ShowPicture(const char * fname);
+		bool ShowPicture(const char * fname);
 
 		void SetSyncMode(AVSYNC_TYPE mode);
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };

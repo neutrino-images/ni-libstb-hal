@@ -632,6 +632,7 @@ bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
 		{
 			if ((*it)->liveUse[j] && (*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source && !calen)
 			{
+				(*it)->SID[j] = 0;
 				(*it)->liveUse[j] = false;
 				return true;
 			}
@@ -650,6 +651,7 @@ bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
 		{
 			if ((*it)->recordUse[j] && (*it)->TP == TP && (*it)->SID[j] == SID && (*it)->source == source && !calen)
 			{
+				(*it)->SID[j] = 0;
 				(*it)->recordUse[j] = false;
 				return true;
 			}

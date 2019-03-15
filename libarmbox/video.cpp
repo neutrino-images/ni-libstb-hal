@@ -632,18 +632,26 @@ void cVideo::SetVideoMode(analog_mode_t mode)
 	proc_put("/proc/stb/avs/0/colorformat", m, strlen(m));
 }
 
-void cVideo::ShowPicture(const char * fname)
+bool cVideo::ShowPicture(const char * fname)
 {
-	hal_info("%s(%s)\n", __func__, fname);
+	bool ret = false;
+	hal_debug("%s(%s)\n", __func__, fname);
 	if (video_standby)
 	{
 		/* does not work and the driver does not seem to like it */
 		hal_info("%s: video_standby == true\n", __func__);
-		return;
+		return ret;
 	}
+	/* in movieplayer mode, fd is not opened */
+	if (fd == -1)
+	{
+		hal_info("%s: decoder not opened\n", __func__);
+		return ret;
+	}
+
 	struct stat st;
 	if (stat(fname, &st)){
-		return;
+		return ret;
 	}
 	closeDevice();
 	openDevice();
@@ -663,8 +671,9 @@ void cVideo::ShowPicture(const char * fname)
 		usleep(150000);
 		ioctl(fd, VIDEO_STOP, 0);
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+		ret = true;
 	}
-	return;
+	return ret;
 }
 
 void cVideo::StopPicture()
@@ -918,7 +927,7 @@ void cVideo::SetControl(int control, int value)
 	case VIDEO_CONTROL_ZAPPING_MODE:
 		zapping_mode = value;
 		const char *mode_zapping[] = { "hold", "mute" };
-		proc_put("/proc/stb/video/zapping_mode", mode_zapping[zapping_mode], strlen(mode_zapping[zapping_mode]));
+		proc_put("/proc/stb/video/zapmode", mode_zapping[zapping_mode], strlen(mode_zapping[zapping_mode]));
 		break;
 	}
 	if (p) {

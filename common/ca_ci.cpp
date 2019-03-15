@@ -878,6 +878,10 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			(*It)->SID[0] = SID;
 			(*It)->ci_use_count = 1;
 			(*It)->TP = TP;
+#if HAVE_ARM_HARDWARE
+			if(!checkLiveSlot && mode && (*It)->source != source)
+				setInputSource((eDVBCISlot*)(*It), false);
+#endif
 			(*It)->source = source;
 			(*It)->pmtlen = calen;
 			for (i = 0; i < calen; i++)

@@ -1353,7 +1353,7 @@ void eDVBCIContentControlManagerSession::resendKey(eDVBCISlot *tslot)
 
 	if (!tslot->SidBlackListed && (tslot->recordUse[0] || tslot->liveUse[0]))
 	{
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if (slot->newPids)
 		{
 			if (slot->pids.size())

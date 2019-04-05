@@ -8,6 +8,9 @@
 #elif HAVE_ARM_HARDWARE
 #include "../libarmbox/video_lib.h"
 #include "../libarmbox/hdmi_cec.h"
+#elif HAVE_MIPS_HARDWARE
+#include "../libmipsbox/video_lib.h"
+#include "../libmipsbox/hdmi_cec.h"
 #elif HAVE_AZBOX_HARDWARE
 #include "../libazbox/video_lib.h"
 #elif HAVE_GENERIC_HARDWARE

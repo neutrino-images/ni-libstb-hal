@@ -66,9 +66,16 @@ SUBDIRS += libeplayer3-arm
 libstb_hal_la_LIBADD += \
 	libeplayer3-arm/libeplayer3_arm.la
 endif
-
 endif
-
+endif
+if BOXTYPE_MIPSBOX
+SUBDIRS += libmipsbox libdvbci
+libstb_hal_la_LIBADD += \
+	libmipsbox/libmipsbox.la \
+	libdvbci/libdvbci.la
+SUBDIRS += libeplayer3-mips
+libstb_hal_la_LIBADD += \
+	libeplayer3-mips/libeplayer3_mips.la
 endif
 
 pkginclude_HEADERS = \

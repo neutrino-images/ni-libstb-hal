@@ -18,7 +18,7 @@ static const char * FILENAME = "[descrambler]";
 static int desc_fd = -1;
 static int desc_user_count = 0;
 
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 
 static const char *descrambler_filename = "/dev/ciplus_ca0";
 
@@ -131,7 +131,7 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 int descrambler_set_pid(int index, int enable, int pid)
 {
 	struct ca_pid p;
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 	unsigned int flags = 0x80;
 
 	if (index)

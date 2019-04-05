@@ -108,10 +108,12 @@ fi
 AC_OUTPUT([
 Makefile
 common/Makefile
+libmipsbox/Makefile
 libarmbox/Makefile
 libazbox/Makefile
 libduckbox/Makefile
 libdvbci/Makefile
+libeplayer3-mips/Makefile
 libeplayer3-arm/Makefile
 libeplayer3-sh4/Makefile
 libgeneric-pc/Makefile
@@ -120,4 +122,3 @@ libspark/Makefile
 libtriple/Makefile
 tools/Makefile
 ])
-

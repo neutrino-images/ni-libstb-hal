@@ -1990,7 +1990,8 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 #endif
 
 	ffmpeg_printf(20, "dump format\n");
-	av_dump_format(avContextTab[0], 0, filename, 0);
+	if(avContextTab[0] != NULL)
+		av_dump_format(avContextTab[0], 0, filename, 0);
 
 
 	uint32_t cAVIdx = 0;

@@ -1105,10 +1105,10 @@ void get_osd_buf(unsigned char *osd_data)
 		memcpy(osd_data,lfb,fix_screeninfo.line_length*var_screeninfo.yres);
 	}
 
-    if (munmap(lfb, fix_screeninfo.smem_len) == -1)
+	if (munmap(lfb, fix_screeninfo.smem_len) == -1)
 	{
 		perror("Error un-mmapping");
-    }
+	}
 
 	close(fb);
 }

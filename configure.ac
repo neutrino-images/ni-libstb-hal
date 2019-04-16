@@ -24,7 +24,6 @@ AC_DEFINE(PACKAGE_VERSION_MICRO, ver_micro, [Micro version number])
 AC_DEFINE(PACKAGE_VERSION_GIT, "ver_git", [internal vcs version info])
 
 TUXBOX_APPS
-TUXBOX_APPS_DIRECTORY
 TUXBOX_BOXTYPE
 
 AC_PROG_CC

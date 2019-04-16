@@ -1069,7 +1069,7 @@ void get_osd_buf(unsigned char *osd_data)
 	struct fb_fix_screeninfo fix_screeninfo;
 	struct fb_var_screeninfo var_screeninfo;
 
-	int fb=open("/dev/fb/0", O_RDWR);
+	int fb=open("/dev/fb/0", O_RDONLY);
 	if (fb == -1)
 	{
 		fprintf(stderr, "Framebuffer failed\n");
@@ -1090,7 +1090,7 @@ void get_osd_buf(unsigned char *osd_data)
 		return;
 	}
 
-	void *lfb = (unsigned char*)mmap(0, fix_screeninfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+	void *lfb = (unsigned char*)mmap(0, fix_screeninfo.smem_len, PROT_READ , MAP_SHARED, fb, 0);
 	if(lfb == MAP_FAILED)
 	{
 		fprintf(stderr, "Framebuffer: <Memmapping failed>\n");
@@ -1104,6 +1104,12 @@ void get_osd_buf(unsigned char *osd_data)
 		// get 32bit framebuffer
 		memcpy(osd_data,lfb,fix_screeninfo.line_length*var_screeninfo.yres);
 	}
+
+    if (munmap(lfb, fix_screeninfo.smem_len) == -1)
+	{
+		perror("Error un-mmapping");
+    }
+
 	close(fb);
 }
 

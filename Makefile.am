@@ -71,6 +71,7 @@ endif
 
 endif
 
+# FIXME: inclusion of these headers from install-directory doesn't work
 pkginclude_HEADERS = \
 	include/audio_hal.h \
 	include/ca.h \

@@ -11,7 +11,7 @@ define(ver_git, m4_esyscmd([
 ]))
 
 AC_PACKAGE_NAME, PACKAGE_NAME_LIBSTB_HAL
-AC_INIT([NI-libstb-hal], [ver_major.ver_minor.ver_micro], [https://www.neutrino-images.de])
+AC_INIT([NI-libstb-hal],[ver_major.ver_minor.ver_micro],[https://www.neutrino-images.de])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([libstb-hal-config.h:config.h.in])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
@@ -35,7 +35,7 @@ PKG_PROG_PKG_CONFIG
 AC_DISABLE_SHARED
 AC_DISABLE_STATIC
 AC_SYS_LARGEFILE
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_ARG_ENABLE(clutter,
 	AS_HELP_STRING(--enable-clutter, use clutter instead of OpenGL),
@@ -103,7 +103,7 @@ if test "$enable_flv2mpeg4" = "yes"; then
 	AC_DEFINE(ENABLE_FLV2MPEG4, 1, [use flv2mpeg4 libeplayer3-arm])
 fi
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 common/Makefile
 libarmbox/Makefile
@@ -119,3 +119,4 @@ libtriple/Makefile
 tools/Makefile
 ])
 
+AC_OUTPUT

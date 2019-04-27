@@ -1,5 +1,6 @@
-#include <stdio.h>
+#include <config.h>
 
+#include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -37,6 +38,10 @@ void hal_api_init()
 		proc_put("/proc/stb/fb/dst_width", buffer, strlen(buffer));
 		sprintf(buffer, "%x", 1);
 		proc_put("/proc/stb/fb/dst_apply", buffer, strlen(buffer));
+#if BOXMODEL_VUSOLO4K
+		const char mode_fcc[] = { "enable" };
+		proc_put("/proc/stb/frontend/fbc/fcc", mode_fcc, strlen(mode_fcc));
+#endif
 	}
 	initialized = true;
 	hal_info("%s end\n", __FUNCTION__);

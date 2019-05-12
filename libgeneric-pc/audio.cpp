@@ -400,6 +400,11 @@ void cAudio::run()
 		hal_info("%s: avcodec_open2() failed\n", __func__);
 		goto out;
 	}
+	if(p->sample_rate == 0 || p->channels == 0){
+		av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
+		hal_info("Header missing %s, sample_fmt %d (%s) sample_rate %d channels %d\n",avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
+		goto out2;
+	}
 	frame = av_frame_alloc();
 	if (!frame) {
 		hal_info("%s: av_frame_alloc failed\n", __func__);

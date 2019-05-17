@@ -336,7 +336,9 @@ void cAudio::run()
 {
 	hal_info("====================== start decoder thread ================================\n");
 	/* libavcodec & friends */
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	av_register_all();
+#endif
 
 	AVCodec *codec;
 	AVFormatContext *avfc = NULL;
@@ -473,7 +475,11 @@ void cAudio::run()
 			}
 			obuf_sz = swr_convert(swr, &obuf, obuf_sz,
 					      (const uint8_t **)frame->extended_data, frame->nb_samples);
+#if (LIBAVUTIL_VERSION_MAJOR < 54)
 			curr_pts = av_frame_get_best_effort_timestamp(frame);
+#else
+			curr_pts = frame->best_effort_timestamp;
+#endif
 			hal_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
 			int o_buf_sz = av_samples_get_buffer_size(&out_linesize, o_ch,
 								  obuf_sz, AV_SAMPLE_FMT_S16, 1);

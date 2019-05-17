@@ -77,7 +77,9 @@ static const AVRational aspect_ratios[6] = {
 cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	hal_debug("%s\n", __func__);
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	av_register_all();
+#endif
 	if (!HAL_nodec)
 		dmxbuf = (uint8_t *)malloc(DMX_BUF_SZ);
 	bufpos = 0;
@@ -575,7 +577,11 @@ void cVideo::run(void)
 				}
 				f->width(c->width);
 				f->height(c->height);
+#if (LIBAVUTIL_VERSION_MAJOR < 54)
 				int64_t vpts = av_frame_get_best_effort_timestamp(frame);
+#else
+				int64_t vpts = frame->best_effort_timestamp;
+#endif
 				/* a/v delay determined experimentally :-) */
 #if USE_OPENGL
 				if (v_format == VIDEO_FORMAT_MPEG2)
@@ -605,7 +611,11 @@ void cVideo::run(void)
 			}
 			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
 					c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
+#if (LIBAVUTIL_VERSION_MAJOR < 54)
 					av_frame_get_best_effort_timestamp(frame));
+#else
+					frame->best_effort_timestamp);
+#endif
 		} else
 			hal_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
 		still_m.unlock();

@@ -18,6 +18,15 @@ static const char * FILENAME = "[descrambler]";
 static int desc_fd = -1;
 static int desc_user_count = 0;
 
+#ifndef CA_SET_PID
+typedef struct ca_pid {
+	unsigned int pid;
+	int index;      /* -1 == disable*/
+} ca_pid_t;
+
+#define CA_SET_PID _IOW('o', 135, ca_pid_t)
+#endif
+
 #ifndef CA_SET_DESCR_DATA
 enum ca_descr_data_type {
 	CA_DATA_IV,

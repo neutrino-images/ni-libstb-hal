@@ -18,10 +18,7 @@ static const char * FILENAME = "[descrambler]";
 static int desc_fd = -1;
 static int desc_user_count = 0;
 
-#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-
-static const char *descrambler_filename = "/dev/ciplus_ca0";
-
+#ifndef CA_SET_DESCR_DATA
 enum ca_descr_data_type {
 	CA_DATA_IV,
 	CA_DATA_KEY,
@@ -41,6 +38,11 @@ struct ca_descr_data {
 };
 
 #define CA_SET_DESCR_DATA _IOW('o', 137, struct ca_descr_data)
+#endif
+
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
+
+static const char *descrambler_filename = "/dev/ciplus_ca0";
 
 int descrambler_set_key(int index, int parity, unsigned char *data)
 {

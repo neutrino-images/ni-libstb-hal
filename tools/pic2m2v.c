@@ -33,7 +33,7 @@
 
 int main(int argc, char **argv)
 {
-	char destname[512];
+	char destname[448];
 	char cmd[512];
 	char *p;
 	char *fname;

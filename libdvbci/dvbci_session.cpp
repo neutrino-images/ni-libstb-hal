@@ -179,11 +179,12 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 				printf("[CI SESS] CC MANAGER\n");
 				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				break;
-		}
+		} // fall through
 		case 0x00100041:
 //			session=new eDVBCIAuthSession;
 			printf("[CI SESS] AuthSession\n");
 //			break;
+		  // fall through
 		case 0x00200041:
 		default:
 			printf("[CI SESS] unknown resource type %02x %02x %02x %02x\n", resource_identifier[0], resource_identifier[1], resource_identifier[2], resource_identifier[3]);

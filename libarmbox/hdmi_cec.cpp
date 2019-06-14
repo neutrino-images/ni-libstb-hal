@@ -555,8 +555,10 @@ void hdmi_cec::Receive()
 			break;
 		}
 		case CEC_OPCODE_USER_CONTROL_PRESSED: /* key pressed */
+		{
 			keypressed = true;
 			pressedkey = rxmessage.data[1];
+		} // fall through
 		case CEC_OPCODE_USER_CONTROL_RELEASE: /* key released */
 		{
 			long code = translateKey(pressedkey);

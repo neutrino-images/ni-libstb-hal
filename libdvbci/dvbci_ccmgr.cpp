@@ -1339,6 +1339,7 @@ int eDVBCIContentControlManagerSession::doAction()
 		}
 		case stateFinal:
 			printf("stateFinal und action! kann doch garnicht sein ;)\n");
+			// fall through
 		default:
 			return 0;
 	}

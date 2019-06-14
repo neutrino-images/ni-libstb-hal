@@ -27,7 +27,7 @@ libmipsbox_la_SOURCES += \
 	playback_libeplayer3.cpp
 
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/libeplayer3-mips/include
+	-I$(top_srcdir)/libeplayer3/include
 
 AM_LDFLAGS += \
 	-lass

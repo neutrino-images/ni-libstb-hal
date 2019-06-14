@@ -40,7 +40,7 @@ libarmbox_la_SOURCES += \
 	playback_libeplayer3.cpp
 
 AM_CPPFLAGS += \
-	-I$(top_srcdir)/libeplayer3-arm/include
+	-I$(top_srcdir)/libeplayer3/include
 endif
 
 AM_LDFLAGS += \

@@ -52,6 +52,7 @@ int eDVBCIDateTimeSession::doAction()
 			return 0;
 		case stateFinal:
 			printf("stateFinal und action! kann doch garnicht sein ;)\n");
+			// fall through
 		default:
 			return 0;
 	}

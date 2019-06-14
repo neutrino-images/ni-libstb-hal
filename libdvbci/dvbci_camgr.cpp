@@ -85,6 +85,7 @@ int eDVBCICAManagerSession::doAction()
 		}
 		case stateFinal:
 			printf("[CI CA] stateFinal and action should not happen\n");
+			// fall through
 		default:
 			return 0;
 	}

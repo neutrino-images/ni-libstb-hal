@@ -41,7 +41,7 @@ static const char * FILENAME = "[ca_ci]";
 const char ci_path[] = "/dev/dvb/adapter0/ci%d";
 ca_slot_info_t info;
 #endif
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 const char ci_path[] = "/dev/ci%d";
 static int last_source = -1;
 #endif
@@ -263,7 +263,7 @@ static bool transmitData(eDVBCISlot* slot, unsigned char* d, int len)
 //send some data on an fd, for a special slot and connection_id
 eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
 {
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		unsigned char *d = (unsigned char*) malloc(len);
 		memcpy(d, data, len);
 		transmitData(slot, d, len);
@@ -878,7 +878,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			(*It)->SID[0] = SID;
 			(*It)->ci_use_count = 1;
 			(*It)->TP = TP;
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 			if(!checkLiveSlot && mode && (*It)->source != source)
 				setInputSource((eDVBCISlot*)(*It), false);
 #endif
@@ -889,7 +889,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			(*It)->newCapmt = true;
 		}
 
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if ((*It)->newCapmt)
 			extractPids((eDVBCISlot*)(*It));
 #endif
@@ -917,7 +917,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 	}
 	else
 	{
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		std::list<eDVBCISlot*>::iterator it;
 		recordUse_found = false;
 		for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -958,7 +958,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 	return true;
 }
 
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 void cCA::extractPids(eDVBCISlot* slot)
 {
 	u32 prg_info_len;
@@ -1060,7 +1060,7 @@ void cCA::setSource(eDVBCISlot* slot)
 	}
 }
 
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 static std::string getTunerLetter(int number) { return std::string(1, char(65 + number)); }
 
 void cCA::setInputs()
@@ -1184,7 +1184,7 @@ cCA::cCA(int Slots)
 	printf("%s -> %s %d\n", FILENAME, __func__, Slots);
 
 	num_slots = Slots;
-#if HAVE_ARM_HARDWARE	
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 	setInputs();
 #endif
 
@@ -1280,7 +1280,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 	{
 		(*it)->status = eStatusReset;
 		usleep(200000);
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		last_source = (int)(*it)->source;
 		setInputSource((eDVBCISlot*)(*it), false);
 #endif
@@ -1373,7 +1373,7 @@ void cCA::ci_inserted(eDVBCISlot* slot)
 void cCA::ci_removed(eDVBCISlot* slot)
 {
 	printf("cam (%d) status changed ->cam now _not_ present\n", slot->slot);
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		last_source = (int)slot->source;
 		setInputSource(slot, false);
 #endif
@@ -1444,7 +1444,7 @@ void cCA::slot_pollthread(void *c)
 
 	while (1)
 	{
-#if HAVE_ARM_HARDWARE		/* Armbox */
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE /* Armbox/Mipsbox */
 
 		int len = 1024 *4;
 		eData status;
@@ -1685,7 +1685,7 @@ FROM_FIRST:
 				break;
 		} /* switch(slot->status) */
 #endif		/* end Duckbox */
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if (!slot->init && slot->camIsReady && last_source > -1)
 		{
 			slot->source = (u8)last_source;
@@ -1740,7 +1740,7 @@ bool cCA::SendCaPMT(eDVBCISlot* slot)
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (slot->fd > 0)
 	{
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		setInputSource(slot, true);
 #endif
 		setSource(slot);

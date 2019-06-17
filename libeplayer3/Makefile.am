@@ -3,7 +3,7 @@ AM_CFLAGS = -Wall -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOUR
 
 CXXFLAGS = -Wall
 
-noinst_LTLIBRARIES = libeplayer3_arm.la
+noinst_LTLIBRARIES = libeplayer3.la
 
 AM_CPPFLAGS   = -I$(srcdir)/include
 AM_CPPFLAGS  += -I$(top_srcdir)/include
@@ -59,11 +59,11 @@ SOURCE_FILES += \
 	output/writer/mipsel/wmv.c \
 	output/writer/mipsel/vc1.c
 
-libeplayer3_arm_la_SOURCES = $(SOURCE_FILES)
+libeplayer3_la_SOURCES = $(SOURCE_FILES)
 
-LIBEPLAYER3_LIBS = libeplayer3_arm.la -lpthread -lavformat -lavcodec -lavutil -lswresample
+LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lswresample
 
 bin_PROGRAMS = eplayer3
 eplayer3_SOURCES = main/exteplayer.c
 eplayer3_LDADD = $(LIBEPLAYER3_LIBS)
-eplayer3_DEPENDENCIES = libeplayer3_arm.la
+eplayer3_DEPENDENCIES = libeplayer3.la

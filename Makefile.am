@@ -65,9 +65,19 @@ libstb_hal_la_LIBADD += \
 	libarmbox/libarmbox.la \
 	libdvbci/libdvbci.la
 if !ENABLE_GSTREAMER_10
-SUBDIRS += libeplayer3-arm
+SUBDIRS += libeplayer3
 libstb_hal_la_LIBADD += \
-	libeplayer3-arm/libeplayer3_arm.la
+	libeplayer3/libeplayer3.la
 endif
 endif
+endif
+
+if BOXTYPE_MIPSBOX
+SUBDIRS += libmipsbox libdvbci
+libstb_hal_la_LIBADD += \
+	libmipsbox/libmipsbox.la \
+	libdvbci/libdvbci.la
+SUBDIRS += libeplayer3
+libstb_hal_la_LIBADD += \
+	libeplayer3/libeplayer3.la
 endif

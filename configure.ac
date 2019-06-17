@@ -95,22 +95,23 @@ if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then
 fi
 
 AC_ARG_ENABLE(flv2mpeg4,
-	AS_HELP_STRING(--enable-flv2mpeg4, use flv2mpeg4 libeplayer3-arm),
+	AS_HELP_STRING(--enable-flv2mpeg4, use flv2mpeg4 libeplayer3),
 	,[enable_flv2mpeg4=no])
 
 AM_CONDITIONAL(ENABLE_FLV2MPEG4, test "$enable_flv2mpeg4" = "yes")
 if test "$enable_flv2mpeg4" = "yes"; then
-	AC_DEFINE(ENABLE_FLV2MPEG4, 1, [use flv2mpeg4 libeplayer3-arm])
+	AC_DEFINE(ENABLE_FLV2MPEG4, 1, [use flv2mpeg4 libeplayer3])
 fi
 
 AC_CONFIG_FILES([
 Makefile
 common/Makefile
+libmipsbox/Makefile
 libarmbox/Makefile
 libazbox/Makefile
 libduckbox/Makefile
 libdvbci/Makefile
-libeplayer3-arm/Makefile
+libeplayer3/Makefile
 libeplayer3-sh4/Makefile
 libgeneric-pc/Makefile
 libraspi/Makefile

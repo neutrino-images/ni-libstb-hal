@@ -142,7 +142,7 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 int descrambler_set_pid(int index, int enable, int pid)
 {
 	struct ca_pid p;
-#if HAVE_ARM_HARDWARE
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 	unsigned int flags = 0x80;
 
 	if (index)

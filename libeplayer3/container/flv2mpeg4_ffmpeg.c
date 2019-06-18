@@ -17,7 +17,7 @@ typedef struct
 } Flv2Mpeg4Context;
 
 
-static int flv2mpeg4_context_write_packet_cb(void *usr_data, int keyframe, int pts, const uint8_t *buf, int size)
+static int flv2mpeg4_context_write_packet_cb(void *usr_data, int keyframe __attribute__((unused)), int pts __attribute__((unused)), const uint8_t *buf, int size)
 {
 	Flv2Mpeg4Context *ctx = usr_data;
 	if (!ctx)
@@ -46,7 +46,7 @@ static int flv2mpeg4_context_write_packet_cb(void *usr_data, int keyframe, int p
 	return 0;
 }
 
-static int flv2mpeg4_context_write_extradata_cb(void *usr_data, int width, int height, int bitrate, const uint8_t *extradata, int extradatasize)
+static int flv2mpeg4_context_write_extradata_cb(void *usr_data, int width __attribute__((unused)), int height __attribute__((unused)), int bitrate __attribute__((unused)), const uint8_t *extradata, int extradatasize)
 {
 	Flv2Mpeg4Context *ctx = usr_data;
 	if (!ctx)

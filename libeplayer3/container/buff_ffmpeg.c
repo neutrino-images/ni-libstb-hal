@@ -188,7 +188,7 @@ void getfillerMutex(const char *filename __attribute__((unused)), const char *fu
 	ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-void releasefillerMutex(const char *filename __attribute__((unused)), const const char *function __attribute__((unused)), int line __attribute__((unused)))
+void releasefillerMutex(const char *filename __attribute__((unused)), const char *function __attribute__((unused)), int line __attribute__((unused)))
 {
 	pthread_mutex_unlock(&fillermutex);
 

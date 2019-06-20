@@ -457,11 +457,25 @@ void cAudio::run()
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)
 			break;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
+#else
+		int ret = avcodec_send_packet(c, &avpkt);
+		if (ret != 0 && ret != AVERROR(EAGAIN)) {
+			hal_info("%s: avcodec_send_packet %d\n", __func__, ret);
+		}else {
+			ret = avcodec_receive_frame(c, frame);
+			if (ret != 0 && ret != AVERROR(EAGAIN)) {
+				hal_info("%s: avcodec_send_packet %d\n", __func__, ret);
+			}else {
+				gotframe = 1;
+			}
+		}
+#endif
+
 		if (gotframe && thread_started) {
 			int out_linesize;
-			obuf_sz = av_rescale_rnd(swr_get_delay(swr, p->sample_rate) +
-						 frame->nb_samples, o_sr, p->sample_rate, AV_ROUND_UP);
+			obuf_sz = av_rescale_rnd(swr_get_delay(swr, p->sample_rate) + frame->nb_samples, o_sr, p->sample_rate, AV_ROUND_UP);
 			if (obuf_sz > obuf_sz_max) {
 				hal_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
 				av_free(obuf);
@@ -481,8 +495,7 @@ void cAudio::run()
 			curr_pts = frame->best_effort_timestamp;
 #endif
 			hal_debug("%s: pts 0x%" PRIx64 " %3f\n", __func__, curr_pts, curr_pts/90000.0);
-			int o_buf_sz = av_samples_get_buffer_size(&out_linesize, o_ch,
-								  obuf_sz, AV_SAMPLE_FMT_S16, 1);
+			int o_buf_sz = av_samples_get_buffer_size(&out_linesize, o_ch, obuf_sz, AV_SAMPLE_FMT_S16, 1);
 			if (o_buf_sz > 0)
 				ao_play(adevice, (char *)obuf, o_buf_sz);
 		}

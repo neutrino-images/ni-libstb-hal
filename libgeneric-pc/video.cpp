@@ -250,10 +250,10 @@ bool cVideo::ShowPicture(const char *fname)
 	buf_out = 0;
 	still_m.unlock();
 
-	unsigned int i;
+	unsigned int i = 0;
 	int stream_id = -1;
 	int got_frame = 0;
-	int len;
+	int av_ret = 0;
 	AVFormatContext *avfc = NULL;
 	AVCodecContext *c = NULL;
 	AVCodecParameters *p = NULL;
@@ -296,14 +296,29 @@ bool cVideo::ShowPicture(const char *fname)
 		hal_info("%s: av_read_frame < 0\n", __func__);
 		goto out_free;
 	}
-	len = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
-	if (len < 0) {
-		hal_info("%s: avcodec_decode_video2 %d\n", __func__, len);
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
+	av_ret = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
+	if (av_ret < 0) {
+		hal_info("%s: avcodec_decode_video2 %d\n", __func__, av_ret);
 		av_packet_unref(&avpkt);
 		goto out_free;
 	}
-	if (avpkt.size > len)
-		hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
+	if (avpkt.size > av_ret)
+		hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, av_ret);
+#else
+	av_ret = avcodec_send_packet(c, &avpkt);
+	if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
+		hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
+		av_packet_unref(&avpkt);
+		goto out_free;
+	}
+	av_ret = avcodec_receive_frame(c, frame);
+	if (av_ret != 0 && av_ret != AVERROR(EAGAIN))
+		goto out_free;
+
+	got_frame = 1;
+#endif
+
 	if (got_frame) {
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
@@ -473,6 +488,7 @@ void cVideo::run(void)
 
 	time_t warn_r = 0; /* last read error */
 	time_t warn_d = 0; /* last decode error */
+	int av_ret = 0;
 
 	bufpos = 0;
 	buf_num = 0;
@@ -539,17 +555,32 @@ void cVideo::run(void)
 			continue;
 		}
 		int got_frame = 0;
-		int len = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
-		if (len < 0) {
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
+		av_ret = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
+		if (av_ret < 0) {
 			if (warn_d - time(NULL) > 4) {
-				hal_info("%s: avcodec_decode_video2 %d\n", __func__, len);
+				hal_info("%s: avcodec_decode_video2 %d\n", __func__, av_ret);
 				warn_d = time(NULL);
 			}
 			av_packet_unref(&avpkt);
 			continue;
 		}
-		if (avpkt.size > len)
-			hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, len);
+		if (avpkt.size > av_ret)
+			hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, av_ret);
+#else
+		av_ret = avcodec_send_packet(c, &avpkt);
+		if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
+			if (warn_d - time(NULL) > 4) {
+				hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
+				warn_d = time(NULL);
+			}
+			av_packet_unref(&avpkt);
+			continue;
+		}
+		av_ret = avcodec_receive_frame(c, frame);
+		if (!av_ret)
+			got_frame = 1;
+#endif
 		still_m.lock();
 		if (got_frame && ! stillpicture) {
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);

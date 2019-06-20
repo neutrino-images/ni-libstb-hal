@@ -347,6 +347,7 @@ void cAudio::run()
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;
 	int ret, driver;
+	int av_ret = 0;
 	/* libao */
 	ao_info *ai;
 	// ao_device *adevice;
@@ -460,13 +461,13 @@ void cAudio::run()
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 #else
-		int ret = avcodec_send_packet(c, &avpkt);
-		if (ret != 0 && ret != AVERROR(EAGAIN)) {
-			hal_info("%s: avcodec_send_packet %d\n", __func__, ret);
+		av_ret = avcodec_send_packet(c, &avpkt);
+		if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
+			hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
 		}else {
-			ret = avcodec_receive_frame(c, frame);
-			if (ret != 0 && ret != AVERROR(EAGAIN)) {
-				hal_info("%s: avcodec_send_packet %d\n", __func__, ret);
+			av_ret = avcodec_receive_frame(c, frame);
+			if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
+				hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
 			}else {
 				gotframe = 1;
 			}

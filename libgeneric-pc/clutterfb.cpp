@@ -39,8 +39,8 @@
 #include <unistd.h>
 #include <linux/input.h>
 #include "glfb_priv.h"
-#include "video_priv.h"
-#include "audio_priv.h"
+#include "video_lib.h"
+#include "audio_lib.h"
 
 #include <clutter/x11/clutter-x11.h>
 
@@ -52,8 +52,8 @@
 #define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
 
 
-extern VDec *vdec;
-extern ADec *adec;
+extern cVideo *videoDecoder;
+extern cAudio *audioDecoder;
 
 /* the private class that does stuff only needed inside libstb-hal.
  * is used e.g. by cVideo... */
@@ -417,10 +417,10 @@ void GLFbPC::bltOSDBuffer()
 void GLFbPC::bltDisplayBuffer()
 {
 	// hal_info("GLFB::%s vdec: %p\n", __func__, vdec);
-	if (!vdec) /* cannot start yet */
+	if (!videoDecoder) /* cannot start yet */
 		return;
 	static bool warn = true;
-	VDec::SWFramebuffer *buf = vdec->getDecBuf();
+	cVideo::SWFramebuffer *buf = videoDecoder->getDecBuf();
 	if (!buf) {
 		if (warn)
 			hal_info("GLFB::%s did not get a buffer...\n", __func__);
@@ -457,8 +457,8 @@ void GLFbPC::bltDisplayBuffer()
 	 * better this than nothing... :-) */
 	int64_t apts = 0;
 	int64_t vpts = buf->pts();
-	if (adec)
-		apts = adec->getPts();
+	if (audioDecoder)
+		apts = audioDecoder->getPts();
 	if (apts != last_apts) {
 		int rate, dummy1, dummy2;
 		if (apts < vpts)
@@ -466,7 +466,7 @@ void GLFbPC::bltDisplayBuffer()
 		else if (sleep_us > 1000)
 			sleep_us -= 1000;
 		last_apts = apts;
-		vdec->getPictureInfo(dummy1, dummy2, rate);
+		videoDecoder->getPictureInfo(dummy1, dummy2, rate);
 		if (rate > 0)
 			rate = 2000000 / rate; /* limit to half the frame rate */
 		else
@@ -477,5 +477,5 @@ void GLFbPC::bltDisplayBuffer()
 			sleep_us = 1;
 	}
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
-			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, vdec->buf_num);
+			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);
 }

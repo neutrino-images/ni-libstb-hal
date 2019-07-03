@@ -196,6 +196,7 @@ void GLFramebuffer::run()
 	hal_info("GLFB: GL thread starting x %d y %d\n", x, y);
 	if (clutter_init(&argc, &argv) != CLUTTER_INIT_SUCCESS) {
 		hal_info("GLFB: error initializing clutter\n");
+		free(argv);
 		return;
 	}
 	hal_info("GLFB: %s:%d\n", __func__, __LINE__);
@@ -262,6 +263,7 @@ void GLFramebuffer::run()
 	clutter_timeline_start(tl);
 	clutter_main();
 	hal_info("GLFB: GL thread stopping\n");
+	free(argv);
 }
 
 /* static */ void GLFbPC::rendercb()

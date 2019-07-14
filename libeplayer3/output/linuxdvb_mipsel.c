@@ -822,6 +822,8 @@ static int Write(Context_t *context, void *_out)
 
 	if (video)
 	{
+		getLinuxDVBMutex();
+
 		char *Encoding = NULL;
 		context->manager->video->Command(context, MANAGER_GETENCODING, &Encoding);
 
@@ -915,9 +917,13 @@ static int Write(Context_t *context, void *_out)
 		}
 
 		free(Encoding);
+
+		releaseLinuxDVBMutex();
 	}
 	else if (audio)
 	{
+		getLinuxDVBMutex();
+
 		char *Encoding = NULL;
 		context->manager->audio->Command(context, MANAGER_GETENCODING, &Encoding);
 
@@ -965,6 +971,8 @@ static int Write(Context_t *context, void *_out)
 		}
 
 		free(Encoding);
+
+		releaseLinuxDVBMutex();
 	}
 
 	return ret;
@@ -974,6 +982,9 @@ static int reset(Context_t *context)
 {
 	int ret = cERR_LINUXDVB_NO_ERROR;
 	Writer_t *writer;
+
+	getLinuxDVBMutex();
+
 	char *Encoding = NULL;
 
 	context->manager->video->Command(context, MANAGER_GETENCODING, &Encoding);
@@ -1008,8 +1019,11 @@ static int reset(Context_t *context)
 
 	free(Encoding);
 
+	releaseLinuxDVBMutex();
+
 	if (isBufferedOutput)
 		LinuxDvbBuffFlush(context);
+
 
 	return ret;
 }

@@ -420,8 +420,10 @@ static int32_t PlaybackStop(Context_t *context)
 		context->playback->SlowMotion   = 0;
 		context->playback->Speed        = 0;
 
-		context->output->Command(context, OUTPUT_STOP, NULL);
-		context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
+		if (context->output && context->output->Command)
+			context->output->Command(context, OUTPUT_STOP, NULL);
+		if (context->container && context->container->selectedContainer)
+			context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
 	}
 	else
 	{

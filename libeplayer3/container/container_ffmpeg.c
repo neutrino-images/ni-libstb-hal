@@ -1531,9 +1531,11 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	int32_t err = 0;
 	AVInputFormat *fmt = NULL;
 	avContextTab[AVIdx] = avformat_alloc_context();
-	avContextTab[AVIdx]->interrupt_callback.callback = interrupt_cb;
-	avContextTab[AVIdx]->interrupt_callback.opaque = context->playback;
-
+	if(avContextTab[AVIdx] != NULL)
+	{
+		avContextTab[AVIdx]->interrupt_callback.callback = interrupt_cb;
+		avContextTab[AVIdx]->interrupt_callback.opaque = context->playback;
+	}
 #ifdef USE_CUSTOM_IO
 	if (0 == strstr(filename, "://") ||
 	    0 == strncmp(filename, "file://", 7))
@@ -1551,8 +1553,11 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		avio_ctx = container_ffmpeg_get_avio_context(custom_io_tab[AVIdx], 4096);
 		if (avio_ctx)
 		{
-			avContextTab[AVIdx]->pb = avio_ctx;
-			use_custom_io[AVIdx] = 1;
+			if(avContextTab[AVIdx])
+			{
+				avContextTab[AVIdx]->pb = avio_ctx;
+				use_custom_io[AVIdx] = 1;
+			}
 		}
 		else
 		{
@@ -1793,7 +1798,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 	pavio_opts = &avio_opts;
 
-	if ((err = avformat_open_input(&avContextTab[AVIdx], filename, fmt, pavio_opts)) != 0)
+	if (avContextTab[AVIdx] != NULL && ((err = avformat_open_input(&avContextTab[AVIdx], filename, fmt, pavio_opts)) != 0))
 	{
 		if (rtmp_proto_impl == 0 && //err == AVERROR_UNKNOWN &&
 		    rtmpProtoImplType == RTMP_NATIVE &&
@@ -1820,10 +1825,11 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 			return cERR_CONTAINER_FFMPEG_OPEN;
 		}
 	}
-
-	avContextTab[AVIdx]->iformat->flags |= AVFMT_SEEK_TO_PTS;
-	avContextTab[AVIdx]->flags = AVFMT_FLAG_GENPTS;
-
+	if(avContextTab[AVIdx] != NULL)
+	{
+		avContextTab[AVIdx]->iformat->flags |= AVFMT_SEEK_TO_PTS;
+		avContextTab[AVIdx]->flags = AVFMT_FLAG_GENPTS;
+	}
 	printf("minimal Probe: %d\n", context->playback->noprobe);
 
 	if (context->playback->noprobe)
@@ -1871,7 +1877,8 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		}
 		else if (progressive_playback)
 		{
-			avContextTab[AVIdx]->pb->read_packet = ffmpeg_read_wrapper;
+			if(avContextTab[AVIdx] != NULL)
+				avContextTab[AVIdx]->pb->read_packet = ffmpeg_read_wrapper;
 		}
 	}
 //for buffered io (end)

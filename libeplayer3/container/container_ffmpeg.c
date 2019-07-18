@@ -1520,6 +1520,7 @@ AVIOContext *container_ffmpeg_get_avio_context(CustomIOCtx_t *custom_io, size_t 
 	avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 0, custom_io, &SAM_ReadFunc, NULL, &SAM_SeekFunc);
 	if (!avio_ctx)
 	{
+		av_free(avio_ctx_buffer);
 		return NULL;
 	}
 	return avio_ctx;

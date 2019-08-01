@@ -2053,6 +2053,35 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				}
 			}
 		}
+		uint32_t i = 0;
+		for (i = 0; i < avContext->nb_chapters; i++)
+		{
+			Track_t track;
+			AVChapter *ch = avContext->chapters[i];
+			AVDictionaryEntry *title = av_dict_get(ch->metadata, "title", NULL, 0);
+			int chstart = ch->start * av_q2d(ch->time_base);
+			int chend = ch->end * av_q2d(ch->time_base);
+			char str[256];
+			if (title)
+				snprintf(str, sizeof(str), "%s (%d - %d)", title->value, chstart, chend);
+			else
+				snprintf(str, sizeof(str), "%d (%d - %d)", i+1, chstart, chend);
+			chstart = (double) 1000 * ch->start * av_q2d(ch->time_base);
+			track.Name      = str;
+			track.Encoding  = "chapter";
+			track.Id        = avContext->nb_streams + i;
+			track.chapter_start = chstart;
+			track.chapter_end = chend;
+			if (context->manager->chapter)
+			{
+				ffmpeg_printf(1, "chapter[%d]: MANAGER_ADD track chapter\n", i);
+				if (context->manager->chapter->Command(context, MANAGER_ADD, &track) < 0)
+				{
+					/* konfetti: fixme: is this a reason to return with error? */
+					ffmpeg_err("failed to add track %d\n", n);
+				}
+			}
+		}
 
 		uint32_t n = 0;
 		for (n = 0; n < avContext->nb_streams; n++)

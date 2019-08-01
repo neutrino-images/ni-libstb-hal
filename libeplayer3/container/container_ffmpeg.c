@@ -2053,6 +2053,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				}
 			}
 		}
+#if 0
 		uint32_t i = 0;
 		for (i = 0; i < avContext->nb_chapters; i++)
 		{
@@ -2082,7 +2083,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				}
 			}
 		}
-
+#endif
 		uint32_t n = 0;
 		for (n = 0; n < avContext->nb_streams; n++)
 		{

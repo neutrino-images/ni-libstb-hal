@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <OpenThreads/Mutex>
 
 typedef enum
 {
@@ -17,6 +18,7 @@ class cPlayback
 	friend class CStreamInfo2;
 
 	private:
+		static OpenThreads::Mutex mutex;
 		bool enabled;
 		bool playing, first;
 		bool no_probe;

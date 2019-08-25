@@ -234,7 +234,7 @@ static bool transmitData(eDVBCISlot* slot, unsigned char* d, int len)
 {
 	printf("%s -> %s len(%d)\n", FILENAME, __func__, len);
 
-#if BOXMODEL_VUSOLO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
 #if y_debug
 	for (int i = 0; i < len; i++)
 		printf("%02x ", d[i]);
@@ -1017,7 +1017,7 @@ void cCA::setSource(eDVBCISlot* slot)
 			case TUNER_D:
 				fprintf(ci, "D");
 				break;
-#if BOXMODEL_VUSOLO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
 			case TUNER_E:
 				fprintf(ci, "E");
 				break;
@@ -1069,7 +1069,7 @@ void cCA::setInputs()
 	char choices[64];
 	FILE * fd = 0;
 
-#if BOXMODEL_VUSOLO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
 	for (int number = 0; number < 16; number++) // tuner A to P, input 0 to 15
 #else
 	for (int number = 0; number < 4; number++) // tuner A to D, input 0 to 3
@@ -1134,7 +1134,7 @@ void cCA::setInputSource(eDVBCISlot* slot, bool ci)
 				case TUNER_D:
 					fprintf(input, "D");
 					break;
-#if BOXMODEL_VUSOLO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
 				case TUNER_E:
 					fprintf(input, "E");
 					break;

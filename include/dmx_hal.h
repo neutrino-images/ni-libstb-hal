@@ -37,7 +37,7 @@ extern "C" {
 
 #include <cs_types.h>
 
-#if BOXMODEL_VUSOLO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
 #define MAX_DMX_UNITS 16
 #else
 #define MAX_DMX_UNITS 4

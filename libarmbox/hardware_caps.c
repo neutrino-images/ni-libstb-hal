@@ -37,15 +37,31 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 480;
 	caps.display_yres = 320;
 	caps.display_type = HW_DISPLAY_GFX;
-	caps.display_can_deepstandby = 1;
-	caps.display_can_set_brightness = 1;
-	caps.display_has_statusline = 1;
+	caps.display_can_deepstandby = 0;	// 0 because we use graphlcd/lcd4linux
+	caps.display_can_set_brightness = 0;	// 0 because we use graphlcd/lcd4linux
+	caps.display_has_statusline = 0;	// 0 because we use graphlcd/lcd4linux
 	caps.has_button_timer = 1;
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "SOLO4K");
 	strcpy(caps.boxarch, "BCM7376");
+#endif
+#if BOXMODEL_VUZERO4K
+	initialized = 1;
+	caps.has_CI = 1;
+	caps.can_cec = 1;
+	caps.can_shutdown = 1;
+	caps.display_type = HW_DISPLAY_NONE;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 0;
+	caps.display_has_statusline = 0;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.boxvendor, "VU+");
+	strcpy(caps.boxname, "ZERO4K");
+	strcpy(caps.boxarch, "BCM72604");
 #endif
 #if BOXMODEL_HD51
 	initialized = 1;

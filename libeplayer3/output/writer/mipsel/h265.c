@@ -86,7 +86,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 	int32_t ret = -100;
 	if (data)
 	{
-		unsigned char tmp[2048];
+		unsigned char tmp[4096];
 		unsigned int tmp_len = 0;
 
 		h265_printf(10, "H265 have codec data..!");

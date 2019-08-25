@@ -1,7 +1,8 @@
 #ifndef pes_123
 #define pes_123
 
-#define PES_MAX_HEADER_SIZE                     64
+#define PES_HEADER_SIZE                         9							///< size of pes header
+#define PES_MAX_HEADER_SIZE                     (PES_HEADER_SIZE + 256)	///< maximal header size
 #define PES_PRIVATE_DATA_FLAG                   0x80
 #define PES_PRIVATE_DATA_LENGTH                 8
 #define PES_LENGTH_BYTE_0                       5

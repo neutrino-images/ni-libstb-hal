@@ -434,7 +434,6 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 		case AV_CODEC_ID_DVB_SUBTITLE:
 		case AV_CODEC_ID_XSUB:
 		case AV_CODEC_ID_MOV_TEXT:
-		case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
 		case AV_CODEC_ID_DVB_TELETEXT:
 //		case CODEC_ID_DVB_TELETEXT:
 //			return "S_TEXT/SRT"; /* fixme */
@@ -445,7 +444,9 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 		case AV_CODEC_ID_SUBRIP:
 			return "S_TEXT/SUBRIP";
 		case AV_CODEC_ID_WEBVTT:
-			return "D_WEBVTT/SUBTITLES";
+			return "S_TEXT/WEBVTT";
+		case AV_CODEC_ID_HDMV_PGS_SUBTITLE:
+			return "S_GRAPHIC/PGS";
 		default:
 			ffmpeg_err("Codec ID %d (%.8x) not found\n", codec_id, codec_id);
 			// Default to injected-pcm for unhandled audio types.

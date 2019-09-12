@@ -38,7 +38,7 @@ void hal_api_init()
 		proc_put("/proc/stb/fb/dst_width", buffer, strlen(buffer));
 		sprintf(buffer, "%x", 1);
 		proc_put("/proc/stb/fb/dst_apply", buffer, strlen(buffer));
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUULTIMO4K
 		const char mode_fcc[] = { "enable" };
 		proc_put("/proc/stb/frontend/fbc/fcc", mode_fcc, strlen(mode_fcc));
 #endif

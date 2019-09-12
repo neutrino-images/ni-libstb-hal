@@ -127,7 +127,7 @@ typedef enum {
 	TUNER_B,
 	TUNER_C,
 	TUNER_D
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUULTIMO4K
 	, TUNER_E
 	, TUNER_F
 	, TUNER_G
@@ -140,6 +140,16 @@ typedef enum {
 	, TUNER_N
 	, TUNER_O
 	, TUNER_P
+#if BOXMODEL_VUULTIMO4K
+	, TUNER_Q
+	, TUNER_R
+	, TUNER_S
+	, TUNER_T
+	, TUNER_U
+	, TUNER_V
+	, TUNER_W
+	, TUNER_X
+#endif
 #endif
 } source_t;
 

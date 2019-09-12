@@ -42,6 +42,7 @@
 #include "stm_ioctls.h"
 #include "bcm_ioctls.h"
 
+#include "debug.h"
 #include "common.h"
 #include "output.h"
 #include "debug.h"

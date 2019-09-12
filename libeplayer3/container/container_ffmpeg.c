@@ -1999,7 +1999,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 #endif
 
 	ffmpeg_printf(20, "dump format\n");
-	if((avContextTab[0] != NULL) && (FFMPEG_DEBUG_LEVEL > 0))
+	if ((avContextTab[0] != NULL) && (FFMPEG_DEBUG_LEVEL > 0))
 		av_dump_format(avContextTab[0], 0, filename, 0);
 
 

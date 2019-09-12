@@ -114,7 +114,7 @@ AS_HELP_STRING([], [valid for mipsbox: vuduo]),
 				AC_MSG_ERROR([unknown model $withval for boxtype $BOXTYPE])
 			fi
 		;;
-		hd51|hd60|bre2ze4k|vusolo4k|vuduo4k|vuzero4k)
+		hd51|hd60|bre2ze4k|vusolo4k|vuduo4k|vuultimo4k|vuzero4k)
 			if test "$BOXTYPE" = "armbox"; then
 				BOXMODEL="$withval"
 			else

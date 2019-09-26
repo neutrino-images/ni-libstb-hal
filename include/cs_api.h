@@ -23,7 +23,13 @@ inline void cs_api_exit()
 #define cs_free_uncached	free
 
 // Callback function helpers
-#if HAVE_DUCKBOX_HARDWARE || (HAVE_ARM_HARDWARE && !BOXMODEL_HD60) || HAVE_MIPS_HARDWARE
+#if HAVE_DUCKBOX_HARDWARE \
+ || HAVE_MIPS_HARDWARE \
+ || (HAVE_ARM_HARDWARE \
+     && !BOXMODEL_HD60 \
+     && !BOXMODEL_OSMIO4K \
+     && !BOXMODEL_OSMIO4KPLUS \
+    )
 void cs_register_messenger(cs_messenger messenger);
 #else
 static inline void cs_register_messenger(cs_messenger) { return; };

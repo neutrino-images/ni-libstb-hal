@@ -59,16 +59,28 @@ SUBDIRS += libarmbox
 libstb_hal_la_LIBADD += \
 	libarmbox/libarmbox.la
 else
+if BOXMODEL_OSMIO4K
+SUBDIRS += libarmbox
+libstb_hal_la_LIBADD += \
+	libarmbox/libarmbox.la
+else
+if BOXMODEL_OSMIO4KPLUS
+SUBDIRS += libarmbox
+libstb_hal_la_LIBADD += \
+	libarmbox/libarmbox.la
+else
 #libstb_hal_test_LDADD += -lasound
 SUBDIRS += libarmbox libdvbci
 libstb_hal_la_LIBADD += \
 	libarmbox/libarmbox.la \
 	libdvbci/libdvbci.la
+endif
+endif
+endif
 if !ENABLE_GSTREAMER_10
 SUBDIRS += libeplayer3
 libstb_hal_la_LIBADD += \
 	libeplayer3/libeplayer3.la
-endif
 endif
 endif
 

@@ -70,8 +70,8 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
-	caps.display_xres = 480;		// or 800 ???
-	caps.display_yres = 320;		// or 480 ???
+	caps.display_xres = 800;
+	caps.display_yres = 480;
 	caps.display_type = HW_DISPLAY_GFX;
 	caps.display_can_deepstandby = 0;	// 0 because we use graphlcd/lcd4linux
 	caps.display_can_set_brightness = 0;	// 0 because we use graphlcd/lcd4linux
@@ -104,8 +104,8 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
-	caps.display_xres = 480;
-	caps.display_yres = 320;
+	caps.display_xres = 400;
+	caps.display_yres = 240;
 	caps.display_type = HW_DISPLAY_GFX;
 	caps.display_can_deepstandby = 0;	// 0 because we use graphlcd/lcd4linux
 	caps.display_can_set_brightness = 0;	// 0 because we use graphlcd/lcd4linux

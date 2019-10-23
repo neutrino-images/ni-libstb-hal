@@ -184,5 +184,22 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "BRE2ZE4K");
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
+#if BOXMODEL_H7
+	initialized = 1;
+	caps.has_CI = 1;
+	caps.can_cec = 1;
+	caps.can_shutdown = 1;
+	caps.display_xres = 5;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_has_statusline = 0;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.boxvendor, "AirDigital");
+	strcpy(caps.boxname, "Zgemma H7C/S");
+	strcpy(caps.boxarch, "BCM7251S");
+#endif
 	return &caps;
 }

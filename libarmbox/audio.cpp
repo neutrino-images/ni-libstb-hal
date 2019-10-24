@@ -246,7 +246,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 		perror("SNDCTL_DSP_CHANNELS");
 	if (ioctl(clipfd, SNDCTL_DSP_SPEED, &srate))
 		perror("SNDCTL_DSP_SPEED");
-#if !BOXMODEL_HD51
+#if !BOXMODEL_HD51 && !BOXMODEL_BRE2ZE4K && !BOXMODEL_H7
 	if (ioctl(clipfd, SNDCTL_DSP_RESET))
 		perror("SNDCTL_DSP_RESET");
 #endif

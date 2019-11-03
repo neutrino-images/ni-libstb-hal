@@ -100,12 +100,12 @@ void cPlayback::Close(void)
 	}
 }
 
-bool cPlayback::Start(std::string filename, std::string headers)
+bool cPlayback::Start(std::string filename, std::string headers, std::string filename2)
 {
-	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers);
+	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers,filename2);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)))
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)),std::string filename2)
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -141,7 +141,14 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	else
 		isHTTP = true;
 
-	PlayFiles_t playbackFiles = { (char *) file.c_str(), NULL, NULL, NULL, 0, 0, 0, 0};
+	std::string szSecondFile;
+	char *file2 = NULL;
+	if(!filename2.empty()){
+		szSecondFile = filename2;
+		file2 = (char *) szSecondFile.c_str();
+	}
+
+	PlayFiles_t playbackFiles = { (char *) file.c_str(), file2, NULL, NULL, 0, 0, 0, 0};
 	if (player->playback->Command(player, PLAYBACK_OPEN, &playbackFiles) == 0)
 	{
 		if (pm == PLAYMODE_TS)

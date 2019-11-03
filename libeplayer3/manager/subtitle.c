@@ -200,7 +200,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET:
 		{
-			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", __FILE__, __FUNCTION__);
 
 			if (TrackCount > 0 && CurrentTrack >= 0)
 			{
@@ -234,7 +234,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET_TRACK:
 		{
-			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
 
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{

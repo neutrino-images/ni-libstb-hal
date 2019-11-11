@@ -174,7 +174,7 @@ static const VLCtab vlc_table_mv[] = //mv_vlc: table_size=538 table_allocated=10
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int __inline decode_DC(BR *p)
+static inline int decode_DC(BR *p)
 {
 	int level = get_bits(p, 8);
 	if ((level & 0x7f) == 0)
@@ -188,7 +188,7 @@ static int __inline decode_DC(BR *p)
 	return level;
 }
 
-static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
+static inline int decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 {
 	int code, run, level, last, sign;
 
@@ -253,7 +253,7 @@ static int __inline decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 	return 0;
 }
 
-static int __inline decode_intra_block(BR *p, BLOCK *block, int escape_type, int coded)
+static inline int decode_intra_block(BR *p, BLOCK *block, int escape_type, int coded)
 {
 	int level = decode_DC(p);
 	if (level < 0)
@@ -274,7 +274,7 @@ static int __inline decode_intra_block(BR *p, BLOCK *block, int escape_type, int
 	return 0;
 }
 
-static int __inline decode_inter_block(BR *p, BLOCK *block, int escape_type, int coded)
+static inline int decode_inter_block(BR *p, BLOCK *block, int escape_type, int coded)
 {
 	block->last_index = -1;
 
@@ -287,7 +287,7 @@ static int __inline decode_inter_block(BR *p, BLOCK *block, int escape_type, int
 	return 0;
 }
 
-static int __inline get_intra_MCBPC(BR *br)
+static inline int get_intra_MCBPC(BR *br)
 {
 	int cbpc;
 	do
@@ -299,7 +299,7 @@ static int __inline get_intra_MCBPC(BR *br)
 	return cbpc;
 }
 
-static int __inline get_inter_MCBPC(BR *br)
+static inline int get_inter_MCBPC(BR *br)
 {
 	int cbpc;
 	do
@@ -316,18 +316,18 @@ static int __inline get_inter_MCBPC(BR *br)
 	return cbpc;
 }
 
-static int __inline get_cbpy(BR *br)
+static inline int get_cbpy(BR *br)
 {
 	return get_vlc(br, vlc_table_cbpy, 6, 1);
 }
 
-static int __inline decode_dquant(BR *p)
+static inline int decode_dquant(BR *p)
 {
 	static const int table[4] = { -1, -2, 1, 2 };
 	return table[get_bits(p, 2)];
 }
 
-static int __inline decode_motion(BR *br, VLCDEC *vlcdec)
+static inline int decode_motion(BR *br, VLCDEC *vlcdec)
 {
 	int tmp;
 	int code = get_vlcdec(br, vlc_table_mv, 9, 2, vlcdec);
@@ -353,7 +353,7 @@ static int __inline decode_motion(BR *br, VLCDEC *vlcdec)
 	return 0;
 }
 
-static int __inline decode_intra_mb_internal(BR *p, MICROBLOCK *mb, int escape_type, int qscale, int cbpc, int dquant)
+static inline int decode_intra_mb_internal(BR *p, MICROBLOCK *mb, int escape_type, int qscale, int cbpc, int dquant)
 {
 	int cbpy, cbp;
 	int i;
@@ -382,7 +382,7 @@ static int __inline decode_intra_mb_internal(BR *p, MICROBLOCK *mb, int escape_t
 	return 0;
 }
 
-static int __inline decode_inter_mb_internal(BR *p, MICROBLOCK *mb, int escape_type, int qscale, int cbpc, int dquant)
+static inline int decode_inter_mb_internal(BR *p, MICROBLOCK *mb, int escape_type, int qscale, int cbpc, int dquant)
 {
 	int cbpy, cbp;
 	int i;
@@ -509,9 +509,6 @@ int decode_picture_header(BR *p, PICTURE *picture)
 
 	picture->escape_type = tmp;
 	picture->frame_number = get_bits(p, 8);
-
-//	printf("picture_format: %d\n", tmp);
-//	printf("picture_number: %d\n", get_bits(p, 8));
 
 	tmp = get_bits(p, 3);
 	switch (tmp)

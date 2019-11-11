@@ -139,7 +139,7 @@ static void align_bits(BR *p)
 	}
 }
 
-static int __inline get_br_pos(BR *p)
+static inline int get_br_pos(BR *p)
 {
 	return (p->read << 3) + p->bitoffset;
 }
@@ -150,7 +150,7 @@ typedef struct _VLCtab
 	int n;
 } VLCtab;
 
-static int __inline get_vlc(BR *br, const VLCtab *table, int bits, int max_depth)
+static inline int get_vlc(BR *br, const VLCtab *table, int bits, int max_depth)
 {
 	int n, index, nb_bits, code;
 	index = show_bits(br, bits);
@@ -171,7 +171,7 @@ static int __inline get_vlc(BR *br, const VLCtab *table, int bits, int max_depth
 	return code;
 }
 
-static int __inline get_vlcdec(BR *p, const VLCtab *table, int bits, int max_depth, VLCDEC *vlcdec)
+static inline int get_vlcdec(BR *p, const VLCtab *table, int bits, int max_depth, VLCDEC *vlcdec)
 {
 	int pos = get_br_pos(p);
 	uint32 show = show_bits(p, 24);

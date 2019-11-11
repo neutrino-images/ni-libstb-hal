@@ -40,7 +40,7 @@ static const uint8 mpeg4_c_dc_scale_table[32] =
 	0, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22, 23, 24, 25
 };
 
-static int __inline get_pred(int *dc_cur, int stride, int scale)
+static inline int get_pred(int *dc_cur, int stride, int scale)
 {
 	/* B C
 	   A X */
@@ -62,7 +62,7 @@ static int __inline get_pred(int *dc_cur, int stride, int scale)
 	return (pred + (scale >> 1)) / scale;
 }
 
-static void __inline set_dc_to_dc_cur(int *dc_cur, int level, int scale)
+static inline void set_dc_to_dc_cur(int *dc_cur, int level, int scale)
 {
 	level *= scale;
 	if (level & (~2047))
@@ -88,7 +88,7 @@ static int *get_dc_cur(M4V_DCPRED *pred, int mb_x, int mb_y, int n)
 	}
 }
 
-static int __inline get_scale(M4V_DCPRED *pred, int n)
+static inline int get_scale(M4V_DCPRED *pred, int n)
 {
 	if (n < 4)
 	{

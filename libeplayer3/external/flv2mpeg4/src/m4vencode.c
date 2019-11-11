@@ -60,7 +60,7 @@ static const uint32 vlce_inter_MCBPC_bits[28] =
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static void __inline encode_DC(BW *p, int level, int n)
+static inline void encode_DC(BW *p, int level, int n)
 {
 	if (level < -255 || level > 255) printf("dc overflow\n");
 
@@ -111,7 +111,7 @@ static void __inline encode_DC(BW *p, int level, int n)
 
 }
 
-static void __inline encode_escape_3(BW *p, int last, int run, int level)
+static inline void encode_escape_3(BW *p, int last, int run, int level)
 {
 #if 0
 	put_bits(p,
@@ -130,7 +130,7 @@ static void __inline encode_escape_3(BW *p, int last, int run, int level)
 
 #define UNI_MPEG4_ENC_INDEX(last, run, level) ((last)*128*64 + (run)*128 + (level))
 
-static void __inline encode_AC(BW *p, M4V_BLOCK *block, int intra)
+static inline void encode_AC(BW *p, M4V_BLOCK *block, int intra)
 {
 	int i = intra;
 	int last_index = block->last_index;
@@ -277,50 +277,50 @@ esc3:
 
 }
 
-static void __inline encode_intra_block(BW *bw, M4V_BLOCK *block, int n)
+static inline void encode_intra_block(BW *bw, M4V_BLOCK *block, int n)
 {
 	encode_DC(bw, block->block[0], n);
 	encode_AC(bw, block, 1);
 }
 
-static void __inline encode_inter_block(BW *bw, M4V_BLOCK *block)
+static inline void encode_inter_block(BW *bw, M4V_BLOCK *block)
 {
 	encode_AC(bw, block, 0);
 }
 
 // same as H.263
-static void __inline encode_intra_I_MCBPC(BW *bw, int cbpc)
+static inline void encode_intra_I_MCBPC(BW *bw, int cbpc)
 {
 	put_bits(bw, vlce_intra_MCBPC_bits[cbpc], vlce_intra_MCBPC_code[cbpc]);
 }
 
 // same as H.263
-static void __inline encode_intra_P_MCBPC(BW *bw, int cbpc)
+static inline void encode_intra_P_MCBPC(BW *bw, int cbpc)
 {
 	put_bits(bw, vlce_inter_MCBPC_bits[cbpc + 4], vlce_inter_MCBPC_code[cbpc + 4]);
 }
 
 // same as H.263
-static void __inline encode_inter_16x16_MCBPC(BW *bw, int cbpc)
+static inline void encode_inter_16x16_MCBPC(BW *bw, int cbpc)
 {
 	put_bits(bw, vlce_inter_MCBPC_bits[cbpc], vlce_inter_MCBPC_code[cbpc]);
 }
 
 // same as H.263
-static void __inline encode_inter_8x8_MCBPC(BW *bw, int cbpc)
+static inline void encode_inter_8x8_MCBPC(BW *bw, int cbpc)
 {
 	put_bits(bw, vlce_inter_MCBPC_bits[cbpc + 16], vlce_inter_MCBPC_code[cbpc + 16]);
 }
 
 
 // same as H.263
-static void __inline encode_cbpy(BW *bw, int cbpy)
+static inline void encode_cbpy(BW *bw, int cbpy)
 {
 	put_bits(bw, vlce_cbpy_bits[cbpy], vlce_cbpy_code[cbpy]);
 }
 
 // same as H.263
-static void __inline encode_dquant(BW *bw, int dquant)
+static inline void encode_dquant(BW *bw, int dquant)
 {
 	const uint32 dquant_code[5] = {1, 0, -1, 2, 3};
 	if (dquant)
@@ -330,7 +330,7 @@ static void __inline encode_dquant(BW *bw, int dquant)
 }
 
 // same as FLV
-static void __inline encode_motion(BW *bw, VLCDEC *mv_x, VLCDEC *mv_y)
+static inline void encode_motion(BW *bw, VLCDEC *mv_x, VLCDEC *mv_y)
 {
 	put_vlcdec(bw, mv_x);
 	if (mv_x->bits_ex)
@@ -354,7 +354,7 @@ static void __inline encode_motion(BW *bw, VLCDEC *mv_x, VLCDEC *mv_y)
 }
 
 // same as FLV
-static void __inline encode_mb_inter_internal(BW *bw, M4V_MICROBLOCK *mb)
+static inline void encode_mb_inter_internal(BW *bw, M4V_MICROBLOCK *mb)
 {
 	int cbp = 0, cbpc, cbpy;
 	int i;
@@ -398,7 +398,7 @@ static void __inline encode_mb_inter_internal(BW *bw, M4V_MICROBLOCK *mb)
 	}
 }
 
-static void __inline encode_mb_intra_internal(BW *bw, M4V_MICROBLOCK *mb, int iframe)
+static inline void encode_mb_intra_internal(BW *bw, M4V_MICROBLOCK *mb, int iframe)
 {
 	int cbp = 0, cbpc, cbpy;
 	int i;
@@ -438,7 +438,7 @@ static void __inline encode_mb_intra_internal(BW *bw, M4V_MICROBLOCK *mb, int if
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static int __inline encode_vo_header(BW *p)
+static inline int encode_vo_header(BW *p)
 {
 	put_bits(p, 16, 0);
 	put_bits(p, 16, VOS_STARTCODE);
@@ -459,7 +459,7 @@ static int __inline encode_vo_header(BW *p)
 	return 0;
 }
 
-static int __inline encode_vol_header(BW *p, M4V_VOL *vol)
+static inline int encode_vol_header(BW *p, M4V_VOL *vol)
 {
 	const int vo_number = 0;
 	const int vol_number = 0;
@@ -507,7 +507,7 @@ static int __inline encode_vol_header(BW *p, M4V_VOL *vol)
 	return 0;
 }
 
-static int __inline encode_vop_header(BW *p, M4V_VOP *vop, int time_bits, int vop_not_coded)
+static inline int encode_vop_header(BW *p, M4V_VOP *vop, int time_bits, int vop_not_coded)
 {
 //	static int time_old = 0;
 
@@ -572,7 +572,7 @@ static int __inline encode_vop_header(BW *p, M4V_VOP *vop, int time_bits, int vo
 	return 0;
 }
 
-static __inline int encode_gop_header(BW *bw, uint32 time_ms)
+static inline int encode_gop_header(BW *bw, uint32 time_ms)
 {
 	int sec, min, hour;
 
@@ -600,7 +600,7 @@ static __inline int encode_gop_header(BW *bw, uint32 time_ms)
 	return 0;
 }
 
-static int __inline encode_user_header(BW *p)
+static inline int encode_user_header(BW *p)
 {
 	put_bits(p, 16, 0);
 	put_bits(p, 16, USERDATA_STARTCODE);

@@ -74,46 +74,64 @@ static bool stillpicture = false;
 
 static const char *VDEV[] = {
 	"/dev/dvb/adapter0/video0",
-	"/dev/dvb/adapter0/video1"
+	"/dev/dvb/adapter0/video1",
+	"/dev/dvb/adapter0/video2",
+	"/dev/dvb/adapter0/video3"
 };
 static const char *VMPEG_aspect[] = {
 	"/proc/stb/vmpeg/0/aspect",
-	"/proc/stb/vmpeg/1/aspect"
+	"/proc/stb/vmpeg/1/aspect",
+	"/proc/stb/vmpeg/2/aspect",
+	"/proc/stb/vmpeg/3/aspect"
 };
 
 static const char *VMPEG_xres[] = {
 	"/proc/stb/vmpeg/0/xres",
-	"/proc/stb/vmpeg/1/xres"
+	"/proc/stb/vmpeg/1/xres",
+	"/proc/stb/vmpeg/2/xres",
+	"/proc/stb/vmpeg/3/xres"
 };
 
 static const char *VMPEG_yres[] = {
 	"/proc/stb/vmpeg/0/yres",
-	"/proc/stb/vmpeg/1/yres"
+	"/proc/stb/vmpeg/1/yres",
+	"/proc/stb/vmpeg/2/yres",
+	"/proc/stb/vmpeg/3/yres"
 };
 
 static const char *VMPEG_dst_height[] = {
 	"/proc/stb/vmpeg/0/dst_height",
-	"/proc/stb/vmpeg/1/dst_height"
+	"/proc/stb/vmpeg/1/dst_height",
+	"/proc/stb/vmpeg/2/dst_height",
+	"/proc/stb/vmpeg/3/dst_height"
 };
 
 static const char *VMPEG_dst_width[] = {
 	"/proc/stb/vmpeg/0/dst_width",
-	"/proc/stb/vmpeg/1/dst_width"
+	"/proc/stb/vmpeg/1/dst_width",
+	"/proc/stb/vmpeg/2/dst_width",
+	"/proc/stb/vmpeg/3/dst_width"
 };
 
 static const char *VMPEG_dst_top[] = {
 	"/proc/stb/vmpeg/0/dst_top",
-	"/proc/stb/vmpeg/1/dst_top"
+	"/proc/stb/vmpeg/1/dst_top",
+	"/proc/stb/vmpeg/2/dst_top",
+	"/proc/stb/vmpeg/3/dst_top"
 };
 
 static const char *VMPEG_dst_left[] = {
 	"/proc/stb/vmpeg/0/dst_left",
-	"/proc/stb/vmpeg/1/dst_left"
+	"/proc/stb/vmpeg/1/dst_left",
+	"/proc/stb/vmpeg/2/dst_left",
+	"/proc/stb/vmpeg/3/dst_left"
 };
 
 static const char *VMPEG_framerate[] = {
 	"/proc/stb/vmpeg/0/framerate",
-	"/proc/stb/vmpeg/1/framerate"
+	"/proc/stb/vmpeg/1/framerate",
+	"/proc/stb/vmpeg/2/framerate",
+	"/proc/stb/vmpeg/3/framerate"
 };
 
 static const char *vid_modes[] = {

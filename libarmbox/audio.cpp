@@ -92,7 +92,15 @@ int map_volume(const int volume)
 	if (vol > 100)
 		vol = 100;
 
+	// convert to -1dB steps
 	vol = 63 - vol * 63 / 100;
+	// now range is 63..0, where 0 is loudest
+
+#if BOXMODEL_VUPLUS4K
+	if (vol == 63)
+		vol = 255;
+#endif
+
 	return vol;
 }
 
@@ -103,10 +111,8 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 	volume = (left + right) / 2;
 	int v = map_volume(volume);
 
-	// convert to -1dB steps
 	left = map_volume(volume);
 	right = map_volume(volume);
-	//now range is 63..0, where 0 is loudest
 
 	audio_mixer_t mixer;
 

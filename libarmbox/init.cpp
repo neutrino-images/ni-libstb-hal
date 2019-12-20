@@ -41,8 +41,8 @@ void hal_api_init()
 		sprintf(buffer, "%s", "mute");
 		proc_put("/proc/stb/video/zapmode", buffer, strlen(buffer));
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
-		const char mode_fcc[] = { "enable" };
-		proc_put("/proc/stb/frontend/fbc/fcc", mode_fcc, strlen(mode_fcc));
+		sprintf(buffer, "%s", "enable");
+		proc_put("/proc/stb/frontend/fbc/fcc", buffer, strlen(buffer));
 #endif
 	}
 	initialized = true;

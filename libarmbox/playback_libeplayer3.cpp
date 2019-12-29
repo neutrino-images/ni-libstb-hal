@@ -522,10 +522,10 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	return true;
 }
 
-void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language)
+void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language)
 {
 	hal_info("%s\n", __func__);
-	int max_numpida = *numpida;
+	const int max_numpida = 40;//MAX_PLAYBACK_PIDS defined in neutrino movieplayer.h
 	*numpida = 0;
 
 	if (player && player->manager && player->manager->audio)

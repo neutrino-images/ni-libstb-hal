@@ -779,6 +779,7 @@ cPlayback::~cPlayback()
 {
 	hal_info("%s\n", __func__);
 
+	RequestAbort();
 	mutex.lock();
 	if (player)
 	{

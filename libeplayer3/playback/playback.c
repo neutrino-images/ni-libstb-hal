@@ -219,8 +219,11 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 	    (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
 	{
 		playback_err("CONTAINER_ADD failed\n");
-		free(context->playback->uri);
-		context->playback->uri = NULL;
+		if(context->playback->uri)
+		{
+			free(context->playback->uri);
+			context->playback->uri = NULL;
+		}
 		return cERR_PLAYBACK_ERROR;
 	}
 
@@ -473,14 +476,17 @@ static int32_t PlaybackTerminate(Context_t *context)
 		}
 
 		ret = context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
-
-		context->playback->isPaused     = 0;
-		context->playback->isPlaying    = 0;
-		context->playback->isForwarding = 0;
-		context->playback->BackWard     = 0;
-		context->playback->SlowMotion   = 0;
-		context->playback->Speed        = 0;
-		context->output->Command(context, OUTPUT_STOP, NULL);
+		if(context && context->playback)
+		{
+			context->playback->isPaused     = 0;
+			context->playback->isPlaying    = 0;
+			context->playback->isForwarding = 0;
+			context->playback->BackWard     = 0;
+			context->playback->SlowMotion   = 0;
+			context->playback->Speed        = 0;
+		}
+		if(context && context->output)
+			context->output->Command(context, OUTPUT_STOP, NULL);
 	}
 	else
 	{

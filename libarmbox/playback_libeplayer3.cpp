@@ -51,15 +51,10 @@ bool cPlayback::Open(playmode_t PlayMode)
 	nPlaybackSpeed = 0;
 	init_jump = -1;
 
-	mutex.lock();
-	if (player)
+	if (!player)
 	{
-		free(player);
-		player = NULL;
+		player = (Context_t *) malloc(sizeof(Context_t));
 	}
-	mutex.unlock();
-
-	player = (Context_t *) malloc(sizeof(Context_t));
 
 	if (player)
 	{
@@ -773,6 +768,7 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 	playing = false;
 	decoders_closed = false;
 	first = false;
+	player = NULL;
 }
 
 cPlayback::~cPlayback()

@@ -1883,6 +1883,10 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 				avContextTab[AVIdx]->pb->read_packet = ffmpeg_read_wrapper;
 		}
 	}
+	if (avio_opts != NULL)
+	{
+		av_dict_free(&avio_opts);
+	}
 //for buffered io (end)
 
 	return 0;

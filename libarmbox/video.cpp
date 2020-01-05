@@ -364,6 +364,7 @@ int image_to_mpeg2(const char *image_name, int fd)
 				av_packet_unref(&packet);
 			}
 			avcodec_close(codecContext);
+			av_free(codecContext);
 		}
 		avformat_close_input(&formatContext);
 	}

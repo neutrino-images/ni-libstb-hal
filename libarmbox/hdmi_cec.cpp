@@ -60,7 +60,6 @@
 })
 
 #define CEC_DEVICE "/dev/cec0"
-#define CEC_HDMIDEVICE "/dev/hdmi_cec"
 #define RC_DEVICE  "/dev/input/event1"
 
 hdmi_cec * hdmi_cec::hdmi_cec_instance = NULL;
@@ -73,7 +72,6 @@ hdmi_cec::hdmi_cec()
 	standby_cec_activ = autoview_cec_activ = standby = muted = false;
 	hdmiFd = -1;
 	volume = 0;
-	hdmi_mode = false;
 }
 
 hdmi_cec::~hdmi_cec()
@@ -195,39 +193,15 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 		return true;
 
 	}
-
-	if (hdmiFd == -1)
-	{
-		hdmiFd = open(CEC_HDMIDEVICE, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-		if (hdmiFd >= 0)
-		{
-			hdmi_mode = true;
-
-			::ioctl(hdmiFd, 0);
-
-			GetCECAddressInfo();
-
-			if(autoview_cec_activ)
-				SetCECState(false);
-
-			Start();
-			return true;
-		}
-	}
-
 	return false;
 }
 
 void hdmi_cec::GetCECAddressInfo()
 {
-	struct addressinfo addressinfo;
+	if (hdmiFd >= 0)
+	{
+		struct addressinfo addressinfo;
 
-	if (hdmi_mode)
-	{
-		::ioctl(hdmiFd, 1, &addressinfo);
-	}
-	else
-	{
 		__u16 phys_addr;
 		struct cec_log_addrs laddrs = {};
 
@@ -260,15 +234,15 @@ void hdmi_cec::GetCECAddressInfo()
 			addressinfo.type = CEC_LOG_ADDR_UNREGISTERED;
 			break;
 		}
-	}
 
-	deviceType = addressinfo.type;
-	logicalAddress = addressinfo.logical;
-	if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
-	{
-		hal_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
-		memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
-		ReportPhysicalAddress();
+		deviceType = addressinfo.type;
+		logicalAddress = addressinfo.logical;
+		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
+		{
+			hal_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
+			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
+			ReportPhysicalAddress();
+		}
 	}
 }
 
@@ -295,18 +269,11 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
 		hal_info("[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
-		if (hdmi_mode)
-		{
-			::write(hdmiFd, &txmessage, 2 + txmessage.length);
-		}
-		else
-		{
-			struct cec_msg msg;
-			cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
-			memcpy(&msg.msg[1], txmessage.data, txmessage.length);
-			msg.len = txmessage.length + 1;
-			ioctl(hdmiFd, CEC_TRANSMIT, &msg);
-		}
+		struct cec_msg msg;
+		cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
+		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
+		msg.len = txmessage.length + 1;
+		ioctl(hdmiFd, CEC_TRANSMIT, &msg);
 	}
 }
 
@@ -533,28 +500,15 @@ void hdmi_cec::Receive()
 	struct cec_message rxmessage;
 	struct cec_message txmessage;
 
-	if (hdmi_mode)
+	struct cec_msg msg;
+	if (::ioctl(hdmiFd, CEC_RECEIVE, &msg) >= 0)
 	{
-		if (::read(hdmiFd, &rxmessage, 2) == 2)
-		{
-			if (::read(hdmiFd, &rxmessage.data, rxmessage.length) == rxmessage.length)
-			{
-				hasdata = true;
-			}
-		}
-	}
-	else
-	{
-		struct cec_msg msg;
-		if (::ioctl(hdmiFd, CEC_RECEIVE, &msg) >= 0)
-		{
-			rxmessage.length = msg.len - 1;
-			rxmessage.initiator = cec_msg_initiator(&msg);
-			rxmessage.destination = cec_msg_destination(&msg);
-			rxmessage.opcode = cec_msg_opcode(&msg);
-			memcpy(&rxmessage.data, &msg.msg[1], rxmessage.length);
-			hasdata = true;
-		}
+		rxmessage.length = msg.len - 1;
+		rxmessage.initiator = cec_msg_initiator(&msg);
+		rxmessage.destination = cec_msg_destination(&msg);
+		rxmessage.opcode = cec_msg_opcode(&msg);
+		memcpy(&rxmessage.data, &msg.msg[1], rxmessage.length);
+		hasdata = true;
 	}
 
 	if (hasdata)

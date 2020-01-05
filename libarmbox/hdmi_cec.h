@@ -70,7 +70,6 @@ private:
 	void request_audio_status();
 	bool muted;
 	int volume;
-	bool hdmi_mode;
 protected:
 	bool running;
 public:

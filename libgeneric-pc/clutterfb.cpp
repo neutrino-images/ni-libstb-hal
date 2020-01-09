@@ -147,25 +147,21 @@ void GLFbPC::initKeys()
 	mKeyMap[CLUTTER_KEY_F3] = KEY_YELLOW;
 	mKeyMap[CLUTTER_KEY_F4] = KEY_BLUE;
 
-	mKeyMap[CLUTTER_KEY_F5] = KEY_WWW;
-	mKeyMap[CLUTTER_KEY_F6] = KEY_SUBTITLE;
-	mKeyMap[CLUTTER_KEY_F7] = KEY_MOVE;
-	mKeyMap[CLUTTER_KEY_F8] = KEY_SLEEP;
+	mKeyMap[CLUTTER_KEY_F5]  = KEY_RECORD;
+	mKeyMap[CLUTTER_KEY_F6]  = KEY_PLAY;
+	mKeyMap[CLUTTER_KEY_F7]  = KEY_PAUSE;
+	mKeyMap[CLUTTER_KEY_F8]  = KEY_STOP;
+
+	mKeyMap[CLUTTER_KEY_F9]  = KEY_FORWARD;
+	mKeyMap[CLUTTER_KEY_F10] = KEY_REWIND;
+	mKeyMap[CLUTTER_KEY_F11] = KEY_NEXT;
+	mKeyMap[CLUTTER_KEY_F12] = KEY_PREVIOUS;
 
 	mKeyMap[CLUTTER_KEY_Page_Up]   = KEY_PAGEUP;
 	mKeyMap[CLUTTER_KEY_Page_Down] = KEY_PAGEDOWN;
 
 	mKeyMap[CLUTTER_KEY_Return] = KEY_OK;
 	mKeyMap[CLUTTER_KEY_Escape] = KEY_EXIT;
-	mKeyMap['e']  = KEY_EPG;
-	mKeyMap['i']  = KEY_INFO;
-	mKeyMap['m']  = KEY_MENU;
-
-	mKeyMap['+']  = KEY_VOLUMEUP;
-	mKeyMap['-']  = KEY_VOLUMEDOWN;
-	mKeyMap['.']  = KEY_MUTE;
-	mKeyMap['h']  = KEY_HELP;
-	mKeyMap['p']  = KEY_POWER;
 
 	mKeyMap['0']  = KEY_0;
 	mKeyMap['1']  = KEY_1;
@@ -177,6 +173,30 @@ void GLFbPC::initKeys()
 	mKeyMap['7']  = KEY_7;
 	mKeyMap['8']  = KEY_8;
 	mKeyMap['9']  = KEY_9;
+
+	mKeyMap['+']  = KEY_VOLUMEUP;
+	mKeyMap['-']  = KEY_VOLUMEDOWN;
+	mKeyMap['.']  = KEY_MUTE;
+	mKeyMap['a']  = KEY_AUDIO;
+	mKeyMap['e']  = KEY_EPG;
+	//     ['f']    is reserved to toggle fullscreen;
+	mKeyMap['g']  = KEY_GAMES;
+	mKeyMap['h']  = KEY_HELP;
+	mKeyMap['i']  = KEY_INFO;
+	mKeyMap['m']  = KEY_MENU;
+	mKeyMap['p']  = KEY_POWER;
+	mKeyMap['r']  = KEY_RADIO;
+	mKeyMap['s']  = KEY_SUBTITLE;
+	mKeyMap['t']  = KEY_TV;
+	mKeyMap['v']  = KEY_VIDEO;
+	mKeyMap['z']  = KEY_SLEEP;
+
+	/* shift keys */
+	mKeyMap['F']  = KEY_FAVORITES;
+	mKeyMap['M']  = KEY_MODE;
+	mKeyMap['S']  = KEY_SAT;
+	mKeyMap['T']  = KEY_TEXT;
+	mKeyMap['W']  = KEY_WWW;
 }
 
 static ClutterActor *stage = NULL;

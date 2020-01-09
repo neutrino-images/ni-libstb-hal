@@ -63,7 +63,7 @@ libeplayer3_la_SOURCES = $(SOURCE_FILES)
 
 LIBEPLAYER3_LIBS = libeplayer3.la -lpthread -lavformat -lavcodec -lavutil -lswresample
 
-bin_PROGRAMS = eplayer3
-eplayer3_SOURCES = main/exteplayer.c
-eplayer3_LDADD = $(LIBEPLAYER3_LIBS)
-eplayer3_DEPENDENCIES = libeplayer3.la
+#bin_PROGRAMS = eplayer3
+#eplayer3_SOURCES = main/exteplayer.c
+#eplayer3_LDADD = $(LIBEPLAYER3_LIBS)
+#eplayer3_DEPENDENCIES = libeplayer3.la

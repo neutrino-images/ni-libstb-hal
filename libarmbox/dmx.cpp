@@ -476,11 +476,11 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 		s_flt.timeout = to;
 
 	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
-		pid, fd, DMX_T[dmx_type], len, s_flt.timeout,s_flt.flags, s_flt.filter.filter[0]);
+		pid, fd, DMX_T[dmx_type], len, s_flt.timeout, s_flt.flags, s_flt.filter.filter[0]);
 #if 0
-	fprintf(stderr,"filt: ");for(int i=0;i<FILTER_LENGTH;i++)fprintf(stderr,"%02hhx ",s_flt.filter[i]);fprintf(stderr,"\n");
-	fprintf(stderr,"mask: ");for(int i=0;i<FILTER_LENGTH;i++)fprintf(stderr,"%02hhx ",s_flt.mask  [i]);fprintf(stderr,"\n");
-	fprintf(stderr,"posi: ");for(int i=0;i<FILTER_LENGTH;i++)fprintf(stderr,"%02hhx ",s_flt.positive[i]);fprintf(stderr,"\n");
+	fprintf(stderr,"filt: "); for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", s_flt.filter.filter[i]); fprintf(stderr, "\n");
+	fprintf(stderr,"mask: "); for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", s_flt.filter.mask  [i]); fprintf(stderr, "\n");
+	fprintf(stderr,"mode: "); for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", s_flt.filter.mode  [i]); fprintf(stderr, "\n");
 #endif
 	ioctl (fd, DMX_STOP);
 	if (ioctl(fd, DMX_SET_FILTER, &s_flt) < 0)

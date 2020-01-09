@@ -36,8 +36,10 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_has_statusline = 0;
 	strcpy(caps.boxvendor, "Generic");
 	strcpy(caps.boxname, "PC");
-	if (! uname(&u))
+	if (! uname(&u)){
 		strncpy(caps.boxarch, u.machine, sizeof(caps.boxarch));
+		caps.boxarch[sizeof(caps.boxarch)-1] = '\0';
+	}
 	else
 		fprintf(stderr, "%s: uname() failed: %m\n", __func__);
 

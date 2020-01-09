@@ -193,9 +193,9 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 		if (!strncmp("mms://", uri, 6))
 		{
 			// mms is in reality called rtsp, and ffmpeg expects this
+			int len = strlen(uri) + 2;
 			char *tUri = (char *)malloc(strlen(uri) + 2);
-			strncpy(tUri + 1, uri, strlen(uri) + 1);
-			strncpy(tUri, "rtsp", 4);
+			snprintf(tUri,len,"rtsp%s",uri+3);
 			free(context->playback->uri);
 			context->playback->uri = tUri;
 		}

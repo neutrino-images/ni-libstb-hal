@@ -1772,9 +1772,9 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 			if (2 == haveNativeProto)
 			{
-				filename = malloc(strlen(baseUri) + 2 + 1);
-				strncpy(filename, "ff", 2);
-				strcpy(filename + 2, baseUri);
+				int len = strlen(baseUri) + 2 + 1;
+				filename = malloc(len);
+				snprintf(filename,len,"ff%s",baseUri);
 				free(baseUri);
 				// memory leak, only once, so does not matter
 			}

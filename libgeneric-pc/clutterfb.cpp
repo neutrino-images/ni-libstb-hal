@@ -313,7 +313,9 @@ void GLFramebuffer::run()
 	ev.type  = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
-	write(glfb_priv->input_fd, &ev, sizeof(ev));
+	ssize_t w = write(glfb_priv->input_fd, &ev, sizeof(ev));
+	if(w < 0)
+		return false;
 	return true;
 }
 
@@ -401,6 +403,7 @@ void GLFbPC::render()
 							zoom = av_q2d(mVA) * av_q2d(a149) / av_q2d(mOA);
 							break;
 						}
+						// fall through
 						/* fallthrough for output format 14:9 */
 					case DISPLAY_AR_MODE_PANSCAN:
 						zoom = av_q2d(mOA) / av_q2d(mVA);

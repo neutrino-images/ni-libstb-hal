@@ -671,7 +671,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 			strcpy(playbackFiles->szFirstFile, "file://");
 		}
 		strcat(playbackFiles->szFirstFile, argv[optind]);
-		playbackFiles->szFirstFile[IPTV_MAX_FILE_PATH] = '\0';
+		playbackFiles->szFirstFile[IPTV_MAX_FILE_PATH-1] = '\0';
 		map_inter_file_path(playbackFiles->szFirstFile);
 		printf("file: [%s]\n", playbackFiles->szFirstFile);
 		++optind;

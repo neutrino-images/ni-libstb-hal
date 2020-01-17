@@ -14,6 +14,40 @@
 
 eDVBCISession* eDVBCISession::sessions[SLMS];
 
+eDVBCIHostControlSession::eDVBCIHostControlSession(eDVBCISlot *tslot)
+{
+	slot = tslot;
+}
+
+eDVBCIHostControlSession::~eDVBCIHostControlSession()
+{
+}
+
+int eDVBCIHostControlSession::receivedAPDU(const unsigned char *tag,const void *data, int len)
+{
+	printf("CI HC SESSION(%d)/TAG %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
+	for (int i=0; i<len; i++)
+		printf("%02x ", ((const unsigned char*)data)[i]);
+	printf("\n");
+	return 0;
+}
+
+int eDVBCIHostControlSession::doAction()
+{
+	switch (state)
+	{
+		case stateStarted:
+		{
+			const unsigned char tag[3] = {0x9F, 0x80, 0x20}; // application manager info
+			sendAPDU(tag);
+			state = stateFinal;
+			return 1;
+		}
+		default:
+			return 0;
+	}
+}
+
 int eDVBCISession::buildLengthField(unsigned char *pkt, int len)
 {
 	if (len < 127)
@@ -180,12 +214,16 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				break;
 		} // fall through
+		case 0x00200041:
+			sessions[session_nb - 1] = new eDVBCIHostControlSession(slot);
+			printf("[CI SESS] Host Control\n");
+			break;
 		case 0x00100041:
 //			session=new eDVBCIAuthSession;
 			printf("[CI SESS] AuthSession\n");
 //			break;
 		  // fall through
-		case 0x00200041:
+		case 0x008e1001:
 		default:
 			printf("[CI SESS] unknown resource type %02x %02x %02x %02x\n", resource_identifier[0], resource_identifier[1], resource_identifier[2], resource_identifier[3]);
 			sessions[session_nb - 1] = 0;

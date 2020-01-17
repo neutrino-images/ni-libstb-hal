@@ -47,4 +47,18 @@ public:
 	static int pollAll();
 };
 
+class eDVBCIHostControlSession: public eDVBCISession
+{
+	enum {
+		stateFinal=statePrivate
+	};
+	eDVBCISlot *slot;
+	int receivedAPDU(const unsigned char *tag,const void *data, int len);
+	int doAction();
+public:
+	eDVBCIHostControlSession(eDVBCISlot *tslot);
+	~eDVBCIHostControlSession();
+};
+
+
 #endif

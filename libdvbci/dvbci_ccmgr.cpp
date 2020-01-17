@@ -713,7 +713,7 @@ static int generate_akh(struct cc_ctrl_data *cc_data)
 	uint8_t akh[32];
 	SHA256_CTX sha;
 
-	printf("%s>%s\n", FILENAME, __FUNCTION__);
+	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
 	SHA256_Init(&sha);
 	SHA256_Update(&sha, element_get_ptr(cc_data, 6), element_get_buf(cc_data, NULL, 6));
@@ -926,9 +926,11 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 
 	/* SAC data messages */
 
+	case 6:                 //CICAM_id
 	case 12:                //keyprecursor
 		check_new_key(cc_data);
 		break;
+	case 26:				//programm number
 	case 25:                //uri_message
 		generate_uri_confirm(cc_data, cc_data->sak);
 		break;
@@ -937,6 +939,7 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 		break;
 
 	default:
+		printf("%s -> %s unhandled ID (%d)\n", FILENAME, __FUNCTION__, id);
 		break;
 	}
 

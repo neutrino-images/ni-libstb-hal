@@ -329,7 +329,7 @@ public:
 	/// sh4 unused
 	void SetTSClock(u32 Speed, int slot = 0);
 
-#if BOXMODEL_VUPLUS_ALL
+#if BOXMODEL_VUPLUS
 	/// dvb wait delay for ci response
 	void SetCIDelay(int Delay);
 #endif

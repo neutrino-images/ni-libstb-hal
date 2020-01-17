@@ -1935,7 +1935,7 @@ void cCA::SetTSClock(u32 Speed, int slot)
 	}
 }
 
-#if BOXMODEL_VUPLUS_ALL
+#if BOXMODEL_VUPLUS
 void cCA::SetCIDelay(int Delay)
 {
 	char buf[64];

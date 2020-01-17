@@ -327,7 +327,7 @@ public:
 	void SetInitMask(enum CA_INIT_MASK InitMask);
 	/// Sets the frequency (in Hz) of the TS stream input (only valid for CI)
 	/// sh4 unused
-	void SetTSClock(u32 Speed);
+	void SetTSClock(u32 Speed, int slot = 0);
 	/// Start the CA module
 	/// sh4 unused
 	bool Start(void);

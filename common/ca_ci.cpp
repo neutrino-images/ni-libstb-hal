@@ -1906,7 +1906,7 @@ void cCA::setCheckLiveSlot(int check)
 		checkLiveSlot = false;
 }
 
-void cCA::SetTSClock(u32 Speed)
+void cCA::SetTSClock(u32 Speed, int slot)
 {
 /* TODO:
  * For now using the coolstream values from neutrino cam_menu
@@ -1919,19 +1919,18 @@ void cCA::SetTSClock(u32 Speed)
  * On the other hand: or ci_clock will be set here for all ci slots ????
  */ 
  	char buf[64];
-	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_tsclk", 0);
+	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_tsclk", slot);
 	FILE *ci = fopen(buf, "wb");
-	printf("%s -> %s to: %s\n", FILENAME, __func__, Speed > 6 * 1000000 ? "high" : "normal");
+	printf("%s -> %s to: %s\n", FILENAME, __func__, Speed > 9 * 1000000 ? "extra_high" : Speed > 6 * 1000000 ? "high" : "normal");
 	if (ci)
 	{
-		if (Speed > 6 * 1000000)
-		{
-			fprintf(ci, "high");
-		}
+		if (Speed > 9 * 1000000)
+			fprintf(ci, "extra_high");
 		else
-		{
+		if (Speed > 6 * 1000000)
+			fprintf(ci, "high");
+		else
 			fprintf(ci, "normal");
-		}
 		fclose(ci);
 	}
 }

@@ -1948,4 +1948,17 @@ void cCA::SetCIDelay(int Delay)
 		fclose(ci);
 	}
 }
+
+void cCA::SetCIRelevantPidsRouting(bool RPR, int slot)
+{
+	char buf[64];
+	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_relevant_pids_routing", slot);
+	FILE *ci = fopen(buf, "wb");
+	printf("%s -> %s to: %b\n", FILENAME, __func__, RPR);
+	if (ci)
+	{
+		fprintf(ci, "%i", RPR == true ? "yes" : "no");
+		fclose(ci);
+	}
+}
 #endif

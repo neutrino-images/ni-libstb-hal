@@ -332,6 +332,8 @@ public:
 #if BOXMODEL_VUPLUS
 	/// dvb wait delay for ci response
 	void SetCIDelay(int Delay);
+	/// relevant pids routing
+	void SetCIRelevantPidsRouting(bool RPR, int slot = 0);
 #endif
 
 	/// Start the CA module

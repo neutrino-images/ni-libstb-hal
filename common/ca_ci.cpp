@@ -1918,7 +1918,7 @@ void cCA::SetTSClock(u32 Speed, int slot)
  * and here too.
  * On the other hand: or ci_clock will be set here for all ci slots ????
  */ 
- 	char buf[64];
+	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_tsclk", slot);
 	FILE *ci = fopen(buf, "wb");
 	printf("%s -> %s to: %s\n", FILENAME, __func__, Speed > 9 * 1000000 ? "extra_high" : Speed > 6 * 1000000 ? "high" : "normal");
@@ -1934,3 +1934,18 @@ void cCA::SetTSClock(u32 Speed, int slot)
 		fclose(ci);
 	}
 }
+
+#if BOXMODEL_VUPLUS_ALL
+void cCA::SetCIDelay(int Delay)
+{
+	char buf[64];
+	snprintf(buf, 64, "/proc/stb/tsmux/rmx_delay");
+	FILE *ci = fopen(buf, "wb");
+	printf("%s -> %s to: %i\n", FILENAME, __func__, Delay);
+	if (ci)
+	{
+		fprintf(ci, "%i", Delay);
+		fclose(ci);
+	}
+}
+#endif

@@ -328,6 +328,12 @@ public:
 	/// Sets the frequency (in Hz) of the TS stream input (only valid for CI)
 	/// sh4 unused
 	void SetTSClock(u32 Speed, int slot = 0);
+
+#if BOXMODEL_VUPLUS_ALL
+	/// dvb wait delay for ci response
+	void SetCIDelay(int Delay);
+#endif
+
 	/// Start the CA module
 	/// sh4 unused
 	bool Start(void);

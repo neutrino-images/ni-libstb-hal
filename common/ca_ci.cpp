@@ -1949,7 +1949,7 @@ void cCA::SetCIDelay(int Delay)
 	}
 }
 
-void cCA::SetCIRelevantPidsRouting(bool RPR, int slot)
+void cCA::SetCIRelevantPidsRouting(int RPR, int slot)
 {
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_relevant_pids_routing", slot);
@@ -1957,7 +1957,7 @@ void cCA::SetCIRelevantPidsRouting(bool RPR, int slot)
 	printf("%s -> %s to: %b\n", FILENAME, __func__, RPR);
 	if (ci)
 	{
-		fprintf(ci, "%s", RPR == true ? "yes" : "no");
+		fprintf(ci, "%s", RPR == 1 ? "yes" : "no");
 		fclose(ci);
 	}
 }

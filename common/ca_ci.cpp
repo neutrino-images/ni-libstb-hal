@@ -1954,7 +1954,7 @@ void cCA::SetCIRelevantPidsRouting(int RPR, int slot)
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_relevant_pids_routing", slot);
 	FILE *ci = fopen(buf, "wb");
-	printf("%s -> %s to: %b\n", FILENAME, __func__, RPR);
+	printf("%s -> %s to: %i\n", FILENAME, __func__, RPR);
 	if (ci)
 	{
 		fprintf(ci, "%s", RPR == 1 ? "yes" : "no");

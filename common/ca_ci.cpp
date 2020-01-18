@@ -1957,7 +1957,7 @@ void cCA::SetCIRelevantPidsRouting(bool RPR, int slot)
 	printf("%s -> %s to: %b\n", FILENAME, __func__, RPR);
 	if (ci)
 	{
-		fprintf(ci, "%i", RPR == true ? "yes" : "no");
+		fprintf(ci, "%s", RPR == true ? "yes" : "no");
 		fclose(ci);
 	}
 }

@@ -110,7 +110,7 @@ public:
 	void MenuAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint32_t choice);
 	void InputAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint8_t * Data, int Len);
 	void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
-	void SetTSClock(u32 /*Speed*/) { return; };
+	void SetTSClock(u32 /*Speed*/, int /*slot*/) { return; };
 	bool checkChannelID(u64 /*chanID*/) { return false; };
 	void setCheckLiveSlot(int /*check*/) { return; };
 	virtual ~cCA();

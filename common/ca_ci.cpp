@@ -479,7 +479,7 @@ bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
 	hal_debug("%s\n", __func__);
 	if(cam_messenger)
-		cam_messenger(EVT_CA_MESSAGE, (uint32_t) msg);
+		cam_messenger(EVT_CA_MESSAGE, (uintptr_t) msg);
 #if z_debug
 	printf("*******Message\n");
 	printf("msg: %p\n", msg);

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sstream>
 
 #include <audio_lib.h>
 #include <video_lib.h>
@@ -536,9 +537,12 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 				if (j < max_numpida)
 				{
-					int _pid;
-					char _lang[strlen(TrackList[i])];
-					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang))
+					int _pid = 0;
+					std::string _lang ;
+					std::istringstream iss(TrackList[i]) ;
+					iss >> _pid;
+					iss >> _lang;
+					if (_pid && !_lang.empty())
 					{
 						apids[j] = _pid;
 						// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
@@ -563,7 +567,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 						else
 							ac3flags[j] = 0;    //todo
 						std::string _language = "";
-						_language += std::string(_lang);
+						_language += _lang;
 						_language += " - ";
 						_language += "(";
 						_language += TrackList[i + 1];
@@ -600,12 +604,15 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 				if (j < max_numpids)
 				{
-					int _pid;
-					char _lang[strlen(TrackList[i])];
-					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang))
+					int _pid = 0;
+					std::string _lang ;
+					std::istringstream iss(TrackList[i]) ;
+					iss >> _pid;
+					iss >> _lang;
+					if (_pid && !_lang.empty())
 					{
 						pids[j] = _pid;
-						language[j] = std::string(_lang);
+						language[j] = _lang;
 					}
 				}
 				free(TrackList[i]);

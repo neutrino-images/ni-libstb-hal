@@ -88,20 +88,20 @@ bool WriterWMV::Write(AVPacket *packet, int64_t pts)
 		PesPtr += METADATA_STRUCT_C_START;
 
 		uint8_t privateData[WMV3_PRIVATE_DATA_LENGTH] = { 0 };
-		memcpy(privateData, stream->codec->extradata, stream->codec->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : stream->codec->extradata_size);
+		memcpy(privateData, get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : get_codecpar(stream)->extradata_size);
 
 		memcpy(PesPtr, privateData, WMV3_PRIVATE_DATA_LENGTH);
 		PesPtr += WMV3_PRIVATE_DATA_LENGTH;
 
 		/* Metadata Header Struct A */
-		*PesPtr++ = (stream->codec->height >> 0) & 0xff;
-		*PesPtr++ = (stream->codec->height >> 8) & 0xff;
-		*PesPtr++ = (stream->codec->height >> 16) & 0xff;
-		*PesPtr++ = stream->codec->height >> 24;
-		*PesPtr++ = (stream->codec->width >> 0) & 0xff;
-		*PesPtr++ = (stream->codec->width >> 8) & 0xff;
-		*PesPtr++ = (stream->codec->width >> 16) & 0xff;
-		*PesPtr++ = stream->codec->width >> 24;
+		*PesPtr++ = (get_codecpar(stream)->height >> 0) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->height >> 8) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->height >> 16) & 0xff;
+		*PesPtr++ = get_codecpar(stream)->height >> 24;
+		*PesPtr++ = (get_codecpar(stream)->width >> 0) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->width >> 8) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->width >> 16) & 0xff;
+		*PesPtr++ = get_codecpar(stream)->width >> 24;
 
 		PesPtr += 12;		/* Skip flag word and Struct B first 8 bytes */
 

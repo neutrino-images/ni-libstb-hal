@@ -236,7 +236,7 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 		return true;
 	}
 
-	AVCodecContext *c = stream->codec;
+	AVCodecContext *c = player->input.GetCodecContext((unsigned int)stream->index);
 
 	if (restart_audio_resampling) {
 		restart_audio_resampling = false;
@@ -251,6 +251,7 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			decoded_frame = NULL;
 		}
 
+#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 57,25,101 ))
 		AVCodec *codec = avcodec_find_decoder(c->codec_id);
 		if (!codec) {
 			fprintf(stderr, "%s %d: avcodec_find_decoder(%llx)\n", __func__, __LINE__, (unsigned long long) c->codec_id);
@@ -261,6 +262,7 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			fprintf(stderr, "%s %d: avcodec_open2 failed\n", __func__, __LINE__);
 			return false;
 		}
+#endif
 	}
 
 	if (!swr) {
@@ -313,7 +315,6 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 
 	unsigned int packet_size = packet->size;
 	while (packet_size > 0 || (!packet_size && !packet->data)) {
-		int got_frame = 0;
 
 		if (!decoded_frame) {
 			if (!(decoded_frame = av_frame_alloc())) {
@@ -322,6 +323,9 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			}
 		} else
 			av_frame_unref(decoded_frame);
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
+		int got_frame = 0;
 
 		int len = avcodec_decode_audio4(c, decoded_frame, &got_frame, packet);
 		if (len < 0) {
@@ -337,8 +341,37 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 				break;
 			continue;
 		}
+#else
+			int ret = avcodec_send_packet(c, packet);
+			if (ret < 0) {
+				if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+					restart_audio_resampling = true;
+					break;
+				}
+			}
+			if (ret >= 0) {
+				packet_size = 0;
+			}
+			ret = avcodec_receive_frame(c, decoded_frame);
+			if (ret < 0) {
+				if (ret == AVERROR_EOF) {
+					restart_audio_resampling = true;
+					break;
+				}
+				if (ret != AVERROR(EAGAIN)) {
+					break;
+				}
+				else {
+					continue;
+				}
+			}
+#endif
 
+#if (LIBAVUTIL_VERSION_MAJOR < 54)
 		pts = player->input.calcPts(stream, av_frame_get_best_effort_timestamp(decoded_frame));
+#else
+		pts = player->input.calcPts(stream, decoded_frame->best_effort_timestamp);
+#endif
 
 		int in_samples = decoded_frame->nb_samples;
 		int out_samples = av_rescale_rnd(swr_get_delay(swr, c->sample_rate) + in_samples, out_sample_rate, c->sample_rate, AV_ROUND_UP);
@@ -360,6 +393,9 @@ bool WriterPCM::Write(AVPacket *packet, int64_t pts)
 			break;
 		}
 	}
+
+	av_frame_free(&decoded_frame);
+
 	return !packet_size;
 }
 

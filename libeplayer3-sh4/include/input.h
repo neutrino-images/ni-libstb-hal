@@ -38,6 +38,14 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+#define EPLAYER_MAX_CODECS 16
+struct CodecList
+{
+	AVCodecContext *codec;
+};
+#endif
+
 class Player;
 class Track;
 
@@ -63,6 +71,9 @@ class Input
 
 		Player *player;
 		AVFormatContext *avfc;
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+		CodecList codecs[EPLAYER_MAX_CODECS];
+#endif
 		uint64_t readCount;
 		int64_t calcPts(AVStream * stream, int64_t pts);
 
@@ -85,6 +96,7 @@ class Input
 		bool GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		bool GetReadCount(uint64_t &readcount);
 		AVFormatContext *GetAVFormatContext();
+		AVCodecContext *GetCodecContext(unsigned int index);
 		void ReleaseAVFormatContext();
 };
 

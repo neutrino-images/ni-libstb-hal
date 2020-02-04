@@ -54,6 +54,10 @@ Input::Input()
 	seek_avts_abs = INT64_MIN;
 	seek_avts_rel = 0;
 	abortPlayback = false;
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+	for (int n = 0;n < EPLAYER_MAX_CODECS;n++)
+		codecs[n].codec = NULL;
+#endif
 }
 
 Input::~Input()
@@ -106,6 +110,43 @@ static void logprintf(const char *format, ...)
 	va_start(ap, format);
 	log_callback(NULL, 0, format, ap);
 	va_end(ap);
+}
+
+AVCodecContext *Input::GetCodecContext(unsigned int index)
+{
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+	if (codecs[index].codec) {
+		return codecs[index].codec;
+	}
+	AVCodec *codec = avcodec_find_decoder(avfc->streams[index]->codecpar->codec_id);
+	codecs[index].codec = avcodec_alloc_context3(codec);
+	if (!codecs[index].codec) {
+		fprintf(stderr, "context3 alloc for stream %d failed\n", (int)index);
+		return NULL;
+	}
+	if (avcodec_parameters_to_context(codecs[index].codec, avfc->streams[index]->codecpar) < 0) {
+		fprintf(stderr, "copy parameters to codec context for stream %d failed\n", (int)index);
+		avcodec_free_context(&codecs[index].codec);
+		return NULL;
+	}
+	if (!codec) {
+		fprintf(stderr, "decoder for codec_id:(0x%X) stream:(%d) not found\n", avfc->streams[index]->codecpar->codec_id, (int)index);;
+		return codecs[index].codec;
+	}
+	else
+	{
+		fprintf(stderr, "decoder for codec_id:(0x%X) stream:(%d) found\n", avfc->streams[index]->codecpar->codec_id, (int)index);;
+	}
+	int err = avcodec_open2(codecs[index].codec, codec, NULL);
+	if (averror(err, avcodec_open2)) {
+		fprintf(stderr, "open codec context for stream:(%d) failed}n", (int)index);
+		avcodec_free_context(&codecs[index].codec);
+		return NULL;
+	}
+	return codecs[index].codec;
+#else
+	return avfc->streams[index]->codec;
+#endif
 }
 
 bool Input::Play()
@@ -182,9 +223,11 @@ bool Input::Play()
 			restart_audio_resampling = true;
 
 			// clear streams
-			for (unsigned int i = 0; i < avfc->nb_streams; i++)
-				if (avfc->streams[i]->codec && avfc->streams[i]->codec->codec)
-					avcodec_flush_buffers(avfc->streams[i]->codec);
+			for (unsigned int i = 0; i < avfc->nb_streams; i++) {
+				AVCodecContext *avcctx = GetCodecContext(i);
+				if (avcctx && avcctx->codec)
+					avcodec_flush_buffers(avcctx);
+			}
 			player->output.ClearAudio();
 			player->output.ClearVideo();
 		}
@@ -194,19 +237,18 @@ bool Input::Play()
 
 		int err = av_read_frame(avfc, &packet);
 		if (err == AVERROR(EAGAIN)) {
-#if (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
 			av_packet_unref(&packet);
-#else
-			av_free_packet(&packet);
-#endif
 			continue;
 		}
-		if (averror(err, av_read_frame)) // EOF?
+		if (averror(err, av_read_frame)) { // EOF?
+			av_packet_unref(&packet);
 			break;		// while
+		}
 
 		player->readCount += packet.size;
 
 		AVStream *stream = avfc->streams[packet.stream_index];
+		AVCodecContext *avcctx = GetCodecContext((unsigned int)stream->index);
 		Track *_videoTrack = videoTrack;
 		Track *_audioTrack = audioTrack;
 		Track *_subtitleTrack = subtitleTrack;
@@ -228,19 +270,19 @@ bool Input::Play()
 			}
 			audioSeen = true;
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {
-			if (stream->codec->codec) {
+			if (avcctx->codec) {
 				AVSubtitle sub;
 				memset(&sub, 0, sizeof(sub));
 				int got_sub_ptr = 0;
 
-				err = avcodec_decode_subtitle2(stream->codec, &sub, &got_sub_ptr, &packet);
+				err = avcodec_decode_subtitle2(avcctx, &sub, &got_sub_ptr, &packet);
 				averror(err, avcodec_decode_subtitle2);
 
 				if (got_sub_ptr && sub.num_rects > 0) {
 					switch (sub.rects[0]->type) {
 						case SUBTITLE_TEXT: // FIXME?
 						case SUBTITLE_ASS:
-							dvbsub_ass_write(stream->codec, &sub, _subtitleTrack->pid);
+							dvbsub_ass_write(avcctx, &sub, _subtitleTrack->pid);
 							break;
 						case SUBTITLE_BITMAP: {
 							int64_t pts = calcPts(stream, packet.pts);
@@ -258,11 +300,8 @@ bool Input::Play()
 				teletext_write(_teletextTrack->pid, packet.data + 1, packet.size - 1);
 		}
 
-#if (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
 		av_packet_unref(&packet);
-#else
-		av_free_packet(&packet);
-#endif
+
 	} /* while */
 
 	if (player->abortRequested)
@@ -286,6 +325,7 @@ bool Input::Play()
 	return res;
 }
 
+#if LIBAVCODEC_VERSION_MAJOR < 58
 static int lock_callback(void **mutex, enum AVLockOp op)
 {
 	switch (op) {
@@ -306,6 +346,7 @@ static int lock_callback(void **mutex, enum AVLockOp op)
 			return -1;
 	}
 }
+#endif
 
 bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 {
@@ -332,8 +373,20 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 		return false;
 	}
 
-	AVCodecContext *c = subavfc->streams[0]->codec;
-	AVCodec *codec = avcodec_find_decoder(c->codec_id);
+	AVCodecContext *c = NULL;
+	AVCodec *codec = NULL;
+#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 57,25,101 ))
+	c = subavfc->streams[0]->codec;
+#else
+	c = avcodec_alloc_context3(codec);
+	if (avcodec_parameters_to_context(c, subavfc->streams[0]->codecpar) < 0) {
+		avcodec_free_context(&c);
+		avformat_close_input(&subavfc);
+		avformat_free_context(subavfc);
+		return false;
+	}
+#endif
+	codec = avcodec_find_decoder(c->codec_id);
 	if (!codec) {
 		avformat_free_context(subavfc);
 		return false;
@@ -355,13 +408,12 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 		avcodec_decode_subtitle2(c, &sub, &got_sub, &packet);
 		if (got_sub)
 			dvbsub_ass_write(c, &sub, pid);
-#if (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
 		av_packet_unref(&packet);
-#else
-		av_free_packet(&packet);
-#endif
 	}
 	avcodec_close(c);
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+	avcodec_free_context(&c);
+#endif
 	avformat_close_input(&subavfc);
 	avformat_free_context(subavfc);
 
@@ -388,7 +440,9 @@ bool Input::Init(const char *filename, std::string headers)
 {
 	bool find_info = true;
 	abortPlayback = false;
+#if LIBAVCODEC_VERSION_MAJOR < 58
 	av_lockmgr_register(lock_callback);
+#endif
 #if ENABLE_LOGGING
 	av_log_set_flags(AV_LOG_SKIP_REPEATED);
 	av_log_set_level(AV_LOG_INFO);
@@ -414,8 +468,10 @@ bool Input::Init(const char *filename, std::string headers)
 		fprintf(stderr, "%s %s %d: %s\n", FILENAME, __func__, __LINE__, filename);
 	}
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	avcodec_register_all();
 	av_register_all();
+#endif
 	avformat_network_init();
 
 	videoTrack = NULL;
@@ -452,10 +508,8 @@ again:
 	avfc->iformat->flags |= AVFMT_SEEK_TO_PTS;
 	avfc->flags = AVFMT_FLAG_GENPTS;
 	if (player->noprobe) {
-#if (LIBAVFORMAT_VERSION_MAJOR <  55) || \
-    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR <  43) || \
-    (LIBAVFORMAT_VERSION_MAJOR == 55 && LIBAVFORMAT_VERSION_MINOR == 43 && LIBAVFORMAT_VERSION_MICRO < 100) || \
-    (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
+#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(55, 43, 100)) || \
+	(LIBAVFORMAT_VERSION_INT > AV_VERSION_INT(57, 25, 0))
 		avfc->max_analyze_duration = 1;
 #else
 		avfc->max_analyze_duration2 = 1;
@@ -527,13 +581,15 @@ bool Input::UpdateTracks()
 	for (unsigned int n = 0; n < avfc->nb_streams; n++) {
 		AVStream *stream = avfc->streams[n];
 
+		AVCodecContext *avcctx = GetCodecContext(n);
+
 		Track track;
 		track.stream = stream;
 		AVDictionaryEntry *lang = av_dict_get(stream->metadata, "language", NULL, 0);
 		track.title = lang ? lang->value : "";
 
 		if (!use_index_as_pid)
-			switch (stream->codec->codec_type) {
+			switch (avcctx->codec_type) {
 				case AVMEDIA_TYPE_VIDEO:
 				case AVMEDIA_TYPE_AUDIO:
 				case AVMEDIA_TYPE_SUBTITLE:
@@ -546,14 +602,14 @@ bool Input::UpdateTracks()
 		track.pid = use_index_as_pid ? n + 1: stream->id;
 		track.ac3flags = 0;
 
-		switch (stream->codec->codec_type) {
+		switch (avcctx->codec_type) {
 			case AVMEDIA_TYPE_VIDEO:
 				player->manager.addVideoTrack(track);
 				if (!videoTrack)
 					videoTrack = player->manager.getVideoTrack(track.pid);
 				break;
 			case AVMEDIA_TYPE_AUDIO:
-				switch(stream->codec->codec_id) {
+				switch(avcctx->codec_id) {
 					case AV_CODEC_ID_MP2:
 						track.ac3flags = 1;
 						break;
@@ -567,10 +623,10 @@ bool Input::UpdateTracks()
 						track.ac3flags = 4;
 						break;
 					case AV_CODEC_ID_AAC: {
-						unsigned int extradata_size = stream->codec->extradata_size;
+						unsigned int extradata_size = avcctx->extradata_size;
 						unsigned int object_type = 2;
 						if(extradata_size >= 2)
-							object_type = stream->codec->extradata[0] >> 3;
+							object_type = avcctx->extradata[0] >> 3;
 						if (extradata_size <= 1 || object_type == 1 || object_type == 5) {
 							fprintf(stderr, "use resampling for AAC\n");
 							track.ac3flags = 6;
@@ -597,10 +653,10 @@ bool Input::UpdateTracks()
 					audioTrack = player->manager.getAudioTrack(track.pid);
 				break;
 			case AVMEDIA_TYPE_SUBTITLE:
-				if (stream->codec->codec_id == AV_CODEC_ID_DVB_TELETEXT) {
+				if (avcctx->codec_id == AV_CODEC_ID_DVB_TELETEXT) {
 					std::string l = lang ? lang->value : "";
-					uint8_t *data = stream->codec->extradata;
-					int size = stream->codec->extradata_size;
+					uint8_t *data = avcctx->extradata;
+					int size = avcctx->extradata_size;
 					if (size > 0 && 2 * size - 1 == (int) l.length())
 						for (int i = 0; i < size; i += 2) {
 							track.title = l.substr(i * 2, 3);
@@ -610,22 +666,22 @@ bool Input::UpdateTracks()
 							player->manager.addTeletextTrack(track);
 						}
 				} else {
-					if (!stream->codec->codec) {
-						stream->codec->codec = avcodec_find_decoder(stream->codec->codec_id);
-						if (!stream->codec->codec)
+					if (!avcctx->codec) {
+						avcctx->codec = avcodec_find_decoder(avcctx->codec_id);
+						if (!avcctx->codec)
 							fprintf(stderr, "avcodec_find_decoder failed for subtitle track %d\n", n);
 						else {
-							int err = avcodec_open2(stream->codec, stream->codec->codec, NULL);
+							int err = avcodec_open2(avcctx, avcctx->codec, NULL);
 							if (averror(err, avcodec_open2))
-								stream->codec->codec = NULL;
+								avcctx->codec = NULL;
 						}
 					}
-					if (stream->codec->codec)
+					if (avcctx->codec)
 						player->manager.addSubtitleTrack(track);
 				}
 				break;
 			default:
-				fprintf(stderr, "not handled or unknown codec_type %d\n", stream->codec->codec_type);
+				fprintf(stderr, "not handled or unknown codec_type %d\n", avcctx->codec_type);
 				break;
 		}
 	}
@@ -657,8 +713,14 @@ bool Input::Stop()
 
 	if (avfc) {
 		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(mutex);
-		for (unsigned int i = 0; i < avfc->nb_streams; i++)
+		for (unsigned int i = 0; i < avfc->nb_streams; i++) {
+#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+			if (codecs[i].codec)
+				avcodec_free_context(&codecs[i].codec);
+#else
 			avcodec_close(avfc->streams[i]->codec);
+#endif
+		}
 		avformat_close_input(&avfc);
 	}
 
@@ -763,11 +825,7 @@ bool Input::GetMetadata(std::vector<std::string> &keys, std::vector<std::string>
 				fwrite(pkt->data, pkt->size, 1, cover_art);
 				fclose(cover_art);
 			}
-#if (LIBAVFORMAT_VERSION_MAJOR == 57 && LIBAVFORMAT_VERSION_MINOR == 25)
 			av_packet_unref(pkt);
-#else
-			av_free_packet(pkt);
-#endif
 			break;
 			}
 		}

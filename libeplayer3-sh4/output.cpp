@@ -127,22 +127,20 @@ bool Output::Play()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	AVCodecContext *avcc;
-
-	if (videoTrack && videoTrack->stream && videofd > -1 && (avcc = videoTrack->stream->codec)) {
-		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type, videoTrack->ac3flags);
+	if (videoTrack && videoTrack->stream && videofd > -1 && get_codecpar(videoTrack->stream)) {
+		videoWriter = Writer::GetWriter(get_codecpar(videoTrack->stream)->codec_id, get_codecpar(videoTrack->stream)->codec_type, videoTrack->ac3flags);
 		videoWriter->Init(videofd, videoTrack->stream, player);
-		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(avcc->codec_id))
+		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(get_codecpar(videoTrack->stream)->codec_id))
 		||  dioctl(videofd, VIDEO_PLAY, NULL))
 			ret = false;
 	}
 
-	if (audioTrack && audioTrack->stream && audiofd > -1 && (avcc = audioTrack->stream->codec)) {
-		audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type, audioTrack->ac3flags);
+	if (audioTrack && audioTrack->stream && audiofd > -1 && get_codecpar(audioTrack->stream)) {
+		audioWriter = Writer::GetWriter(get_codecpar(audioTrack->stream)->codec_id, get_codecpar(audioTrack->stream)->codec_type, audioTrack->ac3flags);
 		audioWriter->Init(audiofd, audioTrack->stream, player);
 		audio_encoding_t audioEncoding = AUDIO_ENCODING_LPCMA;
 		if (audioTrack->ac3flags != 6)
-			audioEncoding = audioWriter->GetAudioEncoding(avcc->codec_id);
+			audioEncoding = audioWriter->GetAudioEncoding(get_codecpar(audioTrack->stream)->codec_id);
 		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioEncoding)
 		||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;
@@ -311,15 +309,14 @@ bool Output::SwitchAudio(Track *track)
 	}
 	audioTrack = track;
 	if (track->stream) {
-		AVCodecContext *avcc = track->stream->codec;
-		if (!avcc)
+		if (!get_codecpar(audioTrack->stream))
 			return false;
-			audioWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type, audioTrack->ac3flags);
+			audioWriter = Writer::GetWriter(get_codecpar(audioTrack->stream)->codec_id, get_codecpar(audioTrack->stream)->codec_type, audioTrack->ac3flags);
 			audioWriter->Init(audiofd, audioTrack->stream, player);
 		if (audiofd > -1) {
 			audio_encoding_t audioEncoding = AUDIO_ENCODING_LPCMA;
 		if (audioTrack->ac3flags != 6)
-			audioEncoding = Writer::GetAudioEncoding(avcc->codec_id);
+			audioEncoding = Writer::GetAudioEncoding(get_codecpar(audioTrack->stream)->codec_id);
 			dioctl(audiofd, AUDIO_SET_ENCODING, audioEncoding);
 			dioctl(audiofd, AUDIO_PLAY, NULL);
 		}
@@ -338,13 +335,12 @@ bool Output::SwitchVideo(Track *track)
 	}
 	videoTrack = track;
 	if (track->stream) {
-		AVCodecContext *avcc = track->stream->codec;
-		if (!avcc)
+		if (!get_codecpar(videoTrack->stream))
 			return false;
-		videoWriter = Writer::GetWriter(avcc->codec_id, avcc->codec_type, videoTrack->type);
+		videoWriter = Writer::GetWriter(get_codecpar(videoTrack->stream)->codec_id, get_codecpar(videoTrack->stream)->codec_type, videoTrack->type);
 		videoWriter->Init(videofd, videoTrack->stream, player);
 		if (videofd > -1) {
-			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(avcc->codec_id));
+			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(get_codecpar(videoTrack->stream)->codec_id));
 			dioctl(videofd, VIDEO_PLAY, NULL);
 		}
 	}
@@ -353,7 +349,7 @@ bool Output::SwitchVideo(Track *track)
 
 bool Output::Write(AVStream *stream, AVPacket *packet, int64_t pts)
 {
-	switch (stream->codec->codec_type) {
+	switch (get_codecpar(stream)->codec_type) {
 		case AVMEDIA_TYPE_VIDEO: {
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 			return videofd > -1 && videoWriter && videoWriter->Write(packet, pts);

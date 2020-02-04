@@ -107,14 +107,14 @@ bool WriterVC1::Write(AVPacket *packet, int64_t pts)
 		PesPtr += WMV3_PRIVATE_DATA_LENGTH;
 
 		/* Metadata Header Struct A */
-		*PesPtr++ = (stream->codec->height >> 0) & 0xff;
-		*PesPtr++ = (stream->codec->height >> 8) & 0xff;
-		*PesPtr++ = (stream->codec->height >> 16) & 0xff;
-		*PesPtr++ = stream->codec->height >> 24;
-		*PesPtr++ = (stream->codec->width >> 0) & 0xff;
-		*PesPtr++ = (stream->codec->width >> 8) & 0xff;
-		*PesPtr++ = (stream->codec->width >> 16) & 0xff;
-		*PesPtr++ = stream->codec->width >> 24;
+		*PesPtr++ = (get_codecpar(stream)->height >> 0) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->height >> 8) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->height >> 16) & 0xff;
+		*PesPtr++ = get_codecpar(stream)->height >> 24;
+		*PesPtr++ = (get_codecpar(stream)->width >> 0) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->width >> 8) & 0xff;
+		*PesPtr++ = (get_codecpar(stream)->width >> 16) & 0xff;
+		*PesPtr++ = get_codecpar(stream)->width >> 24;
 
 		PesPtr += 12;		/* Skip flag word and Struct B first 8 bytes */
 
@@ -132,8 +132,8 @@ bool WriterVC1::Write(AVPacket *packet, int64_t pts)
 
 		/* For VC1 the codec private data is a standard vc1 sequence header so we just copy it to the output */
 		iov[0].iov_base = PesHeader;
-		iov[1].iov_base = stream->codec->extradata;
-		iov[1].iov_len = stream->codec->extradata_size;
+		iov[1].iov_base = get_codecpar(stream)->extradata;
+		iov[1].iov_len = get_codecpar(stream)->extradata_size;
 		iov[0].iov_len = InsertPesHeader(PesHeader, iov[1].iov_len, VC1_VIDEO_PES_START_CODE, INVALID_PTS_VALUE, 0);
 		if (writev(fd, iov, 2) < 0)
 			return false;

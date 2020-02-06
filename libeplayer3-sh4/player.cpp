@@ -317,7 +317,9 @@ bool Player::SlowMotion(int repeats)
 
 bool Player::Seek(int64_t pos, bool absolute)
 {
-	output.Clear();
+	if (GetVideoPid())
+	/* Don't Clear if no video track */
+		output.Clear();
 	return input.Seek(pos, absolute);
 }
 

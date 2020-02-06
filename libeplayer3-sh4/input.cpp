@@ -265,8 +265,9 @@ bool Input::Play()
 			}
 			if (!player->isBackWard) {
 				int64_t pts = calcPts(stream, packet.pts);
-				if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0))
-				logprintf("writing data to audio device failed\n");
+				//if (!player->output.Write(stream, &packet, _videoTrack ? pts : 0))	// DBO: why pts only at video tracks ?
+				if (!player->output.Write(stream, &packet, pts))
+					logprintf("writing data to audio device failed\n");
 			}
 			audioSeen = true;
 		} else if (_subtitleTrack && (_subtitleTrack->stream == stream)) {

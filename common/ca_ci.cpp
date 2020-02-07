@@ -56,7 +56,7 @@ static cCA* pcCAInstance = NULL;
 /* nur diese Message wird vom CI aus neutrinoMessages.h benutzt */
 /* für den CamMsgHandler, darum hier einfach mal definiert */
 /* die Feinheiten werden ja in CA_MESSAGE verpackt */
-uint32_t EVT_CA_MESSAGE = 0x80000000 + 60;
+uintptr_t EVT_CA_MESSAGE = 0x80000000 + 60;
 
 static cs_messenger cam_messenger = NULL;
 

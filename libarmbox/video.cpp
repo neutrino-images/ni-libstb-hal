@@ -65,6 +65,13 @@ extern "C"
 	_r;						\
 })
 
+#ifndef VIDEO_GET_SIZE
+#define VIDEO_GET_SIZE             _IOR('o', 55, video_size_t)
+#endif
+#ifndef VIDEO_GET_FRAME_RATE
+#define VIDEO_GET_FRAME_RATE       _IOR('o', 56, unsigned int)
+#endif
+
 cVideo * videoDecoder = NULL;
 cVideo * pipDecoder = NULL;
 

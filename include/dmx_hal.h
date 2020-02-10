@@ -47,6 +47,25 @@ extern "C" {
 #endif
 #endif
 
+#ifndef DMX_SET_SOURCE
+/**
+ * DMX_SET_SOURCE and dmx_source enum removed on 4.14 kernel
+ * From Github.com/OpenPLI/enigma2 commit 7996dbb
+**/
+enum dmx_source
+{
+	DMX_SOURCE_FRONT0 = 0,
+	DMX_SOURCE_FRONT1,
+	DMX_SOURCE_FRONT2,
+	DMX_SOURCE_FRONT3,
+	DMX_SOURCE_DVR0 = 16,
+	DMX_SOURCE_DVR1,
+	DMX_SOURCE_DVR2,
+	DMX_SOURCE_DVR3
+};
+#define DMX_SET_SOURCE _IOW('o', 49, enum dmx_source)
+#endif
+
 typedef enum
 {
 	DMX_INVALID = 0,

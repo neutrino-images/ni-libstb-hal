@@ -52,6 +52,10 @@
 /* Makros/Constants              */
 /* ***************************** */
 
+#ifndef AUDIO_GET_PTS              _IOR('o', 19, __u64)
+#define AUDIO_GET_PTS              _IOR('o', 19, __u64)
+#endif
+
 #define cERR_LINUXDVB_NO_ERROR      0
 #define cERR_LINUXDVB_ERROR        -1
 

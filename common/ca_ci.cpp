@@ -56,7 +56,7 @@ static cCA* pcCAInstance = NULL;
 /* nur diese Message wird vom CI aus neutrinoMessages.h benutzt */
 /* für den CamMsgHandler, darum hier einfach mal definiert */
 /* die Feinheiten werden ja in CA_MESSAGE verpackt */
-uintptr_t EVT_CA_MESSAGE = 0x80000000 + 60;
+uint32_t EVT_CA_MESSAGE = 0x80000000 + 60;
 
 static cs_messenger cam_messenger = NULL;
 
@@ -479,7 +479,7 @@ bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
 	hal_debug("%s\n", __func__);
 	if(cam_messenger)
-		cam_messenger(EVT_CA_MESSAGE, (uintptr_t) msg);
+		cam_messenger(EVT_CA_MESSAGE, (uint32_t) msg);
 #if z_debug
 	printf("*******Message\n");
 	printf("msg: %p\n", msg);

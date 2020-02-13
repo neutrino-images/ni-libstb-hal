@@ -52,7 +52,7 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#ifndef AUDIO_GET_PTS              _IOR('o', 19, __u64)
+#ifndef AUDIO_GET_PTS
 #define AUDIO_GET_PTS              _IOR('o', 19, __u64)
 #endif
 

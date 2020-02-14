@@ -3140,7 +3140,7 @@ static int32_t container_ffmpeg_switch_audio(Context_t *context, int32_t *arg __
 	releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 
 	/* Hellmaster1024: nothing to do here! */
-	int64_t sec = -1;
+	int64_t sec = -3;
 	context->playback->Command(context, PLAYBACK_SEEK, (void *)&sec);
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }

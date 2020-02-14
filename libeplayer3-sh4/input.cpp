@@ -768,7 +768,7 @@ bool Input::SwitchAudio(Track *track)
 {
 	audioTrack = track;
 	player->output.SwitchAudio(track ? track : NULL);
-	// player->Seek(-5000, false);
+	player->Seek((int64_t)(-8 * AV_TIME_BASE), false);
 	return true;
 }
 

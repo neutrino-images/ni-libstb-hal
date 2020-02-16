@@ -141,7 +141,7 @@ bool cPlayback::Stop(void)
 
 bool cPlayback::SetAPid(int pid, bool /* ac3 */)
 {
-	hal_info("%s\n", __func__);
+	hal_info("%s:(%d)\n", __func__, pid);
 	return player->SwitchAudio(pid);
 }
 
@@ -308,12 +308,14 @@ void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *num
 	hal_info("%s\n", __func__);
 	unsigned int i = 0;
 
-	std::vector<Track> tracks = player->manager.getAudioTracks();
-	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
-		pids[i] = it->pid;
-		ac3flags[i] = (it->ac3flags > 2) ? 1 : 0;
-		language[i] = it->title;
-		i++;
+	if (IsPlaying()) {
+		std::vector<Track> tracks = player->manager.getAudioTracks();
+		for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
+			pids[i] = it->pid;
+			ac3flags[i] = it->ac3flags;
+			language[i] = it->title;
+			i++;
+		}
 	}
 	*numpids = i;
 }

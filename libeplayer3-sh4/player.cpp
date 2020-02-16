@@ -349,7 +349,7 @@ bool Player::SwitchVideo(int pid)
 bool Player::SwitchAudio(int pid)
 {
 	Track *track = manager.getAudioTrack(pid);
-	return input.SwitchAudio(track);
+	return track ? input.SwitchAudio(track) : false;
 }
 
 bool Player::SwitchSubtitle(int pid)

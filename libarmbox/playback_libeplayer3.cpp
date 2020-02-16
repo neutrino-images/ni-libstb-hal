@@ -386,7 +386,7 @@ bool cPlayback::SetSpeed(int speed)
 
 		if (init_jump > -1)
 		{
-			SetPosition(init_jump);
+			SetPosition(init_jump, true);
 			init_jump = -1;
 		}
 

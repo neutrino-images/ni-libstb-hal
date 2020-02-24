@@ -524,7 +524,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 	const int max_numpida = 40;//MAX_PLAYBACK_PIDS defined in neutrino movieplayer.h
 	*numpida = 0;
 
-	if (player && player->manager && player->manager->audio)
+	if (player && player->playback && player->playback->isPlaying && player->manager && player->manager->audio)
 	{
 		char **TrackList = NULL;
 		player->manager->audio->Command(player, MANAGER_LIST, &TrackList);

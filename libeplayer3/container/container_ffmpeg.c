@@ -308,7 +308,7 @@ static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extra
 		case AV_CODEC_ID_MPEG2VIDEO:
 			return "V_MPEG2";
 		case AV_CODEC_ID_MJPEG:
-			return "V_MJPEG";
+			return NULL;//"V_MJPEG";
 		case AV_CODEC_ID_H263:
 		case AV_CODEC_ID_H263P:
 		case AV_CODEC_ID_H263I:

@@ -9,11 +9,14 @@
 #include <audio_lib.h>
 #include <video_lib.h>
 
+extern "C" {
 #include <common.h>
 extern OutputHandler_t      OutputHandler;
 extern PlaybackHandler_t    PlaybackHandler;
 extern ContainerHandler_t   ContainerHandler;
 extern ManagerHandler_t     ManagerHandler;
+extern int32_t ffmpeg_av_dict_set( const char *key, const char *value, int32_t flags);
+}
 
 #include "playback_libeplayer3.h"
 #include "hal_debug.h"
@@ -101,7 +104,7 @@ bool cPlayback::Start(std::string filename, std::string headers, std::string fil
 	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers,filename2);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)),std::string filename2)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers, std::string filename2)
 {
 	bool ret = false;
 	bool isHTTP = false;
@@ -136,6 +139,22 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	}
 	else
 		isHTTP = true;
+
+	if(isHTTP && headers.empty())
+	{
+		size_t pos = file.find('#');
+		if (pos != std::string::npos)
+		{
+			headers = file.substr(pos + 1);
+			pos = headers.find("User-Agent=");
+			if (pos != std::string::npos)
+				headers.replace(pos+10, 1, ": ");
+		}
+	}
+	if(!headers.empty()){
+		const char hkey[] = "headers";
+		ffmpeg_av_dict_set(hkey, headers.c_str(), 0);
+	}
 
 	std::string szSecondFile;
 	char *file2 = NULL;

@@ -455,7 +455,11 @@ int cVideo::setAspectRatio(int aspect, int mode)
 {
 	static const char *a[] = { "n/a", "4:3", "14:9", "16:9" };
 //	static const char *m[] = { "panscan", "letterbox", "bestfit", "nonlinear", "(unset)" };
+#if BOXMODEL_OSMIO4K || BOXMODEL_OSMIO4KPLUS
+	static const char *m[] = { "letterbox", "panscan", "scale", "(unset)", "(unset)" };
+#else
 	static const char *m[] = { "letterbox", "panscan", "bestfit", "nonlinear", "(unset)" };
+#endif
 	int n;
 
 	int mo = (mode < 0||mode > 3) ? 4 : mode;
@@ -473,9 +477,13 @@ int cVideo::setAspectRatio(int aspect, int mode)
 
 	if (mode == -1)
 		return 0;
-
+#if BOXMODEL_OSMIO4K || BOXMODEL_OSMIO4KPLUS
+	hal_debug("%s: /proc/stb/video/policy2 -> %s\n", __func__, m[mo]);
+	n = proc_put("/proc/stb/video/policy2", m[mo], strlen(m[mo]));
+#else
 	hal_debug("%s: /proc/stb/video/policy -> %s\n", __func__, m[mo]);
 	n = proc_put("/proc/stb/video/policy", m[mo], strlen(m[mo]));
+#endif
 	if (n < 0)
 		return 1;
 	return 0;

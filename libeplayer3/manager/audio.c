@@ -303,7 +303,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GETENCODING:
 		{
-			if ((TrackCount > 0) && (CurrentTrack >= 0))
+			if ((TrackCount > 0) && (CurrentTrack >= 0) && (Tracks[CurrentTrack].Encoding != NULL ))
 			{
 				*((char **)argument) = (char *)strdup(Tracks[CurrentTrack].Encoding);
 			}

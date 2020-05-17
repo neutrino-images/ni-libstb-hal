@@ -91,6 +91,12 @@ static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
 #endif
 #endif
 
+char dmxdev[32];
+static char* devname(int adapter, int demux) {
+	snprintf(dmxdev, sizeof(dmxdev), "/dev/dvb/adapter%d/demux%d", adapter, demux);
+	return dmxdev;
+}
+
 /* map the device numbers. */
 #if BOXMODEL_VUULTIMO4K
 #define NUM_DEMUXDEV 24
@@ -101,36 +107,7 @@ static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
 #define NUM_DEMUXDEV 8
 #endif
 #endif
-static const char *devname[NUM_DEMUXDEV] = {
-	"/dev/dvb/adapter0/demux0",
-	"/dev/dvb/adapter0/demux1",
-	"/dev/dvb/adapter0/demux2",
-	"/dev/dvb/adapter0/demux3",
-	"/dev/dvb/adapter0/demux4",
-	"/dev/dvb/adapter0/demux5",
-	"/dev/dvb/adapter0/demux6",
-	"/dev/dvb/adapter0/demux7"
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
-	, "/dev/dvb/adapter0/demux8"
-	, "/dev/dvb/adapter0/demux9"
-	, "/dev/dvb/adapter0/demux10"
-	, "/dev/dvb/adapter0/demux11"
-	, "/dev/dvb/adapter0/demux12"
-	, "/dev/dvb/adapter0/demux13"
-	, "/dev/dvb/adapter0/demux14"
-	, "/dev/dvb/adapter0/demux15"
-#if BOXMODEL_VUULTIMO4K
-	, "/dev/dvb/adapter0/demux16"
-	, "/dev/dvb/adapter0/demux17"
-	, "/dev/dvb/adapter0/demux18"
-	, "/dev/dvb/adapter0/demux19"
-	, "/dev/dvb/adapter0/demux20"
-	, "/dev/dvb/adapter0/demux21"
-	, "/dev/dvb/adapter0/demux22"
-	, "/dev/dvb/adapter0/demux23"
-#endif
-#endif
-};
+
 /* did we already DMX_SET_SOURCE on that demux device? */
 #if BOXMODEL_VUULTIMO4K
 static bool init[NUM_DEMUXDEV] = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
@@ -207,10 +184,10 @@ static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_
 	if (dmx_type != DMX_PSI_CHANNEL)
 		flags |= O_NONBLOCK;
 
-	fd = open(devname[devnum], flags);
+	fd = open(devname(0, devnum), flags);
 	if (fd < 0)
 	{
-		hal_info_z("%s %s: %m\n", __FUNCTION__, devname[devnum]);
+		hal_info_z("%s %s: %m\n", __FUNCTION__, devname(0, devnum));
 		return false;
 	}
 	hal_debug_z("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
@@ -222,7 +199,7 @@ static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_
 	{
 		/* this should not change anything... */
 		int n = DMX_SOURCE_FRONT0 + devnum;
-		hal_info_z("%s: setting %s to source %d\n", __func__, devname[devnum], n);
+		hal_info_z("%s: setting %s to source %d\n", __func__, devname(0, devnum), n);
 		if (ioctl(fd, DMX_SET_SOURCE, &n) < 0)
 			hal_info_z("%s DMX_SET_SOURCE failed!\n", __func__);
 		else

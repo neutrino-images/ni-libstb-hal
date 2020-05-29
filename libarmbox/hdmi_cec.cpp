@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2018 TangoCash
+	Copyright (C) 2018-2020 TangoCash
 
 	License: GPLv2
 
@@ -40,6 +40,7 @@
 #include "hal_debug.h"
 
 #define RED "\x1B[31m"
+#define GREEN "\x1B[32m"
 #define NORMAL "\x1B[0m"
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
@@ -59,8 +60,13 @@
 	_r;						\
 })
 
-#define CEC_DEVICE "/dev/cec0"
+#define CEC_FALLBACK_DEVICE "/dev/cec0"
+#define CEC_HDMIDEV "/dev/hdmi_cec"
+#if BOXMODEL_H7
+#define RC_DEVICE  "/dev/input/event2"
+#else
 #define RC_DEVICE  "/dev/input/event1"
+#endif
 
 hdmi_cec * hdmi_cec::hdmi_cec_instance = NULL;
 
@@ -72,6 +78,7 @@ hdmi_cec::hdmi_cec()
 	standby_cec_activ = autoview_cec_activ = standby = muted = false;
 	hdmiFd = -1;
 	volume = 0;
+	fallback = false;
 }
 
 hdmi_cec::~hdmi_cec()
@@ -88,7 +95,7 @@ hdmi_cec* hdmi_cec::getInstance()
 	if (hdmi_cec_instance == NULL)
 	{
 		hdmi_cec_instance = new hdmi_cec();
-		hal_debug_c("[CEC] new instance created \n");
+		hal_info_c(GREEN"[CEC] new instance created \n"NORMAL);
 	}
 	return hdmi_cec_instance;
 }
@@ -102,88 +109,105 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 	if (_deviceType == VIDEO_HDMI_CEC_MODE_OFF)
 	{
 		Stop();
-		hal_debug("[CEC] switch off %s\n", __func__);
+		hal_info(GREEN"[CEC] switch off %s\n"NORMAL, __func__);
 		return false;
 	}
 	else
 		deviceType = _deviceType;
 
-	hal_debug("[CEC] switch on %s\n", __func__);
+	hal_info(GREEN"[CEC] switch on %s\n"NORMAL, __func__);
 
 	if (hdmiFd == -1)
 	{
-		hdmiFd = open(CEC_DEVICE, O_RDWR | O_CLOEXEC);
+		hdmiFd = ::open(CEC_HDMIDEV, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+		if (hdmiFd >= 0)
+		{
+			::ioctl(hdmiFd, 0); /* flush old messages */
+		}
+	}
+
+
+	if (hdmiFd == -1)
+	{
+		hdmiFd = open(CEC_FALLBACK_DEVICE, O_RDWR | O_CLOEXEC);
+
+		if (hdmiFd >= 0)
+		{
+			fallback = true;
+			hal_info(RED"[CEC] fallback on %s\n"NORMAL, __func__);
+
+			__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+			struct cec_caps caps = {};
+
+			if (ioctl(hdmiFd, CEC_ADAP_G_CAPS, &caps) < 0)
+				hal_info(RED"[CEC] %s: get caps failed (%m)\n"NORMAL, __func__);
+
+			if (caps.capabilities & CEC_CAP_LOG_ADDRS)
+			{
+				struct cec_log_addrs laddrs = {};
+
+				if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
+					hal_info(RED"[CEC] %s: reset log addr failed (%m)\n"NORMAL, __func__);
+
+				memset(&laddrs, 0, sizeof(laddrs));
+
+				/*
+				 * NOTE: cec_version, osd_name and deviceType should be made configurable,
+				 * CEC_ADAP_S_LOG_ADDRS delayed till the desired values are available
+				 * (saves us some startup speed as well, polling for a free logical address
+				 * takes some time)
+				 */
+				laddrs.cec_version = CEC_OP_CEC_VERSION_2_0;
+				strcpy(laddrs.osd_name, "neutrino");
+				laddrs.vendor_id = CEC_VENDOR_ID_NONE;
+
+				switch (deviceType)
+				{
+				case CEC_LOG_ADDR_TV:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TV;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TV;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TV;
+					break;
+				case CEC_LOG_ADDR_RECORD_1:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_RECORD;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_RECORD;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_RECORD;
+					break;
+				case CEC_LOG_ADDR_TUNER_1:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TUNER;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TUNER;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TUNER;
+					break;
+				case CEC_LOG_ADDR_PLAYBACK_1:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_PLAYBACK;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_PLAYBACK;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_PLAYBACK;
+					break;
+				case CEC_LOG_ADDR_AUDIOSYSTEM:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_AUDIOSYSTEM;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+					break;
+				default:
+					laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_UNREGISTERED;
+					laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_SWITCH;
+					laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_SWITCH;
+					break;
+				}
+				laddrs.num_log_addrs++;
+
+				if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
+					hal_info(RED"[CEC] %s: et log addr failed (%m)\n"NORMAL, __func__);
+			}
+
+			if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
+				hal_info(RED"[CEC] %s: monitor failed (%m)\n"NORMAL, __func__);
+
+		}
 	}
 
 	if (hdmiFd >= 0)
 	{
-		__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
-		struct cec_caps caps = {};
-
-		if (ioctl(hdmiFd, CEC_ADAP_G_CAPS, &caps) < 0)
-			hal_debug("[CEC] %s: get caps failed (%m)\n", __func__);
-
-		if (caps.capabilities & CEC_CAP_LOG_ADDRS)
-		{
-			struct cec_log_addrs laddrs = {};
-
-			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				hal_debug("[CEC] %s: reset log addr failed (%m)\n", __func__);
-
-			memset(&laddrs, 0, sizeof(laddrs));
-
-			/*
-			 * NOTE: cec_version, osd_name and deviceType should be made configurable,
-			 * CEC_ADAP_S_LOG_ADDRS delayed till the desired values are available
-			 * (saves us some startup speed as well, polling for a free logical address
-			 * takes some time)
-			 */
-			laddrs.cec_version = CEC_OP_CEC_VERSION_2_0;
-			strcpy(laddrs.osd_name, "neutrino");
-			laddrs.vendor_id = CEC_VENDOR_ID_NONE;
-
-			switch (deviceType)
-			{
-			case CEC_LOG_ADDR_TV:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TV;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TV;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TV;
-				break;
-			case CEC_LOG_ADDR_RECORD_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_RECORD;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_RECORD;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_RECORD;
-				break;
-			case CEC_LOG_ADDR_TUNER_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_TUNER;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_TUNER;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_TUNER;
-				break;
-			case CEC_LOG_ADDR_PLAYBACK_1:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_PLAYBACK;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_PLAYBACK;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_PLAYBACK;
-				break;
-			case CEC_LOG_ADDR_AUDIOSYSTEM:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_AUDIOSYSTEM;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
-				break;
-			default:
-				laddrs.log_addr_type[laddrs.num_log_addrs] = CEC_LOG_ADDR_TYPE_UNREGISTERED;
-				laddrs.all_device_types[laddrs.num_log_addrs] = CEC_OP_ALL_DEVTYPE_SWITCH;
-				laddrs.primary_device_type[laddrs.num_log_addrs] = CEC_OP_PRIM_DEVTYPE_SWITCH;
-				break;
-			}
-			laddrs.num_log_addrs++;
-
-			if (ioctl(hdmiFd, CEC_ADAP_S_LOG_ADDRS, &laddrs) < 0)
-				hal_debug("[CEC] %s: et log addr failed (%m)\n", __func__);
-		}
-
-		if (ioctl(hdmiFd, CEC_S_MODE, &monitor) < 0)
-			hal_debug("[CEC] %s: monitor failed (%m)\n", __func__);
-
 		GetCECAddressInfo();
 
 		if(autoview_cec_activ)
@@ -200,48 +224,62 @@ void hdmi_cec::GetCECAddressInfo()
 {
 	if (hdmiFd >= 0)
 	{
+		bool hasdata = false;
 		struct addressinfo addressinfo;
 
-		__u16 phys_addr;
-		struct cec_log_addrs laddrs = {};
-
-		::ioctl(hdmiFd, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
-		addressinfo.physical[0] = (phys_addr >> 8) & 0xff;
-		addressinfo.physical[1] = phys_addr & 0xff;
-
-		::ioctl(hdmiFd, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		addressinfo.logical = laddrs.log_addr[0];
-
-		switch (laddrs.log_addr_type[0])
+		if (fallback)
 		{
-		case CEC_LOG_ADDR_TYPE_TV:
-			addressinfo.type = CEC_LOG_ADDR_TV;
-			break;
-		case CEC_LOG_ADDR_TYPE_RECORD:
-			addressinfo.type = CEC_LOG_ADDR_RECORD_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_TUNER:
-			addressinfo.type = CEC_LOG_ADDR_TUNER_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_PLAYBACK:
-			addressinfo.type = CEC_LOG_ADDR_PLAYBACK_1;
-			break;
-		case CEC_LOG_ADDR_TYPE_AUDIOSYSTEM:
-			addressinfo.type = CEC_LOG_ADDR_AUDIOSYSTEM;
-			break;
-		case CEC_LOG_ADDR_TYPE_UNREGISTERED:
-		default:
-			addressinfo.type = CEC_LOG_ADDR_UNREGISTERED;
-			break;
+			__u16 phys_addr;
+			struct cec_log_addrs laddrs = {};
+
+			::ioctl(hdmiFd, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
+			addressinfo.physical[0] = (phys_addr >> 8) & 0xff;
+			addressinfo.physical[1] = phys_addr & 0xff;
+
+			::ioctl(hdmiFd, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			addressinfo.logical = laddrs.log_addr[0];
+
+			switch (laddrs.log_addr_type[0])
+			{
+			case CEC_LOG_ADDR_TYPE_TV:
+				addressinfo.type = CEC_LOG_ADDR_TV;
+				break;
+			case CEC_LOG_ADDR_TYPE_RECORD:
+				addressinfo.type = CEC_LOG_ADDR_RECORD_1;
+				break;
+			case CEC_LOG_ADDR_TYPE_TUNER:
+				addressinfo.type = CEC_LOG_ADDR_TUNER_1;
+				break;
+			case CEC_LOG_ADDR_TYPE_PLAYBACK:
+				addressinfo.type = CEC_LOG_ADDR_PLAYBACK_1;
+				break;
+			case CEC_LOG_ADDR_TYPE_AUDIOSYSTEM:
+				addressinfo.type = CEC_LOG_ADDR_AUDIOSYSTEM;
+				break;
+			case CEC_LOG_ADDR_TYPE_UNREGISTERED:
+			default:
+				addressinfo.type = CEC_LOG_ADDR_UNREGISTERED;
+				break;
+			}
+			hasdata = true;
 		}
-
-		deviceType = addressinfo.type;
-		logicalAddress = addressinfo.logical;
-		if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
+		else
 		{
-			hal_info("[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n", __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
-			memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
-			ReportPhysicalAddress();
+			if (::ioctl(hdmiFd, 1, &addressinfo) >= 0)
+			{
+				hasdata = true;
+			}
+		}
+		if (hasdata)
+		{
+			deviceType = addressinfo.type;
+			logicalAddress = addressinfo.logical;
+			if (memcmp(physicalAddress, addressinfo.physical, sizeof(physicalAddress)))
+			{
+				hal_info(GREEN"[CEC] %s: detected physical address change: %02X%02X --> %02X%02X\n"NORMAL, __func__, physicalAddress[0], physicalAddress[1], addressinfo.physical[0], addressinfo.physical[1]);
+				memcpy(physicalAddress, addressinfo.physical, sizeof(physicalAddress));
+				ReportPhysicalAddress();
+			}
 		}
 	}
 }
@@ -263,17 +301,31 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 {
 	if (hdmiFd >= 0)
 	{
+
 		char str[txmessage.length*6];
 		for (int i = 0; i < txmessage.length; i++)
 		{
 			sprintf(str+(i*6),"[0x%02X]", txmessage.data[i]);
 		}
-		hal_info("[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
-		struct cec_msg msg;
-		cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
-		memcpy(&msg.msg[1], txmessage.data, txmessage.length);
-		msg.len = txmessage.length + 1;
-		ioctl(hdmiFd, CEC_TRANSMIT, &msg);
+		hal_info(GREEN"[CEC] send message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n"NORMAL,ToString((cec_logical_address)txmessage.initiator), txmessage.destination == 0xf ? "all" : ToString((cec_logical_address)txmessage.destination), txmessage.initiator, txmessage.destination, ToString((cec_opcode)txmessage.data[0]), str);
+
+		if (fallback)
+		{
+			struct cec_msg msg;
+			cec_msg_init(&msg, txmessage.initiator, txmessage.destination);
+			memcpy(&msg.msg[1], txmessage.data, txmessage.length);
+			msg.len = txmessage.length + 1;
+			ioctl(hdmiFd, CEC_TRANSMIT, &msg);
+		}
+		else
+		{
+			struct cec_message_fb message;
+			message.address = txmessage.destination;
+			message.length = txmessage.length;
+			memcpy(&message.data, txmessage.data, txmessage.length);
+			::write(hdmiFd, &message, 2 + message.length);
+		}
+
 	}
 }
 
@@ -304,12 +356,12 @@ void hdmi_cec::SetCECState(bool state)
 
 	if ((autoview_cec_activ) && !state)
 	{
-		message.initiator = logicalAddress;
-		message.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
-		message.data[0] = CEC_MSG_GIVE_SYSTEM_AUDIO_MODE_STATUS;
-		message.length = 1;
-		SendCECMessage(message);
-		usleep(10000);
+		//message.initiator = logicalAddress;
+		//message.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+		//message.data[0] = CEC_MSG_GIVE_SYSTEM_AUDIO_MODE_STATUS;
+		//message.length = 1;
+		//SendCECMessage(message);
+		//usleep(10000);
 
 		message.initiator = logicalAddress;
 		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
@@ -467,7 +519,7 @@ bool hdmi_cec::Stop()
 		return false;
 
 	running = false;
-	
+
 	OpenThreads::Thread::cancel();
 
 	if (hdmiFd >= 0)
@@ -490,82 +542,122 @@ void hdmi_cec::run()
 	while (running)
 	{
 		if (poll(&pfd, 1, 0) > 0)
-			Receive();
+			Receive(pfd.revents);
 	}
 }
 
-void hdmi_cec::Receive()
+void hdmi_cec::Receive(int what)
 {
-	bool hasdata = false;
-	struct cec_message rxmessage;
-	struct cec_message txmessage;
-
-	struct cec_msg msg;
-	if (::ioctl(hdmiFd, CEC_RECEIVE, &msg) >= 0)
+	if (what & POLLPRI)
 	{
-		rxmessage.length = msg.len - 1;
-		rxmessage.initiator = cec_msg_initiator(&msg);
-		rxmessage.destination = cec_msg_destination(&msg);
-		rxmessage.opcode = cec_msg_opcode(&msg);
-		memcpy(&rxmessage.data, &msg.msg[1], rxmessage.length);
-		hasdata = true;
+		GetCECAddressInfo();
 	}
 
-	if (hasdata)
+
+	if (what & POLLIN)
 	{
-		bool keypressed = false;
-		static unsigned char pressedkey = 0;
 
-		char str[rxmessage.length*6];
-		for (int i = 0; i < rxmessage.length; i++)
-		{
-			sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
-		}
-		hal_info("[CEC] received message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n",ToString((cec_logical_address)rxmessage.initiator), rxmessage.destination == 0xf ? "all" : ToString((cec_logical_address)rxmessage.destination), rxmessage.initiator, rxmessage.destination, ToString((cec_opcode)rxmessage.opcode), str);
+		bool hasdata = false;
+		struct cec_message rxmessage;
+		struct cec_message txmessage;
 
-		switch (rxmessage.opcode)
+		if (fallback)
 		{
-		case CEC_OPCODE_REPORT_AUDIO_STATUS:
-		{
-			muted = ((rxmessage.data[1] & 0x80) == 0x80);
-			volume = ((rxmessage.data[1] & 0x7F) / 127.0) * 100.0;
-			if (muted)
-				hal_debug("[CEC] %s volume muted\n", ToString((cec_logical_address)rxmessage.initiator));
-			else
-				hal_debug("[CEC] %s volume %d \n", ToString((cec_logical_address)rxmessage.initiator), volume);
-			break;
+			struct cec_msg msg;
+			if (::ioctl(hdmiFd, CEC_RECEIVE, &msg) >= 0)
+			{
+				rxmessage.length = msg.len - 1;
+				rxmessage.initiator = cec_msg_initiator(&msg);
+				rxmessage.destination = cec_msg_destination(&msg);
+				rxmessage.opcode = cec_msg_opcode(&msg);
+				memcpy(&rxmessage.data, &msg.msg[1], rxmessage.length);
+				hasdata = true;
+			}
 		}
-		case CEC_OPCODE_DEVICE_VENDOR_ID:
-		case CEC_OPCODE_VENDOR_COMMAND_WITH_ID:
+		else
 		{
-			uint64_t iVendorId =	((uint64_t)rxmessage.data[1] << 16) +
-			                        ((uint64_t)rxmessage.data[2] << 8) +
-			                        (uint64_t)rxmessage.data[3];
-			hal_debug("[CEC] decoded message '%s' (%s)\n", ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
-			break;
+			struct cec_message_fb rx_message;
+			if (::read(hdmiFd, &rx_message, 2) == 2)
+			{
+				if (::read(hdmiFd, &rx_message.data, rx_message.length) == rx_message.length)
+				{
+					rxmessage.length = rx_message.length;
+					rxmessage.initiator = rx_message.address;
+					rxmessage.destination = logicalAddress;
+					rxmessage.opcode = rx_message.data[0];
+					memcpy(&rxmessage.data, rx_message.data, rx_message.length);
+					hasdata = true;
+				}
+			}
 		}
-		case CEC_OPCODE_GIVE_DEVICE_POWER_STATUS:
+
+		if (hasdata)
 		{
-			txmessage.destination = rxmessage.initiator;
-			txmessage.initiator = rxmessage.destination;
-			txmessage.data[0] = GetResponseOpcode((cec_opcode)rxmessage.opcode);
-			txmessage.data[1] = standby ? CEC_POWER_STATUS_STANDBY : CEC_POWER_STATUS_ON;
-			txmessage.length = 2;
-			SendCECMessage(txmessage);
-			break;
-		}
-		case CEC_OPCODE_USER_CONTROL_PRESSED: /* key pressed */
-		{
-			keypressed = true;
-			pressedkey = rxmessage.data[1];
-		} // fall through
-		case CEC_OPCODE_USER_CONTROL_RELEASE: /* key released */
-		{
-			long code = translateKey(pressedkey);
-			hal_debug("[CEC] decoded key %s (%ld)\n",ToString((cec_user_control_code)pressedkey), code);
-			handleCode(code,keypressed);
-			break;
-		}
+			bool keypressed = false;
+			static unsigned char pressedkey = 0;
+
+			char str[rxmessage.length*6];
+			for (int i = 0; i < rxmessage.length; i++)
+			{
+				sprintf(str+(i*6),"[0x%02X]", rxmessage.data[i]);
+			}
+			hal_info(GREEN"[CEC] received message %s to %s (0x%02X>>0x%02X) '%s' (%s)\n"NORMAL,ToString((cec_logical_address)rxmessage.initiator), rxmessage.destination == 0xf ? "all" : ToString((cec_logical_address)rxmessage.destination), rxmessage.initiator, rxmessage.destination, ToString((cec_opcode)rxmessage.opcode), str);
+
+			switch (rxmessage.opcode)
+			{
+			case CEC_OPCODE_REQUEST_ACTIVE_SOURCE:
+			{
+				txmessage.destination = rxmessage.initiator;
+				txmessage.initiator = rxmessage.destination;
+				txmessage.data[0] = CEC_MSG_ACTIVE_SOURCE;
+				txmessage.data[1] = physicalAddress[0];
+				txmessage.data[2] = physicalAddress[1];
+				txmessage.length = 3;
+				if (!standby)
+					SendCECMessage(txmessage);
+			}
+			case CEC_OPCODE_REPORT_AUDIO_STATUS:
+			{
+				muted = ((rxmessage.data[1] & 0x80) == 0x80);
+				volume = ((rxmessage.data[1] & 0x7F) / 127.0) * 100.0;
+				if (muted)
+					hal_info(GREEN"[CEC] %s volume muted\n"NORMAL, ToString((cec_logical_address)rxmessage.initiator));
+				else
+					hal_info(GREEN"[CEC] %s volume %d \n"NORMAL, ToString((cec_logical_address)rxmessage.initiator), volume);
+				break;
+			}
+			case CEC_OPCODE_DEVICE_VENDOR_ID:
+			case CEC_OPCODE_VENDOR_COMMAND_WITH_ID:
+			{
+				uint64_t iVendorId =	((uint64_t)rxmessage.data[1] << 16) +
+				                        ((uint64_t)rxmessage.data[2] << 8) +
+				                        (uint64_t)rxmessage.data[3];
+				hal_info(GREEN"[CEC] decoded message '%s' (%s)\n"NORMAL, ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
+				break;
+			}
+			case CEC_OPCODE_GIVE_DEVICE_POWER_STATUS:
+			{
+				txmessage.destination = rxmessage.initiator;
+				txmessage.initiator = rxmessage.destination;
+				txmessage.data[0] = GetResponseOpcode((cec_opcode)rxmessage.opcode);
+				txmessage.data[1] = standby ? CEC_POWER_STATUS_STANDBY : CEC_POWER_STATUS_ON;
+				txmessage.length = 2;
+				SendCECMessage(txmessage);
+				break;
+			}
+			case CEC_OPCODE_USER_CONTROL_PRESSED: /* key pressed */
+			{
+				keypressed = true;
+				pressedkey = rxmessage.data[1];
+			} // fall through
+			case CEC_OPCODE_USER_CONTROL_RELEASE: /* key released */
+			{
+				long code = translateKey(pressedkey);
+				hal_info(GREEN"[CEC] decoded key %s (%ld)\n"NORMAL,ToString((cec_user_control_code)pressedkey), code);
+				handleCode(code,keypressed);
+				break;
+			}
+			}
 		}
 	}
 }
@@ -575,14 +667,14 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	int evd = open(RC_DEVICE, O_RDWR);
 	if (evd < 0)
 	{
-		hal_debug("[CEC] opening " RC_DEVICE " failed");
+		hal_info(RED"[CEC] opening " RC_DEVICE " failed"NORMAL);
 		return;
 	}
 	if (keypressed)
 	{
 		if (rc_send(evd, code, CEC_KEY_PRESSED) < 0)
 		{
-			hal_debug("[CEC] writing 'KEY_PRESSED' event failed");
+			hal_info(RED"[CEC] writing 'KEY_PRESSED' event failed"NORMAL);
 			close(evd);
 			return;
 		}
@@ -592,7 +684,7 @@ void hdmi_cec::handleCode(long code, bool keypressed)
 	{
 		if (rc_send(evd, code, CEC_KEY_RELEASED) < 0)
 		{
-			hal_debug("[CEC] writing 'KEY_RELEASED' event failed");
+			hal_info(RED"[CEC] writing 'KEY_RELEASED' event failed"NORMAL);
 			close(evd);
 			return;
 		}

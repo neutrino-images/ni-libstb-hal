@@ -43,6 +43,8 @@
 #define GREEN "\x1B[32m"
 #define NORMAL "\x1B[0m"
 
+#define WAITTIME 20
+
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
 #define hal_debug_c(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
@@ -79,6 +81,8 @@ hdmi_cec::hdmi_cec()
 	hdmiFd = -1;
 	volume = 0;
 	fallback = false;
+	tv_off = true;
+	deviceType = CEC_LOG_ADDR_TYPE_UNREGISTERED;
 }
 
 hdmi_cec::~hdmi_cec()
@@ -125,7 +129,6 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 			::ioctl(hdmiFd, 0); /* flush old messages */
 		}
 	}
-
 
 	if (hdmiFd == -1)
 	{
@@ -326,6 +329,7 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage)
 			::write(hdmiFd, &message, 2 + message.length);
 		}
 
+		usleep(WAITTIME*10000);
 	}
 }
 
@@ -352,23 +356,46 @@ void hdmi_cec::SetCECState(bool state)
 		message.data[0] = CEC_MSG_STANDBY;
 		message.length = 1;
 		SendCECMessage(message);
+
+		message.initiator = logicalAddress;
+		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
+		message.data[0] = CEC_MSG_GIVE_DEVICE_POWER_STATUS;
+		message.length = 1;
+		SendCECMessage(message);
 	}
 
 	if ((autoview_cec_activ) && !state)
 	{
-		//message.initiator = logicalAddress;
-		//message.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
-		//message.data[0] = CEC_MSG_GIVE_SYSTEM_AUDIO_MODE_STATUS;
-		//message.length = 1;
-		//SendCECMessage(message);
-		//usleep(10000);
+		message.initiator = logicalAddress;
+		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
+		message.data[0] = CEC_MSG_GET_CEC_VERSION;
+		message.length = 1;
+		SendCECMessage(message);
 
 		message.initiator = logicalAddress;
 		message.destination = CEC_OP_PRIM_DEVTYPE_TV;
-		message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
+		message.data[0] = CEC_MSG_GIVE_DEVICE_POWER_STATUS;
 		message.length = 1;
 		SendCECMessage(message);
-		usleep(10000);
+
+		int cnt = 0;
+
+		while (tv_off && (cnt < 5))
+		{
+			message.initiator = logicalAddress;
+			message.destination = CEC_OP_PRIM_DEVTYPE_TV;
+			message.data[0] = CEC_MSG_IMAGE_VIEW_ON;
+			message.length = 1;
+			SendCECMessage(message);
+
+			message.initiator = logicalAddress;
+			message.destination = CEC_OP_PRIM_DEVTYPE_TV;
+			message.data[0] = CEC_MSG_GIVE_DEVICE_POWER_STATUS;
+			message.length = 1;
+			SendCECMessage(message);
+
+			cnt++;
+		}
 
 		message.initiator = logicalAddress;
 		message.destination = CEC_LOG_ADDR_BROADCAST;
@@ -377,7 +404,20 @@ void hdmi_cec::SetCECState(bool state)
 		message.data[2] = physicalAddress[1];
 		message.length = 3;
 		SendCECMessage(message);
-		usleep(10000);
+
+		message.initiator = logicalAddress;
+		message.destination = CEC_LOG_ADDR_BROADCAST;
+		message.data[0] = CEC_OPCODE_SET_OSD_NAME;
+		message.data[1] = 0x6e; //n
+		message.data[2] = 0x65; //e
+		message.data[3] = 0x75; //u
+		message.data[4] = 0x74; //t
+		message.data[5] = 0x72; //r
+		message.data[6] = 0x69; //i
+		message.data[7] = 0x6e; //n
+		message.data[8] = 0x6f; //o
+		message.length = 9;
+		SendCECMessage(message);
 
 		request_audio_status();
 	}
@@ -605,10 +645,11 @@ void hdmi_cec::Receive(int what)
 
 			switch (rxmessage.opcode)
 			{
+			case CEC_OPCODE_ACTIVE_SOURCE:
 			case CEC_OPCODE_REQUEST_ACTIVE_SOURCE:
 			{
-				txmessage.destination = rxmessage.initiator;
-				txmessage.initiator = rxmessage.destination;
+				txmessage.destination = CEC_LOG_ADDR_BROADCAST; //rxmessage.initiator;
+				txmessage.initiator = logicalAddress; //rxmessage.destination;
 				txmessage.data[0] = CEC_MSG_ACTIVE_SOURCE;
 				txmessage.data[1] = physicalAddress[0];
 				txmessage.data[2] = physicalAddress[1];
@@ -643,6 +684,26 @@ void hdmi_cec::Receive(int what)
 				txmessage.data[1] = standby ? CEC_POWER_STATUS_STANDBY : CEC_POWER_STATUS_ON;
 				txmessage.length = 2;
 				SendCECMessage(txmessage);
+				break;
+			}
+			case CEC_OPCODE_REPORT_POWER_STATUS:
+			{
+				if ((rxmessage.data[1] == CEC_POWER_STATUS_ON) || (rxmessage.data[1] == CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON))
+				{
+					hal_info(GREEN"[CEC] %s reporting state on (%d)\n"NORMAL, ToString((cec_logical_address)rxmessage.initiator), rxmessage.data[1]);
+					if (rxmessage.initiator == CEC_OP_PRIM_DEVTYPE_TV)
+						tv_off = false;
+				} else {
+					hal_info(GREEN"[CEC] %s reporting state off (%d)\n"NORMAL, ToString((cec_logical_address)rxmessage.initiator), rxmessage.data[1]);
+					if (rxmessage.initiator == CEC_OP_PRIM_DEVTYPE_TV)
+						tv_off = true;
+				}
+				break;
+			}
+			case CEC_OPCODE_STANDBY:
+			{
+				if (rxmessage.initiator == CEC_OP_PRIM_DEVTYPE_TV)
+					tv_off = true;
 				break;
 			}
 			case CEC_OPCODE_USER_CONTROL_PRESSED: /* key pressed */
@@ -723,7 +784,6 @@ void hdmi_cec::send_key(unsigned char key, unsigned char destination)
 	txmessage.data[1] = key;
 	txmessage.length = 2;
 	SendCECMessage(txmessage);
-	usleep(10000);
 
 	txmessage.destination = destination;
 	txmessage.initiator = logicalAddress;
@@ -745,18 +805,15 @@ void hdmi_cec::request_audio_status()
 void hdmi_cec::vol_up()
 {
 	send_key(CEC_USER_CONTROL_CODE_VOLUME_UP, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
-	usleep(50000);
 	request_audio_status();
 }
 void hdmi_cec::vol_down()
 {
 	send_key(CEC_USER_CONTROL_CODE_VOLUME_DOWN, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
-	usleep(50000);
 	request_audio_status();
 }
 void hdmi_cec::toggle_mute()
 {
 	send_key(CEC_USER_CONTROL_CODE_MUTE, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
-	usleep(50000);
 	request_audio_status();
 }

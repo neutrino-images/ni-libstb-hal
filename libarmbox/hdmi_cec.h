@@ -78,6 +78,7 @@ private:
 	bool muted;
 	int volume;
 	bool fallback;
+	bool tv_off;
 protected:
 	bool running;
 public:

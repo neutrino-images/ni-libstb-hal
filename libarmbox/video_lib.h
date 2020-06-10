@@ -238,6 +238,7 @@ class cVideo
 		void SetCECAutoView(bool);
 		void SetCECAutoStandby(bool);
 		bool ShowPicture(const char * fname);
+		void ShowBlank(int fd, unsigned char *iframe, size_t st_size);
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600, int startx = 0, int starty = 0, int endx = 1279, int endy = 719);

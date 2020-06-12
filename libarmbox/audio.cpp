@@ -96,7 +96,7 @@ int map_volume(const int volume)
 	vol = 63 - vol * 63 / 100;
 	// now range is 63..0, where 0 is loudest
 
-#if BOXMODEL_VUPLUS4K
+#if BOXMODEL_VUPLUS_ALL
 	if (vol == 63)
 		vol = 255;
 #endif
@@ -343,7 +343,7 @@ int cAudio::StopClip()
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
-#if BOXMODEL_VUPLUS4K
+#if BOXMODEL_VUPLUS_ARM
 	ioctl(clipfd, SNDCTL_DSP_RESET);
 #endif
 	close(clipfd);

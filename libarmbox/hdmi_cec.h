@@ -88,7 +88,7 @@ public:
 	void SetCECAutoView(bool);
 	void SetCECAutoStandby(bool);
 	void GetCECAddressInfo();
-	void SendCECMessage(struct cec_message &message);
+	void SendCECMessage(struct cec_message &message, int sleeptime = 10);
 	void SetCECState(bool state);
 	void ReportPhysicalAddress();
 	bool standby_cec_activ;

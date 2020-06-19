@@ -76,12 +76,12 @@ void cPlayback::Close(void)
 
 }
 
-bool cPlayback::Start(std::string filename, std::string headers)
+bool cPlayback::Start(std::string filename, std::string headers, std::string filename2)
 {
-	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers);
+	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers,filename2);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)))
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers __attribute__((unused)), std::string filename2 __attribute__((unused)))
 {
 	bool ret = false;
 

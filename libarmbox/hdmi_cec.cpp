@@ -44,7 +44,7 @@
 #define GREEN "\x1B[32m"
 #define NORMAL "\x1B[0m"
 
-#define EPOLL_WAIT_TIMEOUT (1000)
+#define EPOLL_WAIT_TIMEOUT (-1)
 #define EPOLL_MAX_EVENTS (1)
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)

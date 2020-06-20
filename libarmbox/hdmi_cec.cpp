@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include <array>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -42,6 +43,9 @@
 #define RED "\x1B[31m"
 #define GREEN "\x1B[32m"
 #define NORMAL "\x1B[0m"
+
+#define EPOLL_WAIT_TIMEOUT (1000)
+#define EPOLL_MAX_EVENTS (1)
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_INIT, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_INIT, this, args)
@@ -557,6 +561,7 @@ bool hdmi_cec::Start()
 		return false;
 
 	running = true;
+	OpenThreads::Thread::setSchedulePriority(THREAD_PRIORITY_MIN);
 	return (OpenThreads::Thread::start() == 0);
 }
 
@@ -581,27 +586,30 @@ bool hdmi_cec::Stop()
 void hdmi_cec::run()
 {
 	OpenThreads::Thread::setCancelModeAsynchronous();
-	struct pollfd pfd;
+	int n;
+	int epollfd = epoll_create1(0);
+	struct epoll_event event;
+	event.data.fd = hdmiFd;
+	event.events = EPOLLIN;
 
-	pfd.fd = hdmiFd;
-	pfd.events = (POLLIN | POLLPRI);
+	epoll_ctl(epollfd, EPOLL_CTL_ADD, hdmiFd, &event);
+
+	std::array<struct epoll_event, EPOLL_MAX_EVENTS> events;
 
 	while (running)
 	{
-		if (poll(&pfd, 1, 0) > 0)
-			Receive(pfd.revents);
+		n = epoll_wait(epollfd, events.data(), EPOLL_MAX_EVENTS, EPOLL_WAIT_TIMEOUT);
+		for (int i = 0; i < n; ++i)
+		{
+			if (events[i].events & EPOLLIN)
+				Receive(events[i].events);
+		}
 	}
 }
 
 void hdmi_cec::Receive(int what)
 {
-	if (what & POLLPRI)
-	{
-		GetCECAddressInfo();
-	}
-
-
-	if (what & POLLIN)
+	if (what & EPOLLIN)
 	{
 
 		bool hasdata = false;

@@ -48,8 +48,6 @@ extern "C"
 #include <libavutil/imgutils.h>
 }
 
-#include "video_blank.h"
-
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
 #define hal_debug_c(args...) _hal_debug(HAL_DEBUG_VIDEO, NULL, args)
@@ -80,7 +78,6 @@ cVideo * pipDecoder = NULL;
 int system_rev = 0;
 
 static bool stillpicture = false;
-static pthread_mutex_t stillp_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const char *VDEV[] = {
 	"/dev/dvb/adapter0/video0",
@@ -571,20 +568,17 @@ int cVideo::Stop(bool blank)
 		hal_debug("%s: stillpicture == true\n", __func__);
 		return -1;
 	}
-	/* blank parameter seems to not work on VIDEO_STOP */
-	if (blank)
-		setBlank(1);
 	playstate = blank ? VIDEO_STOPPED : VIDEO_FREEZED;
 	return fop(ioctl, VIDEO_STOP, blank ? 1 : 0);
 }
 
 int cVideo::setBlank(int)
 {
-	pthread_mutex_lock(&stillp_mutex);
-	if (blank_data)
-		ShowBlank(fd, blank_data, blank_size);
-	pthread_mutex_unlock(&stillp_mutex);
-	return 1;
+	fop(ioctl, VIDEO_PLAY);
+	fop(ioctl, VIDEO_CONTINUE);
+	video_still_picture sp = { NULL, 0 };
+	fop(ioctl, VIDEO_STILLPICTURE, &sp);
+	return Stop(1);
 }
 
 int cVideo::SetVideoSystem(int video_system, bool remember)
@@ -695,7 +689,6 @@ bool cVideo::ShowPicture(const char * fname)
 	}
 	closeDevice();
 	openDevice();
-	pthread_mutex_lock(&stillp_mutex);
 	if (fd >= 0)
 	{
 		usleep(50000);//workaround for switch to radiomode
@@ -714,51 +707,7 @@ bool cVideo::ShowPicture(const char * fname)
 		ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
 		ret = true;
 	}
-	pthread_mutex_unlock(&stillp_mutex);
 	return ret;
-}
-
-void cVideo::ShowBlank(int fd, unsigned char *iframe, size_t st_size)
-{
-	static const unsigned char pes_header[] = { 0x0, 0x0, 0x1, 0xe0, 0x00, 0x00, 0x80, 0x80, 0x5, 0x21, 0x0, 0x1, 0x0, 0x1 };
-	static const unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
-	unsigned char stuffing[128];
-	bool seq_end_avail = false;
-	size_t pos = 0;
-	int count = 7;
-	if (ioctl(fd, VIDEO_SET_FORMAT, VIDEO_FORMAT_16_9) < 0)
-		hal_info_c("%s: VIDEO_SET_FORMAT failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_SET_STREAMTYPE, VIDEO_FORMAT_MPEG2) < 0)
-		hal_info_c("%s: VIDEO_SET_STREAMTYPE failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY) < 0)
-		hal_info_c("%s: VIDEO_SELECT_SOURCE failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_PLAY) < 0)
-		hal_info_c("%s: VIDEO_PLAY failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_CONTINUE) < 0)
-		hal_info_c("%s: VIDEO_CONTINUE failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_CLEAR_BUFFER) < 0)
-		hal_info_c("%s: VIDEO_CLEAR_BUFFER failed (%m)\n", __func__);
-	while (pos <= (st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
-		++pos;
-	while (count--)
-	{
-		if ((iframe[3] >> 4) != 0xE) // no pes header
-			write(fd, pes_header, sizeof(pes_header));
-		else
-			iframe[4] = iframe[5] = 0x00;
-		write_all(fd, iframe, st_size);
-		usleep(8000);
-	}
-	if (!seq_end_avail)
-		write_all(fd, seq_end, sizeof(seq_end));
-
-	memset(stuffing, 0, sizeof(stuffing));
-	for (count = 0; count < 8192 / (int)sizeof(stuffing); count++)
-		write_all(fd, stuffing, sizeof(stuffing));
-	if (ioctl(fd, VIDEO_STOP, 0) < 0)
-		hal_info_c("%s: VIDEO_STOP failed (%m)\n", __func__);
-	if (ioctl(fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX) < 0)
-		hal_info_c("%s: VIDEO_SELECT_SOURCE failed (%m)\n", __func__);
 }
 
 void cVideo::StopPicture()

@@ -101,9 +101,11 @@ public:
 	bool GetPosition(int &position, int &duration);
 	void GetPts(uint64_t &pts);
 	bool SetPosition(int position, bool absolute = false);
-	void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
+	void FindAllPids(short unsigned int *apids, short unsigned int *ac3flags, short unsigned int *numpida, std::string *language);
 	void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
 	void FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpidt, std::string */*tlanguage*/, int */*mags*/, int */*pages*/);
+	void FindAllSubs(short unsigned int *pids, short unsigned int *supported, short unsigned int *numpida, std::string *language);
+	bool SelectSubtitles(int pid, std::string charset = "");
 	void RequestAbort(void);
 	bool IsPlaying(void);
 	uint64_t GetReadCount(void);
@@ -113,6 +115,8 @@ public:
 
 	AVFormatContext *GetAVFormatContext();
 	void ReleaseAVFormatContext();
+	void GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current);
+	void SetTitle(int title);
 };
 
 class netlink_event : public OpenThreads::Thread

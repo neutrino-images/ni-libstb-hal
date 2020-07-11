@@ -45,6 +45,28 @@
 extern cAudio *audioDecoder;
 extern cVideo *videoDecoder;
 
+/* dummy functions */
+bool cPlayback::SelectSubtitles(int /*pid*/, std::string /*charset*/)
+{
+	return false;
+}
+
+void cPlayback::FindAllSubs(short unsigned int * /*pids*/, short unsigned int * /*supp*/, short unsigned int *num, std::string * /*lang*/)
+{
+	*num = 0;
+}
+
+void cPlayback::SetTitle(int /*title*/)
+{
+}
+
+void cPlayback::GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current)
+{
+	playlists.clear();
+	titles.clear();
+	current = 0;
+}
+
 //Used by Fileplay
 bool cPlayback::Open(playmode_t PlayMode)
 {
@@ -417,7 +439,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	return true;
 }
 
-void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language)
+void cPlayback::FindAllPids(short unsigned int *apids, short unsigned int *ac3flags, short unsigned int *numpida, std::string *language)
 {
 	hal_info("%s\n", __func__);
 	int max_numpida = *numpida;

@@ -33,6 +33,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 16;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;

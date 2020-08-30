@@ -32,6 +32,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
 	caps.display_has_statusline = 0;
+	caps.can_cpufreq = 1;
 	if (fd != -1) {
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);

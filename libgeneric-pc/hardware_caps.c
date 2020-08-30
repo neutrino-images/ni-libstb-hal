@@ -28,6 +28,7 @@ hw_caps_t *get_hwcaps(void)
 	memset(&caps, 0, sizeof(hw_caps_t));
 
 	initialized = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;	/* for testing */
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
 	caps.has_HDMI = 1;

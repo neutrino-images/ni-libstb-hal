@@ -15,6 +15,7 @@ static hw_caps_t caps = {
 	.has_SCART_input = 1,
 	.has_HDMI = 0,
 	.has_YUV_cinch = 0,
+	.can_cpufreq = 1, /* see "elegant" hack in pwrmngr.cpp */
 	.can_shutdown = 0,
 	.can_cec = 0,
 	.display_type = HW_DISPLAY_GFX,

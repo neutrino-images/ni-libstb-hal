@@ -33,6 +33,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 480;
 	caps.display_yres = 320;
@@ -52,6 +53,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 480;
 	caps.display_yres = 320;
@@ -71,6 +73,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 800;
 	caps.display_yres = 480;
@@ -90,6 +93,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_type = HW_DISPLAY_LED_ONLY;
 	caps.display_can_deepstandby = 0;
@@ -107,6 +111,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 400;
 	caps.display_yres = 240;
@@ -126,6 +131,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_type = HW_DISPLAY_LED_ONLY;
 	caps.display_can_deepstandby = 0;
@@ -143,6 +149,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 16;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
@@ -161,6 +168,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;
 	caps.display_type = HW_DISPLAY_LED_NUM;
@@ -179,6 +187,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;
 	caps.display_type = HW_DISPLAY_LED_NUM;
@@ -197,6 +206,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;
 	caps.display_type = HW_DISPLAY_LED_NUM;
@@ -215,6 +225,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;
 	caps.display_type = HW_DISPLAY_LED_NUM;
@@ -233,6 +244,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 5;
 	caps.display_type = HW_DISPLAY_LINE_TEXT;

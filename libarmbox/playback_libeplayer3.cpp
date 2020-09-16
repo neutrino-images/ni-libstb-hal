@@ -54,6 +54,7 @@ bool cPlayback::Open(playmode_t PlayMode)
 	last_size = 0;
 	nPlaybackSpeed = 0;
 	init_jump = -1;
+	avft = avformat_alloc_context();
 
 	if (!player)
 	{
@@ -117,7 +118,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	mAudioStream = 0;
 	mSubtitleStream = -1;
 	mTeletextStream = -1;
-	unlink("/tmp/.id3coverart");
 	std::string file;
 
 	if (*filename == '/')
@@ -856,11 +856,17 @@ uint64_t cPlayback::GetReadCount()
 
 AVFormatContext *cPlayback::GetAVFormatContext()
 {
-	return NULL;
+	if (player && player->container && player->container->selectedContainer)
+	{
+		player->container->selectedContainer->Command(player, CONTAINER_GET_AVCONTEXT, avft);
+	}
+	return avft;
 }
 
 void cPlayback::ReleaseAVFormatContext()
 {
+	avft->streams = NULL;
+	avft->nb_streams = NULL;
 }
 
 #if 0

@@ -35,6 +35,7 @@ class cPlayback
 		std::string fn_xml;
 		off64_t last_size;
 		int init_jump;
+		AVFormatContext *avft;
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();

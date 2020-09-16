@@ -3287,6 +3287,52 @@ static int container_ffmpeg_get_metadata(Context_t *context, char ***p)
 	*pp++ = NULL;
 	*pp = NULL;
 
+	// find the first attached picture, if available
+	unlink("/tmp/.id3coverart");
+	for(unsigned int i = 0; i < avContextTab[0]->nb_streams; i++) {
+		if (avContextTab[0]->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC) {
+			AVPacket *pkt = NULL;
+			pkt = av_packet_clone(&avContextTab[0]->streams[i]->attached_pic);
+			FILE *cover_art = fopen("/tmp/.id3coverart", "wb");
+			if (cover_art) {
+				fwrite(pkt->data, pkt->size, 1, cover_art);
+				fclose(cover_art);
+			}
+			av_packet_free(&pkt);
+			break;
+		}
+	}
+
+	return cERR_CONTAINER_FFMPEG_NO_ERROR;
+}
+
+static int container_ffmpeg_av_context(Context_t *context, AVFormatContext *ext_avContext)
+{
+	if (!context)
+	{
+		fprintf(stderr, "BUG %s:%d\n", __func__, __LINE__);
+		return cERR_CONTAINER_FFMPEG_ERR;
+	}
+	if (avContextTab[0] != NULL)
+	{
+		getMutex(__FILE__, __FUNCTION__, __LINE__);
+		ext_avContext->streams = avContextTab[0]->streams;
+		ext_avContext->nb_streams = avContextTab[0]->nb_streams;
+		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
+	}
+	else if ((avContextTab[0] == NULL) && (avContextTab[1] != NULL))
+	{
+		getMutex(__FILE__, __FUNCTION__, __LINE__);
+		ext_avContext->streams = avContextTab[1]->streams;
+		ext_avContext->nb_streams = avContextTab[1]->nb_streams;
+		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
+	}
+	else
+	{
+		ext_avContext->streams = NULL;
+		ext_avContext->nb_streams = NULL;
+	}
+
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
 
@@ -3381,6 +3427,11 @@ static int32_t Command(Context_t *context, ContainerCmd_t command, void *argumen
 		case CONTAINER_GET_METADATA:
 		{
 			ret = container_ffmpeg_get_metadata(context, (char ***)argument);
+			break;
+		}
+		case CONTAINER_GET_AVFCONTEXT:
+		{
+			ret = container_ffmpeg_av_context(context, (AVFormatContext *)argument);
 			break;
 		}
 		default:

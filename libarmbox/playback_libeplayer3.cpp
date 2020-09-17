@@ -858,7 +858,7 @@ AVFormatContext *cPlayback::GetAVFormatContext()
 {
 	if (player && player->container && player->container->selectedContainer)
 	{
-		player->container->selectedContainer->Command(player, CONTAINER_GET_AVCONTEXT, avft);
+		player->container->selectedContainer->Command(player, CONTAINER_GET_AVFCONTEXT, avft);
 	}
 	return avft;
 }

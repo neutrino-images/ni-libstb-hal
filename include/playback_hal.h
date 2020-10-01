@@ -1,7 +1,5 @@
 #include <config.h>
-#if HAVE_TRIPLEDRAGON
-#include "../libtriple/playback_td.h"
-#elif HAVE_DUCKBOX_HARDWARE
+#if HAVE_DUCKBOX_HARDWARE
 #include "../libduckbox/playback_libeplayer3.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/playback_libeplayer3.h"

@@ -1,7 +1,5 @@
 #include <config.h>
-#if HAVE_TRIPLEDRAGON
-#include "../libtriple/record_td.h"
-#elif HAVE_DUCKBOX_HARDWARE
+#if HAVE_DUCKBOX_HARDWARE
 #include "../libduckbox/record_lib.h"
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/record_lib.h"

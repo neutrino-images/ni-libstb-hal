@@ -75,9 +75,9 @@ AC_SYS_LARGEFILE
 
 AC_DEFUN([TUXBOX_BOXTYPE], [
 AC_ARG_WITH(boxtype,
-	AS_HELP_STRING([--with-boxtype], [valid values: generic, tripledragon, spark, duckbox, armbox, mipsbox]),
+	AS_HELP_STRING([--with-boxtype], [valid values: generic, spark, duckbox, armbox, mipsbox]),
 	[case "${withval}" in
-		generic|tripledragon|spark|duckbox|armbox|mipsbox)
+		generic|spark|duckbox|armbox|mipsbox)
 			BOXTYPE="$withval"
 		;;
 		*)
@@ -138,7 +138,6 @@ AC_SUBST(BOXTYPE)
 AC_SUBST(BOXMODEL)
 
 AM_CONDITIONAL(BOXTYPE_GENERIC, test "$BOXTYPE" = "generic")
-AM_CONDITIONAL(BOXTYPE_TRIPLE, test "$BOXTYPE" = "tripledragon")
 AM_CONDITIONAL(BOXTYPE_SPARK, test "$BOXTYPE" = "spark")
 AM_CONDITIONAL(BOXTYPE_DUCKBOX, test "$BOXTYPE" = "duckbox")
 AM_CONDITIONAL(BOXTYPE_ARMBOX, test "$BOXTYPE" = "armbox")
@@ -202,8 +201,6 @@ AM_CONDITIONAL(BOXMODEL_VUDUO, test "$BOXMODEL" = "vuduo")
 
 if test "$BOXTYPE" = "generic"; then
 	AC_DEFINE(HAVE_GENERIC_HARDWARE, 1, [building for a generic device like a standard PC])
-elif test "$BOXTYPE" = "tripledragon"; then
-	AC_DEFINE(HAVE_TRIPLEDRAGON, 1, [building for a tripledragon])
 elif test "$BOXTYPE" = "spark"; then
 	AC_DEFINE(HAVE_SPARK_HARDWARE, 1, [building for a goldenmedia 990 or edision pingulux])
 	AC_DEFINE(HAVE_SH4_HARDWARE, 1, [building for a sh4 box])

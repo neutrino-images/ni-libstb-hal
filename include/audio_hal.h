@@ -1,7 +1,5 @@
 #include <config.h>
-#if HAVE_TRIPLEDRAGON
-#include "../libtriple/audio_td.h"
-#elif HAVE_DUCKBOX_HARDWARE
+#if HAVE_DUCKBOX_HARDWARE
 #include "../libduckbox/audio_lib.h"
 #include "../libduckbox/audio_mixer.h"
 #elif HAVE_SPARK_HARDWARE

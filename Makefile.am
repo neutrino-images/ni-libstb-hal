@@ -18,12 +18,6 @@ libstb_hal_la_LIBADD += \
 	libtriple/libtriple.la
 endif
 
-if BOXTYPE_AZBOX
-SUBDIRS += libazbox
-libstb_hal_la_LIBADD += \
-	libazbox/libazbox.la
-endif
-
 if BOXTYPE_GENERIC
 if BOXMODEL_RASPI
 SUBDIRS += libraspi

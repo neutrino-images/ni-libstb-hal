@@ -9,8 +9,6 @@
 #include "../libarmbox/record_lib.h"
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/record_lib.h"
-#elif HAVE_AZBOX_HARDWARE
-#include "../libazbox/record_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
 #include "../libraspi/record_lib.h"

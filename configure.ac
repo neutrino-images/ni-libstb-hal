@@ -108,7 +108,6 @@ Makefile
 common/Makefile
 libmipsbox/Makefile
 libarmbox/Makefile
-libazbox/Makefile
 libduckbox/Makefile
 libdvbci/Makefile
 libeplayer3/Makefile

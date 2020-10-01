@@ -17,8 +17,6 @@
 #endif
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/playback_libeplayer3.h"
-#elif HAVE_AZBOX_HARDWARE
-#include "../libazbox/playback_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
 #include "../libraspi/playback_lib.h"

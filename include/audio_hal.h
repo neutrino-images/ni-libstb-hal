@@ -11,8 +11,6 @@
 #include "../libarmbox/audio_lib.h"
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/audio_lib.h"
-#elif HAVE_AZBOX_HARDWARE
-#include "../libazbox/audio_lib.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
 #include "../libraspi/audio_lib.h"

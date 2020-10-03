@@ -185,7 +185,7 @@ hw_caps_t *get_hwcaps(void)
 #endif
 #if BOXMODEL_HD61
 	initialized = 1;
-	caps.has_CI = 0;
+	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;

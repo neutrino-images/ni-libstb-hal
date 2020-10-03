@@ -69,6 +69,24 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "DUO4K");
 	strcpy(caps.boxarch, "BCM7278");
 #endif
+#if BOXMODEL_VUDUO4KSE
+	initialized = 1;
+	caps.has_CI = 2;
+	caps.can_cec = 1;
+	caps.can_shutdown = 1;
+	caps.display_xres = 480;
+	caps.display_yres = 320;
+	caps.display_type = HW_DISPLAY_GFX;
+	caps.display_can_deepstandby = 0;	// 0 because we use graphlcd/lcd4linux
+	caps.display_can_set_brightness = 0;	// 0 because we use graphlcd/lcd4linux
+	caps.display_has_statusline = 0;	// 0 because we use graphlcd/lcd4linux
+	caps.display_has_colon = 0;
+	caps.has_button_timer = 1;
+	caps.has_HDMI = 2;
+	strcpy(caps.boxvendor, "VU+");
+	strcpy(caps.boxname, "DUO4KSE");
+	strcpy(caps.boxarch, "BCM7444S");
+#endif
 #if BOXMODEL_VUULTIMO4K
 	initialized = 1;
 	caps.has_CI = 2;

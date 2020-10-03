@@ -137,7 +137,7 @@ int cAudio::Start(void)
 {
 	int ret;
 	ret = ioctl(fd, AUDIO_PLAY);
-#ifdef BOXMODEL_HD60 || BOXMODEL_HD61
+#if BOXMODEL_HISILICON
 	ioctl(fd, AUDIO_CONTINUE);
 #endif
 	return ret;

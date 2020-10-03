@@ -32,7 +32,7 @@ AM_LDFLAGS += \
 	-lgsttag-1.0 \
 	-lgstmpegts-1.0
 else
-if BOXMODEL_HD60
+if BOXMODEL_HISILICON
 libarmbox_la_SOURCES += \
 	playback_hisilicon.cpp
 else

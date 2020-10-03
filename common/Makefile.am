@@ -31,7 +31,7 @@ libcommon_la_SOURCES = \
 	ca_ci.cpp
 else
 if BOXTYPE_ARMBOX
-if BOXMODEL_HD60
+if BOXMODEL_HISILICON
 libcommon_la_SOURCES = \
 	ca.cpp
 else

@@ -26,7 +26,7 @@ inline void cs_api_exit()
 #if HAVE_DUCKBOX_HARDWARE \
  || HAVE_MIPS_HARDWARE \
  || (HAVE_ARM_HARDWARE \
-     && !BOXMODEL_HD60 \
+     && !BOXMODEL_HISILICON \
      && !BOXMODEL_OSMIO4K \
      && !BOXMODEL_OSMIO4KPLUS \
     )

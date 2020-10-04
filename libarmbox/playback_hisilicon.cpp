@@ -359,44 +359,11 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (!playing)
 		return false;
 
-	int64_t vpts = 0;
-	//::ioctl(videoDecoder->fd, VIDEO_GET_PTS, &vpts);
-	vpts = videoDecoder->GetPTS();
-
-	if (vpts <= 0)
-	{
-		printf("ERROR: vpts==0\n");
-	}
-	else
-	{
-		/* workaround for crazy vpts value during timeshift */
-		if (!got_vpts_ts && pm == PLAYMODE_TS)
-		{
-			vpts_ts = vpts;
-			got_vpts_ts = true;
-		}
-		if (got_vpts_ts)
-			vpts -= vpts_ts;
-		/* end workaround */
-		/* len is in nanoseconds. we have 90 000 pts per second. */
-		position = vpts / 90;
-	}
-
 	if (got_duration)
 		return true;
 
-	int64_t length = 0;
-
-	length = netlink_event::getInstance()->getDuration() * 1000;
-
-	if (length <= 0)
-	{
-		duration = duration + 1000;
-	}
-	else
-	{
-		duration = length * 1000;
-	}
+	position = videoDecoder->GetPTS() / 90LL;
+	duration = netlink_event::getInstance()->getDuration();
 
 	return true;
 }
@@ -418,7 +385,7 @@ bool cPlayback::SetPosition(int position, bool absolute)
 		return false;
 	}
 
-	int64_t pos = (position / 1000.0);
+	int64_t pos = position;
 
 	if (!absolute)
 	{

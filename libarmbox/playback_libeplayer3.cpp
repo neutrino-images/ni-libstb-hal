@@ -722,7 +722,7 @@ int cPlayback::GetTeletextPid(void)
 }
 
 /* dummy functions for subtitles */
-void cPlayback::FindAllSubs(int * /*pids*/, unsigned int * /*supp*/, unsigned int *num, std::string * /*lang*/)
+void cPlayback::FindAllSubs(short unsigned int * /*pids*/, short unsigned int * /*supp*/, short unsigned int *num, std::string * /*lang*/)
 {
 	*num = 0;
 }

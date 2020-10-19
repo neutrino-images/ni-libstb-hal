@@ -58,8 +58,7 @@ class cPlayback
 		void GetPts(uint64_t &pts);
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);
-		void FindAllSubs(int *pids, unsigned int *supported, unsigned int *numpida, std::string *language);
-		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language) { FindAllSubs((int*) pids, (unsigned int*) supported, (unsigned int*) numpida, language); };
+		void FindAllSubs(short unsigned int *pids, short unsigned int *supported, short unsigned int *numpida, std::string *language);
 		bool SelectSubtitles(int pid, std::string charset = "");
 		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
 		void FindAllTeletextsubtitlePids(int */*pids*/, unsigned int *numpidt, std::string */*tlanguage*/, int */*mags*/, int */*pages*/);

@@ -408,6 +408,8 @@ void hdmi_cec::SetCECState(bool state)
 		}
 #endif
 
+		GetCECAddressInfo();
+
 		message.initiator = logicalAddress;
 		message.destination = CEC_LOG_ADDR_BROADCAST;
 		message.data[0] = CEC_MSG_ACTIVE_SOURCE;

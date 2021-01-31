@@ -160,39 +160,12 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	ioctl(fd, AUDIO_SET_AV_SYNC, Mode);
 }
 
-#define AUDIO_STREAMTYPE_AC3	0
-#define AUDIO_STREAMTYPE_MPEG	1
-#define AUDIO_STREAMTYPE_DTS	2
-#define AUDIO_STREAMTYPE_AAC	8
-#define AUDIO_STREAMTYPE_AACHE	9
-
-void cAudio::SetStreamType(AUDIO_FORMAT type)
+void cAudio::SetStreamType(int bypass)
 {
-	int bypass = AUDIO_STREAMTYPE_MPEG;
-	hal_debug("%s %d\n", __FUNCTION__, type);
-	StreamType = type;
+	StreamType = bypass;
 
-	switch (type)
-	{
-		case AUDIO_FMT_DD_PLUS:
-		case AUDIO_FMT_DOLBY_DIGITAL:
-			bypass = AUDIO_STREAMTYPE_AC3;
-			break;
-		case AUDIO_FMT_AAC:
-			bypass = AUDIO_STREAMTYPE_AAC;
-			break;
-		case AUDIO_FMT_AAC_PLUS:
-			bypass = AUDIO_STREAMTYPE_AACHE;
-			break;
-		case AUDIO_FMT_DTS:
-			bypass = AUDIO_STREAMTYPE_DTS;
-			break;
-		default:
-			break;
-	}
+	hal_info("%s %d (0x%x)\n", __FUNCTION__, bypass, bypass);
 
-	// Normaly the encoding should be set using AUDIO_SET_ENCODING
-	// But as we implemented the behavior to bypass (cause of e2) this is correct here
 	if (ioctl(fd, AUDIO_SET_BYPASS_MODE, bypass) < 0)
 		hal_info("%s: AUDIO_SET_BYPASS_MODE failed (%m)\n", __func__);
 }

@@ -18,24 +18,6 @@ typedef enum {
 	HDMI_ENCODED_FORCED
 } HDMI_ENCODED_MODE;
 
-typedef enum
-{
-	AUDIO_FMT_AUTO = 0,
-	AUDIO_FMT_MPEG,
-	AUDIO_FMT_MP3,
-	AUDIO_FMT_DOLBY_DIGITAL,
-	AUDIO_FMT_BASIC = AUDIO_FMT_DOLBY_DIGITAL,
-	AUDIO_FMT_AAC,
-	AUDIO_FMT_AAC_PLUS,
-	AUDIO_FMT_DD_PLUS,
-	AUDIO_FMT_DTS,
-	AUDIO_FMT_AVS,
-	AUDIO_FMT_MLP,
-	AUDIO_FMT_WMA,
-	AUDIO_FMT_MPG1, // TD only. For Movieplayer / cPlayback
-	AUDIO_FMT_ADVANCED = AUDIO_FMT_MLP
-} AUDIO_FORMAT;
-
 class mixerVolume;
 
 class cAudio
@@ -49,7 +31,7 @@ class cAudio
 		int mixer_fd;  /* if we are using the OSS mixer */
 		int mixer_num; /* oss mixer to use, if any */
 
-		AUDIO_FORMAT	StreamType;
+		int	StreamType;
 		AUDIO_SYNC_MODE    SyncMode;
 		bool started;
 
@@ -80,8 +62,8 @@ class cAudio
 		int Start(void);
 		int Stop(void);
 		bool Pause(bool Pcm = true);
-		void SetStreamType(AUDIO_FORMAT type);
-		AUDIO_FORMAT GetStreamType(void) { return StreamType; }
+		void SetStreamType(int bypass);
+		int GetStreamType(void) { return StreamType; }
 		void SetSyncMode(AVSYNC_TYPE Mode);
 
 		/* select channels */

@@ -2,7 +2,7 @@
 #define __HDMI_CEC_H__
 
 /*
-	Copyright (C) 2018-2020 TangoCash
+	Copyright (C) 2018-2021 TangoCash
 
 	License: GPLv2
 
@@ -79,6 +79,7 @@ private:
 	int volume;
 	bool fallback;
 	bool tv_off;
+	unsigned char audio_destination;
 protected:
 	bool running;
 public:
@@ -103,6 +104,11 @@ public:
 	{
 		return muted;
 	};
+	int GetAudioDestination()
+	{
+		return (int)audio_destination;
+	}
+	void SetAudioDestination(int audio_dest);
 };
 
 #endif // __HDMI_CEC_H__

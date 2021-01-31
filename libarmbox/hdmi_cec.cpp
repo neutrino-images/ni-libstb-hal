@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2018-2020 TangoCash
+	Copyright (C) 2018-2021 TangoCash
 
 	License: GPLv2
 
@@ -85,6 +85,7 @@ hdmi_cec::hdmi_cec()
 	fallback = false;
 	tv_off = true;
 	deviceType = CEC_LOG_ADDR_TYPE_UNREGISTERED;
+	audio_destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
 }
 
 hdmi_cec::~hdmi_cec()
@@ -812,7 +813,7 @@ void hdmi_cec::send_key(unsigned char key, unsigned char destination)
 void hdmi_cec::request_audio_status()
 {
 	struct cec_message txmessage;
-	txmessage.destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+	txmessage.destination = audio_destination;
 	txmessage.initiator = logicalAddress;
 	txmessage.data[0] = CEC_OPCODE_GIVE_AUDIO_STATUS;
 	txmessage.length = 1;
@@ -821,16 +822,31 @@ void hdmi_cec::request_audio_status()
 
 void hdmi_cec::vol_up()
 {
-	send_key(CEC_USER_CONTROL_CODE_VOLUME_UP, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	send_key(CEC_USER_CONTROL_CODE_VOLUME_UP, audio_destination);
 	request_audio_status();
 }
 void hdmi_cec::vol_down()
 {
-	send_key(CEC_USER_CONTROL_CODE_VOLUME_DOWN, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	send_key(CEC_USER_CONTROL_CODE_VOLUME_DOWN, audio_destination);
 	request_audio_status();
 }
 void hdmi_cec::toggle_mute()
 {
-	send_key(CEC_USER_CONTROL_CODE_MUTE, CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM);
+	send_key(CEC_USER_CONTROL_CODE_MUTE, audio_destination);
 	request_audio_status();
 }
+
+void hdmi_cec::SetAudioDestination(int audio_dest)
+{
+	switch(audio_dest)
+	{
+		case 2:
+			audio_destination = CEC_OP_PRIM_DEVTYPE_TV;
+			break;
+		case 1:
+		default:
+			audio_destination = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+			break;
+	}
+}
+

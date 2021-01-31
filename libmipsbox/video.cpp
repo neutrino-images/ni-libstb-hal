@@ -1278,3 +1278,13 @@ void cVideo::SetCECAutoView(bool state)
 {
 	hdmi_cec::getInstance()->SetCECAutoView(state);
 }
+
+int cVideo::GetAudioDestination()
+{
+	return (int)hdmi_cec::getInstance()->GetAudioDestination();
+}
+
+void cVideo::SetAudioDestination(int audio_dest)
+{
+	hdmi_cec::getInstance()->SetAudioDestination(audio_dest);
+}

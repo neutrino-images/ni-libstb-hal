@@ -132,9 +132,11 @@ void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 	hal_debug("%s %d\n", __func__, Mode);
 };
 
-void cAudio::SetStreamType(AUDIO_FORMAT type)
+void cAudio::SetStreamType(int bypass)
 {
-	hal_debug("%s %d\n", __func__, type);
+	StreamType = bypass;
+
+	hal_debug("%s %d (0x%x)\n", __FUNCTION__, bypass, bypass);
 };
 
 int cAudio::setChannel(int /*channel*/)

@@ -200,7 +200,7 @@ class cVideo : public OpenThreads::Thread
 		void SetCECAutoView(bool) { return; };
 		void SetCECAutoStandby(bool) { return; };
 		int  GetAudioDestination() { return 0; };
-		void SetAudioDestination(int audio_dest) { };
+		void SetAudioDestination(int audio_dest) { return; };
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600, int startx = 0, int starty = 0, int endx = 1279, int endy = 719);

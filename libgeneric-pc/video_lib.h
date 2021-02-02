@@ -116,6 +116,12 @@ typedef enum {
 	VIDEO_HDMI_CEC_MODE_RECORDER
 } VIDEO_HDMI_CEC_MODE;
 
+typedef enum {
+	VIDEO_HDMI_CEC_VOL_OFF = 0,
+	VIDEO_HDMI_CEC_VOL_AUDIOSYSTEM = 1,
+	VIDEO_HDMI_CEC_VOL_TV = 2
+} VIDEO_HDMI_CEC_VOL;
+
 typedef enum
 {
 	VIDEO_CONTROL_BRIGHTNESS = 0,
@@ -193,6 +199,8 @@ class cVideo : public OpenThreads::Thread
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };
 		void SetCECAutoStandby(bool) { return; };
+		int  GetAudioDestination() { return 0; };
+		void SetAudioDestination(int audio_dest) { };
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600, int startx = 0, int starty = 0, int endx = 1279, int endy = 719);

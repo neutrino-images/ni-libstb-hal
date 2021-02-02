@@ -594,15 +594,9 @@ void hdmi_cec::run()
 	struct epoll_event event;
 	event.data.fd = hdmiFd;
 	event.events = EPOLLIN;
-<<<<<<< HEAD
 
 	epoll_ctl(epollfd, EPOLL_CTL_ADD, hdmiFd, &event);
-
-=======
-
-	epoll_ctl(epollfd, EPOLL_CTL_ADD, hdmiFd, &event);
-
->>>>>>> e24aae1... cec volume switch audiosystem/tv
+	
 	std::array<struct epoll_event, EPOLL_MAX_EVENTS> events;
 
 	while (running)

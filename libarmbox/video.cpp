@@ -141,6 +141,13 @@ static const char *VMPEG_framerate[] = {
 	"/proc/stb/vmpeg/3/framerate"
 };
 
+static const char *VMPEG_visible[] = {
+	"/proc/stb/vmpeg/0/visible",
+	"/proc/stb/vmpeg/1/visible",
+	"/proc/stb/vmpeg/2/visible",
+	"/proc/stb/vmpeg/3/visible"
+};
+
 static const char *vid_modes[] = {
 	"pal",		// VIDEO_STD_NTSC
 	"pal",		// VIDEO_STD_SECAM
@@ -757,6 +764,13 @@ int cVideo::getBlank(void)
 	hal_debug("%s => %d\n", __func__, blank_mode);
 	return blank_mode;
 #endif
+}
+
+void cVideo::ShowPig(int _x)
+{
+	char buffer[64];
+	sprintf(buffer, "%d", _x);
+	proc_put(VMPEG_visible[devnum], buffer, strlen(buffer));
 }
 
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, int starty, int endx, int endy)

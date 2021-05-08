@@ -39,6 +39,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
 	caps.display_can_deepstandby = 1;
 	caps.display_can_set_brightness = 1;
+	caps.display_can_umlauts = 0;	/* need test */
 	caps.display_has_statusline = 0;
 	caps.display_has_colon = 0;
 	caps.has_button_timer = 1;

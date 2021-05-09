@@ -41,7 +41,7 @@ hw_caps_t *get_hwcaps(void)
 		buf[len] = 0;
 		if (!strncmp(buf, "atevio7500", 10)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "atevio7500");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -54,7 +54,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ufs912", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ufs912");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -67,7 +67,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ufs913", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ufs913");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -80,7 +80,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ufs922", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ufs922");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -93,7 +93,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ufs910", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ufs910");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -106,7 +106,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "hdbox", 5)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "hdbox");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -119,7 +119,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "octagon1008", 11)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "octagon1008");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -177,7 +177,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo-mini", 14)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo-mini");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -187,7 +187,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo-mini2", 14)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo-mini2");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -200,7 +200,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo-250hd", 4)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo-250hd");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -210,7 +210,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo-2000hd", 15)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo-2000hd");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -220,7 +220,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo", 8)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -230,7 +230,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "cuberevo-3000hd", 14)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "cuberevo-3000hd");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -240,7 +240,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ipbox9900", 9)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ipbox9900");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 2;
@@ -250,7 +250,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ipbox99", 7)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ipbox99");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -260,7 +260,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "ipbox55", 7)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "ipbox55");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;
@@ -270,7 +270,7 @@ hw_caps_t *get_hwcaps(void)
 		}
 		else if (!strncmp(buf, "tf7700", 6)) {
 			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
+			strcpy(caps.boxname, "tf7700");
 			caps.can_shutdown = 1;
 			caps.has_HDMI = 1;
 			caps.has_SCART = 1;

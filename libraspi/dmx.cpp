@@ -346,7 +346,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
 		pid, fd, DMX_T[dmx_type], len, s_flt.timeout,s_flt.flags, s_flt.filter.filter[0]);
 
-	if (HAL_DEBUG_DEMUX) {
+	if (debuglevel == 2) {
 		fprintf(stderr,"filt: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.filter[i]);fprintf(stderr,"\n");
 		fprintf(stderr,"mask: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.mask  [i]);fprintf(stderr,"\n");
 		fprintf(stderr,"mode: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.mode  [i]);fprintf(stderr,"\n");

@@ -65,6 +65,11 @@ extern "C"
 	_r;						\
 })
 
+enum
+{	ENCODER,
+	AUX
+};
+
 cVideo * videoDecoder = NULL;
 cVideo * pipDecoder = NULL;
 
@@ -363,6 +368,19 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 	}
 	av_free(formatContext);
 	return 0;
+}
+
+void cVideo::setAVInput(int val)
+{
+	hal_info("%s not implemented yet - switching to: %s\n", __func__, val == AUX ? "SCART" : "ENCODER");
+#if 0 // not working
+	int input_fd = open("/proc/stb/avs/0/input", O_WRONLY);
+	if(input_fd){
+		const char *input[] = {"encoder", "scart"};
+		write(input_fd, input[val], strlen(input[val]));
+		close(input_fd);
+	}
+#endif
 }
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)

@@ -18,13 +18,31 @@
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
+#define fop(cmd, args...) ({				\
+	int _r;						\
+	if (fd >= 0) { 					\
+		if ((_r = ::cmd(fd, args)) < 0)		\
+			hal_info(#cmd"(fd, "#args")\n");\
+		else					\
+			hal_debug(#cmd"(fd, "#args")\n");\
+	}						\
+	else { _r = fd; } 				\
+	_r;						\
+})
+
 #include <linux/soundcard.h>
+
+enum
+{	ENCODER,
+	AUX
+};
 
 cAudio * audioDecoder = NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
 	fd = -1;
+	fdd = false;
 	clipfd = -1;
 	mixer_fd = -1;
 	openDevice();
@@ -62,6 +80,48 @@ void cAudio::closeDevice(void)
 	if (mixer_fd > -1) {
 		close(mixer_fd);
 		mixer_fd = -1;
+	}
+}
+
+#ifndef AUDIO_SOURCE_HDMI
+#define AUDIO_SOURCE_HDMI 2
+#endif
+
+void cAudio::open_AVInput_Device(void)
+{
+	hal_debug("%s\n", __func__);
+
+	if (fdd) /* already open */
+		return;
+
+	fop(ioctl, AUDIO_SELECT_SOURCE, AUDIO_SOURCE_HDMI);
+	fop(ioctl, AUDIO_PLAY);
+	fdd = true;
+}
+
+void cAudio::close_AVInput_Device(void)
+{
+	hal_debug("%s\n", __func__);
+
+	if (fdd) {
+		fop(ioctl, AUDIO_STOP);
+	}
+	fdd = false;
+}
+
+void cAudio::setAVInput(int val)
+{
+	hal_info("%s - switching to: %s\n", __func__, val == AUX ? "AUX" : "ENCODER");
+
+	if (val == AUX) {
+		Stop();
+		open_AVInput_Device();
+	} else {
+		if (fdd) {
+			close_AVInput_Device();
+			fop(ioctl, AUDIO_SELECT_SOURCE, AUDIO_SOURCE_DEMUX);
+			Start();
+		}
 	}
 }
 

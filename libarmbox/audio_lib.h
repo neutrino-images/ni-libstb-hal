@@ -25,6 +25,7 @@ class cAudio
 	friend class cPlayback;
 	private:
 		int fd;
+		bool fdd;
 		bool Muted;
 
 		int clipfd; /* for pcm playback */
@@ -39,14 +40,19 @@ class cAudio
 
 		int do_mute(bool enable, bool remember);
 		void setBypassMode(bool disable);
-
 	public:
 		/* construct & destruct */
 		cAudio(void *, void *, void *);
 		~cAudio(void);
 
+		/* used internally by playback */
 		void openDevice(void);
 		void closeDevice(void);
+
+		void open_AVInput_Device(void);
+		void close_AVInput_Device(void);
+
+		void setAVInput(int val);
 
 		void *GetHandle() { return NULL; };
 		/* shut up */

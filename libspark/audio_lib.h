@@ -52,6 +52,11 @@ class cAudio
 		cAudio(void *, void *, void *);
 		~cAudio(void);
 
+		void open_AVInput_Device(void) { return; };
+		void close_AVInput_Device(void) { return; };
+
+		void setAVInput(int val);
+
 		void *GetHandle() { return NULL; };
 		/* shut up */
 		int mute(bool remember = true) { return do_mute(true, remember); };

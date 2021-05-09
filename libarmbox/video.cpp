@@ -57,7 +57,7 @@ extern "C"
 	int _r;						\
 	if (fd >= 0) { 					\
 		if ((_r = ::cmd(fd, args)) < 0)		\
-			hal_info(#cmd"(fd, "#args")\n");	\
+			hal_info(#cmd"(fd, "#args")\n");\
 		else					\
 			hal_debug(#cmd"(fd, "#args")\n");\
 	}						\
@@ -71,6 +71,11 @@ extern "C"
 #ifndef VIDEO_GET_FRAME_RATE
 #define VIDEO_GET_FRAME_RATE       _IOR('o', 56, unsigned int)
 #endif
+
+enum
+{	ENCODER,
+	AUX
+};
 
 cVideo * videoDecoder = NULL;
 cVideo * pipDecoder = NULL;
@@ -385,15 +390,56 @@ int image_to_mpeg2(const char *image_name, int fd)
 	av_free(formatContext);
 	return ret;
 }
-enum{ENCODER,AUX};
-void setAVInput(int val)
+
+#ifndef VIDEO_SOURCE_HDMI
+#define VIDEO_SOURCE_HDMI 2
+#endif
+
+void cVideo::open_AVInput_Device(void)
 {
+	hal_debug("%s\n", __func__);
+
+	if (fdd) /* already open */
+		return;
+
+	fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_HDMI);
+	fop(ioctl, VIDEO_PLAY);
+	fdd = true;
+}
+
+void cVideo::close_AVInput_Device(void)
+{
+	hal_debug("%s\n", __func__);
+
+	if (fdd) {
+		fop(ioctl, VIDEO_STOP);
+		fop(ioctl, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_DEMUX);
+	}
+	fdd = false;
+}
+
+void cVideo::setAVInput(int val)
+{
+	hal_info("%s - switching to: %s\n", __func__, val == AUX ? "AUX" : "ENCODER");
+
+	if (val == AUX) {
+		setBlank(1);
+		open_AVInput_Device();
+	} else {
+		if (fdd) {
+			close_AVInput_Device();
+			setBlank(0);
+		}
+	}
+
+#if 0 // not working
 	int input_fd = open("/proc/stb/avs/0/input", O_WRONLY);
 	if(input_fd){
 		const char *input[] = {"encoder", "aux"};
 		write(input_fd, input[val], strlen(input[val]));
 		close(input_fd);
 	}
+#endif
 }
 
 cVideo::cVideo(int, void *, void *, unsigned int unit)
@@ -412,14 +458,19 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	} else
 		devnum = unit;
 	fd = -1;
+	fdd = false;
 	openDevice();
+#if 0
 	setAVInput(ENCODER);
+#endif
 }
 
 cVideo::~cVideo(void)
 {
+#if 0
 	if(fd >= 0)
 		setAVInput(AUX);
+#endif
 	if (hdmi_cec::getInstance()->standby_cec_activ && fd >= 0)
 		hdmi_cec::getInstance()->SetCECState(true);
 
@@ -743,12 +794,16 @@ void cVideo::Standby(unsigned int bOn)
 	if (bOn)
 	{
 		closeDevice();
+#if 0
 		setAVInput(AUX);
+#endif
 	}
 	else
 	{
 		openDevice();
+#if 0
 		setAVInput(ENCODER);
+#endif
 	}
 	video_standby = bOn;
 	hdmi_cec::getInstance()->SetCECState(video_standby);

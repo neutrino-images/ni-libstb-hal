@@ -7,6 +7,7 @@
  * License: GPL v2 or later
  */
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -25,329 +26,277 @@ hw_caps_t *get_hwcaps(void)
 
 	memset(&caps, 0, sizeof(hw_caps_t));
 
+#if BOXMODEL_UFS910
 	initialized = 1;
-	char buf[64];
-	int len = -1;
-	int fd = open("/proc/stb/info/model", O_RDONLY);
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "UFS910");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 16;
+#endif
+#if BOXMODEL_UFS912
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "UFS912");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 1;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 16;
+#endif
+#if BOXMODEL_UFS913
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "UFS913");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 1;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 16;
+#endif
+#if BOXMODEL_UFS922
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "UFS922");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 16;
+#endif
+#if BOXMODEL_ATEVIO7500
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "ATEVIO7500");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 1;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 12;
+#endif
+#if BOXMODEL_FORTIS_HDBOX
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "HDBOX");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 12;
+#endif
+#if BOXMODEL_OCTAGON1008
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "OCTAGON1008");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 8;
+#endif
+#if BOXMODEL_CUBEREVO
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
 	caps.display_has_statusline = 0;
-	caps.can_cpufreq = 1;
-	if (fd != -1) {
-		len = read(fd, buf, sizeof(buf) - 1);
-		close(fd);
-	}
-	if (len > 0) {
-		buf[len] = 0;
-		if (!strncmp(buf, "atevio7500", 10)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "atevio7500");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 12;
-		}
-		else if (!strncmp(buf, "ufs912", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ufs912");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 16;
-		}
-		else if (!strncmp(buf, "ufs913", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ufs913");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 16;
-		}
-		else if (!strncmp(buf, "ufs922", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ufs922");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 16;
-		}
-		else if (!strncmp(buf, "ufs910", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ufs910");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 16;
-		}
-		else if (!strncmp(buf, "hdbox", 5)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "hdbox");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 12;
-		}
-		else if (!strncmp(buf, "octagon1008", 11)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "octagon1008");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 8;
-		}
-		else if (!strncmp(buf, "hs7110", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-		}
-		else if (!strncmp(buf, "hs7810a", 7)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-		}
-		else if (!strncmp(buf, "hs7119", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-		}
-		else if (!strncmp(buf, "hs7819", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-		}
-		else if (!strncmp(buf, "dp7000", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-		}
-		else if (!strncmp(buf, "cuberevo-mini", 14)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo-mini");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-		}
-		else if (!strncmp(buf, "cuberevo-mini2", 14)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo-mini2");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 14;
-		}
-		else if (!strncmp(buf, "cuberevo-250hd", 4)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo-250hd");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 0;
-		}
-		else if (!strncmp(buf, "cuberevo-2000hd", 15)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo-2000hd");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 0;
-		}
-		else if (!strncmp(buf, "cuberevo", 8)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-		}
-		else if (!strncmp(buf, "cuberevo-3000hd", 14)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "cuberevo-3000hd");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-		}
-		else if (!strncmp(buf, "ipbox9900", 9)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ipbox9900");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 2;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-		}
-		else if (!strncmp(buf, "ipbox99", 7)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ipbox99");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 1;
-			caps.has_CI = 0;
-		}
-		else if (!strncmp(buf, "ipbox55", 7)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "ipbox55");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 0;
-		}
-		else if (!strncmp(buf, "tf7700", 6)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, "tf7700");
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 0;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-		}
-		else if (!strncmp(buf, "hl101", 5)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 1;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.has_SCART_input = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-			caps.display_type = HW_DISPLAY_LINE_TEXT;
-			caps.display_xres = 8;
-		}
-		else if (!strncmp(buf, "arivalink200", 12)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 0;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 0;
-		}
-		else if ((!strncasecmp(buf, "nbox", 4)) ||
-				(!strncasecmp(buf, "adb_box", 7))) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 0;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 1;
-			caps.has_CI = 2;
-			caps.display_can_set_brightness = 1;
-		}
-		else if ((!strncasecmp(buf, "sagemcom88", 10)) ||
-			(!strncasecmp(buf, "esi_88", 6)) ||
-			(!strncasecmp(buf, "esi88", 5)) ||
-			(!strncasecmp(buf, "dsi87", 5))) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 0;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 1;
-			caps.can_cec = 1;
-			caps.has_fan = 1;
-			caps.has_CI = 0;
-			caps.display_can_set_brightness = 1;
-		}
-		else if (!strncasecmp(buf, "dsi87", 5)) {
-			strcpy(caps.boxvendor, "DUCKBOX");
-			strcpy(caps.boxname, buf);
-			caps.can_shutdown = 0;
-			caps.has_HDMI = 1;
-			caps.has_SCART = 0;
-			caps.can_cec = 1;
-			caps.has_fan = 0;
-			caps.has_CI = 0;
-			caps.display_can_set_brightness = 0;
-		}
-		else {
-			strcpy(caps.boxvendor, "unknown");
-			strcpy(caps.boxname, buf);
-		}
-	}
-	else
-		strcpy(caps.boxname, "(unknown model)");
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 2;
+#endif
+#if BOXMODEL_CUBEREVO_MINI
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO-MINI");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+#endif
+#if BOXMODEL_CUBEREVO_MINI2
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO-MINI2");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 2;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.display_type = HW_DISPLAY_LINE_TEXT;
+	caps.display_xres = 14;
+#endif
+#if BOXMODEL_CUBEREVO_250HD
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO-250HD");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 0;
+#endif
+#if BOXMODEL_CUBEREVO_2000HD
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO-2000HD");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 0;
+#endif
+#if BOXMODEL_CUBEREVO_3000HD
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "CUBEREVO-3000HD");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 2;
+#endif
+#if BOXMODEL_IPBOX9900
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "IPBOX9900");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 2;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 2;
+#endif
+#if BOXMODEL_IPBOX99
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "IPBOX99");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 1;
+	caps.has_CI = 0;
+#endif
+#if BOXMODEL_IPBOX55
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "IPBOX55");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 0;
+#endif
+#if BOXMODEL_TF7700
+	initialized = 1;
+	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxname, "TF7700");
+	strcpy(caps.boxarch, caps.boxname);
+	caps.can_shutdown = 1;
+	caps.display_can_set_brightness = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_has_statusline = 0;
+	caps.has_HDMI = 1;
+	caps.has_SCART = 1;
+	caps.can_cec = 0;
+	caps.has_fan = 0;
+	caps.has_CI = 2;
+#endif
 
-	strcpy(caps.boxarch,caps.boxname);
 	return &caps;
 }

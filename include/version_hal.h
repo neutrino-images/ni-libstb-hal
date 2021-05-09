@@ -17,6 +17,4 @@ typedef struct hal_libversion_t
 
 void hal_get_lib_version(hal_libversion_t *ver);
 
-
 #endif //__VERSION_HAL_H__
-

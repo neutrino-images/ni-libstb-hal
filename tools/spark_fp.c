@@ -69,9 +69,9 @@ double mod_julian_date(struct tm *t)
 	day   = t->tm_mday;
 
 	date = day - 32076 +
-		1461 * (year + 4800 + (month - 14) / 12) / 4 +
-		367 *  (month - 2 -   (month - 14) / 12 * 12) / 12 -
-		3 *   ((year + 4900 + (month - 14) / 12 ) / 100) / 4;
+	    1461 * (year + 4800 + (month - 14) / 12) / 4 +
+	    367 * (month - 2 - (month - 14) / 12 * 12) / 12 -
+	    3 * ((year + 4900 + (month - 14) / 12) / 100) / 4;
 
 	date += (t->tm_hour + 12.0) / 24.0;
 	date += (t->tm_min) / 1440.0;
@@ -85,7 +85,7 @@ double mod_julian_date(struct tm *t)
 void time_to_aotom(time_t t, char *dest)
 {
 	/* from u-boot aotom */
-	struct tm* tmp;
+	struct tm *tmp;
 	tmp = localtime(&t);
 #if 0
 	/* this mjd stuff is totally useless: driver only uses dest[2] and dest[3]... */
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = 0;
-	while ((c = getopt (argc, argv, "gs:tw:Tl:L:P:S:B:i:I:p:")) != -1)
+	while ((c = getopt(argc, argv, "gs:tw:Tl:L:P:S:B:i:I:p:")) != -1)
 	{
 		switch (c)
 		{
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 				t = atol(optarg);
 				if (t == 0)
 					t = time(NULL),
-				ret = set_aotom_time(fd, t);
+					ret = set_aotom_time(fd, t);
 				break;
 			case 't':
 				ret = ioctl(fd, VFDGETTIME, &t);
@@ -212,17 +212,17 @@ int main(int argc, char **argv)
 				}
 				tmp = gmtime(&t2);
 				fprintf(stderr, "current time: %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
-						tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
+				    tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 				tmp = gmtime(&t);
 				fprintf(stderr, "wakeup time:  %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
-						tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
+				    tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
 				break;
 			case 'P':
 				ret = ioctl(fd, VFDPOWEROFF);
 				break;
 			case 'p':
-				period = atoi(optarg)/10;
+				period = atoi(optarg) / 10;
 				break;
 			case 'l': /* LED on */
 				aotom.u.led.on = period;
@@ -261,15 +261,19 @@ int main(int argc, char **argv)
 			case 'S':
 				if (2 == sscanf(optarg, "%d:%lx", &aotom.u.key.key_nr, (long unsigned int *) &aotom.u.key.key))
 					ioctl(fd, VFDSETSTBYKEY, &aotom);
-				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr)) {
+				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr))
+				{
 					ret = ioctl(fd, VFDGETSTBYKEY, &aotom);
 					if (ret)
 						perror("ioctl VFDGETSTBYKEY");
 					else
 						fprintf(stderr, "stby key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
-				} else {
+				}
+				else
+				{
 					aotom.u.key.key_nr = 0;
-					while(aotom.u.key.key_nr < 5) {
+					while (aotom.u.key.key_nr < 5)
+					{
 						ret = ioctl(fd, VFDGETSTBYKEY, &aotom);
 						if (ret)
 							perror("ioctl VFDGETSTBYKEY");
@@ -282,15 +286,19 @@ int main(int argc, char **argv)
 			case 'B':
 				if (2 == sscanf(optarg, "%d:%lx", &aotom.u.key.key_nr, (long unsigned int *) &aotom.u.key.key))
 					ioctl(fd, VFDSETBLUEKEY, &aotom);
-				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr)) {
+				if (1 == sscanf(optarg, "%d", &aotom.u.key.key_nr))
+				{
 					ret = ioctl(fd, VFDGETBLUEKEY, &aotom);
 					if (ret)
 						perror("ioctl VFDGETBLUEKEY");
 					else
 						fprintf(stderr, "blue key %d = %.8x\n", aotom.u.key.key_nr, aotom.u.key.key);
-				} else {
+				}
+				else
+				{
 					aotom.u.key.key_nr = 0;
-					while(aotom.u.key.key_nr < 5) {
+					while (aotom.u.key.key_nr < 5)
+					{
 						ret = ioctl(fd, VFDGETBLUEKEY, &aotom);
 						if (ret)
 							perror("ioctl VFDGETBLUEKEY");

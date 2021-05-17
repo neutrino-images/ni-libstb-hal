@@ -28,7 +28,7 @@
 
 #include "misc.h"
 
-void PutBits(BitPacker_t * ld, unsigned int code, unsigned int length)
+void PutBits(BitPacker_t *ld, unsigned int code, unsigned int length)
 {
 	unsigned int bit_buf;
 	unsigned int bit_left;
@@ -39,20 +39,23 @@ void PutBits(BitPacker_t * ld, unsigned int code, unsigned int length)
 #ifdef DEBUG_PUTBITS
 	if (ld->debug)
 		dprintf("code = %d, length = %d, bit_buf = 0x%x, bit_left = %d\n",
-			code, length, bit_buf, bit_left);
+		    code, length, bit_buf, bit_left);
 #endif
 
-	if (length < bit_left) {
+	if (length < bit_left)
+	{
 		/* fits into current buffer */
 		bit_buf = (bit_buf << length) | code;
 		bit_left -= length;
-	} else {
+	}
+	else
+	{
 		/* doesn't fit */
 		bit_buf <<= bit_left;
 		bit_buf |= code >> (length - bit_left);
-		ld->Ptr[0] = (uint8_t) (bit_buf >> 24);
-		ld->Ptr[1] = (uint8_t) (bit_buf >> 16);
-		ld->Ptr[2] = (uint8_t) (bit_buf >> 8);
+		ld->Ptr[0] = (uint8_t)(bit_buf >> 24);
+		ld->Ptr[1] = (uint8_t)(bit_buf >> 16);
+		ld->Ptr[2] = (uint8_t)(bit_buf >> 8);
 		ld->Ptr[3] = (uint8_t) bit_buf;
 		ld->Ptr += 4;
 		length -= bit_left;
@@ -71,10 +74,11 @@ void PutBits(BitPacker_t * ld, unsigned int code, unsigned int length)
 	ld->Remaining = bit_left;
 }
 
-void FlushBits(BitPacker_t * ld)
+void FlushBits(BitPacker_t *ld)
 {
 	ld->BitBuffer <<= ld->Remaining;
-	while (ld->Remaining < 32) {
+	while (ld->Remaining < 32)
+	{
 #ifdef DEBUG_PUTBITS
 		if (ld->debug)
 			dprintf("flushing 0x%2.2x\n", ld->BitBuffer >> 24);

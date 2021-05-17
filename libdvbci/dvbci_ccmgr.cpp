@@ -28,15 +28,16 @@
 #define x_debug 0
 #define y_debug 0
 
-static const char * FILENAME = "[dvbci_ccmgr]";
+static const char *FILENAME = "[dvbci_ccmgr]";
 
 /* storage & load of authenticated data (HostID & DHSK & AKH) */
 
 static void CheckFile(char *file)
 {
-	if (access(file, F_OK) != 0) {
+	if (access(file, F_OK) != 0)
+	{
 		printf("No File: %s\n", file);
-		FILE* fd;
+		FILE *fd;
 		fd = fopen(file, "w");
 		fclose(fd);
 	}
@@ -64,19 +65,23 @@ static bool get_authdata(uint8_t *host_id, uint8_t *dhsk, uint8_t *akh, unsigned
 	get_authdata_filename(filename, sizeof(filename), slot);
 
 	fd = open(filename, O_RDONLY);
-	if (fd <= 0) {
+	if (fd <= 0)
+	{
 		fprintf(stderr, "cannot open %s\n", filename);
 		return false;
 	}
 
-	for (i = 0; i < 5; i++) {
-		if (read(fd, chunk, sizeof(chunk)) != sizeof(chunk)) {
+	for (i = 0; i < 5; i++)
+	{
+		if (read(fd, chunk, sizeof(chunk)) != sizeof(chunk))
+		{
 			fprintf(stderr, "cannot read auth_data\n");
 			close(fd);
 			return false;
 		}
 
-		if (i == index) {
+		if (i == index)
+		{
 			memcpy(host_id, chunk, 8);
 			memcpy(dhsk, &chunk[8], 256);
 			memcpy(akh, &chunk[8 + 256], 32);
@@ -100,13 +105,15 @@ static bool write_authdata(unsigned int slot, const uint8_t *host_id, const uint
 	unsigned int i;
 	bool ret = false;
 
-	for (entries = 0; entries < 5; entries++) {
+	for (entries = 0; entries < 5; entries++)
+	{
 		int offset = (8 + 256 + 32) * entries;
 		if (!get_authdata(&buf[offset], &buf[offset + 8], &buf[offset + 8 + 256], slot, entries))
 			break;
 
 		/* check if we got this pair already */
-		if (!memcmp(&buf[offset + 8 + 256], akh, 32)) {
+		if (!memcmp(&buf[offset + 8 + 256], akh, 32))
+		{
 			printf("data already stored\n");
 			return true;
 		}
@@ -117,23 +124,27 @@ static bool write_authdata(unsigned int slot, const uint8_t *host_id, const uint
 	get_authdata_filename(filename, sizeof(filename), slot);
 
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
-	if (fd <= 0) {
+	if (fd <= 0)
+	{
 		printf("cannot open %s for writing - authdata not stored\n", filename);
 		return false;
 	}
 
 	/* store new entry first */
-	if (write(fd, host_id, 8) != 8) {
+	if (write(fd, host_id, 8) != 8)
+	{
 		fprintf(stderr, "error in write\n");
 		goto end;
 	}
 
-	if (write(fd, dhsk, 256) != 256) {
+	if (write(fd, dhsk, 256) != 256)
+	{
 		fprintf(stderr, "error in write\n");
 		goto end;
 	}
 
-	if (write(fd, akh, 32) != 32) {
+	if (write(fd, akh, 32) != 32)
+	{
 		fprintf(stderr, "error in write\n");
 		goto end;
 	}
@@ -142,9 +153,11 @@ static bool write_authdata(unsigned int slot, const uint8_t *host_id, const uint
 	if (entries > 3)
 		entries = 3;
 
-	for (i = 0; i < entries; i++) {
+	for (i = 0; i < entries; i++)
+	{
 		int offset = (8 + 256 + 32) * i;
-		if (write(fd, &buf[offset], (8 + 256 + 32)) != (8 + 256 + 32)) {
+		if (write(fd, &buf[offset], (8 + 256 + 32)) != (8 + 256 + 32))
+		{
 			fprintf(stderr, "error in write\n");
 			goto end;
 		}
@@ -159,7 +172,8 @@ end:
 
 /* CI+ certificates */
 
-struct cert_ctx {
+struct cert_ctx
+{
 	X509_STORE *store;
 
 	/* Host */
@@ -173,7 +187,8 @@ struct cert_ctx {
 
 static int verify_cb(int /*ok*/, X509_STORE_CTX *ctx)
 {
-	if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_CERT_NOT_YET_VALID) {
+	if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_CERT_NOT_YET_VALID)
+	{
 		time_t now = time(NULL);
 		struct tm *t = localtime(&now);
 		if (t->tm_year < 2015)
@@ -193,7 +208,8 @@ static RSA *rsa_privatekey_open(const char *filename)
 	RSA *r = NULL;
 
 	fp = fopen(filename, "r");
-	if (!fp) {
+	if (!fp)
+	{
 		fprintf(stderr, "cannot open %s\n", filename);
 		return NULL;
 	}
@@ -213,7 +229,8 @@ static X509 *certificate_open(const char *filename)
 	X509 *cert;
 
 	fp = fopen(filename, "r");
-	if (!fp) {
+	if (!fp)
+	{
 		fprintf(stderr, "cannot open %s\n", filename);
 		return NULL;
 	}
@@ -256,15 +273,18 @@ static X509 *certificate_load_and_check(struct cert_ctx *ctx, const char *filena
 {
 	X509 *cert;
 
-	if (!ctx->store) {
+	if (!ctx->store)
+	{
 		/* we assume this is the first certificate added - so its root-ca */
 		ctx->store = X509_STORE_new();
-		if (!ctx->store) {
+		if (!ctx->store)
+		{
 			fprintf(stderr, "cannot create cert_store\n");
 			exit(-1);
 		}
 
-		if (X509_STORE_load_locations(ctx->store, filename, NULL) != 1) {
+		if (X509_STORE_load_locations(ctx->store, filename, NULL) != 1)
+		{
 			fprintf(stderr, "load of first certificate (root_ca) failed\n");
 			exit(-1);
 		}
@@ -273,19 +293,22 @@ static X509 *certificate_load_and_check(struct cert_ctx *ctx, const char *filena
 	}
 
 	cert = certificate_open(filename);
-	if (!cert) {
+	if (!cert)
+	{
 		fprintf(stderr, "cannot open certificate %s\n", filename);
 		return NULL;
 	}
 
-	if (!certificate_validate(ctx, cert)) {
+	if (!certificate_validate(ctx, cert))
+	{
 		fprintf(stderr, "cannot vaildate certificate\n");
 		X509_free(cert);
 		return NULL;
 	}
 
 	/* push into store - create a chain */
-	if (X509_STORE_load_locations(ctx->store, filename, NULL) != 1) {
+	if (X509_STORE_load_locations(ctx->store, filename, NULL) != 1)
+	{
 		fprintf(stderr, "load of certificate failed\n");
 		X509_free(cert);
 		return NULL;
@@ -299,12 +322,14 @@ static X509 *certificate_import_and_check(struct cert_ctx *ctx, const uint8_t *d
 	X509 *cert;
 
 	cert = d2i_X509(NULL, &data, len);
-	if (!cert) {
+	if (!cert)
+	{
 		fprintf(stderr, "cannot read certificate\n");
 		return NULL;
 	}
 
-	if (!certificate_validate(ctx, cert)) {
+	if (!certificate_validate(ctx, cert))
+	{
 		fprintf(stderr, "cannot vaildate certificate\n");
 		X509_free(cert);
 		return NULL;
@@ -320,7 +345,8 @@ static X509 *certificate_import_and_check(struct cert_ctx *ctx, const uint8_t *d
 
 #define MAX_ELEMENTS    33
 
-uint32_t datatype_sizes[MAX_ELEMENTS] = {
+uint32_t datatype_sizes[MAX_ELEMENTS] =
+{
 	0, 50, 0, 0, 0, 8, 8, 0,
 	0, 0, 0, 0, 32, 256, 256, 0,
 	0, 256, 256, 32, 8, 8, 32, 32,
@@ -328,14 +354,16 @@ uint32_t datatype_sizes[MAX_ELEMENTS] = {
 	32
 };
 
-struct element {
+struct element
+{
 	uint8_t *data;
 	uint32_t size;
 	/* buffer valid */
 	bool valid;
 };
 
-struct cc_ctrl_data {
+struct cc_ctrl_data
+{
 	/* parent */
 	//struct ci_session *session;
 	eDVBCISlot *slot;
@@ -370,7 +398,8 @@ struct cc_ctrl_data {
 static struct element *element_get(struct cc_ctrl_data *cc_data, unsigned int id)
 {
 	/* array index */
-	if ((id < 1) || (id >= MAX_ELEMENTS)) {
+	if ((id < 1) || (id >= MAX_ELEMENTS))
+	{
 		fprintf(stderr, "element_get: invalid id\n");
 		return NULL;
 	}
@@ -383,7 +412,8 @@ static void element_invalidate(struct cc_ctrl_data *cc_data, unsigned int id)
 	struct element *e;
 
 	e = element_get(cc_data, id);
-	if (e) {
+	if (e)
+	{
 		free(e->data);
 		memset(e, 0, sizeof(struct element));
 	}
@@ -406,13 +436,14 @@ static bool element_set(struct cc_ctrl_data *cc_data, unsigned int id, const uin
 		return false;
 
 	/* check size */
-	if ((datatype_sizes[id] != 0) && (datatype_sizes[id] != size)) {
+	if ((datatype_sizes[id] != 0) && (datatype_sizes[id] != size))
+	{
 		fprintf(stderr, "size %d of datatype_id %d doesn't match\n", size, id);
 		return false;
 	}
 
 	free(e->data);
-	e->data = (uint8_t*)malloc(size);
+	e->data = (uint8_t *)malloc(size);
 	memcpy(e->data, data, size);
 	e->size = size;
 	e->valid = true;
@@ -428,12 +459,14 @@ static bool element_set_certificate(struct cc_ctrl_data *cc_data, unsigned int i
 	int cert_len;
 
 	cert_len = i2d_X509(cert, &cert_der);
-	if (cert_len <= 0) {
+	if (cert_len <= 0)
+	{
 		printf("cannot get data in DER format\n");
 		return false;
 	}
 
-	if (!element_set(cc_data, id, cert_der, cert_len)) {
+	if (!element_set(cc_data, id, cert_der, cert_len))
+	{
 		printf("cannot store element (%d)\n", id);
 		return false;
 	}
@@ -448,7 +481,8 @@ static bool element_set_hostid_from_certificate(struct cc_ctrl_data *cc_data, un
 	char hostid[20];
 	uint8_t bin_hostid[8];
 
-	if ((id != 5) && (id != 6)) {
+	if ((id != 5) && (id != 6))
+	{
 		printf("wrong datatype_id for hostid\n");
 		return false;
 	}
@@ -456,14 +490,16 @@ static bool element_set_hostid_from_certificate(struct cc_ctrl_data *cc_data, un
 	subject = X509_get_subject_name(cert);
 	X509_NAME_get_text_by_NID(subject, nid_cn, hostid, sizeof(hostid));
 
-	if (strlen(hostid) != 16) {
+	if (strlen(hostid) != 16)
+	{
 		printf("malformed hostid\n");
 		return false;
 	}
 
 	str2bin(bin_hostid, hostid, 16);
 
-	if (!element_set(cc_data, id, bin_hostid, sizeof(bin_hostid))) {
+	if (!element_set(cc_data, id, bin_hostid, sizeof(bin_hostid)))
+	{
 		printf("cannot set hostid\n");
 		return false;
 	}
@@ -488,12 +524,14 @@ static unsigned int element_get_buf(struct cc_ctrl_data *cc_data, uint8_t *dest,
 	if (e == NULL)
 		return 0;
 
-	if (!e->valid) {
+	if (!e->valid)
+	{
 		fprintf(stderr, "element_get_buf: datatype %d not valid\n", id);
 		return 0;
 	}
 
-	if (!e->data) {
+	if (!e->data)
+	{
 		fprintf(stderr, "element_get_buf: datatype %d doesn't exist\n", id);
 		return 0;
 	}
@@ -508,7 +546,8 @@ static unsigned int element_get_req(struct cc_ctrl_data *cc_data, uint8_t *dest,
 {
 	unsigned int len = element_get_buf(cc_data, &dest[3], id);
 
-	if (len == 0) {
+	if (len == 0)
+	{
 		fprintf(stderr, "cannot get element %d\n", id);
 		return 0;
 	}
@@ -528,12 +567,14 @@ static uint8_t *element_get_ptr(struct cc_ctrl_data *cc_data, unsigned int id)
 	if (e == NULL)
 		return NULL;
 
-	if (!e->valid) {
+	if (!e->valid)
+	{
 		fprintf(stderr, "element_get_ptr: datatype %u not valid\n", id);
 		return NULL;
 	}
 
-	if (!e->data) {
+	if (!e->data)
+	{
 		fprintf(stderr, "element_get_ptr: datatype %u doesn't exist\n", id);
 		return NULL;
 	}
@@ -557,7 +598,8 @@ static bool sac_check_auth(const uint8_t *data, unsigned int len, uint8_t *sak)
 	aes_xcbc_mac_process(&ctx, data, len - 16);
 	aes_xcbc_mac_done(&ctx, calced_signature);
 
-	if (memcmp(&data[len - 16], calced_signature, 16)) {
+	if (memcmp(&data[len - 16], calced_signature, 16))
+	{
 		fprintf(stderr, "signature wrong\n");
 		return false;
 	}
@@ -654,7 +696,8 @@ static X509 *import_ci_certificates(struct cc_ctrl_data *cc_data, unsigned int i
 	len = element_get_buf(cc_data, buf, id);
 
 	cert = certificate_import_and_check(ctx, buf, len);
-	if (!cert) {
+	if (!cert)
+	{
 		printf("cannot read/verify DER cert\n");
 		return NULL;
 	}
@@ -688,19 +731,22 @@ static int check_ci_certificates(struct cc_ctrl_data *cc_data)
 #endif
 
 	/* import CICAM_BrandCert */
-	if ((ctx->ci_cust_cert = import_ci_certificates(cc_data, 8)) == NULL) {
+	if ((ctx->ci_cust_cert = import_ci_certificates(cc_data, 8)) == NULL)
+	{
 		printf("cannot import cert\n");
 		return -1;
 	}
 
 	/* import CICAM_DevCert */
-	if ((ctx->ci_device_cert = import_ci_certificates(cc_data, 16)) == NULL) {
+	if ((ctx->ci_device_cert = import_ci_certificates(cc_data, 16)) == NULL)
+	{
 		printf("cannot import cert\n");
 		return -1;
 	}
 
 	/* everything seems to be fine here - so extract the CICAM_id from cert */
-	if (!element_set_hostid_from_certificate(cc_data, 6, ctx->ci_device_cert)) {
+	if (!element_set_hostid_from_certificate(cc_data, 6, ctx->ci_device_cert))
+	{
 		printf("cannot set cicam_id in elements\n");
 		return -1;
 	}
@@ -770,10 +816,13 @@ static int restart_dh_challenge(struct cc_ctrl_data *cc_data)
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
-	if (!cc_data->cert_ctx) {
-		ctx = (struct cert_ctx*)calloc(1, sizeof(struct cert_ctx));
+	if (!cc_data->cert_ctx)
+	{
+		ctx = (struct cert_ctx *)calloc(1, sizeof(struct cert_ctx));
 		cc_data->cert_ctx = ctx;
-	} else {
+	}
+	else
+	{
 		ctx = cc_data->cert_ctx;
 	}
 
@@ -782,7 +831,8 @@ static int restart_dh_challenge(struct cc_ctrl_data *cc_data)
 	ctx->cust_cert = certificate_load_and_check(ctx, CUSTOMER_CERT);
 	ctx->device_cert = certificate_load_and_check(ctx, DEVICE_CERT);
 
-	if (!ctx->cust_cert || !ctx->device_cert) {
+	if (!ctx->cust_cert || !ctx->device_cert)
+	{
 		fprintf(stderr, "cannot loader certificates\n");
 		return -1;
 	}
@@ -798,7 +848,8 @@ static int restart_dh_challenge(struct cc_ctrl_data *cc_data)
 		fprintf(stderr, "cannot set hostid in elements\n");
 
 	cc_data->rsa_device_key = rsa_privatekey_open(DEVICE_CERT);
-	if (!cc_data->rsa_device_key) {
+	if (!cc_data->rsa_device_key)
+	{
 		fprintf(stderr, "cannot read private key\n");
 		return -1;
 	}
@@ -901,46 +952,47 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 
 	/* depends on new received items */
 
-	switch (id) {
-	case 8:         /* CICAM_BrandCert */
-	case 14:        /* DHPM */
-	case 16:        /* CICAM_DevCert */
-	case 18:        /* Signature_B */
-		/* this results in CICAM_ID when cert-chain is verified and ok */
-		if (check_ci_certificates(cc_data))
+	switch (id)
+	{
+		case 8:         /* CICAM_BrandCert */
+		case 14:        /* DHPM */
+		case 16:        /* CICAM_DevCert */
+		case 18:        /* Signature_B */
+			/* this results in CICAM_ID when cert-chain is verified and ok */
+			if (check_ci_certificates(cc_data))
+				break;
+			/* generate DHSK & AKH */
+			check_dh_challenge(cc_data);
 			break;
-		/* generate DHSK & AKH */
-		check_dh_challenge(cc_data);
-		break;
 
-	case 19:        /* auth_nonce - triggers new dh keychallenge - invalidates DHSK & AKH */
-		/* generate DHPH & Signature_A */
-		restart_dh_challenge(cc_data);
-		break;
+		case 19:        /* auth_nonce - triggers new dh keychallenge - invalidates DHSK & AKH */
+			/* generate DHPH & Signature_A */
+			restart_dh_challenge(cc_data);
+			break;
 
-	case 21:        /* Ns_module - triggers SAC key calculation */
-		generate_ns_host(cc_data);
-		generate_key_seed(cc_data);
-		generate_SAK_SEK(cc_data->sak, cc_data->sek, cc_data->ks_host);
-		break;
+		case 21:        /* Ns_module - triggers SAC key calculation */
+			generate_ns_host(cc_data);
+			generate_key_seed(cc_data);
+			generate_SAK_SEK(cc_data->sak, cc_data->sek, cc_data->ks_host);
+			break;
 
-	/* SAC data messages */
+		/* SAC data messages */
 
-	case 6:                 //CICAM_id
-	case 12:                //keyprecursor
-		check_new_key(cc_data);
-		break;
-	case 26:				//programm number
-	case 25:                //uri_message
-		generate_uri_confirm(cc_data, cc_data->sak);
-		break;
-	case 28:                //key register
-		check_new_key(cc_data);
-		break;
+		case 6:                 //CICAM_id
+		case 12:                //keyprecursor
+			check_new_key(cc_data);
+			break;
+		case 26:                //programm number
+		case 25:                //uri_message
+			generate_uri_confirm(cc_data, cc_data->sak);
+			break;
+		case 28:                //key register
+			check_new_key(cc_data);
+			break;
 
-	default:
-		printf("%s -> %s unhandled ID (%d)\n", FILENAME, __FUNCTION__, id);
-		break;
+		default:
+			printf("%s -> %s unhandled ID (%d)\n", FILENAME, __FUNCTION__, id);
+			break;
 	}
 
 	return 0;
@@ -951,22 +1003,24 @@ static int data_req_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 #if x_debug
 	printf("%s -> %s ID = (%d)\n", FILENAME, __FUNCTION__, id);
 #endif
-	switch (id) {
-	case 22:                /* AKH */
+	switch (id)
 	{
-		uint8_t akh[32], host_id[8];
-		memset(akh, 0, sizeof(akh));
-		if (cc_data->akh_index != 5) {
-			if (!get_authdata(host_id, cc_data->dhsk, akh, cc_data->slot->slot, cc_data->akh_index++))
-				cc_data->akh_index = 5;
-			if (!element_set(cc_data, 22, akh, 32))
-				printf("cannot set AKH in elements\n");
-			if (!element_set(cc_data, 5, host_id, 8))
-				printf("cannot set host_id in elements\n");
+		case 22:                /* AKH */
+		{
+			uint8_t akh[32], host_id[8];
+			memset(akh, 0, sizeof(akh));
+			if (cc_data->akh_index != 5)
+			{
+				if (!get_authdata(host_id, cc_data->dhsk, akh, cc_data->slot->slot, cc_data->akh_index++))
+					cc_data->akh_index = 5;
+				if (!element_set(cc_data, 22, akh, 32))
+					printf("cannot set AKH in elements\n");
+				if (!element_set(cc_data, 5, host_id, 8))
+					printf("cannot set host_id in elements\n");
+			}
 		}
-	}
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return 0;
@@ -980,7 +1034,8 @@ static int data_get_loop(struct cc_ctrl_data *cc_data, const unsigned char *data
 #if x_debug
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 #endif
-	for (i = 0; i < items; i++) {
+	for (i = 0; i < items; i++)
+	{
 		if (pos + 3 > datalen)
 			return 0;
 
@@ -1020,14 +1075,16 @@ static int data_req_loop(struct cc_ctrl_data *cc_data, unsigned char *dest, cons
 	if (items > datalen)
 		return -1;
 
-	for (i = 0; i < items; i++) {
+	for (i = 0; i < items; i++)
+	{
 		dt_id = *data++;
 #if x_debug
 		printf("req element %d\n", dt_id);
 #endif
 		data_req_handle_new(cc_data, dt_id);    /* check if there is any action needed before we answer */
 		len = element_get_req(cc_data, dest, dt_id);
-		if (len == 0) {
+		if (len == 0)
+		{
 			printf("cannot get element %d\n", dt_id);
 			return -1;
 		}
@@ -1054,13 +1111,15 @@ bool eDVBCIContentControlManagerSession::data_initialize(eDVBCISlot *tslot)
 
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
-	if (tslot->private_data) {
+	if (tslot->private_data)
+	{
 		fprintf(stderr, "strange private_data not null!\n");
 		return false;
 	}
 
-	data = (struct cc_ctrl_data*)calloc(1, sizeof(struct cc_ctrl_data));
-	if (!data) {
+	data = (struct cc_ctrl_data *)calloc(1, sizeof(struct cc_ctrl_data));
+	if (!data)
+	{
 		fprintf(stderr, "out of memory\n");
 		return false;
 	}
@@ -1084,7 +1143,8 @@ bool eDVBCIContentControlManagerSession::data_initialize(eDVBCISlot *tslot)
 
 	/* load first AKH */
 	data->akh_index = 0;
-	if (!get_authdata(host_id, data->dhsk, buf, tslot->slot, data->akh_index)) {
+	if (!get_authdata(host_id, data->dhsk, buf, tslot->slot, data->akh_index))
+	{
 		/* no AKH available */
 		memset(buf, 0, sizeof(buf));
 		data->akh_index = 5;    /* last one */
@@ -1114,7 +1174,7 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_cc_open_cnf(eDVBCISlot *tslot)
 
 bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len)
 {
-	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
+	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data *)(tslot->private_data);
 	uint8_t cc_data_cnf_tag[3] = { 0x9f, 0x90, 0x04 };
 	uint8_t dest[2048 * 2];
 	int dt_nr;
@@ -1143,7 +1203,8 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(eDVBCISlot *tslot,
 	dest[1] = dt_nr;
 
 	answ_len = data_req_loop(cc_data, &dest[2], &data[rp], len - rp, dt_nr);
-	if (answ_len <= 0) {
+	if (answ_len <= 0)
+	{
 		fprintf(stderr, "cannot req data\n");
 		return false;
 	}
@@ -1157,9 +1218,9 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(eDVBCISlot *tslot,
 
 void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int
 #if y_debug
- len
+    len
 #endif
- )
+)
 {
 	const uint8_t sync_cnf_tag[3] = { 0x9f, 0x90, 0x10 };
 	uint8_t dest[64];
@@ -1193,7 +1254,7 @@ void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sync_req()
 
 bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(eDVBCISlot *tslot, const uint8_t *tag, uint8_t *data, unsigned int pos)
 {
-	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
+	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data *)(tslot->private_data);
 	printf("%s -> %s (%02X%02X%02X) \n", FILENAME, __FUNCTION__, tag[0], tag[1], tag[2]);
 
 	if (pos < 8)
@@ -1217,7 +1278,7 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_send(eDVBCISlot *tslot,
 
 bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int len)
 {
-	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data*)(tslot->private_data);
+	struct cc_ctrl_data *cc_data = (struct cc_ctrl_data *)(tslot->private_data);
 	const uint8_t data_cnf_tag[3] = { 0x9f, 0x90, 0x08 };
 	uint8_t dest[2048];
 	uint8_t tmp[len];
@@ -1240,7 +1301,8 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(eDVBCISlot *ts
 		printf("%02x ", data[i]);
 	printf("\n");
 #endif
-	if (!sac_check_auth(data, len, cc_data->sak)) {
+	if (!sac_check_auth(data, len, cc_data->sak))
+	{
 		fprintf(stderr, "check_auth of message failed\n");
 		return false;
 	}
@@ -1269,7 +1331,8 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_data_req(eDVBCISlot *ts
 	dest[pos++] = dt_nr;    /* dt_nbr */
 
 	answ_len = data_req_loop(cc_data, &dest[pos], &data[rp], len - rp, dt_nr);
-	if (answ_len <= 0) {
+	if (answ_len <= 0)
+	{
 		fprintf(stderr, "cannot req data\n");
 		return false;
 	}
@@ -1294,7 +1357,7 @@ eDVBCIContentControlManagerSession::~eDVBCIContentControlManagerSession()
 
 void eDVBCIContentControlManagerSession::ci_ccmgr_doClose(eDVBCISlot *tslot)
 {
-	struct cc_ctrl_data *data = (struct cc_ctrl_data*)(tslot->private_data);
+	struct cc_ctrl_data *data = (struct cc_ctrl_data *)(tslot->private_data);
 	printf("%s -> %s\n", FILENAME, __FUNCTION__);
 
 	descrambler_deinit();
@@ -1309,23 +1372,35 @@ int eDVBCIContentControlManagerSession::receivedAPDU(const unsigned char *tag, c
 	printf("SESSION(%d)/CC %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 #if y_debug
 	for (int i = 0; i < len; i++)
-		printf("%02x ", ((const unsigned char*)data)[i]);
+		printf("%02x ", ((const unsigned char *)data)[i]);
 #endif
 	printf("\n");
 
-	if ((tag[0] == 0x9f) && (tag[1] == 0x90)) {
-		switch (tag[2]) {
-		case 0x01: ci_ccmgr_cc_open_cnf(slot); break;
-		case 0x03: ci_ccmgr_cc_data_req(slot, (const uint8_t*)data, len); break;
-		case 0x05: ci_ccmgr_cc_sync_req(); break;
-		case 0x07: ci_ccmgr_cc_sac_data_req(slot, (const uint8_t*)data, len); break;
-		case 0x09: ci_ccmgr_cc_sac_sync_req(slot, (const uint8_t*)data, len); break;
-		default:
-			fprintf(stderr, "unknown apdu tag %02x\n", tag[2]);
-			break;
+	if ((tag[0] == 0x9f) && (tag[1] == 0x90))
+	{
+		switch (tag[2])
+		{
+			case 0x01:
+				ci_ccmgr_cc_open_cnf(slot);
+				break;
+			case 0x03:
+				ci_ccmgr_cc_data_req(slot, (const uint8_t *)data, len);
+				break;
+			case 0x05:
+				ci_ccmgr_cc_sync_req();
+				break;
+			case 0x07:
+				ci_ccmgr_cc_sac_data_req(slot, (const uint8_t *)data, len);
+				break;
+			case 0x09:
+				ci_ccmgr_cc_sac_sync_req(slot, (const uint8_t *)data, len);
+				break;
+			default:
+				fprintf(stderr, "unknown apdu tag %02x\n", tag[2]);
+				break;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -1342,7 +1417,7 @@ int eDVBCIContentControlManagerSession::doAction()
 		}
 		case stateFinal:
 			printf("stateFinal und action! kann doch garnicht sein ;)\n");
-			// fall through
+		// fall through
 		default:
 			return 0;
 	}

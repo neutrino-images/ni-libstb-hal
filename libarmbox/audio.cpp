@@ -14,30 +14,31 @@
 #include "hal_debug.h"
 #include <config.h>
 
-#define AUDIO_DEVICE	"/dev/dvb/adapter0/audio0"
+#define AUDIO_DEVICE    "/dev/dvb/adapter0/audio0"
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
-#define fop(cmd, args...) ({				\
-	int _r;						\
-	if (fd >= 0) { 					\
-		if ((_r = ::cmd(fd, args)) < 0)		\
-			hal_info(#cmd"(fd, "#args")\n");\
-		else					\
-			hal_debug(#cmd"(fd, "#args")\n");\
-	}						\
-	else { _r = fd; } 				\
-	_r;						\
-})
+#define fop(cmd, args...) ({                \
+		int _r;                     \
+		if (fd >= 0) {                  \
+			if ((_r = ::cmd(fd, args)) < 0)     \
+				hal_info(#cmd"(fd, "#args")\n");\
+			else                    \
+				hal_debug(#cmd"(fd, "#args")\n");\
+		}                       \
+		else { _r = fd; }               \
+		_r;                     \
+	})
 
 #include <linux/soundcard.h>
 
 enum
-{	ENCODER,
+{
+	ENCODER,
 	AUX
 };
 
-cAudio * audioDecoder = NULL;
+cAudio *audioDecoder = NULL;
 
 cAudio::cAudio(void *, void *, void *)
 {
@@ -69,15 +70,18 @@ void cAudio::openDevice(void)
 
 void cAudio::closeDevice(void)
 {
-	if (fd > -1) {
+	if (fd > -1)
+	{
 		close(fd);
 		fd = -1;
 	}
-	if (clipfd > -1) {
+	if (clipfd > -1)
+	{
 		close(clipfd);
 		clipfd = -1;
 	}
-	if (mixer_fd > -1) {
+	if (mixer_fd > -1)
+	{
 		close(mixer_fd);
 		mixer_fd = -1;
 	}
@@ -103,7 +107,8 @@ void cAudio::close_AVInput_Device(void)
 {
 	hal_debug("%s\n", __func__);
 
-	if (fdd) {
+	if (fdd)
+	{
 		fop(ioctl, AUDIO_STOP);
 	}
 	fdd = false;
@@ -113,11 +118,15 @@ void cAudio::setAVInput(int val)
 {
 	hal_info("%s - switching to: %s\n", __func__, val == AUX ? "AUX" : "ENCODER");
 
-	if (val == AUX) {
+	if (val == AUX)
+	{
 		Stop();
 		open_AVInput_Device();
-	} else {
-		if (fdd) {
+	}
+	else
+	{
+		if (fdd)
+		{
 			close_AVInput_Device();
 			fop(ioctl, AUDIO_SELECT_SOURCE, AUDIO_SOURCE_DEMUX);
 			Start();
@@ -243,7 +252,8 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	const char *dsp_dev = getenv("DSP_DEVICE");
 	const char *mix_dev = getenv("MIX_DEVICE");
 	hal_info("cAudio::%s ch %d srate %d bits %d le %d\n", __FUNCTION__, ch, srate, bits, little_endian);
-	if (clipfd > -1) {
+	if (clipfd > -1)
+	{
 		hal_info("%s: clipfd already opened (%d)\n", __func__, clipfd);
 		return -1;
 	}
@@ -257,22 +267,25 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	 *   export MIX_DEVICE=/dev/sound/mixer2
 	 *   neutrino
 	 */
-	if ((!dsp_dev) || (access(dsp_dev, W_OK))) {
+	if ((!dsp_dev) || (access(dsp_dev, W_OK)))
+	{
 		if (dsp_dev)
 			hal_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-				" fall back to /dev/dsp\n", __func__, dsp_dev);
+			    " fall back to /dev/dsp\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp";
 	}
-	if ((!mix_dev) || (access(mix_dev, W_OK))) {
+	if ((!mix_dev) || (access(mix_dev, W_OK)))
+	{
 		if (mix_dev)
 			hal_info("%s: MIX_DEVICE is set (%s) but cannot be opened,"
-					" fall back to /dev/mixer\n", __func__, dsp_dev);
+			    " fall back to /dev/mixer\n", __func__, dsp_dev);
 		mix_dev = "/dev/mixer";
 	}
 	hal_info("cAudio::%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
 	/* the tdoss dsp driver seems to work only on the second open(). really. */
 	clipfd = open(dsp_dev, O_WRONLY);
-	if (clipfd < 0) {
+	if (clipfd < 0)
+	{
 		hal_info("%s open %s: %m\n", dsp_dev, __FUNCTION__);
 		return -1;
 	}
@@ -297,42 +310,50 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 		return 0;
 
 	mixer_fd = open(mix_dev, O_RDWR);
-	if (mixer_fd < 0) {
+	if (mixer_fd < 0)
+	{
 		hal_info("%s: open mixer %s failed (%m)\n", __func__, mix_dev);
 		/* not a real error */
 		return 0;
 	}
-	if (ioctl(mixer_fd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1) {
+	if (ioctl(mixer_fd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1)
+	{
 		hal_info("%s: SOUND_MIXER_READ_DEVMASK %m\n", __func__);
 		devmask = 0;
 	}
-	if (ioctl(mixer_fd, SOUND_MIXER_READ_STEREODEVS, &stereo) == -1) {
+	if (ioctl(mixer_fd, SOUND_MIXER_READ_STEREODEVS, &stereo) == -1)
+	{
 		hal_info("%s: SOUND_MIXER_READ_STEREODEVS %m\n", __func__);
 		stereo = 0;
 	}
 	usable = devmask & stereo;
-	if (usable == 0) {
+	if (usable == 0)
+	{
 		hal_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
-			__func__, devmask, stereo);
+		    __func__, devmask, stereo);
 		close(mixer_fd);
 		mixer_fd = -1;
 		return 0; /* TODO: should we treat this as error? */
 	}
 	/* __builtin_popcount needs GCC, it counts the set bits... */
-	if (__builtin_popcount (usable) != 1) {
+	if (__builtin_popcount(usable) != 1)
+	{
 		/* TODO: this code is not yet tested as I have only single-mixer devices... */
 		hal_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
-			"%s: querying MIX_NUMBER environment variable...\n",
-			__func__, devmask, stereo, __func__);
+		    "%s: querying MIX_NUMBER environment variable...\n",
+		    __func__, devmask, stereo, __func__);
 		const char *tmp = getenv("MIX_NUMBER");
 		if (tmp)
 			mixer_num = atoi(tmp);
 		hal_info("%s: mixer_num is %d -> device %08x\n",
-			__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
+		    __func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
-	} else {
+	}
+	else
+	{
 		mixer_num = 0;
-		while (!(usable & 0x01)) {
+		while (!(usable & 0x01))
+		{
 			mixer_num++;
 			usable >>= 1;
 		}
@@ -344,9 +365,10 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
-	int ret, __attribute__ ((unused)) count = 1;
+	int ret, __attribute__((unused)) count = 1;
 	// hal_debug("cAudio::%s\n", __FUNCTION__);
-	if (clipfd < 0) {
+	if (clipfd < 0)
+	{
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
@@ -354,12 +376,14 @@ int cAudio::WriteClip(unsigned char *buffer, int size)
 again:
 #endif
 	ret = write(clipfd, buffer, size);
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		hal_info("%s: write error (%m)\n", __FUNCTION__);
 		return ret;
 	}
 #if BOXMODEL_HD51 || BOXMODEL_BRE2ZE4K || BOXMODEL_H7
-	if (ret != size) {
+	if (ret != size)
+	{
 		hal_info("cAudio::%s: difference > to write (%d) != written (%d) try (%d) > reset dsp and restart write\n", __FUNCTION__, size, ret, count);
 		if (ioctl(clipfd, SNDCTL_DSP_RESET))
 			perror("SNDCTL_DSP_RESET");
@@ -375,7 +399,8 @@ int cAudio::StopClip()
 {
 	hal_info("cAudio::%s\n", __FUNCTION__);
 
-	if (clipfd < 0) {
+	if (clipfd < 0)
+	{
 		hal_info("%s: clipfd not yet opened\n", __FUNCTION__);
 		return -1;
 	}
@@ -384,7 +409,8 @@ int cAudio::StopClip()
 #endif
 	close(clipfd);
 	clipfd = -1;
-	if (mixer_fd > -1) {
+	if (mixer_fd > -1)
+	{
 		close(mixer_fd);
 		mixer_fd = -1;
 	}
@@ -412,24 +438,24 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 
 	type = atype;
 #if 0
-/* this does not work, some of the values are negative?? */
+	/* this does not work, some of the values are negative?? */
 	AMPEGStatus A;
 	memcpy(&A, &i.word00, sizeof(i.word00));
 	layer   = A.audio_mpeg_layer;
 	mode    = A.audio_mpeg_mode;
 	bitrate = A.audio_mpeg_bitrate;
-	switch(A.audio_mpeg_frequency)
+	switch (A.audio_mpeg_frequency)
 #endif
-	/* layer and bitrate are not used anyway... */
-	layer   = 0; //(i.word00 >> 17) & 3;
+		/* layer and bitrate are not used anyway... */
+		layer   = 0; //(i.word00 >> 17) & 3;
 	bitrate = 0; //(i.word00 >> 12) & 3;
 	switch (type)
 	{
-		case 0:	/* MPEG */
+		case 0: /* MPEG */
 			mode = (i.word00 >> 6) & 3;
 			freq = freq_mpg[(i.word00 >> 10) & 3];
 			break;
-		case 1:	/* AC3 */
+		case 1: /* AC3 */
 			mode = (i.word00 >> 28) & 7;
 			freq = freq_ac3[(i.word00 >> 16) & 3];
 			break;

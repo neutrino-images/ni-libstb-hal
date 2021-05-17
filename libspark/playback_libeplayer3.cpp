@@ -54,7 +54,7 @@ void cPlayback::Close(void)
 
 bool cPlayback::Start(std::string filename, std::string headers)
 {
-	return Start((char*) filename.c_str(),0,0,0,0,0, headers);
+	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers);
 }
 
 bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int, std::string headers)
@@ -77,40 +77,53 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	if ((file.find(":31339/id=") != std::string::npos) || (file.find(":10000") != std::string::npos) || (file.find(":8001/") != std::string::npos)) // for LocalTV and Entertain-TV streaming
 		no_probe = true;
 
-	if (file.substr(0, 7) == "file://") {
-		if (file.substr(file.length() - 3) ==  ".ts") {
+	if (file.substr(0, 7) == "file://")
+	{
+		if (file.substr(file.length() - 3) ==  ".ts")
+		{
 			fn_ts = file.substr(7);
 			fn_xml = file.substr(7, file.length() - 9);
 			fn_xml += "xml";
 			no_probe = true;
 		}
-	} else
+	}
+	else
 		isHTTP = true;
 
-	if (player->Open(file.c_str(), no_probe, headers)) {
-		if (pm == PLAYMODE_TS) {
+	if (player->Open(file.c_str(), no_probe, headers))
+	{
+		if (pm == PLAYMODE_TS)
+		{
 			struct stat64 s;
 			if (!stat64(file.c_str(), &s))
 				last_size = s.st_size;
 			ret = true;
 			videoDecoder->Stop(false);
 			audioDecoder->Stop();
-		} else {
+		}
+		else
+		{
 			std::vector<std::string> keys, values;
 			int selected_program = 0;
-			if (vpid || apid) {
+			if (vpid || apid)
+			{
 				;
-			} else if (GetPrograms(keys, values) && (keys.size() > 1) && ProgramSelectionCallback) {
+			}
+			else if (GetPrograms(keys, values) && (keys.size() > 1) && ProgramSelectionCallback)
+			{
 				const char *key = ProgramSelectionCallback(ProgramSelectionCallbackData, keys, values);
-				if (!key) {
+				if (!key)
+				{
 					player->Close();
 					return false;
 				}
 				selected_program = atoi(key);
-			} else if (keys.size() > 0)
+			}
+			else if (keys.size() > 0)
 				selected_program = atoi(keys[0].c_str());
 
-			if (!keys.size() || !player->SelectProgram(selected_program)) {
+			if (!keys.size() || !player->SelectProgram(selected_program))
+			{
 				if (apid)
 					SetAPid(apid);
 				if (vpid)
@@ -181,27 +194,35 @@ bool cPlayback::SetSpeed(int speed)
 
 	nPlaybackSpeed = speed;
 
-	if (speed > 1) {
+	if (speed > 1)
+	{
 		/* direction switch ? */
 		if (player->isBackWard)
 			player->FastBackward(0);
 		res = player->FastForward(speed);
-	} else if (speed < 0) {
+	}
+	else if (speed < 0)
+	{
 		/* direction switch ? */
 		if (player->isForwarding)
 			player->Continue();
 		res = player->FastBackward(speed);
-	} else if (speed == 0) {
+	}
+	else if (speed == 0)
+	{
 		/* konfetti: hmmm accessing the member isn't very proper */
 		if ((player->isForwarding) || (!player->isBackWard))
 			/* res = */ player->Pause();
 		else
 			/* res = */ player->FastForward(0);
-	} else /* speed == 1 */ {
+	}
+	else /* speed == 1 */
+	{
 		res = player->Continue();
 	}
 
-	if (init_jump > -1) {
+	if (init_jump > -1)
+	{
 		SetPosition(init_jump);
 		init_jump = -1;
 	}
@@ -252,7 +273,8 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (!playing)
 		return false;
 
-	if (!player->isPlaying) {
+	if (!player->isPlaying)
+	{
 		hal_info("%s !!!!EOF!!!! < -1\n", __func__);
 		position = duration + 1000;
 		// duration = 0;
@@ -263,11 +285,14 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	int64_t vpts = 0;
 	player->GetPts(vpts);
 
-	if(vpts <= 0) {
+	if (vpts <= 0)
+	{
 		//printf("ERROR: vpts==0");
-	} else {
+	}
+	else
+	{
 		/* len is in nanoseconds. we have 90 000 pts per second. */
-		position = vpts/90;
+		position = vpts / 90;
 	}
 
 	if (got_duration)
@@ -277,7 +302,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 
 	player->GetDuration(length);
 
-	if(length <= 0)
+	if (length <= 0)
 		duration = position + AV_TIME_BASE / 1000;
 	else
 		duration = length * 1000 / AV_TIME_BASE;
@@ -308,9 +333,11 @@ void cPlayback::FindAllPids(int *pids, unsigned int *ac3flags, unsigned int *num
 	hal_info("%s\n", __func__);
 	unsigned int i = 0;
 
-	if (IsPlaying()) {
+	if (IsPlaying())
+	{
 		std::vector<Track> tracks = player->manager.getAudioTracks();
-		for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
+		for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it)
+		{
 			pids[i] = it->pid;
 			ac3flags[i] = it->ac3flags;
 			language[i] = it->title;
@@ -326,7 +353,8 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 	unsigned int i = 0;
 
 	std::vector<Track> tracks = player->manager.getSubtitleTracks();
-	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
+	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it)
+	{
 		pids[i] = it->pid;
 		language[i] = it->title;
 		i++;
@@ -341,7 +369,8 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 	unsigned int i = 0;
 
 	std::vector<Track> tracks = player->manager.getTeletextTracks();
-	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it) {
+	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end() && i < *numpids; ++it)
+	{
 		if (it->type != 2 && it->type != 5) // return subtitles only
 			continue;
 		pids[i] = it->pid;
@@ -357,7 +386,8 @@ void cPlayback::FindAllTeletextsubtitlePids(int *pids, unsigned int *numpids, st
 int cPlayback::GetFirstTeletextPid(void)
 {
 	std::vector<Track> tracks = player->manager.getTeletextTracks();
-	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end(); ++it) {
+	for (std::vector<Track>::iterator it = tracks.begin(); it != tracks.end(); ++it)
+	{
 		if (it->type == 1)
 			return it->pid;
 	}
@@ -413,17 +443,20 @@ cPlayback::~cPlayback()
 	delete player;
 }
 
-void cPlayback::RequestAbort() {
+void cPlayback::RequestAbort()
+{
 	player->RequestAbort();
 	while (player->isPlaying)
 		usleep(100000);
 }
 
-bool cPlayback::IsPlaying() {
+bool cPlayback::IsPlaying()
+{
 	return player->isPlaying;
 }
 
-uint64_t cPlayback::GetReadCount() {
+uint64_t cPlayback::GetReadCount()
+{
 	return player->readCount;
 }
 

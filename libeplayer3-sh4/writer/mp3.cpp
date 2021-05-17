@@ -46,7 +46,8 @@ bool WriterMP3::Write(AVPacket *packet, int64_t pts)
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
-	for (int pos = 0; pos < packet->size; ) {
+	for (int pos = 0; pos < packet->size;)
+	{
 		int PacketLength = std::min(packet->size - pos, MAX_PES_PACKET_SIZE);
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
@@ -71,4 +72,4 @@ WriterMP3::WriterMP3()
 	Register(this, AV_CODEC_ID_FLAC, AUDIO_ENCODING_LPCM);
 }
 
-static WriterMP3 writer_mp3 __attribute__ ((init_priority (300)));
+static WriterMP3 writer_mp3 __attribute__((init_priority(300)));

@@ -51,13 +51,14 @@ struct Chapter
 	int64_t end;
 };
 
-class Player {
-	friend class Input;
-	friend class Output;
-	friend class Manager;
-	friend class cPlayback;
-	friend class WriterPCM;
-	friend int interrupt_cb(void *arg);
+class Player
+{
+		friend class Input;
+		friend class Output;
+		friend class Manager;
+		friend class cPlayback;
+		friend class WriterPCM;
+		friend int interrupt_cb(void *arg);
 
 	private:
 		Input input;
@@ -81,10 +82,10 @@ class Player {
 		uint64_t readCount;
 
 		std::string url;
-		bool noprobe;	/* hack: only minimal probing in av_find_stream_info */
+		bool noprobe;   /* hack: only minimal probing in av_find_stream_info */
 
 		void SetChapters(std::vector<Chapter> &Chapters);
-		static void* playthread(void*);
+		static void *playthread(void *);
 	public:
 		bool SwitchAudio(int pid);
 		bool SwitchVideo(int pid);
@@ -115,8 +116,14 @@ class Player {
 		void RequestAbort();
 		bool GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 
-		AVFormatContext *GetAVFormatContext() { return input.GetAVFormatContext(); }
-		void ReleaseAVFormatContext() { input.ReleaseAVFormatContext(); }
+		AVFormatContext *GetAVFormatContext()
+		{
+			return input.GetAVFormatContext();
+		}
+		void ReleaseAVFormatContext()
+		{
+			input.ReleaseAVFormatContext();
+		}
 
 		bool GetPrograms(std::vector<std::string> &keys, std::vector<std::string> &values);
 		bool SelectProgram(int key);

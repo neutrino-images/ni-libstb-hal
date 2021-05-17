@@ -54,7 +54,7 @@ extern const uint8_t ff_mpeg4audio_channels[8];
  * @return On error -1 is returned, on success AudioSpecificConfig bit index in extradata.
  */
 int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
-                                 int bit_size, int sync_extension);
+    int bit_size, int sync_extension);
 
 enum AudioObjectType
 {

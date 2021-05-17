@@ -97,11 +97,11 @@ static uint32_t breakBufferFillSize = 0;
 static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32_t uBitsPerSample, uint8_t bLittleEndian __attribute__((unused)))
 {
 	printf("rate: %d ch: %d bits: %d (%d bps)\n",
-	       uSampleRate/*Format->dwSamplesPerSec*/,
-	       uNoOfChannels/*Format->wChannels*/,
-	       uBitsPerSample/*Format->wBitsPerSample*/,
-	       (uBitsPerSample/*Format->wBitsPerSample*/ / 8)
-	     );
+	    uSampleRate/*Format->dwSamplesPerSec*/,
+	    uNoOfChannels/*Format->wChannels*/,
+	    uBitsPerSample/*Format->wBitsPerSample*/,
+	    (uBitsPerSample/*Format->wBitsPerSample*/ / 8)
+	);
 
 	SubFrameLen = 0;
 	SubFramesPerPES = 0;

@@ -497,7 +497,7 @@ typedef uint8_t     PAUSE_LEN;
 #define GRUNDIG2_COMPLETE_DATA_LEN              7                               // complete length
 
 #define AUTO_FRAME_REPETITION_TIME              80.0e-3                         // SIRCS/SAMSUNG32/NUBERT: automatic repetition after 25-50ms
-                                                                                // KASEIKYO: automatic repetition after 75ms
+// KASEIKYO: automatic repetition after 75ms
 
 #define TRUE                                    1
 #define FALSE                                   0
@@ -506,23 +506,23 @@ typedef uint8_t     PAUSE_LEN;
 
 typedef struct
 {
-  uint8_t               protocol;                                               // protocol, i.e. NEC_PROTOCOL
-  uint16_t              address;                                                // address
-  uint16_t              command;                                                // command
-  uint8_t               flags;                                                  // flags, e.g. repetition
+	uint8_t               protocol;                                               // protocol, i.e. NEC_PROTOCOL
+	uint16_t              address;                                                // address
+	uint16_t              command;                                                // command
+	uint8_t               flags;                                                  // flags, e.g. repetition
 } IRMP_DATA;
 
-extern void                             irmp_init (void);
-extern uint8_t                          irmp_get_data (IRMP_DATA *);
-extern uint8_t                          irmp_is_busy (void);
-extern uint8_t                          irmp_ISR (uint8_t);
+extern void                             irmp_init(void);
+extern uint8_t                          irmp_get_data(IRMP_DATA *);
+extern uint8_t                          irmp_is_busy(void);
+extern uint8_t                          irmp_ISR(uint8_t);
 
 #if IRMP_PROTOCOL_NAMES == 1
-extern char *                           irmp_protocol_names[IRMP_N_PROTOCOLS + 1];
+extern char                            *irmp_protocol_names[IRMP_N_PROTOCOLS + 1];
 #endif
 
 #if IRMP_USE_CALLBACK == 1
-extern void                             irmp_set_callback_ptr (void (*cb)(uint8_t));
+extern void                             irmp_set_callback_ptr(void (*cb)(uint8_t));
 #endif // IRSND_USE_CALLBACK == 1
 
 #endif /* _WC_IRMP_H_ */

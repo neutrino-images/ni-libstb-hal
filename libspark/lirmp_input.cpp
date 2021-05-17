@@ -51,23 +51,25 @@ static uint8_t IRMP_PIN;
 #define hal_info(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
 /* same defines as in neutrino's rcinput.h */
-#define KEY_TTTV	KEY_FN_1
-#define KEY_TTZOOM	KEY_FN_2
-#define KEY_REVEAL	KEY_FN_D
+#define KEY_TTTV    KEY_FN_1
+#define KEY_TTZOOM  KEY_FN_2
+#define KEY_REVEAL  KEY_FN_D
 /* only defined in newer kernels / headers... */
 #ifndef KEY_ZOOMIN
-#define KEY_ZOOMIN	KEY_FN_E
+#define KEY_ZOOMIN  KEY_FN_E
 #endif
 #ifndef KEY_ZOOMOUT
-#define KEY_ZOOMOUT	KEY_FN_F
+#define KEY_ZOOMOUT KEY_FN_F
 #endif
 
-typedef struct {
-	uint16_t ir;	/* IR command */
-	int code;	/* input key code */
+typedef struct
+{
+	uint16_t ir;    /* IR command */
+	int code;   /* input key code */
 } key_map_t;
 
-static const key_map_t key_map[] = {
+static const key_map_t key_map[] =
+{
 	{ 0x13, KEY_0 },
 	{ 0x1a, KEY_1 },
 	{ 0x1f, KEY_2 },
@@ -101,15 +103,15 @@ static const key_map_t key_map[] = {
 	{ 0x4e, KEY_GREEN },
 	{ 0x11, KEY_YELLOW },
 	{ 0x4a, KEY_BLUE },
-	{ 0x4c, KEY_TV },	/* TV/Radio */
-	{ 0x5c, KEY_VIDEO },	/* FIND */
-	{ 0x19, KEY_AUDIO },	/* FOLDER */
-/*	KEY_AUX,
-	KEY_TEXT,
-	KEY_TTTV,
-	KEY_TTZOOM,
-	KEY_REVEAL,
-*/
+	{ 0x4c, KEY_TV },   /* TV/Radio */
+	{ 0x5c, KEY_VIDEO },    /* FIND */
+	{ 0x19, KEY_AUDIO },    /* FOLDER */
+	/*  KEY_AUX,
+	    KEY_TEXT,
+	    KEY_TTTV,
+	    KEY_TTZOOM,
+	    KEY_REVEAL,
+	*/
 	{ 0x01, KEY_REWIND },
 	{ 0x53, KEY_FORWARD },
 	{ 0x22, KEY_STOP },
@@ -121,7 +123,8 @@ static const key_map_t key_map[] = {
 	{ 0x10, KEY_RECORD }
 };
 
-static const int key_list[] = {
+static const int key_list[] =
+{
 	KEY_0,
 	KEY_1,
 	KEY_2,
@@ -191,9 +194,9 @@ static void *input_thread(void *)
 	int i = 0;
 	int last_pulse = 1;
 	int last_code = -1;
-	uint32_t lircdata;	/* lirc_t to be correct... */
-	unsigned int count = 0;	/* how many timeouts? */
-	unsigned int nodec = 0;	/* how many timeouts since last decoded? */
+	uint32_t lircdata;  /* lirc_t to be correct... */
+	unsigned int count = 0; /* how many timeouts? */
+	unsigned int nodec = 0; /* how many timeouts since last decoded? */
 	int aotom_fd = -1;
 	IRMP_DATA d;
 
@@ -201,10 +204,12 @@ static void *input_thread(void *)
 
 	/* modprobe does not complain if the module is already loaded... */
 	system("/sbin/modprobe uinput");
-	do {
+	do
+	{
 		usleep(100000); /* mdev needs some time to create the device? */
-		uinput = open("/dev/uinput", O_WRONLY|O_NDELAY);
-	} while (uinput < 0 && ++count < 100);
+		uinput = open("/dev/uinput", O_WRONLY | O_NDELAY);
+	}
+	while (uinput < 0 && ++count < 100);
 
 	if (uinput < 0)
 	{
@@ -253,7 +258,7 @@ static void *input_thread(void *)
 		char newdev[20];
 		while (getline(&line, &n, f) != -1)
 		{
-			switch(line[0])
+			switch (line[0])
 			{
 				case 'I':
 					if (strncmp(line, DEVLINE, strlen(DEVLINE)) == 0)
@@ -295,10 +300,10 @@ static void *input_thread(void *)
 	}
 	IRMP_PIN = 0xFF;
 
-/* 50 ms. This should be longer than the longest light pulse */
-#define POLL_MS		(100 * 1000)
-#define LIRC_PULSE	0x01000000
-#define LIRC_PULSE_MASK	0x00FFFFFF
+	/* 50 ms. This should be longer than the longest light pulse */
+#define POLL_MS     (100 * 1000)
+#define LIRC_PULSE  0x01000000
+#define LIRC_PULSE_MASK 0x00FFFFFF
 	hal_info("LIRC/IRMP input converter going into main loop...\n");
 
 	aotom_fd = open("/dev/vfd", O_RDONLY);
@@ -317,11 +322,14 @@ static void *input_thread(void *)
 		tv.tv_usec = POLL_MS;
 		/* any singal can interrupt select. we rely on the linux-only feature
 		 * that the timeout is automatcally recalculated in this case! */
-		do {
+		do
+		{
 			ret = select(lircfd + 1, &fds, NULL, NULL, &tv);
-		} while (ret == -1 && errno == EINTR);
+		}
+		while (ret == -1 && errno == EINTR);
 
-		if (ret == -1) {
+		if (ret == -1)
+		{
 			/* errno != EINTR... */
 			hal_info("%s: lirmp: lircfd select: %m\n", __func__);
 			break;
@@ -331,13 +339,13 @@ static void *input_thread(void *)
 		{
 			count++;
 			nodec++;
-			lircdata = POLL_MS;	/* timeout */
-			pulse = !last_pulse;	/* lirc sends data on signal change */
+			lircdata = POLL_MS; /* timeout */
+			pulse = !last_pulse;    /* lirc sends data on signal change */
 			if (last_code != -1 && nodec > 1)
 			{
 				// fprintf(stderr, "timeout!\n");
 				u.code = last_code;
-				u.value = 0;	/* release */
+				u.value = 0;    /* release */
 				write(uinput, &u, sizeof(u));
 				last_code = -1;
 			}
@@ -349,9 +357,9 @@ static void *input_thread(void *)
 				perror("read");
 				break;
 			}
-			pulse = (lircdata & LIRC_PULSE);	/* we got light... */
+			pulse = (lircdata & LIRC_PULSE);    /* we got light... */
 			last_pulse = pulse;
-			lircdata &= LIRC_PULSE_MASK;		/* how long the pulse was in microseconds */
+			lircdata &= LIRC_PULSE_MASK;        /* how long the pulse was in microseconds */
 		}
 
 		if (ret && count)
@@ -370,19 +378,20 @@ static void *input_thread(void *)
 		else
 			IRMP_PIN = 0xff;
 
-		do {
-			(void) irmp_ISR (IRMP_PIN);
-			if (irmp_get_data (&d))
+		do
+		{
+			(void) irmp_ISR(IRMP_PIN);
+			if (irmp_get_data(&d))
 			{
 				nodec = 0;
 				hal_debug("irmp_get_data proto: %2d addr: 0x%04x cmd: 0x%04x fl: %d\n",
-					d.protocol, d.address, d.command, d.flags);
+				    d.protocol, d.address, d.command, d.flags);
 
 				/* todo: do we need to complete the loop if we already
 				 * detected the singal in this pulse? */
 				if (d.protocol == IRMP_NEC_PROTOCOL && d.address == 0xba45)
 				{
-					for (i = 0; i < (int)(sizeof(key_map)/sizeof(key_map_t)); i++)
+					for (i = 0; i < (int)(sizeof(key_map) / sizeof(key_map_t)); i++)
 					{
 						if (key_map[i].ir == d.command)
 						{
@@ -397,7 +406,8 @@ static void *input_thread(void *)
 							//hal_debug("uinput write: value: %d code: %d\n", u.value, u.code);
 							last_code = u.code;
 							write(uinput, &u, sizeof(u));
-							if (aotom_fd > -1) {
+							if (aotom_fd > -1)
+							{
 								struct aotom_ioctl_data vfd_data;
 								vfd_data.u.led.led_nr = 1;
 								vfd_data.u.led.on = 10;
@@ -408,15 +418,16 @@ static void *input_thread(void *)
 					}
 				}
 			}
-		} while (lircdata-- > 0);
+		}
+		while (lircdata-- > 0);
 	}
 	/* clean up */
-	close (lircfd);
+	close(lircfd);
 
 	if (aotom_fd > -1)
 		close(aotom_fd);
 
- out:
+out:
 	ioctl(uinput, UI_DEV_DESTROY);
 	return NULL;
 }

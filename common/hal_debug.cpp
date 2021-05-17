@@ -12,7 +12,8 @@ int cnxt_debug = 0; /* compat, unused */
 
 int debuglevel = -1;
 
-static const char* hal_facility[] = {
+static const char *hal_facility[] =
+{
 	"audio ",
 	"video ",
 	"demux ",
@@ -40,7 +41,7 @@ void _hal_debug(int facility, const void *func, const char *fmt, ...)
 	if (debuglevel < 0)
 		fprintf(stderr, "hal_debug: debuglevel not initialized!\n");
 
-	if (! ((1 << facility) & debuglevel))
+	if (!((1 << facility) & debuglevel))
 		return;
 
 	fprintf(stderr, "[HAL:%08lx:%s] ", (long)func, hal_facility[facility]);
@@ -63,14 +64,18 @@ void hal_debug_init(void)
 	{
 		fprintf(stderr, "libstb-hal debug options can be set by exporting HAL_DEBUG.\n");
 		fprintf(stderr, "The following values (or bitwise OR combinations) are valid:\n");
-		while (hal_facility[i]) {
+		while (hal_facility[i])
+		{
 			fprintf(stderr, "\tcomponent: %s  0x%02x\n", hal_facility[i], 1 << i);
 			i++;
 		}
 		fprintf(stderr, "\tall components:    0x%02x\n", (1 << i) - 1);
-	} else {
+	}
+	else
+	{
 		fprintf(stderr, "libstb-hal debug is active for the following components:\n");
-		while (hal_facility[i]) {
+		while (hal_facility[i])
+		{
 			if (debuglevel & (1 << i))
 				fprintf(stderr, "%s ", hal_facility[i]);
 			i++;
@@ -84,5 +89,5 @@ void hal_set_threadname(const char *name)
 	char threadname[17];
 	strncpy(threadname, name, sizeof(threadname));
 	threadname[16] = 0;
-	prctl (PR_SET_NAME, (unsigned long)&threadname);
+	prctl(PR_SET_NAME, (unsigned long)&threadname);
 }

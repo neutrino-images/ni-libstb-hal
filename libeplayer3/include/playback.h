@@ -7,7 +7,8 @@
 typedef void(* PlaybackDieNowCallback)();
 bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback);
 
-typedef enum {
+typedef enum
+{
 	PLAYBACK_OPEN,
 	PLAYBACK_CLOSE,
 	PLAYBACK_PLAY,

@@ -1,25 +1,25 @@
 /*
-	Framebuffer implementation using clutter https://developer.gnome.org/clutter/
-	Copyright (C) 2016 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
+    Framebuffer implementation using clutter https://developer.gnome.org/clutter/
+    Copyright (C) 2016 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
 
-	based on the openGL framebuffer implementation
-	Copyright 2010 Carsten Juttner <carjay@gmx.net>
-	Copyright 2012,2013 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
+    based on the openGL framebuffer implementation
+    Copyright 2010 Carsten Juttner <carjay@gmx.net>
+    Copyright 2012,2013 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program. If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-	TODO:	AV-Sync code is "experimental" at best
+    TODO:   AV-Sync code is "experimental" at best
 */
 
 #include "config.h"
@@ -92,8 +92,8 @@ GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mS
 	*mX = x;
 	*mY = y;
 	av_reduce(&mOA.num, &mOA.den, x, y, INT_MAX);
-	mVA = mOA;	/* initial aspect ratios are from the FB resolution, those */
-	_mVA = mVA;	/* will be updated by the videoDecoder functions anyway */
+	mVA = mOA;  /* initial aspect ratios are from the FB resolution, those */
+	_mVA = mVA; /* will be updated by the videoDecoder functions anyway */
 	mVAchanged = true;
 	mCrop = DISPLAY_AR_MODE_PANSCAN;
 	zoom = 1.0;
@@ -121,7 +121,7 @@ GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mS
 
 	unlink("/tmp/neutrino.input");
 	mkfifo("/tmp/neutrino.input", 0600);
-	input_fd = open("/tmp/neutrino.input", O_RDWR|O_CLOEXEC|O_NONBLOCK);
+	input_fd = open("/tmp/neutrino.input", O_RDWR | O_CLOEXEC | O_NONBLOCK);
 	if (input_fd < 0)
 		hal_info("%s: could not open /tmp/neutrino.input FIFO: %m\n", __func__);
 	initKeys();
@@ -214,7 +214,8 @@ void GLFramebuffer::run()
 	argv[0] = a;
 	argv[1] = NULL;
 	hal_info("GLFB: GL thread starting x %d y %d\n", x, y);
-	if (clutter_init(&argc, &argv) != CLUTTER_INIT_SUCCESS) {
+	if (clutter_init(&argc, &argv) != CLUTTER_INIT_SUCCESS)
+	{
 		hal_info("GLFB: error initializing clutter\n");
 		free(argv);
 		return;
@@ -228,7 +229,7 @@ void GLFramebuffer::run()
 	//g_signal_connect(stage, "destroy", G_CALLBACK(clutter_main_quit), NULL);
 	g_signal_connect(stage, "key-press-event", G_CALLBACK(GLFbPC::keyboardcb), (void *)1);
 	g_signal_connect(stage, "key-release-event", G_CALLBACK(GLFbPC::keyboardcb), NULL);
-	clutter_stage_set_user_resizable(CLUTTER_STAGE (stage), TRUE);
+	clutter_stage_set_user_resizable(CLUTTER_STAGE(stage), TRUE);
 	clutter_actor_grab_key_focus(stage);
 	clutter_actor_show(stage);
 
@@ -241,7 +242,8 @@ void GLFramebuffer::run()
 	vid_actor = clutter_actor_new();
 	ClutterContent *fb = clutter_image_new();
 	/* osd_buf, because it starts up black */
-	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf.data(), COGL_PIXEL_FORMAT_BGR_888, x, y, x*3, NULL)) {
+	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf.data(), COGL_PIXEL_FORMAT_BGR_888, x, y, x * 3, NULL))
+	{
 		hal_info("GLFB::%s clutter_image_set_data failed? (vid)\n", __func__);
 		_exit(1); /* life is hard */
 	}
@@ -260,7 +262,8 @@ void GLFramebuffer::run()
 
 	fb_actor = clutter_actor_new();
 	fb = clutter_image_new();
-	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf.data(), COGL_PIXEL_FORMAT_BGRA_8888, x, y, x*4, NULL)) {
+	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf.data(), COGL_PIXEL_FORMAT_BGRA_8888, x, y, x * 4, NULL))
+	{
 		hal_info("GLFB::%s clutter_image_set_data failed? (osd)\n", __func__);
 		_exit(1); /* life is hard */
 	}
@@ -293,14 +296,14 @@ void GLFramebuffer::run()
 
 /* static */ bool GLFbPC::keyboardcb(ClutterActor * /*actor*/, ClutterEvent *event, gpointer user_data)
 {
-	guint key = clutter_event_get_key_symbol (event);
+	guint key = clutter_event_get_key_symbol(event);
 	int keystate = user_data ? 1 : 0;
 	hal_info_c("GLFB::%s: 0x%x, %d\n", __func__, key, keystate);
 
 	struct input_event ev;
 	if (key == 'f' && keystate)
 	{
-		hal_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, glfb_priv->mFullscreen?"off":"on");
+		hal_info_c("GLFB::%s: toggle fullscreen %s\n", __func__, glfb_priv->mFullscreen ? "off" : "on");
 		glfb_priv->mFullscreen = !(glfb_priv->mFullscreen);
 		glfb_priv->mReInit = true;
 		return true;
@@ -314,7 +317,7 @@ void GLFramebuffer::run()
 	gettimeofday(&ev.time, NULL);
 	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	ssize_t w = write(glfb_priv->input_fd, &ev, sizeof(ev));
-	if(w < 0)
+	if (w < 0)
 		return false;
 	return true;
 }
@@ -323,7 +326,7 @@ int sleep_us = 30000;
 
 void GLFbPC::render()
 {
-	if(mShutDown)
+	if (mShutDown)
 		clutter_main_quit();
 
 	mReInitLock.lock();
@@ -338,22 +341,26 @@ void GLFbPC::render()
 		mY = &_mY[mFullscreen];
 #endif
 		*mX = *mY * mOA.num / mOA.den;
-		if (mFullscreen) {
+		if (mFullscreen)
+		{
 			clutter_stage_set_fullscreen(CLUTTER_STAGE(stage), TRUE);
 			clutter_actor_show(stage);
 			clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
-		} else {
+		}
+		else
+		{
 			clutter_stage_set_fullscreen(CLUTTER_STAGE(stage), FALSE);
 //			*mX = *mY * mOA.num / mOA.den;
 			clutter_actor_set_size(stage, *mX, *mY);
 		}
 		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
-			__func__, *mX, *mY, xoff, yoff, mFullscreen);
+		    __func__, *mX, *mY, xoff, yoff, mFullscreen);
 	}
 	mReInitLock.unlock();
 
 	bltDisplayBuffer(); /* decoded video stream */
-	if (mState.blit) {
+	if (mState.blit)
+	{
 		/* only blit manually after fb->blit(), this helps to find missed blit() calls */
 		mState.blit = false;
 		hal_debug("GLFB::%s blit!\n", __func__);
@@ -368,15 +375,17 @@ void GLFbPC::render()
 		//xscale = 1.0;
 		int cmp = av_cmp_q(mVA, mOA);
 		const AVRational a149 = { 14, 9 };
-		switch (cmp) {
+		switch (cmp)
+		{
 			default:
-			case INT_MIN:	/* invalid */
-			case 0:		/* identical */
+			case INT_MIN:   /* invalid */
+			case 0:     /* identical */
 				hal_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
 				break;
-			case 1:		/* mVA > mOA -- video is wider than display */
+			case 1:     /* mVA > mOA -- video is wider than display */
 				hal_debug("%s: mVA > mOA\n", __func__);
-				switch (mCrop) {
+				switch (mCrop)
+				{
 					case DISPLAY_AR_MODE_PANSCAN:
 						zoom = av_q2d(mVA) / av_q2d(mOA);
 						break;
@@ -393,18 +402,20 @@ void GLFbPC::render()
 						break;
 				}
 				break;
-			case -1:	/* mVA < mOA -- video is taller than display */
+			case -1:    /* mVA < mOA -- video is taller than display */
 				hal_debug("%s: mVA < mOA\n", __func__);
-				switch (mCrop) {
+				switch (mCrop)
+				{
 					case DISPLAY_AR_MODE_LETTERBOX:
 						break;
 					case DISPLAY_AR_MODE_PANSCAN2:
-						if (av_cmp_q(a149, mOA) < 0) {
+						if (av_cmp_q(a149, mOA) < 0)
+						{
 							zoom = av_q2d(mVA) * av_q2d(a149) / av_q2d(mOA);
 							break;
 						}
-						// fall through
-						/* fallthrough for output format 14:9 */
+					// fall through
+					/* fallthrough for output format 14:9 */
 					case DISPLAY_AR_MODE_PANSCAN:
 						zoom = av_q2d(mOA) / av_q2d(mVA);
 						break;
@@ -416,11 +427,11 @@ void GLFbPC::render()
 				}
 				break;
 		}
-		hal_debug("zoom: %f xscale: %f xzoom: %f\n", zoom, xscale,xzoom);
-		clutter_actor_set_scale(vid_actor, xscale*zoom*xzoom, zoom);
+		hal_debug("zoom: %f xscale: %f xzoom: %f\n", zoom, xscale, xzoom);
+		clutter_actor_set_scale(vid_actor, xscale * zoom * xzoom, zoom);
 	}
 	clutter_timeline_stop(tl);
-	clutter_timeline_set_delay(tl, sleep_us/1000);
+	clutter_timeline_set_delay(tl, sleep_us / 1000);
 	clutter_timeline_start(tl);
 }
 
@@ -430,7 +441,8 @@ void GLFbPC::bltOSDBuffer()
 	int x = glfb_priv->mState.width;
 	int y = glfb_priv->mState.height;
 	ClutterContent *fb = clutter_image_new();
-	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf->data(), COGL_PIXEL_FORMAT_BGRA_8888, x, y, x*4, NULL)) {
+	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), osd_buf->data(), COGL_PIXEL_FORMAT_BGRA_8888, x, y, x * 4, NULL))
+	{
 		hal_info("GLFB::%s clutter_image_set_data failed?\n", __func__);
 		_exit(1); /* life is hard */
 	}
@@ -446,7 +458,8 @@ void GLFbPC::bltDisplayBuffer()
 		return;
 	static bool warn = true;
 	cVideo::SWFramebuffer *buf = videoDecoder->getDecBuf();
-	if (!buf) {
+	if (!buf)
+	{
 		if (warn)
 			hal_info("GLFB::%s did not get a buffer...\n", __func__);
 		warn = false;
@@ -458,18 +471,20 @@ void GLFbPC::bltDisplayBuffer()
 		return;
 
 	AVRational a = buf->AR();
-	if (a.den != 0 && a.num != 0 && av_cmp_q(a, _mVA)) {
+	if (a.den != 0 && a.num != 0 && av_cmp_q(a, _mVA))
+	{
 		_mVA = a;
 		/* _mVA is the raw buffer's aspect, mVA is the real scaled output aspect */
 		av_reduce(&mVA.num, &mVA.den, w * a.num, h * a.den, INT_MAX);
 		// mVA.num: 16 mVA.den: 9 w: 720 h: 576
 		// 16*576/720/9 = 1.42222
-		xscale = (double)mVA.num*h/(double)mVA.den/w;
+		xscale = (double)mVA.num * h / (double)mVA.den / w;
 		mVAchanged = true;
 	}
 
 	ClutterContent *fb = clutter_image_new();
-	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), &(*buf)[0], COGL_PIXEL_FORMAT_BGR_888, w, h, w*3, NULL)) {
+	if (!clutter_image_set_data(CLUTTER_IMAGE(fb), &(*buf)[0], COGL_PIXEL_FORMAT_BGR_888, w, h, w * 3, NULL))
+	{
 		hal_info("GLFB::%s clutter_image_set_data failed?\n", __func__);
 		_exit(1); /* life is hard */
 	}
@@ -484,10 +499,11 @@ void GLFbPC::bltDisplayBuffer()
 	int64_t vpts = buf->pts();
 	if (audioDecoder)
 		apts = audioDecoder->getPts();
-	if (apts != last_apts) {
+	if (apts != last_apts)
+	{
 		int rate, dummy1, dummy2;
 		if (apts < vpts)
-			sleep_us = (sleep_us * 2 + (vpts - apts)*10/9) / 3;
+			sleep_us = (sleep_us * 2 + (vpts - apts) * 10 / 9) / 3;
 		else if (sleep_us > 1000)
 			sleep_us -= 1000;
 		last_apts = apts;
@@ -502,5 +518,5 @@ void GLFbPC::bltDisplayBuffer()
 			sleep_us = 1;
 	}
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
-			buf->pts(), apts, (buf->pts() - apts)/90000.0, sleep_us, videoDecoder->buf_num);
+	    buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
 }

@@ -30,17 +30,18 @@
 #include "pes.h"
 #include "writer.h"
 
-#define NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS		24	// Reference: player/standards/h264.h
-#define CONTAINER_PARAMETERS_VERSION			0x00
+#define NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS      24  // Reference: player/standards/h264.h
+#define CONTAINER_PARAMETERS_VERSION            0x00
 
-typedef struct avcC_s {
-	uint8_t Version;		// configurationVersion
-	uint8_t Profile;		// AVCProfileIndication
-	uint8_t Compatibility;		// profile_compatibility
-	uint8_t Level;			// AVCLevelIndication
-	uint8_t NalLengthMinusOne;	// held in bottom two bits
-	uint8_t NumParamSets;		// held in bottom 5 bits
-	uint8_t Params[1];		// {length,params}{length,params}...sequence then picture
+typedef struct avcC_s
+{
+	uint8_t Version;        // configurationVersion
+	uint8_t Profile;        // AVCProfileIndication
+	uint8_t Compatibility;      // profile_compatibility
+	uint8_t Level;          // AVCLevelIndication
+	uint8_t NalLengthMinusOne;  // held in bottom two bits
+	uint8_t NumParamSets;       // held in bottom 5 bits
+	uint8_t Params[1];      // {length,params}{length,params}...sequence then picture
 } avcC_t;
 
 class WriterH264 : public Writer
@@ -74,14 +75,16 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 	uint8_t *d = packet->data;
 
 	// byte-stream format
-	if ((packet->size > 3) && (   (d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x00 && d[3] == 0x01) // first NAL unit
-			           || (d[0] == 0xff && d[1] == 0xff && d[2] == 0xff && d[3] == 0xff) // FIXME, needed???
-	)) {
+	if ((packet->size > 3) && ((d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x00 && d[3] == 0x01)    // first NAL unit
+	        || (d[0] == 0xff && d[1] == 0xff && d[2] == 0xff && d[3] == 0xff) // FIXME, needed???
+	    ))
+	{
 		unsigned int FakeStartCode = /* (call->Version << 8) | */ PES_VERSION_FAKE_START_CODE;
 		int ic = 0;
 		iov[ic++].iov_base = PesHeader;
 		unsigned int len = 0;
-		if (initialHeader) {
+		if (initialHeader)
+		{
 			initialHeader = false;
 			iov[ic].iov_base = get_codecpar(stream)->extradata;
 			iov[ic++].iov_len = get_codecpar(stream)->extradata_size;
@@ -103,10 +106,12 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 	}
 
 	// convert NAL units without sync byte sequence to byte-stream format
-	if (initialHeader) {
+	if (initialHeader)
+	{
 		avcC_t *avcCHeader = (avcC_t *) get_codecpar(stream)->extradata;
 
-		if (!avcCHeader) {
+		if (!avcCHeader)
+		{
 			fprintf(stderr, "stream->codec->extradata == NULL\n");
 			return false;
 		}
@@ -122,35 +127,35 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 
 		uint8_t Header[20];
 		unsigned int len = 0;
-		Header[len++] = 0x00;	// Start code, 00 00 00 01 for first NAL unit
+		Header[len++] = 0x00;   // Start code, 00 00 00 01 for first NAL unit
 		Header[len++] = 0x00;
 		Header[len++] = 0x00;
 		Header[len++] = 0x01;
 		Header[len++] = NALU_TYPE_PLAYER2_CONTAINER_PARAMETERS; // NAL unit header
 		// Container message version - changes when/if we vary the format of the message
 		Header[len++] = CONTAINER_PARAMETERS_VERSION;
-		Header[len++] = 0xff;	// marker bits
+		Header[len++] = 0xff;   // marker bits
 
-		#if 0
+#if 0
 		if (FrameRate == 0xffffffff)
 			FrameRate = (TimeScale > 1000) ? 1001 : 1;
-		#endif
+#endif
 
-		Header[len++] = (TimeScale >> 24) & 0xff;	// Output the timescale
+		Header[len++] = (TimeScale >> 24) & 0xff;   // Output the timescale
 		Header[len++] = (TimeScale >> 16) & 0xff;
-		Header[len++] = 0xff;	// marker bits
+		Header[len++] = 0xff;   // marker bits
 		Header[len++] = (TimeScale >>  8) & 0xff;
-		Header[len++] = (TimeScale      ) & 0xff;
-		Header[len++] = 0xff;	// marker bits
+		Header[len++] = (TimeScale) & 0xff;
+		Header[len++] = 0xff;   // marker bits
 
-		Header[len++] = (FrameRate >> 24) & 0xff;	// Output frame period (should be: time delta)
+		Header[len++] = (FrameRate >> 24) & 0xff;   // Output frame period (should be: time delta)
 		Header[len++] = (FrameRate >> 16) & 0xff;
-		Header[len++] = 0xff;	// marker bits
+		Header[len++] = 0xff;   // marker bits
 		Header[len++] = (FrameRate >>  8) & 0xff;
-		Header[len++] = (FrameRate      ) & 0xff;
-		Header[len++] = 0xff;	// marker bits
+		Header[len++] = (FrameRate) & 0xff;
+		Header[len++] = 0xff;   // marker bits
 
-		Header[len++] = 0x80;	// Rsbp trailing bits
+		Header[len++] = 0x80;   // Rsbp trailing bits
 
 		int ic = 0;
 		iov[ic].iov_base = PesHeader;
@@ -169,7 +174,8 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 
 		// sequence parameter set
 		unsigned int ParamSets = avcCHeader->NumParamSets & 0x1f;
-		for (unsigned int i = 0; i < ParamSets; i++) {
+		for (unsigned int i = 0; i < ParamSets; i++)
+		{
 			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) | avcCHeader->Params[ParamOffset + 1];
 
 			iov[ic].iov_base = (uint8_t *) "\0\0\0\1";
@@ -184,7 +190,8 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 		// picture parameter set
 		ParamSets = avcCHeader->Params[ParamOffset++];
 
-		for (unsigned int i = 0; i < ParamSets; i++) {
+		for (unsigned int i = 0; i < ParamSets; i++)
+		{
 			unsigned int PsLength = (avcCHeader->Params[ParamOffset] << 8) | avcCHeader->Params[ParamOffset + 1];
 
 			iov[ic].iov_base = (uint8_t *) "\0\0\0\1";
@@ -205,9 +212,11 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 	}
 
 	uint8_t *de = d + packet->size;
-	do {
+	do
+	{
 		unsigned int len = 0;
-		switch (NalLengthBytes) {
+		switch (NalLengthBytes)
+		{
 			case 4:
 				len = *d;
 				d++;
@@ -225,8 +234,9 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 				d++;
 		}
 
-		if (d + len > de) {
-			fprintf(stderr, "NAL length past end of buffer - size %u frame offset %d left %d\n", len, (int) (d - packet->data), (int) (de - d));
+		if (d + len > de)
+		{
+			fprintf(stderr, "NAL length past end of buffer - size %u frame offset %d left %d\n", len, (int)(d - packet->data), (int)(de - d));
 			break;
 		}
 
@@ -245,7 +255,8 @@ bool WriterH264::Write(AVPacket *packet, int64_t pts)
 		d += len;
 		pts = INVALID_PTS_VALUE;
 
-	} while (d < de);
+	}
+	while (d < de);
 
 	return true;
 }
@@ -255,4 +266,4 @@ WriterH264::WriterH264()
 	Register(this, AV_CODEC_ID_H264, VIDEO_ENCODING_H264);
 }
 
-static WriterH264 writerh264 __attribute__ ((init_priority (300)));
+static WriterH264 writerh264 __attribute__((init_priority(300)));

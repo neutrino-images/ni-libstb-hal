@@ -71,4 +71,4 @@ WriterH263::WriterH263()
 	Register(this, AV_CODEC_ID_FLV1, VIDEO_ENCODING_FLV1);
 }
 
-static WriterH263 writer_h263 __attribute__ ((init_priority (300)));
+static WriterH263 writer_h263 __attribute__((init_priority(300)));

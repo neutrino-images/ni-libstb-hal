@@ -30,8 +30,8 @@
 #include "pes.h"
 #include "writer.h"
 
-#define PES_AUDIO_PRIVATE_HEADER_SIZE   16	// consider maximum private header size.
-#define PES_AUDIO_HEADER_SIZE		(32 + PES_AUDIO_PRIVATE_HEADER_SIZE)
+#define PES_AUDIO_PRIVATE_HEADER_SIZE   16  // consider maximum private header size.
+#define PES_AUDIO_HEADER_SIZE       (32 + PES_AUDIO_PRIVATE_HEADER_SIZE)
 
 class WriterDTS : public Writer
 {
@@ -53,7 +53,8 @@ bool WriterDTS::Write(AVPacket *packet, int64_t pts)
 	memcpy(Data, packet->data, packet->size);
 
 	/* 16-bit byte swap all data before injecting it */
-	for (i = 0; i < packet->size; i += 2) {
+	for (i = 0; i < packet->size; i += 2)
+	{
 		uint8_t Tmp = Data[i];
 		Data[i] = Data[i + 1];
 		Data[i + 1] = Tmp;
@@ -63,7 +64,7 @@ bool WriterDTS::Write(AVPacket *packet, int64_t pts)
 	struct iovec iov[2];
 
 	iov[0].iov_base = PesHeader;
-	iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE /*PRIVATE_STREAM_1_PES_START_CODE */ , pts, 0);
+	iov[0].iov_len = InsertPesHeader(PesHeader, packet->size, MPEG_AUDIO_PES_START_CODE /*PRIVATE_STREAM_1_PES_START_CODE */, pts, 0);
 #ifdef DO_BYTESPWAP
 	iov[1].iov_base = Data;
 #else
@@ -79,4 +80,4 @@ WriterDTS::WriterDTS()
 	Register(this, AV_CODEC_ID_DTS, AUDIO_ENCODING_DTS);
 }
 
-static WriterDTS writer_dts __attribute__ ((init_priority (300)));
+static WriterDTS writer_dts __attribute__((init_priority(300)));

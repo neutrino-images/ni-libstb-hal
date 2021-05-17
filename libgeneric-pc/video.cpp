@@ -65,13 +65,14 @@ extern bool HAL_nodec;
 static uint8_t *dmxbuf;
 static int bufpos;
 
-static const AVRational aspect_ratios[6] = {
+static const AVRational aspect_ratios[6] =
+{
 	{  1, 1 },
 	{  4, 3 },
 	{ 14, 9 },
 	{ 16, 9 },
 	{ 20, 9 },
-	{ -1,-1 }
+	{ -1, -1 }
 };
 
 cVideo::cVideo(int, void *, void *, unsigned int)
@@ -133,15 +134,15 @@ int cVideo::getAspectRatio(void)
 	ar = w * 100 * a.num / h / a.den;
 	if (ar < 100 || ar > 225) /* < 4:3, > 20:9 */
 		; /* ret = 0: N/A */
-	else if (ar < 140)	/* 4:3 */
+	else if (ar < 140)  /* 4:3 */
 		ret = 1;
-	else if (ar < 165)	/* 14:9 */
+	else if (ar < 165)  /* 14:9 */
 		ret = 2;
-	else if (ar < 200)	/* 16:9 */
+	else if (ar < 200)  /* 16:9 */
 		ret = 3;
 	else
-		ret = 4;	/* 20:9 */
- out:
+		ret = 4;    /* 20:9 */
+out:
 	buf_m.unlock();
 	return ret;
 }
@@ -163,7 +164,8 @@ int cVideo::Start(void *, unsigned short, unsigned short, void *)
 int cVideo::Stop(bool)
 {
 	hal_debug("%s running %d >\n", __func__, thread_running);
-	if (thread_running) {
+	if (thread_running)
+	{
 		thread_running = false;
 		OpenThreads::Thread::join();
 	}
@@ -180,9 +182,9 @@ int cVideo::GetVideoSystem()
 {
 	int current_video_system = VIDEO_STD_1080I50;
 
-	if(dec_w < 720)
+	if (dec_w < 720)
 		current_video_system = VIDEO_STD_PAL;
-	else if(dec_w > 720 && dec_w <= 1280)
+	else if (dec_w > 720 && dec_w <= 1280)
 		current_video_system = VIDEO_STD_720P50;
 
 	return current_video_system;
@@ -191,7 +193,7 @@ int cVideo::GetVideoSystem()
 int cVideo::SetVideoSystem(int system, bool)
 {
 	int h;
-	switch(system)
+	switch (system)
 	{
 		case VIDEO_STD_NTSC:
 		case VIDEO_STD_480P:
@@ -211,7 +213,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			break;
 		case VIDEO_STD_AUTO:
 			hal_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
-			// fallthrough
+		// fallthrough
 		case VIDEO_STD_SECAM:
 		case VIDEO_STD_PAL:
 		case VIDEO_STD_576P:
@@ -261,17 +263,21 @@ bool cVideo::ShowPicture(const char *fname)
 	AVFrame *frame, *rgbframe;
 	AVPacket avpkt;
 
-	if (avformat_open_input(&avfc, fname, NULL, NULL) < 0) {
+	if (avformat_open_input(&avfc, fname, NULL, NULL) < 0)
+	{
 		hal_info("%s: Could not open file %s\n", __func__, fname);
 		return ret;
 	}
 
-	if (avformat_find_stream_info(avfc, NULL) < 0) {
+	if (avformat_find_stream_info(avfc, NULL) < 0)
+	{
 		hal_info("%s: Could not find file info %s\n", __func__, fname);
 		goto out_close;
 	}
-	for (i = 0; i < avfc->nb_streams; i++) {
-		if (avfc->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+	for (i = 0; i < avfc->nb_streams; i++)
+	{
+		if (avfc->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+		{
 			stream_id = i;
 			break;
 		}
@@ -281,24 +287,28 @@ bool cVideo::ShowPicture(const char *fname)
 	p = avfc->streams[stream_id]->codecpar;
 	codec = avcodec_find_decoder(p->codec_id);
 	c = avcodec_alloc_context3(codec);
-	if (avcodec_open2(c, codec, NULL) < 0) {
+	if (avcodec_open2(c, codec, NULL) < 0)
+	{
 		hal_info("%s: Could not find/open the codec, id 0x%x\n", __func__, p->codec_id);
 		goto out_close;
 	}
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
-	if (!frame || !rgbframe) {
+	if (!frame || !rgbframe)
+	{
 		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out_free;
 	}
 	av_init_packet(&avpkt);
-	if (av_read_frame(avfc, &avpkt) < 0) {
+	if (av_read_frame(avfc, &avpkt) < 0)
+	{
 		hal_info("%s: av_read_frame < 0\n", __func__);
 		goto out_free;
 	}
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 	av_ret = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
-	if (av_ret < 0) {
+	if (av_ret < 0)
+	{
 		hal_info("%s: avcodec_decode_video2 %d\n", __func__, av_ret);
 		av_packet_unref(&avpkt);
 		goto out_free;
@@ -307,7 +317,8 @@ bool cVideo::ShowPicture(const char *fname)
 		hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, av_ret);
 #else
 	av_ret = avcodec_send_packet(c, &avpkt);
-	if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
+	if (av_ret != 0 && av_ret != AVERROR(EAGAIN))
+	{
 		hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
 		av_packet_unref(&avpkt);
 		goto out_free;
@@ -319,22 +330,24 @@ bool cVideo::ShowPicture(const char *fname)
 	got_frame = 1;
 #endif
 
-	if (got_frame) {
+	if (got_frame)
+	{
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
-							    c->width, c->height, VDEC_PIXFMT,
-							    SWS_BICUBIC, 0, 0, 0);
+		        c->width, c->height, VDEC_PIXFMT,
+		        SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
 			hal_info("%s: ERROR setting up SWS context\n", __func__);
-		else {
+		else
+		{
 			buf_m.lock();
 			SWFramebuffer *f = &buffers[buf_in];
 			if (f->size() < need)
 				f->resize(need);
 			av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
-					c->width, c->height, 1);
+			    c->width, c->height, 1);
 			sws_scale(convert, frame->data, frame->linesize, 0, c->height,
-					rgbframe->data, rgbframe->linesize);
+			    rgbframe->data, rgbframe->linesize);
 			sws_freeContext(convert);
 			f->width(c->width);
 			f->height(c->height);
@@ -344,7 +357,8 @@ bool cVideo::ShowPicture(const char *fname)
 			buf_in++;
 			buf_in %= VDEC_MAXBUFS;
 			buf_num++;
-			if (buf_num > (VDEC_MAXBUFS - 1)) {
+			if (buf_num > (VDEC_MAXBUFS - 1))
+			{
 				hal_debug("%s: buf_num overflow\n", __func__);
 				buf_out++;
 				buf_out %= VDEC_MAXBUFS;
@@ -355,12 +369,12 @@ bool cVideo::ShowPicture(const char *fname)
 		}
 	}
 	av_packet_unref(&avpkt);
- out_free:
+out_free:
 	avcodec_close(c);
 	av_free(c);
 	av_frame_free(&frame);
 	av_frame_free(&rgbframe);
- out_close:
+out_close:
 	avformat_close_input(&avfc);
 	hal_debug("%s(%s) end\n", __func__, fname);
 	return ret;
@@ -396,7 +410,8 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 {
 	width = dec_w;
 	height = dec_h;
-	switch (dec_r) {
+	switch (dec_r)
+	{
 		case 23://23.976fps
 			rate = VIDEO_FRAME_RATE_23_976;
 			break;
@@ -437,7 +452,8 @@ int cVideo::SetStreamType(VIDEO_FORMAT v)
 cVideo::SWFramebuffer *cVideo::getDecBuf(void)
 {
 	buf_m.lock();
-	if (buf_num == 0) {
+	if (buf_num == 0)
+	{
 		buf_m.unlock();
 		return NULL;
 	}
@@ -452,8 +468,10 @@ cVideo::SWFramebuffer *cVideo::getDecBuf(void)
 static int my_read(void *, uint8_t *buf, int buf_size)
 {
 	int tmp = 0;
-	if (videoDecoder && bufpos < DMX_BUF_SZ - 4096) {
-		while (bufpos < buf_size && ++tmp < 20) { /* retry max 20 times */
+	if (videoDecoder && bufpos < DMX_BUF_SZ - 4096)
+	{
+		while (bufpos < buf_size && ++tmp < 20)   /* retry max 20 times */
+		{
 			int ret = videoDemux->Read(dmxbuf + bufpos, DMX_BUF_SZ - bufpos, 20);
 			if (ret > 0)
 				bufpos += ret;
@@ -461,7 +479,8 @@ static int my_read(void *, uint8_t *buf, int buf_size)
 	}
 	if (bufpos == 0)
 		return 0;
-	if (bufpos > buf_size) {
+	if (bufpos > buf_size)
+	{
 		memcpy(buf, dmxbuf, buf_size);
 		memmove(dmxbuf, dmxbuf + buf_size, bufpos - buf_size);
 		bufpos -= buf_size;
@@ -478,7 +497,7 @@ void cVideo::run(void)
 	hal_info("====================== start decoder thread ================================\n");
 	AVCodec *codec;
 	AVCodecParameters *p = NULL;
-	AVCodecContext *c= NULL;
+	AVCodecContext *c = NULL;
 	AVFormatContext *avfc = NULL;
 	AVInputFormat *inp;
 	AVFrame *frame, *rgbframe;
@@ -499,18 +518,19 @@ void cVideo::run(void)
 	av_init_packet(&avpkt);
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
-			0,		// bWriteable (1=true,0=false)
-			NULL,		// user data; will be passed to our callback functions
-			my_read,	// read callback
-			NULL,		// write callback
-			NULL);		// seek callback
+	        0,      // bWriteable (1=true,0=false)
+	        NULL,       // user data; will be passed to our callback functions
+	        my_read,    // read callback
+	        NULL,       // write callback
+	        NULL);      // seek callback
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
-	avfc->probesize = 188*5;
+	avfc->probesize = 188 * 5;
 
 	thread_running = true;
-	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0) {
+	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0)
+	{
 		hal_info("%s: Could not open input\n", __func__);
 		goto out;
 	}
@@ -529,25 +549,31 @@ void cVideo::run(void)
 		hal_info("%s: no video codec? 0x%x\n", __func__, p->codec_type);
 
 	codec = avcodec_find_decoder(p->codec_id);
-	if (!codec) {
+	if (!codec)
+	{
 		hal_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(p->codec_id));
 		goto out;
 	}
 	c = avcodec_alloc_context3(codec);
-	if (avcodec_open2(c, codec, NULL) < 0) {
+	if (avcodec_open2(c, codec, NULL) < 0)
+	{
 		hal_info("%s: Could not open codec\n", __func__);
 		goto out;
 	}
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
-	if (!frame || !rgbframe) {
+	if (!frame || !rgbframe)
+	{
 		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out2;
 	}
 	hal_info("decoding %s\n", avcodec_get_name(c->codec_id));
-	while (thread_running) {
-		if (av_read_frame(avfc, &avpkt) < 0) {
-			if (warn_r - time(NULL) > 4) {
+	while (thread_running)
+	{
+		if (av_read_frame(avfc, &avpkt) < 0)
+		{
+			if (warn_r - time(NULL) > 4)
+			{
 				hal_info("%s: av_read_frame < 0\n", __func__);
 				warn_r = time(NULL);
 			}
@@ -557,8 +583,10 @@ void cVideo::run(void)
 		int got_frame = 0;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 		av_ret = avcodec_decode_video2(c, frame, &got_frame, &avpkt);
-		if (av_ret < 0) {
-			if (warn_d - time(NULL) > 4) {
+		if (av_ret < 0)
+		{
+			if (warn_d - time(NULL) > 4)
+			{
 				hal_info("%s: avcodec_decode_video2 %d\n", __func__, av_ret);
 				warn_d = time(NULL);
 			}
@@ -569,8 +597,10 @@ void cVideo::run(void)
 			hal_info("%s: WARN: pkt->size %d != len %d\n", __func__, avpkt.size, av_ret);
 #else
 		av_ret = avcodec_send_packet(c, &avpkt);
-		if (av_ret != 0 && av_ret != AVERROR(EAGAIN)) {
-			if (warn_d - time(NULL) > 4) {
+		if (av_ret != 0 && av_ret != AVERROR(EAGAIN))
+		{
+			if (warn_d - time(NULL) > 4)
+			{
 				hal_info("%s: avcodec_send_packet %d\n", __func__, av_ret);
 				warn_d = time(NULL);
 			}
@@ -582,26 +612,29 @@ void cVideo::run(void)
 			got_frame = 1;
 #endif
 		still_m.lock();
-		if (got_frame && ! stillpicture) {
+		if (got_frame && ! stillpicture)
+		{
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
-						       c->width, c->height, c->pix_fmt,
-						       c->width, c->height, VDEC_PIXFMT,
-						       SWS_BICUBIC, 0, 0, 0);
+			        c->width, c->height, c->pix_fmt,
+			        c->width, c->height, VDEC_PIXFMT,
+			        SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
 				hal_info("%s: ERROR setting up SWS context\n", __func__);
-			else {
+			else
+			{
 				buf_m.lock();
 				SWFramebuffer *f = &buffers[buf_in];
 				if (f->size() < need)
 					f->resize(need);
 				av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
-						c->width, c->height, 1);
+				    c->width, c->height, 1);
 				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
-						rgbframe->data, rgbframe->linesize);
-				if (dec_w != c->width || dec_h != c->height) {
+				    rgbframe->data, rgbframe->linesize);
+				if (dec_w != c->width || dec_h != c->height)
+				{
 					hal_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
-							dec_w, dec_h, c->width, c->height);
+					    dec_w, dec_h, c->width, c->height);
 					dec_w = c->width;
 					dec_h = c->height;
 					w_h_changed = true;
@@ -616,14 +649,14 @@ void cVideo::run(void)
 				/* a/v delay determined experimentally :-) */
 #if USE_OPENGL
 				if (v_format == VIDEO_FORMAT_MPEG2)
-					vpts += 90000*4/10; /* 400ms */
+					vpts += 90000 * 4 / 10; /* 400ms */
 				else
-					vpts += 90000*3/10; /* 300ms */
+					vpts += 90000 * 3 / 10; /* 300ms */
 #endif
 #if USE_CLUTTER
 				/* no idea why there's a difference between OpenGL and clutter rendering... */
 				if (v_format == VIDEO_FORMAT_MPEG2)
-					vpts += 90000*3/10; /* 300ms */
+					vpts += 90000 * 3 / 10; /* 300ms */
 #endif
 				f->pts(vpts);
 				AVRational a = av_guess_sample_aspect_ratio(avfc, avfc->streams[0], frame);
@@ -631,41 +664,44 @@ void cVideo::run(void)
 				buf_in++;
 				buf_in %= VDEC_MAXBUFS;
 				buf_num++;
-				if (buf_num > (VDEC_MAXBUFS - 1)) {
+				if (buf_num > (VDEC_MAXBUFS - 1))
+				{
 					hal_debug("%s: buf_num overflow\n", __func__);
 					buf_out++;
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;
 				}
-				dec_r = c->time_base.den/(c->time_base.num * c->ticks_per_frame);
+				dec_r = c->time_base.den / (c->time_base.num * c->ticks_per_frame);
 				buf_m.unlock();
 			}
 			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
-					c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
+			    c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
 #if (LIBAVUTIL_VERSION_MAJOR < 54)
-					av_frame_get_best_effort_timestamp(frame));
+			    av_frame_get_best_effort_timestamp(frame));
 #else
-					frame->best_effort_timestamp);
+			    frame->best_effort_timestamp);
 #endif
-		} else
+		}
+		else
 			hal_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
 		still_m.unlock();
 		av_packet_unref(&avpkt);
 	}
 	sws_freeContext(convert);
- out2:
+out2:
 	avcodec_close(c);
 	av_free(c);
 	av_frame_free(&frame);
 	av_frame_free(&rgbframe);
- out:
+out:
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);
 	av_free(pIOCtx);
 	/* reset output buffers */
 	bufpos = 0;
 	still_m.lock();
-	if (!stillpicture) {
+	if (!stillpicture)
+	{
 		buf_num = 0;
 		buf_in = 0;
 		buf_out = 0;
@@ -680,50 +716,57 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 	int len = 0;
 	struct SwsContext *scale = NULL;
 	scale = sws_getCachedContext(scale, sw, sh, sfmt, dw, dh, AV_PIX_FMT_RGB32, SWS_BICUBIC, 0, 0, 0);
-	if (!scale) {
+	if (!scale)
+	{
 		hal_info_c("%s: ERROR setting up SWS context\n", __func__);
 		return ret;
 	}
 	AVFrame *sframe = av_frame_alloc();
 	AVFrame *dframe = av_frame_alloc();
-	if (sframe && dframe) {
+	if (sframe && dframe)
+	{
 		len = av_image_fill_arrays(sframe->data, sframe->linesize, &(src)[0], sfmt, sw, sh, 1);
-		if(len>-1)
+		if (len > -1)
 			ret = true;
 
-		if(ret && (len = av_image_fill_arrays(dframe->data, dframe->linesize, &(dst)[0], AV_PIX_FMT_RGB32, dw, dh, 1)<0))
+		if (ret && (len = av_image_fill_arrays(dframe->data, dframe->linesize, &(dst)[0], AV_PIX_FMT_RGB32, dw, dh, 1) < 0))
 			ret = false;
 
-		if(ret && (len = sws_scale(scale, sframe->data, sframe->linesize, 0, sh, dframe->data, dframe->linesize)<0))
+		if (ret && (len = sws_scale(scale, sframe->data, sframe->linesize, 0, sh, dframe->data, dframe->linesize) < 0))
 			ret = false;
 		else
 			ret = true;
-	}else{
+	}
+	else
+	{
 		hal_info_c("%s: could not alloc sframe (%p) or dframe (%p)\n", __func__, sframe, dframe);
 		ret = false;
 	}
 
-	if(sframe){
+	if (sframe)
+	{
 		av_frame_free(&sframe);
 		sframe = NULL;
 	}
-	if(dframe){
+	if (dframe)
+	{
 		av_frame_free(&dframe);
 		dframe = NULL;
 	}
-	if(scale){
+	if (scale)
+	{
 		sws_freeContext(scale);
 		scale = NULL;
 	}
-	hal_info_c("%s: %s scale %ix%i to %ix%i ,len %i\n",ret?" ":"ERROR",__func__, sw, sh, dw, dh,len);
+	hal_info_c("%s: %s scale %ix%i to %ix%i ,len %i\n", ret ? " " : "ERROR", __func__, sw, sh, dw, dh, len);
 
 	return ret;
 }
 
-bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
+bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
 	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
+	    __func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	SWFramebuffer video;
 	std::vector<unsigned char> *osd = NULL;
 	std::vector<unsigned char> s_osd; /* scaled OSD */
@@ -732,13 +775,15 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 	int osd_h = glfb_priv->getOSDHeight();
 	xres = osd_w;
 	yres = osd_h;
-	if (get_video) {
+	if (get_video)
+	{
 		buf_m.lock();
 		video = buffers[buf_out];
 		buf_m.unlock();
 		vid_w = video.width();
 		vid_h = video.height();
-		if (scale_to_video || !get_osd) {
+		if (scale_to_video || !get_osd)
+		{
 			xres = vid_w;
 			yres = vid_h;
 			AVRational a = video.AR();
@@ -747,8 +792,9 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 				xres = vid_w * a.num / a.den;
 		}
 	}
-	if(video.empty()){
-		get_video=false;
+	if (video.empty())
+	{
+		get_video = false;
 		xres = osd_w;
 		yres = osd_h;
 	}
@@ -756,53 +802,66 @@ bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool ge
 		osd = glfb_priv->getOSDBuffer();
 	unsigned int need = av_image_get_buffer_size(AV_PIX_FMT_RGB32, xres, yres, 1);
 	data = (unsigned char *)realloc(data, need); /* will be freed by caller */
-	if (data == NULL)	/* out of memory? */
+	if (data == NULL)   /* out of memory? */
 		return false;
 
-	if (get_video) {
+	if (get_video)
+	{
 #if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
-		if (vid_w != xres || vid_h != yres){ /* scale video into data... */
+		if (vid_w != xres || vid_h != yres)  /* scale video into data... */
+		{
 #endif
-			bool ret = swscale(&video[0], data, vid_w, vid_h, xres, yres,VDEC_PIXFMT);
-			if(!ret){
+			bool ret = swscale(&video[0], data, vid_w, vid_h, xres, yres, VDEC_PIXFMT);
+			if (!ret)
+			{
 				free(data);
 				return false;
 			}
 #if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
-		}else{ /* get_video and no fancy scaling needed */
+		}
+		else   /* get_video and no fancy scaling needed */
+		{
 			memcpy(data, &video[0], xres * yres * sizeof(uint32_t));
 		}
 #endif
 	}
 
-	if (get_osd && (osd_w != xres || osd_h != yres)) {
+	if (get_osd && (osd_w != xres || osd_h != yres))
+	{
 		/* rescale osd */
 		s_osd.resize(need);
-		bool ret = swscale(&(*osd)[0], &s_osd[0], osd_w, osd_h, xres, yres,AV_PIX_FMT_RGB32);
-		if(!ret){
+		bool ret = swscale(&(*osd)[0], &s_osd[0], osd_w, osd_h, xres, yres, AV_PIX_FMT_RGB32);
+		if (!ret)
+		{
 			free(data);
 			return false;
 		}
 		osd = &s_osd;
 	}
 
-	if (get_video && get_osd) {
+	if (get_video && get_osd)
+	{
 		/* alpha blend osd onto data (video). TODO: maybe libavcodec can do this? */
 		uint32_t *d = (uint32_t *)data;
-		uint32_t *pixpos = (uint32_t *)&(*osd)[0];
-		for (int count = 0; count < yres; count++) {
-			for (int count2 = 0; count2 < xres; count2++ ) {
+		uint32_t *pixpos = (uint32_t *) & (*osd)[0];
+		for (int count = 0; count < yres; count++)
+		{
+			for (int count2 = 0; count2 < xres; count2++)
+			{
 				uint32_t pix = *pixpos;
 				if ((pix & 0xff000000) == 0xff000000)
 					*d = pix;
-				else {
+				else
+				{
 					uint8_t *in = (uint8_t *)(pixpos);
 					uint8_t *out = (uint8_t *)d;
-					int a = in[3];	/* TODO: big/little endian? */
+					int a = in[3];  /* TODO: big/little endian? */
 					*out = (*out + ((*in - *out) * a) / 256);
-					in++; out++;
+					in++;
+					out++;
 					*out = (*out + ((*in - *out) * a) / 256);
-					in++; out++;
+					in++;
+					out++;
 					*out = (*out + ((*in - *out) * a) / 256);
 				}
 				d++;

@@ -12,7 +12,7 @@
 #include "dvbci_mmi.h"
 #include "dvbci_ccmgr.h"
 
-eDVBCISession* eDVBCISession::sessions[SLMS];
+eDVBCISession *eDVBCISession::sessions[SLMS];
 
 eDVBCIHostControlSession::eDVBCIHostControlSession(eDVBCISlot *tslot)
 {
@@ -23,11 +23,11 @@ eDVBCIHostControlSession::~eDVBCIHostControlSession()
 {
 }
 
-int eDVBCIHostControlSession::receivedAPDU(const unsigned char *tag,const void *data, int len)
+int eDVBCIHostControlSession::receivedAPDU(const unsigned char *tag, const void *data, int len)
 {
 	printf("CI HC SESSION(%d)/TAG %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
-	for (int i=0; i<len; i++)
-		printf("%02x ", ((const unsigned char*)data)[i]);
+	for (int i = 0; i < len; i++)
+		printf("%02x ", ((const unsigned char *)data)[i]);
 	printf("\n");
 	return 0;
 }
@@ -161,7 +161,7 @@ void eDVBCISession::deleteSessions(const eDVBCISlot *slot)
 	}
 }
 
-eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned char *resource_identifier, unsigned char &status)
+eDVBCISession *eDVBCISession::createSession(eDVBCISlot *slot, const unsigned char *resource_identifier, unsigned char &status)
 {
 	unsigned long tag;
 	unsigned short session_nb;
@@ -207,13 +207,13 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 			sessions[session_nb - 1] = new eDVBCIMMISession(slot);
 			printf("[CI SESS] MMI - create session\n");
 			break;
-		if (cCA::GetInstance()->CheckCerts())
-		{
+			if (cCA::GetInstance()->CheckCerts())
+			{
 			case 0x008c1001:
 				printf("[CI SESS] CC MANAGER\n");
 				sessions[session_nb - 1] = new eDVBCIContentControlManagerSession(slot);
 				break;
-		} // fall through
+			} // fall through
 		case 0x00200041:
 			sessions[session_nb - 1] = new eDVBCIHostControlSession(slot);
 			printf("[CI SESS] Host Control\n");
@@ -222,7 +222,7 @@ eDVBCISession* eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 //			session=new eDVBCIAuthSession;
 			printf("[CI SESS] AuthSession\n");
 //			break;
-		  // fall through
+		// fall through
 		case 0x008e1001:
 		default:
 			printf("[CI SESS] unknown resource type %02x %02x %02x %02x\n", resource_identifier[0], resource_identifier[1], resource_identifier[2], resource_identifier[3]);
@@ -284,18 +284,18 @@ int eDVBCISession::pollAll()
 
 void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size_t len)
 {
-	if ((ptr[0] == 0x90 || ptr[0] == 0x95) && (ptr[3] == 0 ))
+	if ((ptr[0] == 0x90 || ptr[0] == 0x95) && (ptr[3] == 0))
 	{
 		printf("[CI SESS] ****Mist: %02x %02x %02x %02x\n", ptr[0], ptr[1], ptr[2], ptr[3]);
 	}
-	const unsigned char *pkt = (const unsigned char*)ptr;
+	const unsigned char *pkt = (const unsigned char *)ptr;
 	unsigned char tag = *pkt++;
 	int llen, hlen;
 
-	printf("[CI SESS] receiveData slot: %p > ",slot);
+	printf("[CI SESS] receiveData slot: %p > ", slot);
 
 #if 0
-	for(unsigned int i = 0; i < len; i++)
+	for (unsigned int i = 0; i < len; i++)
 		printf("%02x ", ptr[i]);
 #endif
 	printf("\n");
@@ -303,9 +303,9 @@ void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size
 	llen = parseLengthField(pkt, hlen);
 	pkt += llen;
 
-	eDVBCISession* session = NULL;
+	eDVBCISession *session = NULL;
 
-	if(tag == 0x91)
+	if (tag == 0x91)
 	{
 		unsigned char status;
 
@@ -357,7 +357,7 @@ void eDVBCISession::receiveData(eDVBCISlot *slot, const unsigned char *ptr, size
 
 	hlen += llen + 1; // lengthfield and tag
 
-	pkt = ((const unsigned char*)ptr) + hlen;
+	pkt = ((const unsigned char *)ptr) + hlen;
 	len -= hlen;
 
 	if (session)

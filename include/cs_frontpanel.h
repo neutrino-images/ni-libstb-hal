@@ -26,7 +26,8 @@
 #define VFDSETTIMEMODE       0xc0425b03
 #define VFDDISPLAYCLR        0xc0425b00
 
-typedef enum {
+typedef enum
+{
 #if defined(BOXMODEL_OCTAGON1008)
 	ICON_DOLBY = 0x10,
 	ICON_DTS,
@@ -248,42 +249,47 @@ typedef enum {
 #endif
 } fp_icon;
 
-typedef enum {
-	FP_FLAG_NONE			= 0x00,
-	FP_FLAG_SCROLL_ON		= 0x01,	/* switch scrolling on */
-	FP_FLAG_SCROLL_LTR		= 0x02,	/* scroll from left to rightinstead of default right to left direction (i.e. for arabic text) */
-	FP_FLAG_SCROLL_SIO		= 0x04,	/* start/stop scrolling with empty screen (scroll in/out) */
-	FP_FLAG_SCROLL_DELAY		= 0x08,	/* delayed scroll start */
-	FP_FLAG_ALIGN_LEFT		= 0x10,	/* align the text in display from the left (default) */
-	FP_FLAG_ALIGN_RIGHT		= 0x20,	/* align the text in display from the right (arabic) */
-	FP_FLAG_UPDATE_SCROLL_POS	= 0x40,	/* update the current position for scrolling */
+typedef enum
+{
+	FP_FLAG_NONE            = 0x00,
+	FP_FLAG_SCROLL_ON       = 0x01, /* switch scrolling on */
+	FP_FLAG_SCROLL_LTR      = 0x02, /* scroll from left to rightinstead of default right to left direction (i.e. for arabic text) */
+	FP_FLAG_SCROLL_SIO      = 0x04, /* start/stop scrolling with empty screen (scroll in/out) */
+	FP_FLAG_SCROLL_DELAY        = 0x08, /* delayed scroll start */
+	FP_FLAG_ALIGN_LEFT      = 0x10, /* align the text in display from the left (default) */
+	FP_FLAG_ALIGN_RIGHT     = 0x20, /* align the text in display from the right (arabic) */
+	FP_FLAG_UPDATE_SCROLL_POS   = 0x40, /* update the current position for scrolling */
 } fp_flag;
 
-typedef struct {
-	unsigned char		brightness;
-	unsigned char		flags;
-	unsigned char		current_hour;
-	unsigned char		current_minute;
-	unsigned char		timer_minutes_hi;
-	unsigned char		timer_minutes_lo;
+typedef struct
+{
+	unsigned char       brightness;
+	unsigned char       flags;
+	unsigned char       current_hour;
+	unsigned char       current_minute;
+	unsigned char       timer_minutes_hi;
+	unsigned char       timer_minutes_lo;
 } fp_standby_data_t;
 
-typedef enum {
-	FP_LED_1_ON		= 0x81,
-	FP_LED_2_ON		= 0x82,
-	FP_LED_3_ON		= 0x83,
-	FP_LED_1_OFF		= 0x01,
-	FP_LED_2_OFF		= 0x02,
-	FP_LED_3_OFF		= 0x03
+typedef enum
+{
+	FP_LED_1_ON     = 0x81,
+	FP_LED_2_ON     = 0x82,
+	FP_LED_3_ON     = 0x83,
+	FP_LED_1_OFF        = 0x01,
+	FP_LED_2_OFF        = 0x02,
+	FP_LED_3_OFF        = 0x03
 } fp_led_ctrl_t;
 
-typedef struct {
-	unsigned char		source;
-	unsigned char		time_minutes_hi;
-	unsigned char		time_minutes_lo;
+typedef struct
+{
+	unsigned char       source;
+	unsigned char       time_minutes_hi;
+	unsigned char       time_minutes_lo;
 } fp_wakeup_data_t;
 
-typedef enum {
+typedef enum
+{
 	FP_WAKEUP_SOURCE_TIMER  = 0x01,
 	FP_WAKEUP_SOURCE_BUTTON = 0x02,
 	FP_WAKEUP_SOURCE_REMOTE = 0x04,
@@ -291,30 +297,34 @@ typedef enum {
 	FP_WAKEUP_SOURCE_POWER  = 0xFF
 } fp_wakeup_source;
 
-typedef struct {
-	unsigned short		addr;
-	unsigned short		cmd;
+typedef struct
+{
+	unsigned short      addr;
+	unsigned short      cmd;
 } fp_standby_cmd_data_t;
 
-typedef enum {
-	FP_DISPLAY_TEXT_NONE	= 0,
+typedef enum
+{
+	FP_DISPLAY_TEXT_NONE    = 0,
 	FP_DISPLAY_TEXT_LIMITED,
 	FP_DISPLAY_TEXT_ALL,
 } fp_display_text_type_t;
 
-typedef enum {
-	FP_DISPLAY_TYPE_NONE	= 0,
+typedef enum
+{
+	FP_DISPLAY_TYPE_NONE    = 0,
 	FP_DISPLAY_TYPE_VFD,
 	FP_DISPLAY_TYPE_OLED,
 	FP_DISPLAY_TYPE_LED_SEGMENT
 } fp_display_type_t;
 
-typedef struct {
-	fp_display_type_t	display_type;
-	unsigned short		xres, yres;
-	unsigned int		segment_count;
-	fp_display_text_type_t	text_support;
-	bool			number_support;
+typedef struct
+{
+	fp_display_type_t   display_type;
+	unsigned short      xres, yres;
+	unsigned int        segment_count;
+	fp_display_text_type_t  text_support;
+	bool            number_support;
 } fp_display_caps_t;
 
 #endif // __CS_FRONTPANEL_H__

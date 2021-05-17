@@ -80,7 +80,7 @@ static inline int get_sample_rate(GetBitContext *gb, int *index)
 }
 
 int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
-                                 int bit_size, int sync_extension)
+    int bit_size, int sync_extension)
 {
 	GetBitContext gb;
 	int specific_config_bitindex, ret;
@@ -100,8 +100,8 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 	c->sbr = -1;
 	c->ps  = -1;
 	if (c->object_type == AOT_SBR || (c->object_type == AOT_PS &&
-	    // check for W6132 Annex YYYY draft MP3onMP4
-	    !(show_bits(&gb, 3) & 0x03 && !(show_bits(&gb, 9) & 0x3F))))
+	        // check for W6132 Annex YYYY draft MP3onMP4
+	        !(show_bits(&gb, 3) & 0x03 && !(show_bits(&gb, 9) & 0x3F))))
 	{
 		if (c->object_type == AOT_PS)
 			c->ps = 1;
@@ -165,8 +165,8 @@ int avpriv_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf,
 }
 
 static av_always_inline unsigned int copy_bits(PutBitContext *pb,
-        GetBitContext *gb,
-        int bits)
+    GetBitContext *gb,
+    int bits)
 {
 	unsigned int el = get_bits(gb, bits);
 	put_bits(pb, bits, el);

@@ -61,11 +61,14 @@ unsigned long cCpuFreqManager::GetDelta(void)
 }
 
 #if HAVE_SPARK_HARDWARE || HAVE_DUCKBOX_HARDWARE
-unsigned long cCpuFreqManager::GetCpuFreq(void) {
+unsigned long cCpuFreqManager::GetCpuFreq(void)
+{
 	int freq = 0;
-	if (FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "r")) {
+	if (FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "r"))
+	{
 		char buffer[120];
-		while(fgets(buffer, sizeof(buffer), pll0)) {
+		while (fgets(buffer, sizeof(buffer), pll0))
+		{
 			if (1 == sscanf(buffer, "SH4 = %d MHZ", &freq))
 				break;
 		}
@@ -84,14 +87,16 @@ unsigned long cCpuFreqManager::GetCpuFreq(void)
 
 bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 {
-	hal_info("%s(%lu) => set standby = %s\n", __func__, f, f?"true":"false");
+	hal_info("%s(%lu) => set standby = %s\n", __func__, f, f ? "true" : "false");
 #if HAVE_SPARK_HARDWARE || HAVE_DUCKBOX_HARDWARE
-	if (f) {
-		FILE *pll0 = fopen ("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
-		if (pll0) {
+	if (f)
+	{
+		FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
+		if (pll0)
+		{
 			f /= 1000000;
-			fprintf(pll0, "%lu\n", (f/10 << 8) | 3);
-			fclose (pll0);
+			fprintf(pll0, "%lu\n", (f / 10 << 8) | 3);
+			fclose(pll0);
 			return false;
 		}
 	}

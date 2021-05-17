@@ -46,7 +46,8 @@ bool WriterMPEG2::Write(AVPacket *packet, int64_t pts)
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
-	for (int pos = 0; pos < packet->size; ) {
+	for (int pos = 0; pos < packet->size;)
+	{
 		int PacketLength = std::min(packet->size - pos, MAX_PES_PACKET_SIZE);
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
@@ -68,4 +69,4 @@ WriterMPEG2::WriterMPEG2()
 	Register(this, AV_CODEC_ID_MPEG2TS, VIDEO_ENCODING_AUTO);
 }
 
-static WriterMPEG2 writer_mpeg2 __attribute__ ((init_priority (300)));
+static WriterMPEG2 writer_mpeg2 __attribute__((init_priority(300)));

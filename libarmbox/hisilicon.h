@@ -202,8 +202,8 @@ typedef struct hiFORMAT_AUD_INFO_S
 	HI_BOOL bBigEndian;                      /**< Big endian or little endian. It is valid only for the PCM format */
 	HI_CHAR aszLanguage[HI_FORMAT_LANG_LEN]; /**< Audio stream language */
 	HI_U32 u32ExtradataSize;                 /**< Length of the extended data */
-	HI_U8*  pu8Extradata;                    /**< Extended data */
-	HI_VOID*  pCodecContext;                 /**< Audio decode context */
+	HI_U8  *pu8Extradata;                    /**< Extended data */
+	HI_VOID  *pCodecContext;                 /**< Audio decode context */
 	HI_U32 u32Role;                          /**< Role descriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value may be the bitwise '|' result of value define in HI_FORMAT_ROLE_VALUE_E*/
 	HI_U32 u32Accessibility;                 /**<  Accessbilitydescriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value type is number*/
 	HI_S64 s64Duration;                      /**< Duration of audio stream, in the unit of ms. */
@@ -226,8 +226,8 @@ typedef struct hiFORMAT_VID_INFO_S
 	HI_U32 u32Reversed;
 	HI_BOOL bEnableTVP;
 	HI_U32 u32ExtradataSize;                /**< Length of the extended data */
-	HI_U8*  pu8Extradata;                   /**< Extended data */
-	HI_VOID*  pCodecContext;                /**< video decode context */
+	HI_U8  *pu8Extradata;                   /**< Extended data */
+	HI_VOID  *pCodecContext;                /**< video decode context */
 	HI_U32 u32Role;                         /**< Role descriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value may be the bitwise '|' result of value define in HI_FORMAT_ROLE_VALUE_E*/
 	HI_U32 u32Accessibility;                /**<  Accessbilitydescriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value type is number*/
 	HI_S64 s64Duration;                     /**< Duration of video stream, in the unit of ms. */
@@ -239,17 +239,17 @@ typedef struct hiFORMAT_SUB_INFO_S
 	HI_S32  s32StreamIndex;                            /**< Stream index. The invalid value is ::HI_FORMAT_INVALID_STREAM_ID. */
 	HI_U32  u32Format;                                 /**< Subtitle format, For details about the value definition, see::HI_FORMAT_SUBTITLE_TYPE_E */
 	HI_U32  u32CharSet;                                /**< Encoding type of the subtitle, the value range is as follows:
-															1. The default value is 0.
-															2. The value of the u32CharSet is the identified byte encoding value if the IdentStream byte encoding function (for details about the definition, see hi_charset_common.h) is set.
-															3. If the ConvStream function (for details about the definition, see hi_charset_common.h) is set and the invoke interface is called to set the encoding type to be converted by implementing HI_FORMAT_INVOKE_SET_SOURCE_CODETYPE, the value of the u32CharSet is the configured encoding type */
+                                                            1. The default value is 0.
+                                                            2. The value of the u32CharSet is the identified byte encoding value if the IdentStream byte encoding function (for details about the definition, see hi_charset_common.h) is set.
+                                                            3. If the ConvStream function (for details about the definition, see hi_charset_common.h) is set and the invoke interface is called to set the encoding type to be converted by implementing HI_FORMAT_INVOKE_SET_SOURCE_CODETYPE, the value of the u32CharSet is the configured encoding type */
 	HI_BOOL bExtSub;                                  /**< Whether subtitles are external subtitles. When bExtSub is HI_TRUE, the subtitles are external. When bExtSub is HI_FALSE, the subtitles are internal. */
 	HI_U32  u32StreamNum;                             /**< contains stream number */
 	HI_CHAR paszLanguage[HI_FORMAT_MAX_LANGUAGE_NUM][HI_FORMAT_LANG_LEN]; /**< Subtitle language */
 	HI_U16  u16OriginalFrameWidth;                     /**< Width of the original image */
 	HI_U16  u16OriginalFrameHeight;                    /**< Height of the original image */
 	HI_U32  u32ExtradataSize;                          /**< Length of the extended data */
-	HI_U8*   pu8Extradata;                             /**< Extended data */
-	HI_VOID*  pCodecContext;                           /**< Audio decode context */
+	HI_U8   *pu8Extradata;                             /**< Extended data */
+	HI_VOID  *pCodecContext;                           /**< Audio decode context */
 	HI_U32 u32Role;                                    /**< Role descriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value may be the bitwise '|' result of value define in HI_FORMAT_ROLE_VALUE_E*/
 	HI_U32 u32Accessibility;                           /**<  Accessibility descriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, value type is number*/
 	HI_CHAR paszFileName[HI_FORMAT_MAX_URL_LEN];       /**< File name of external subtitle. */
@@ -258,11 +258,11 @@ typedef struct hiFORMAT_SUB_INFO_S
 typedef struct hiFORMAT_PROGRAM_INFO_S
 {
 	HI_U32 u32VidStreamNum;                /**< Number of video streams */
-	HI_FORMAT_VID_INFO_S* pastVidStream;   /**< Video stream information */
+	HI_FORMAT_VID_INFO_S *pastVidStream;   /**< Video stream information */
 	HI_U32 u32AudStreamNum;                /**< Number of audio streams */
-	HI_FORMAT_AUD_INFO_S* pastAudStream;   /**< Audio stream information */
+	HI_FORMAT_AUD_INFO_S *pastAudStream;   /**< Audio stream information */
 	HI_U32 u32SubStreamNum;                /**< Number of subtitles */
-	HI_FORMAT_SUB_INFO_S* pastSubStream;   /**< Subtitle information */
+	HI_FORMAT_SUB_INFO_S *pastSubStream;   /**< Subtitle information */
 	HI_CHAR aszServiceName[HI_FORMAT_SERVICE_DESCRIPT_LEN];       /**< Program service name info */
 	HI_CHAR aszServiceProvider[HI_FORMAT_SERVICE_DESCRIPT_LEN];   /**<  Program service provider info */
 	HI_S64  s64ProgramDuration;
@@ -279,7 +279,7 @@ typedef struct hiFORMAT_FILE_INFO_S
 	HI_U32  u32Bitrate;                     /**< File bit rate, in the unit of bit/s. */
 	HI_CHAR aszFileFormat[HI_FORMAT_TITLE_MAX_LEN];   /**< File demuxer info .Not used now*/
 	HI_U32  u32ProgramNum;                  /**< Actual number of programs */
-	HI_FORMAT_PROGRAM_INFO_S* pastProgramInfo; /**< Program information */
+	HI_FORMAT_PROGRAM_INFO_S *pastProgramInfo; /**< Program information */
 	HI_BOOL bIsDivx;                        /**< If the stream is DIVX restricted stream,HI_TRUE yes,HI_FALSE no */
 	HI_BOOL bIsDrmFile;
 } HI_FORMAT_FILE_INFO_S;

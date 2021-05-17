@@ -20,28 +20,28 @@
 
 class cCpuFreqManager
 {
-public:
-	cCpuFreqManager(void);
-	void Up(void);
-	void Down(void);
-	void Reset(void);
+	public:
+		cCpuFreqManager(void);
+		void Up(void);
+		void Down(void);
+		void Reset(void);
 
-	bool SetCpuFreq(unsigned long CpuFreq);
-	bool SetDelta(unsigned long Delta);
-	unsigned long GetCpuFreq(void);
-	unsigned long GetDelta(void);
+		bool SetCpuFreq(unsigned long CpuFreq);
+		bool SetDelta(unsigned long Delta);
+		unsigned long GetCpuFreq(void);
+		unsigned long GetDelta(void);
 };
 
 class cPowerManager
 {
-public:
-	cPowerManager(void);
-	virtual ~cPowerManager();
+	public:
+		cPowerManager(void);
+		virtual ~cPowerManager();
 
-	bool Open(void);
-	void Close(void);
+		bool Open(void);
+		void Close(void);
 
-	bool SetStandby(bool Active, bool Passive);
+		bool SetStandby(bool Active, bool Passive);
 };
 
 #endif // __PWRMNGR_H__

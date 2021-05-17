@@ -134,7 +134,7 @@ static int writeData(void *_call)
 	wmv_printf(10, "Got Private Size %d\n", call->private_size);
 
 	memcpy(private_data.privateData, call->private_data,
-	       call->private_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->private_size);
+	    call->private_size > WMV3_PRIVATE_DATA_LENGTH ? WMV3_PRIVATE_DATA_LENGTH : call->private_size);
 
 	private_data.width = call->Width;
 	private_data.height = call->Height;
@@ -196,7 +196,7 @@ static int writeData(void *_call)
 		while (Position < call->len)
 		{
 			int PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
-			                   (call->len - Position) : MAX_PES_PACKET_SIZE;
+			    (call->len - Position) : MAX_PES_PACKET_SIZE;
 
 			int Remaining = call->len - Position - PacketLength;
 
@@ -214,7 +214,7 @@ static int writeData(void *_call)
 				PrivateHeaderLength     = InsertVideoPrivateDataHeader(&PesHeader[HeaderLength], call->len);
 				/* Update PesLength */
 				PesLength               = PesHeader[PES_LENGTH_BYTE_0] +
-				                         (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
+				    (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
 				PesHeader[PES_LENGTH_BYTE_0]            = PesLength & 0xff;
 				PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
 				PesHeader[PES_HEADER_DATA_LENGTH_BYTE] += PrivateHeaderLength;

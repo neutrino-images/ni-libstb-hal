@@ -46,7 +46,8 @@ bool WriterAC3::Write(AVPacket *packet, int64_t pts)
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 
-	for (int pos = 0; pos < packet->size; ) {
+	for (int pos = 0; pos < packet->size;)
+	{
 		int PacketLength = std::min(packet->size - pos, MAX_PES_PACKET_SIZE);
 		struct iovec iov[2];
 		iov[0].iov_base = PesHeader;
@@ -69,4 +70,4 @@ WriterAC3::WriterAC3()
 	Register(this, AV_CODEC_ID_EAC3, AUDIO_ENCODING_AC3);
 }
 
-static WriterAC3 writer_ac3 __attribute__ ((init_priority (300)));
+static WriterAC3 writer_ac3 __attribute__((init_priority(300)));

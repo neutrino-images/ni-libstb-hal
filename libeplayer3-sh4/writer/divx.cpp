@@ -58,7 +58,7 @@ bool WriterDIVX::Write(AVPacket *packet, int64_t pts)
 		return false;
 
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
-	uint8_t FakeHeaders[64] = { 0 };	// 64bytes should be enough to make the fake headers
+	uint8_t FakeHeaders[64] = { 0 };    // 64bytes should be enough to make the fake headers
 	unsigned int FakeHeaderLength;
 	uint8_t Version = 5;
 	unsigned int FakeStartCode = (Version << 8) | PES_VERSION_FAKE_START_CODE;
@@ -72,10 +72,10 @@ bool WriterDIVX::Write(AVPacket *packet, int64_t pts)
 	   PutBits(&ld, 0x0, 8);
 	   PutBits(&ld, 0x0, 8);
 	 */
-	PutBits(&ld, 0x1b0, 32);	// startcode
-	PutBits(&ld, 0, 8);		// profile = reserved
-	PutBits(&ld, 0x1b2, 32);	// startcode (user data)
-	PutBits(&ld, 0x53545443, 32);	// STTC - an embedded ST timecode from an avi file
+	PutBits(&ld, 0x1b0, 32);    // startcode
+	PutBits(&ld, 0, 8);     // profile = reserved
+	PutBits(&ld, 0x1b2, 32);    // startcode (user data)
+	PutBits(&ld, 0x53545443, 32);   // STTC - an embedded ST timecode from an avi file
 	PutBits(&ld, usecPerFrame, 32); // microseconds per frame
 	FlushBits(&ld);
 
@@ -88,7 +88,8 @@ bool WriterDIVX::Write(AVPacket *packet, int64_t pts)
 	iov[ic].iov_base = FakeHeaders;
 	iov[ic++].iov_len = FakeHeaderLength;
 
-	if (initialHeader) {
+	if (initialHeader)
+	{
 		iov[ic].iov_base = get_codecpar(stream)->extradata;
 		iov[ic++].iov_len = get_codecpar(stream)->extradata_size;
 		initialHeader = false;
@@ -107,4 +108,4 @@ WriterDIVX::WriterDIVX()
 	Register(this, AV_CODEC_ID_MSMPEG4V3, VIDEO_ENCODING_MPEG4P2);
 }
 
-static WriterDIVX writer_divx __attribute__ ((init_priority (300)));
+static WriterDIVX writer_divx __attribute__((init_priority(300)));

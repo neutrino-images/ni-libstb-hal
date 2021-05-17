@@ -85,7 +85,8 @@ static int ManagerAdd(Context_t *context, Track_t track)
 		if (Tracks[i].Id == track.Id)
 		{
 			Tracks[i].pending = 0;
-			if(track.aacbuf){
+			if (track.aacbuf)
+			{
 				free(track.aacbuf);
 				track.aacbuf = NULL;
 			}
@@ -303,7 +304,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GETENCODING:
 		{
-			if ((TrackCount > 0) && (CurrentTrack >= 0) && (Tracks[CurrentTrack].Encoding != NULL ))
+			if ((TrackCount > 0) && (CurrentTrack >= 0) && (Tracks[CurrentTrack].Encoding != NULL))
 			{
 				*((char **)argument) = (char *)strdup(Tracks[CurrentTrack].Encoding);
 			}
@@ -315,7 +316,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GETNAME:
 		{
-			if ((TrackCount > 0) && (CurrentTrack >= 0) && (Tracks[CurrentTrack].Name != NULL ))
+			if ((TrackCount > 0) && (CurrentTrack >= 0) && (Tracks[CurrentTrack].Name != NULL))
 			{
 				*((char **)argument) = (char *)strdup(Tracks[CurrentTrack].Name);
 			}

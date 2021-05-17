@@ -44,7 +44,7 @@ class Player;
 
 class Output
 {
-	friend class Player;
+		friend class Player;
 
 	private:
 		int videofd;

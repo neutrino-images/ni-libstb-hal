@@ -97,8 +97,8 @@ typedef struct GetBitContext
 #endif
 
 #define OPEN_READER_NOSIZE(name, gb)            \
-    unsigned int name ## _index = (gb)->index;  \
-    unsigned int av_unused name ## _cache
+	unsigned int name ## _index = (gb)->index;  \
+	unsigned int av_unused name ## _cache
 
 
 #define OPEN_READER(name, gb) OPEN_READER_NOSIZE(name, gb)
@@ -110,18 +110,18 @@ typedef struct GetBitContext
 # ifdef LONG_BITSTREAM_READER
 
 # define UPDATE_CACHE_LE(name, gb) name ## _cache = \
-      AV_RL64((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
+    AV_RL64((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
 
 # define UPDATE_CACHE_BE(name, gb) name ## _cache = \
-      AV_RB64((gb)->buffer + (name ## _index >> 3)) >> (32 - (name ## _index & 7))
+    AV_RB64((gb)->buffer + (name ## _index >> 3)) >> (32 - (name ## _index & 7))
 
 #else
 
 # define UPDATE_CACHE_LE(name, gb) name ## _cache = \
-      AV_RL32((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
+    AV_RL32((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
 
 # define UPDATE_CACHE_BE(name, gb) name ## _cache = \
-      AV_RB32((gb)->buffer + (name ## _index >> 3)) << (name ## _index & 7)
+    AV_RB32((gb)->buffer + (name ## _index >> 3)) << (name ## _index & 7)
 
 #endif
 
@@ -146,10 +146,10 @@ typedef struct GetBitContext
 #define BITS_LEFT(name, gb) ((int)((gb)->size_in_bits - name ## _index))
 
 #define SKIP_BITS(name, gb, num)                \
-    do {                                        \
-        SKIP_CACHE(name, gb, num);              \
-        SKIP_COUNTER(name, gb, num);            \
-    } while (0)
+	do {                                        \
+		SKIP_CACHE(name, gb, num);              \
+		SKIP_COUNTER(name, gb, num);            \
+	} while (0)
 
 #define LAST_SKIP_BITS(name, gb, num) SKIP_COUNTER(name, gb, num)
 
@@ -389,7 +389,7 @@ static inline int check_marker(void *logctx __attribute__((unused)), GetBitConte
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
 static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
-                                int bit_size)
+    int bit_size)
 {
 	int buffer_size;
 	int ret = 0;
@@ -421,7 +421,7 @@ static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
 static inline int init_get_bits8(GetBitContext *s, const uint8_t *buffer,
-                                 int byte_size)
+    int byte_size)
 {
 	if (byte_size > INT_MAX / 8 || byte_size < 0)
 		byte_size = -1;
@@ -442,73 +442,73 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
  * is undefined.
  */
 #define GET_VLC(code, name, gb, table, bits, max_depth)         \
-    do {                                                        \
-        int n, nb_bits;                                         \
-        unsigned int index;                                     \
-                                                                \
-        index = SHOW_UBITS(name, gb, bits);                     \
-        code  = table[index][0];                                \
-        n     = table[index][1];                                \
-                                                                \
-        if (max_depth > 1 && n < 0) {                           \
-            LAST_SKIP_BITS(name, gb, bits);                     \
-            UPDATE_CACHE(name, gb);                             \
-                                                                \
-            nb_bits = -n;                                       \
-                                                                \
-            index = SHOW_UBITS(name, gb, nb_bits) + code;       \
-            code  = table[index][0];                            \
-            n     = table[index][1];                            \
-            if (max_depth > 2 && n < 0) {                       \
-                LAST_SKIP_BITS(name, gb, nb_bits);              \
-                UPDATE_CACHE(name, gb);                         \
-                                                                \
-                nb_bits = -n;                                   \
-                                                                \
-                index = SHOW_UBITS(name, gb, nb_bits) + code;   \
-                code  = table[index][0];                        \
-                n     = table[index][1];                        \
-            }                                                   \
-        }                                                       \
-        SKIP_BITS(name, gb, n);                                 \
-    } while (0)
+	do {                                                        \
+		int n, nb_bits;                                         \
+		unsigned int index;                                     \
+		\
+		index = SHOW_UBITS(name, gb, bits);                     \
+		code  = table[index][0];                                \
+		n     = table[index][1];                                \
+		\
+		if (max_depth > 1 && n < 0) {                           \
+			LAST_SKIP_BITS(name, gb, bits);                     \
+			UPDATE_CACHE(name, gb);                             \
+			\
+			nb_bits = -n;                                       \
+			\
+			index = SHOW_UBITS(name, gb, nb_bits) + code;       \
+			code  = table[index][0];                            \
+			n     = table[index][1];                            \
+			if (max_depth > 2 && n < 0) {                       \
+				LAST_SKIP_BITS(name, gb, nb_bits);              \
+				UPDATE_CACHE(name, gb);                         \
+				\
+				nb_bits = -n;                                   \
+				\
+				index = SHOW_UBITS(name, gb, nb_bits) + code;   \
+				code  = table[index][0];                        \
+				n     = table[index][1];                        \
+			}                                                   \
+		}                                                       \
+		SKIP_BITS(name, gb, n);                                 \
+	} while (0)
 
 #define GET_RL_VLC(level, run, name, gb, table, bits,  \
-                   max_depth, need_update)                      \
-    do {                                                        \
-        int n, nb_bits;                                         \
-        unsigned int index;                                     \
-                                                                \
-        index = SHOW_UBITS(name, gb, bits);                     \
-        level = table[index].level;                             \
-        n     = table[index].len;                               \
-                                                                \
-        if (max_depth > 1 && n < 0) {                           \
-            SKIP_BITS(name, gb, bits);                          \
-            if (need_update) {                                  \
-                UPDATE_CACHE(name, gb);                         \
-            }                                                   \
-                                                                \
-            nb_bits = -n;                                       \
-                                                                \
-            index = SHOW_UBITS(name, gb, nb_bits) + level;      \
-            level = table[index].level;                         \
-            n     = table[index].len;                           \
-            if (max_depth > 2 && n < 0) {                       \
-                LAST_SKIP_BITS(name, gb, nb_bits);              \
-                if (need_update) {                              \
-                    UPDATE_CACHE(name, gb);                     \
-                }                                               \
-                nb_bits = -n;                                   \
-                                                                \
-                index = SHOW_UBITS(name, gb, nb_bits) + level;  \
-                level = table[index].level;                     \
-                n     = table[index].len;                       \
-            }                                                   \
-        }                                                       \
-        run = table[index].run;                                 \
-        SKIP_BITS(name, gb, n);                                 \
-    } while (0)
+    max_depth, need_update)                      \
+do {                                                        \
+	int n, nb_bits;                                         \
+	unsigned int index;                                     \
+	\
+	index = SHOW_UBITS(name, gb, bits);                     \
+	level = table[index].level;                             \
+	n     = table[index].len;                               \
+	\
+	if (max_depth > 1 && n < 0) {                           \
+		SKIP_BITS(name, gb, bits);                          \
+		if (need_update) {                                  \
+			UPDATE_CACHE(name, gb);                         \
+		}                                                   \
+		\
+		nb_bits = -n;                                       \
+		\
+		index = SHOW_UBITS(name, gb, nb_bits) + level;      \
+		level = table[index].level;                         \
+		n     = table[index].len;                           \
+		if (max_depth > 2 && n < 0) {                       \
+			LAST_SKIP_BITS(name, gb, nb_bits);              \
+			if (need_update) {                              \
+				UPDATE_CACHE(name, gb);                     \
+			}                                               \
+			nb_bits = -n;                                   \
+			\
+			index = SHOW_UBITS(name, gb, nb_bits) + level;  \
+			level = table[index].level;                     \
+			n     = table[index].len;                       \
+		}                                                   \
+	}                                                       \
+	run = table[index].run;                                 \
+	SKIP_BITS(name, gb, n);                                 \
+} while (0)
 
 
 static inline int decode012(GetBitContext *gb)

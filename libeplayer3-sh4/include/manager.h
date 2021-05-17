@@ -62,16 +62,16 @@ struct Program
 
 class Manager
 {
-	friend class Player;
+		friend class Player;
 
 	private:
 		Player *player;
 		OpenThreads::Mutex mutex;
-		std::map<int,Track*> videoTracks, audioTracks, subtitleTracks, teletextTracks;
-		std::map<int,Program> Programs;
-		void addTrack(std::map<int,Track*> &tracks, Track &track);
-		Track *getTrack(std::map<int,Track*> &tracks, int pid);
-		std::vector<Track> getTracks(std::map<int,Track*> &tracks);
+		std::map<int, Track *> videoTracks, audioTracks, subtitleTracks, teletextTracks;
+		std::map<int, Program> Programs;
+		void addTrack(std::map<int, Track *> &tracks, Track &track);
+		Track *getTrack(std::map<int, Track *> &tracks, int pid);
+		std::vector<Track> getTracks(std::map<int, Track *> &tracks);
 	public:
 		void addVideoTrack(Track &track);
 		void addAudioTrack(Track &track);

@@ -47,12 +47,14 @@ hw_caps_t *get_hwcaps(void)
 	const char *tmp;
 	char buf[1024];
 	int len = -1, ret, val;
-	int fd = open (FP_DEV, O_RDWR);
-	if (fd != -1) {
+	int fd = open(FP_DEV, O_RDWR);
+	if (fd != -1)
+	{
 		ret = ioctl(fd, VFDGETVERSION, &val);
 		if (ret < 0)
 			fprintf(stderr, "[hardware_caps] %s: VFDGETVERSION %m\n", __func__);
-		else if (val & 1) { /* VFD = 1, DVFD = 3 */
+		else if (val & 1)   /* VFD = 1, DVFD = 3 */
+		{
 			caps.display_type = HW_DISPLAY_LINE_TEXT;
 			caps.display_can_umlauts = 0; /* need test */
 			caps.display_xres = 8;
@@ -61,17 +63,21 @@ hw_caps_t *get_hwcaps(void)
 		close(fd);
 	}
 	fd = open("/proc/cmdline", O_RDONLY);
-	if (fd != -1) {
+	if (fd != -1)
+	{
 		len = read(fd, buf, sizeof(buf) - 1);
 		close(fd);
 	}
-	if (len > 0) {
+	if (len > 0)
+	{
 		buf[len] = 0;
 		char *p = strstr(buf, "STB_ID=");
 		int h0, h1, h2;
-		if (p && sscanf(p, "STB_ID=%x:%x:%x:", &h0, &h1, &h2) == 3) {
+		if (p && sscanf(p, "STB_ID=%x:%x:%x:", &h0, &h1, &h2) == 3)
+		{
 			int sys_id = (h0 << 16) | (h1 << 8) | h2;
-			switch (sys_id) {
+			switch (sys_id)
+			{
 				case 0x090003:
 					tmp = "Truman Premier 1+";
 					break;
@@ -159,10 +165,11 @@ hw_caps_t *get_hwcaps(void)
 				caps.boxtype = 7111;
 			else
 				caps.boxtype = 7162;
-		} else
+		}
+		else
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
 	}
-	strcpy(caps.boxarch,caps.boxname);
+	strcpy(caps.boxarch, caps.boxname);
 	return &caps;
 }

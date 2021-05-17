@@ -132,11 +132,11 @@ static int writeData(WriterAVCallData_t *call)
 		data += 38;
 		data[0] = B_GET_BITS(width, 11, 4);
 		data[1] = B_SET_BITS("width [3..0]", B_GET_BITS(width, 3, 0), 7, 4) |
-		          B_SET_BITS("'10'", 0x02, 3, 2) |
-		          B_SET_BITS("height [11..10]", B_GET_BITS(height, 11, 10), 1, 0);
+		    B_SET_BITS("'10'", 0x02, 3, 2) |
+		    B_SET_BITS("height [11..10]", B_GET_BITS(height, 11, 10), 1, 0);
 		data[2] = B_GET_BITS(height, 9, 2);
 		data[3] = B_SET_BITS("height [1.0]", B_GET_BITS(height, 1, 0), 7, 6) |
-		          B_SET_BITS("'100000'", 0x20, 5, 0);
+		    B_SET_BITS("'100000'", 0x20, 5, 0);
 
 		iov[ic].iov_base = brcm_divx311_sequence_header;
 		iov[ic++].iov_len = sizeof(brcm_divx311_sequence_header);

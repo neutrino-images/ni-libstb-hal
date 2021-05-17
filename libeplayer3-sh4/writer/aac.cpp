@@ -41,7 +41,8 @@
 static inline void Hexdump(unsigned char *Data, int length)
 {
 	int k;
-	for (k = 0; k < length; k++) {
+	for (k = 0; k < length; k++)
+	{
 		printf("%02x ", Data[k]);
 		if (((k + 1) & 31) == 0)
 			printf("\n");
@@ -84,7 +85,7 @@ static inline int aac_get_sample_rate_index(uint32_t sample_rate)
 }
 
 #if 0
-static unsigned char DefaultAACHeader[] = {0xff,0xf1,0x50,0x80,0x00,0x1f,0xfc};
+static unsigned char DefaultAACHeader[] = {0xff, 0xf1, 0x50, 0x80, 0x00, 0x1f, 0xfc};
 #endif
 
 class WriterAAC : public Writer
@@ -109,7 +110,7 @@ void WriterAAC::Init(int _fd, AVStream *_stream, Player *_player)
 	printf("stream->codec->extradata_size %d\n", stream->codec->extradata_size);
 	Hexdump(stream->codec->extradata, stream->codec->extradata_size);
 #endif
-	unsigned int object_type = 2;	// LC
+	unsigned int object_type = 2;   // LC
 	unsigned int sample_index = aac_get_sample_rate_index(stream->codec->sample_rate);
 	unsigned int chan_config = stream->codec->channels;
 	if (stream->codec->extradata_size >= 2)
@@ -123,7 +124,7 @@ void WriterAAC::Init(int _fd, AVStream *_stream, Player *_player)
 	printf("aac sample_index %d\n", sample_index);
 	printf("aac chan_config %d\n", chan_config);
 #endif
-	object_type -= 1;	// Cause of ADTS
+	object_type -= 1;   // Cause of ADTS
 	aacbuflen = AAC_HEADER_LENGTH;
 	aacbuf[0] = 0xFF;
 	aacbuf[1] = 0xF1;
@@ -147,7 +148,7 @@ bool WriterAAC::Write(AVPacket *packet, int64_t pts)
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE];
 	uint8_t ExtraData[AAC_HEADER_LENGTH];
 
-	for (int pos = 0; pos < packet->size + AAC_HEADER_LENGTH; )
+	for (int pos = 0; pos < packet->size + AAC_HEADER_LENGTH;)
 	{
 		int PacketLength = std::min(packet->size - pos + AAC_HEADER_LENGTH, MAX_PES_PACKET_SIZE);
 
@@ -182,4 +183,4 @@ WriterAAC::WriterAAC()
 	Register(this, AV_CODEC_ID_AAC, AUDIO_ENCODING_AAC);
 }
 
-static WriterAAC writer_aac __attribute__ ((init_priority (300)));
+static WriterAAC writer_aac __attribute__((init_priority(300)));

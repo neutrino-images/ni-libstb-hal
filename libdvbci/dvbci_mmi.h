@@ -5,20 +5,21 @@
 
 class eDVBCIMMISession: public eDVBCISession
 {
-	enum {
-		stateDisplayReply=statePrivate, stateFakeOK, stateIdle
-	};
+		enum
+		{
+			stateDisplayReply = statePrivate, stateFakeOK, stateIdle
+		};
 
-	int receivedAPDU(const unsigned char *tag, const void *data, int len);
-	int doAction();
-	eDVBCISlot *slot;
-public:
-	eDVBCIMMISession(eDVBCISlot *tslot);
-	~eDVBCIMMISession();
-	int stopMMI();
-	int answerText(int answer);
-	int answerEnq(char *answer, int len);
-	int cancelEnq();
+		int receivedAPDU(const unsigned char *tag, const void *data, int len);
+		int doAction();
+		eDVBCISlot *slot;
+	public:
+		eDVBCIMMISession(eDVBCISlot *tslot);
+		~eDVBCIMMISession();
+		int stopMMI();
+		int answerText(int answer);
+		int answerEnq(char *answer, int len);
+		int cancelEnq();
 };
 
 #endif

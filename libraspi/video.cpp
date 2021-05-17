@@ -81,7 +81,7 @@ int cVideo::setBlank(int)
 int cVideo::SetVideoSystem(int system, bool)
 {
 	int h;
-	switch(system)
+	switch (system)
 	{
 		case VIDEO_STD_NTSC:
 		case VIDEO_STD_480P:
@@ -101,7 +101,7 @@ int cVideo::SetVideoSystem(int system, bool)
 			break;
 		case VIDEO_STD_AUTO:
 			hal_info("%s: VIDEO_STD_AUTO not implemented\n", __func__);
-			// fallthrough
+		// fallthrough
 		case VIDEO_STD_SECAM:
 		case VIDEO_STD_PAL:
 		case VIDEO_STD_576P:
@@ -170,10 +170,10 @@ int cVideo::SetStreamType(VIDEO_FORMAT v)
 	return 0;
 }
 
-bool cVideo::GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
+bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
 	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
+	    __func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	return false;
 }
 

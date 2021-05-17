@@ -33,21 +33,22 @@
 
 #include <algorithm>
 
-#define WMV3_PRIVATE_DATA_LENGTH	4
+#define WMV3_PRIVATE_DATA_LENGTH    4
 
-static const uint8_t Metadata[] = {
+static const uint8_t Metadata[] =
+{
 	0x00, 0x00, 0x00, 0xc5,
 	0x04, 0x00, 0x00, 0x00,
-#define METADATA_STRUCT_C_START			8
-	0xc0, 0x00, 0x00, 0x00,	/* Struct C set for for advanced profile */
-#define METADATA_STRUCT_A_START			12
-	0x00, 0x00, 0x00, 0x00,	/* Struct A */
+#define METADATA_STRUCT_C_START         8
+	0xc0, 0x00, 0x00, 0x00, /* Struct C set for for advanced profile */
+#define METADATA_STRUCT_A_START         12
+	0x00, 0x00, 0x00, 0x00, /* Struct A */
 	0x00, 0x00, 0x00, 0x00,
 	0x0c, 0x00, 0x00, 0x00,
-#define METADATA_STRUCT_B_START			24
-	0x60, 0x00, 0x00, 0x00,	/* Struct B */
+#define METADATA_STRUCT_B_START         24
+	0x60, 0x00, 0x00, 0x00, /* Struct B */
 	0x00, 0x00, 0x00, 0x00,
-#define METADATA_STRUCT_B_FRAMERATE_START	32
+#define METADATA_STRUCT_B_FRAMERATE_START   32
 	0x00, 0x00, 0x00, 0x00
 };
 
@@ -75,7 +76,8 @@ bool WriterWMV::Write(AVPacket *packet, int64_t pts)
 	if (!packet || !packet->data)
 		return false;
 
-	if (initialHeader) {
+	if (initialHeader)
+	{
 #define PES_MIN_HEADER_SIZE 9
 		uint8_t PesPacket[PES_MIN_HEADER_SIZE + 128];
 		uint8_t *PesPtr;
@@ -103,7 +105,7 @@ bool WriterWMV::Write(AVPacket *packet, int64_t pts)
 		*PesPtr++ = (get_codecpar(stream)->width >> 16) & 0xff;
 		*PesPtr++ = get_codecpar(stream)->width >> 24;
 
-		PesPtr += 12;		/* Skip flag word and Struct B first 8 bytes */
+		PesPtr += 12;       /* Skip flag word and Struct B first 8 bytes */
 
 		*PesPtr++ = (usecPerFrame >> 0) & 0xff;
 		*PesPtr++ = (usecPerFrame >> 8) & 0xff;
@@ -120,18 +122,21 @@ bool WriterWMV::Write(AVPacket *packet, int64_t pts)
 		initialHeader = false;
 	}
 
-	if (packet->size > 0 && packet->data) {
+	if (packet->size > 0 && packet->data)
+	{
 		int Position = 0;
 		bool insertSampleHeader = true;
 
-		while (Position < packet->size) {
+		while (Position < packet->size)
+		{
 
 			int PacketLength = std::min(packet->size - Position, MAX_PES_PACKET_SIZE);
 
 			uint8_t PesHeader[PES_MAX_HEADER_SIZE] = { 0 };
 			int HeaderLength = InsertPesHeader(PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, pts, 0);
 
-			if (insertSampleHeader) {
+			if (insertSampleHeader)
+			{
 				unsigned int PesLength;
 				unsigned int PrivateHeaderLength;
 
@@ -168,4 +173,4 @@ WriterWMV::WriterWMV()
 	Register(this, AV_CODEC_ID_WMV3, VIDEO_ENCODING_WMV);
 }
 
-static WriterWMV writer_wmv __attribute__ ((init_priority (300)));
+static WriterWMV writer_wmv __attribute__((init_priority(300)));

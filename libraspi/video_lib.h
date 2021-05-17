@@ -10,7 +10,8 @@ extern "C" {
 #include <libavutil/rational.h>
 }
 
-typedef enum {
+typedef enum
+{
 	ANALOG_SD_RGB_CINCH = 0x00,
 	ANALOG_SD_YPRPB_CINCH,
 	ANALOG_HD_RGB_CINCH,
@@ -23,7 +24,8 @@ typedef enum {
 } analog_mode_t;
 
 
-typedef enum {
+typedef enum
+{
 	VIDEO_FORMAT_MPEG2 = 0,
 	VIDEO_FORMAT_MPEG4,
 	VIDEO_FORMAT_VC1,
@@ -32,7 +34,8 @@ typedef enum {
 	VIDEO_FORMAT_PNG
 } VIDEO_FORMAT;
 
-typedef enum {
+typedef enum
+{
 	VIDEO_SD = 0,
 	VIDEO_HD,
 	VIDEO_120x60i,
@@ -41,7 +44,8 @@ typedef enum {
 	VIDEO_360x288i
 } VIDEO_DEFINITION;
 
-typedef enum {
+typedef enum
+{
 	VIDEO_FRAME_RATE_23_976 = 0,
 	VIDEO_FRAME_RATE_24,
 	VIDEO_FRAME_RATE_25,
@@ -52,7 +56,8 @@ typedef enum {
 	VIDEO_FRAME_RATE_60
 } VIDEO_FRAME_RATE;
 
-typedef enum {
+typedef enum
+{
 	DISPLAY_AR_1_1,
 	DISPLAY_AR_4_3,
 	DISPLAY_AR_14_9,
@@ -61,20 +66,23 @@ typedef enum {
 	DISPLAY_AR_RAW
 } DISPLAY_AR;
 
-typedef enum {
+typedef enum
+{
 	DISPLAY_AR_MODE_PANSCAN = 0,
 	DISPLAY_AR_MODE_LETTERBOX,
 	DISPLAY_AR_MODE_NONE,
 	DISPLAY_AR_MODE_PANSCAN2
 } DISPLAY_AR_MODE;
 
-typedef enum {
+typedef enum
+{
 	VIDEO_DB_DR_NEITHER = 0,
 	VIDEO_DB_ON,
 	VIDEO_DB_DR_BOTH
 } VIDEO_DB_DR;
 
-typedef enum {
+typedef enum
+{
 	VIDEO_PLAY_STILL = 0,
 	VIDEO_PLAY_CLIP,
 	VIDEO_PLAY_TRICK,
@@ -82,7 +90,8 @@ typedef enum {
 	VIDEO_PLAY_MOTION_NO_SYNC
 } VIDEO_PLAY_MODE;
 
-typedef enum {
+typedef enum
+{
 	VIDEO_STD_NTSC,
 	VIDEO_STD_SECAM,
 	VIDEO_STD_PAL,
@@ -96,12 +105,13 @@ typedef enum {
 	VIDEO_STD_1080P24,
 	VIDEO_STD_1080P25,
 	VIDEO_STD_AUTO,
-	VIDEO_STD_1080P50,	/* SPARK only */
+	VIDEO_STD_1080P50,  /* SPARK only */
 	VIDEO_STD_MAX
 } VIDEO_STD;
 
 /* not used, for dummy functions */
-typedef enum {
+typedef enum
+{
 	VIDEO_HDMI_CEC_MODE_OFF = 0,
 	VIDEO_HDMI_CEC_MODE_TUNER,
 	VIDEO_HDMI_CEC_MODE_RECORDER
@@ -121,27 +131,51 @@ typedef enum
 #define VDEC_MAXBUFS 0x30
 class cVideo
 {
-	friend class GLFramebuffer;
-	friend class cDemux;
+		friend class GLFramebuffer;
+		friend class cDemux;
 	private:
 		/* called from GL thread */
 		class SWFramebuffer : public std::vector<unsigned char>
 		{
-		public:
-			SWFramebuffer() : mWidth(0), mHeight(0) {}
-			void width(int w) { mWidth = w; }
-			void height(int h) { mHeight = h; }
-			void pts(uint64_t p) { mPts = p; }
-			void AR(AVRational a) { mAR = a; }
-			int width() const { return mWidth; }
-			int height() const { return mHeight; }
-			int64_t pts() const { return mPts; }
-			AVRational AR() const { return mAR; }
-		private:
-			int mWidth;
-			int mHeight;
-			int64_t mPts;
-			AVRational mAR;
+			public:
+				SWFramebuffer() : mWidth(0), mHeight(0) {}
+				void width(int w)
+				{
+					mWidth = w;
+				}
+				void height(int h)
+				{
+					mHeight = h;
+				}
+				void pts(uint64_t p)
+				{
+					mPts = p;
+				}
+				void AR(AVRational a)
+				{
+					mAR = a;
+				}
+				int width() const
+				{
+					return mWidth;
+				}
+				int height() const
+				{
+					return mHeight;
+				}
+				int64_t pts() const
+				{
+					return mPts;
+				}
+				AVRational AR() const
+				{
+					return mAR;
+				}
+			private:
+				int mWidth;
+				int mHeight;
+				int64_t mPts;
+				AVRational mAR;
 		};
 		int buf_in, buf_out, buf_num;
 		int64_t GetPTS(void);
@@ -150,8 +184,14 @@ class cVideo
 		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
-		void * GetTVEnc() { return NULL; };
-		void * GetTVEncSD() { return NULL; };
+		void *GetTVEnc()
+		{
+			return NULL;
+		};
+		void *GetTVEncSD()
+		{
+			return NULL;
+		};
 
 		/* aspect ratio */
 		int getAspectRatio(void);
@@ -177,25 +217,58 @@ class cVideo
 		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
 		void SetSyncMode(AVSYNC_TYPE mode);
-		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
-		void SetCECAutoView(bool) { return; };
-		void SetCECAutoStandby(bool) { return; };
-		bool ShowPicture(const char * fname);
+		bool SetCECMode(VIDEO_HDMI_CEC_MODE)
+		{
+			return true;
+		};
+		void SetCECAutoView(bool)
+		{
+			return;
+		};
+		void SetCECAutoStandby(bool)
+		{
+			return;
+		};
+		bool ShowPicture(const char *fname);
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
-		void SetControl(int, int) { return; };
+		void SetControl(int, int)
+		{
+			return;
+		};
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
-		void SetDBDR(int) { return; };
-		void SetAudioHandle(void *) { return; };
-		void SetAutoModes(int [VIDEO_STD_MAX]) { return; };
-		int  OpenVBI(int) { return 0; };
-		int  CloseVBI(void) { return 0; };
-		int  StartVBI(unsigned short) { return 0; };
-		int  StopVBI(void) { return 0; };
+		void SetDBDR(int)
+		{
+			return;
+		};
+		void SetAudioHandle(void *)
+		{
+			return;
+		};
+		void SetAutoModes(int [VIDEO_STD_MAX])
+		{
+			return;
+		};
+		int  OpenVBI(int)
+		{
+			return 0;
+		};
+		int  CloseVBI(void)
+		{
+			return 0;
+		};
+		int  StartVBI(unsigned short)
+		{
+			return 0;
+		};
+		int  StopVBI(void)
+		{
+			return 0;
+		};
 		void SetDemux(cDemux *dmx);
-		bool GetScreenImage(unsigned char * &data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
+		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 	private:
 		SWFramebuffer buffers[VDEC_MAXBUFS];
 		int dec_w, dec_h;

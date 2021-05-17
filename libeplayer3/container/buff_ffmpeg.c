@@ -107,7 +107,7 @@ static void update_finish_timeout()
 		 * this is the reason for additional validation when we what to close immediately
 		 */
 		if (!progressive_playback && 0 == ret && currPts >= maxInjectedPts &&
-		        ((currPts - maxInjectedPts) / 90000) < 2)
+		    ((currPts - maxInjectedPts) / 90000) < 2)
 		{
 			/* close immediately
 			 */
@@ -271,7 +271,7 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t *inpause, int3
 	}
 
 	while ((flag == 0 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF) ||
-	       (flag == 1 && hasfillerThreadStarted[id] == 1 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF))
+	    (flag == 1 && hasfillerThreadStarted[id] == 1 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF))
 	{
 		if (0 == PlaybackDieNow(0))
 		{

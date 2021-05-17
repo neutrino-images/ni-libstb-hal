@@ -15,7 +15,7 @@ struct AVFormatContext;
 
 class cPlayback
 {
-	friend class CStreamInfo2;
+		friend class CStreamInfo2;
 
 	private:
 		static OpenThreads::Mutex mutex;
@@ -48,9 +48,18 @@ class cPlayback
 		bool SetVPid(int /*pid*/);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
-		int GetAPid(void) { return mAudioStream; }
-		int GetVPid(void) { return 0; }
-		int GetSubtitlePid(void) { return mSubtitleStream; }
+		int GetAPid(void)
+		{
+			return mAudioStream;
+		}
+		int GetVPid(void)
+		{
+			return 0;
+		}
+		int GetSubtitlePid(void)
+		{
+			return mSubtitleStream;
+		}
 		int GetTeletextPid(void);
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;

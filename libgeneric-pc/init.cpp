@@ -18,7 +18,8 @@ void hal_api_init()
 	if (!initialized)
 		hal_debug_init();
 	hal_info("%s begin, initialized=%d, debug=0x%02x\n", __func__, (int)initialized, debuglevel);
-	if (! glfb) {
+	if (! glfb)
+	{
 		int x = 1280, y = 720; /* default OSD FB resolution */
 		/*
 		 * export GLFB_RESOLUTION=720,576
@@ -28,7 +29,8 @@ void hal_api_init()
 		const char *p = NULL;
 		if (tmp)
 			p = strchr(tmp, ',');
-		if (p) {
+		if (p)
+		{
 			x = atoi(tmp);
 			y = atoi(p + 1);
 		}

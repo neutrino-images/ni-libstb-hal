@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 		strcat(destname, fname);
 		p = &destname[strlen("/var/cache/")];
 		while ((p = strchr(p, '/')) != NULL)
-			*p = '.';
+			* p = '.';
 		strcat(destname, ".m2v");
 		/* ...then check if it exists already... */
 		if (stat(destname, &st) || (st.st_mtime != st2.st_mtime) || (st.st_size == 0))
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 			printf("converting %s -> %s\n", fname, destname);
 			/* it does not exist or has a different date, so call ffmpeg... */
 			sprintf(cmd, "ffmpeg -y -f mjpeg -i '%s' -s %s '%s' </dev/null",
-							fname, TARGETRES, destname);
+			    fname, TARGETRES, destname);
 			system(cmd); /* TODO: use libavcodec to directly convert it */
 			utime(destname, &u);
 		}

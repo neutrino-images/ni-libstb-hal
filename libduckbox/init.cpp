@@ -29,7 +29,7 @@ void hal_api_init()
 		/* this is a strange hack: the drivers seem to only work correctly after
 		 * demux0 has been used once. After that, we can use demux1,2,... */
 		struct dmx_pes_filter_params p;
-		int dmx = open("/dev/dvb/adapter0/demux0", O_RDWR|O_CLOEXEC);
+		int dmx = open("/dev/dvb/adapter0/demux0", O_RDWR | O_CLOEXEC);
 		if (dmx < 0)
 			hal_info("%s: ERROR open /dev/dvb/adapter0/demux0 (%m)\n", __func__);
 		else

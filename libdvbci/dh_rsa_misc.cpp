@@ -20,8 +20,9 @@ static int pkcs_1_mgf1(const uint8_t *seed, unsigned long seedlen, uint8_t *mask
 	hLen = 20;      /* SHA1 */
 
 	/* allocate memory */
-	buf = (uint8_t*)malloc(hLen);
-	if (buf == NULL) {
+	buf = (uint8_t *)malloc(hLen);
+	if (buf == NULL)
+	{
 		printf("error mem\n");
 		return -1;
 	}
@@ -29,7 +30,8 @@ static int pkcs_1_mgf1(const uint8_t *seed, unsigned long seedlen, uint8_t *mask
 	/* start counter */
 	counter = 0;
 
-	while (masklen > 0) {
+	while (masklen > 0)
+	{
 		/* handle counter */
 		BYTE32(buf, counter);
 		++counter;
@@ -50,8 +52,8 @@ static int pkcs_1_mgf1(const uint8_t *seed, unsigned long seedlen, uint8_t *mask
 }
 
 static int pkcs_1_pss_encode(const uint8_t *msghash, unsigned int msghashlen,
-			     unsigned long saltlen, unsigned long modulus_bitlen,
-			     uint8_t *out, unsigned int outlen)
+    unsigned long saltlen, unsigned long modulus_bitlen,
+    uint8_t *out, unsigned int outlen)
 {
 	unsigned char *DB, *mask, *salt, *hash;
 	unsigned long x, y, hLen, modulus_len;
@@ -63,22 +65,25 @@ static int pkcs_1_pss_encode(const uint8_t *msghash, unsigned int msghashlen,
 	modulus_len = (modulus_bitlen >> 3) + (modulus_bitlen & 7 ? 1 : 0);
 
 	/* allocate ram for DB/mask/salt/hash of size modulus_len */
-	DB = (unsigned char*)malloc(modulus_len);
-	mask = (unsigned char*)malloc(modulus_len);
-	salt = (unsigned char*)malloc(modulus_len);
-	hash = (unsigned char*)malloc(modulus_len);
+	DB = (unsigned char *)malloc(modulus_len);
+	mask = (unsigned char *)malloc(modulus_len);
+	salt = (unsigned char *)malloc(modulus_len);
+	hash = (unsigned char *)malloc(modulus_len);
 
 	hashbuflen = 8 + msghashlen + saltlen;
-	hashbuf = (unsigned char*)malloc(hashbuflen);
+	hashbuf = (unsigned char *)malloc(hashbuflen);
 
-	if (!(DB && mask && salt && hash && hashbuf)) {
+	if (!(DB && mask && salt && hash && hashbuf))
+	{
 		printf("out of memory\n");
 		goto LBL_ERR;
 	}
 
 	/* generate random salt */
-	if (saltlen > 0) {
-		if (get_random(salt, saltlen) != (long)saltlen) {
+	if (saltlen > 0)
+	{
+		if (get_random(salt, saltlen) != (long)saltlen)
+		{
 			printf("rnd failed\n");
 			goto LBL_ERR;
 		}
@@ -107,7 +112,8 @@ static int pkcs_1_pss_encode(const uint8_t *msghash, unsigned int msghashlen,
 		DB[y] ^= mask[y];
 
 	/* output is DB || hash || 0xBC */
-	if (outlen < modulus_len) {
+	if (outlen < modulus_len)
+	{
 		err = -1;
 		printf("error overflow\n");
 		goto LBL_ERR;
@@ -168,7 +174,8 @@ int dh_gen_exp(uint8_t *dest, int dest_len, uint8_t *dh_g, int dh_g_len, uint8_t
 	DH_get0_key(dh, &pub_key, &priv_key);
 	len = BN_num_bytes(priv_key);
 #endif
-	if (len > dest_len) {
+	if (len > dest_len)
+	{
 		printf("len > dest_len\n");
 		return -1;
 	}
@@ -206,7 +213,8 @@ int dh_mod_exp(uint8_t *dest, int dest_len, uint8_t *base, int base_len, uint8_t
 
 
 	len = BN_num_bytes(bn_dest);
-	if (len > dest_len) {
+	if (len > dest_len)
+	{
 		printf("len > dest_len\n");
 		return -1;
 	}
@@ -251,7 +259,8 @@ int dh_dhph_signature(uint8_t *out, uint8_t *nonce, uint8_t *dhph, RSA *r)
 
 	SHA1(dest, 0x12e, hash);
 
-	if (pkcs_1_pss_encode(hash, 20, 20, 0x800, dbuf, sizeof(dbuf))) {
+	if (pkcs_1_pss_encode(hash, 20, 20, 0x800, dbuf, sizeof(dbuf)))
+	{
 		printf("pss encode failed\n");
 		return -1;
 	}

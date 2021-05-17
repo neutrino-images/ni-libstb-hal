@@ -139,10 +139,10 @@ static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw
 
 		// write frame
 		if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
-		                             0,
-		                             0,//c->frame,
-		                             bw->buf,
-		                             bw->pos) < 0)
+		        0,
+		        0,//c->frame,
+		        bw->buf,
+		        bw->pos) < 0)
 		{
 			return -1;
 		}
@@ -203,10 +203,10 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
 
 	// write frame
 	if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
-	                             vop.picture_type == M4V_I_TYPE,
-	                             0,//c->frame,
-	                             bw->buf,
-	                             bw->pos) < 0)
+	        vop.picture_type == M4V_I_TYPE,
+	        0,//c->frame,
+	        bw->buf,
+	        bw->pos) < 0)
 	{
 		return -1;
 	}

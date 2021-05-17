@@ -25,7 +25,7 @@ void hal_get_lib_version(hal_libversion_t *ver)
 		return;
 
 	//init struct
-	*ver = {"",0,0,0,"","",""};
+	*ver = {"", 0, 0, 0, "", "", ""};
 
 #ifdef VERSION
 	ver->vVersion = VERSION;

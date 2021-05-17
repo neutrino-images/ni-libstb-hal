@@ -1,7 +1,8 @@
 #ifndef __AES_XCBC_H_
 #define __AES_XCBC_H_
 
-struct aes_xcbc_mac_ctx {
+struct aes_xcbc_mac_ctx
+{
 	uint8_t K[3][16];
 	uint8_t IV[16];
 	AES_KEY key;

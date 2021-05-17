@@ -46,62 +46,68 @@ struct AVFormatContext;
 
 class cPlayback
 {
-private:
-	bool playing, first;
-	bool decoders_closed;
+	private:
+		bool playing, first;
+		bool decoders_closed;
 
-	int mSpeed;
-	int mAudioStream;
-	int init_jump;
+		int mSpeed;
+		int mAudioStream;
+		int init_jump;
 
-public:
-	playstate_t playstate;
+	public:
+		playstate_t playstate;
 
-	cPlayback(int);
-	bool Open(playmode_t PlayMode);
-	void Close(void);
-	bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers = "");
-	bool Start(std::string filename, std::string headers = "");
-	bool Play(void);
-	bool SyncAV(void);
+		cPlayback(int);
+		bool Open(playmode_t PlayMode);
+		void Close(void);
+		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers = "");
+		bool Start(std::string filename, std::string headers = "");
+		bool Play(void);
+		bool SyncAV(void);
 
-	bool Stop(void);
-	bool SetAPid(int pid, bool ac3);
-	bool SetSubtitlePid(int pid);
-	bool SetTeletextPid(int pid);
+		bool Stop(void);
+		bool SetAPid(int pid, bool ac3);
+		bool SetSubtitlePid(int pid);
+		bool SetTeletextPid(int pid);
 
-	void trickSeek(int ratio);
-	bool SetSpeed(int speed);
-	bool SetSlow(int slow);
-	bool GetSpeed(int &speed) const;
-	bool GetPosition(int &position, int &duration);
-	void GetPts(uint64_t &pts);
-	int GetAPid(void);
-	int GetVPid(void);
-	int GetSubtitlePid(void);
-	bool SetPosition(int position, bool absolute = false);
-	void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
-	void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language) { FindAllPids((int*) apids, (unsigned int*) ac3flags, (unsigned int*) numpida, language); };
-	void FindAllSubs(int *pids, unsigned int *supported, unsigned int *numpida, std::string *language);
-	void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language) { FindAllSubs((int*) pids, (unsigned int*) supported, (unsigned int*) numpida, language); };
-	bool SelectSubtitles(int pid, std::string charset = "");
-	void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
-	void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage, int *mags, int *pages);
-	void RequestAbort(void);
-	uint64_t GetReadCount(void);
-	void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
-	void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
-	AVFormatContext *GetAVFormatContext();
-	void ReleaseAVFormatContext();
-	std::string extra_headers;
-	std::string user_agent;
+		void trickSeek(int ratio);
+		bool SetSpeed(int speed);
+		bool SetSlow(int slow);
+		bool GetSpeed(int &speed) const;
+		bool GetPosition(int &position, int &duration);
+		void GetPts(uint64_t &pts);
+		int GetAPid(void);
+		int GetVPid(void);
+		int GetSubtitlePid(void);
+		bool SetPosition(int position, bool absolute = false);
+		void FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *numpida, std::string *language);
+		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language)
+		{
+			FindAllPids((int *) apids, (unsigned int *) ac3flags, (unsigned int *) numpida, language);
+		};
+		void FindAllSubs(int *pids, unsigned int *supported, unsigned int *numpida, std::string *language);
+		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language)
+		{
+			FindAllSubs((int *) pids, (unsigned int *) supported, (unsigned int *) numpida, language);
+		};
+		bool SelectSubtitles(int pid, std::string charset = "");
+		void FindAllSubtitlePids(int *pids, unsigned int *numpids, std::string *language);
+		void FindAllTeletextsubtitlePids(int *pids, unsigned int *numpidt, std::string *tlanguage, int *mags, int *pages);
+		void RequestAbort(void);
+		uint64_t GetReadCount(void);
+		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
+		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
+		AVFormatContext *GetAVFormatContext();
+		void ReleaseAVFormatContext();
+		std::string extra_headers;
+		std::string user_agent;
 
-	void GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current);
-	void SetTitle(int title);
+		void GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current);
+		void SetTitle(int title);
 
-	//
-	~cPlayback();
-	void getMeta();
+		//
+		~cPlayback();
+		void getMeta();
 };
 
 #endif // __PLAYBACK_GST_H__

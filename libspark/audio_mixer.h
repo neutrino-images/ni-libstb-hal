@@ -27,7 +27,7 @@ class mixerVolume
 	private:
 		long min, max;
 		snd_mixer_t *handle;
-		snd_mixer_elem_t* elem;
+		snd_mixer_elem_t *elem;
 	public:
 		mixerVolume(const char *selem_name, const char *Card, long volume = -1);
 		~mixerVolume(void);

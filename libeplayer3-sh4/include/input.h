@@ -51,9 +51,9 @@ class Track;
 
 class Input
 {
-	friend class Player;
-	friend class WriterPCM; // needs calcPts()
-	friend int interrupt_cb(void *arg);
+		friend class Player;
+		friend class WriterPCM; // needs calcPts()
+		friend int interrupt_cb(void *arg);
 
 	private:
 		OpenThreads::Mutex mutex;
@@ -75,7 +75,7 @@ class Input
 		CodecList codecs[EPLAYER_MAX_CODECS];
 #endif
 		uint64_t readCount;
-		int64_t calcPts(AVStream * stream, int64_t pts);
+		int64_t calcPts(AVStream *stream, int64_t pts);
 
 	public:
 		Input();

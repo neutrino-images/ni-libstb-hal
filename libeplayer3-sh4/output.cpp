@@ -44,12 +44,12 @@
 
 static const char *FILENAME = "eplayer/output.cpp";
 
-#define dioctl(fd,req,arg) ({		\
-	int _r = ioctl(fd,req,arg); \
-	if (_r)				\
-		fprintf(stderr, "%s %d: ioctl '%s' failed: %d (%s)\n", FILENAME, __LINE__, #req, errno, strerror(errno)); \
-	_r; \
-})
+#define dioctl(fd,req,arg) ({       \
+		int _r = ioctl(fd,req,arg); \
+		if (_r)             \
+			fprintf(stderr, "%s %d: ioctl '%s' failed: %d (%s)\n", FILENAME, __LINE__, #req, errno, strerror(errno)); \
+		_r; \
+	})
 
 #define VIDEODEV "/dev/dvb/adapter0/video0"
 #define AUDIODEV "/dev/dvb/adapter0/audio0"
@@ -70,7 +70,7 @@ bool Output::Open()
 {
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
-	
+
 	if (videofd < 0)
 		videofd = open(VIDEODEV, O_RDWR);
 
@@ -85,7 +85,8 @@ bool Output::Open()
 	if (audiofd < 0)
 		audiofd = open(AUDIODEV, O_RDWR);
 
-	if (audiofd < 0) {
+	if (audiofd < 0)
+	{
 		close(videofd);
 		videofd = -1;
 		return false;
@@ -105,11 +106,13 @@ bool Output::Close()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videofd > -1) {
+	if (videofd > -1)
+	{
 		close(videofd);
 		videofd = -1;
 	}
-	if (audiofd > -1) {
+	if (audiofd > -1)
+	{
 		close(audiofd);
 		audiofd = -1;
 	}
@@ -127,22 +130,24 @@ bool Output::Play()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videoTrack && videoTrack->stream && videofd > -1 && get_codecpar(videoTrack->stream)) {
+	if (videoTrack && videoTrack->stream && videofd > -1 && get_codecpar(videoTrack->stream))
+	{
 		videoWriter = Writer::GetWriter(get_codecpar(videoTrack->stream)->codec_id, get_codecpar(videoTrack->stream)->codec_type, videoTrack->ac3flags);
 		videoWriter->Init(videofd, videoTrack->stream, player);
 		if (dioctl(videofd, VIDEO_SET_ENCODING, videoWriter->GetVideoEncoding(get_codecpar(videoTrack->stream)->codec_id))
-		||  dioctl(videofd, VIDEO_PLAY, NULL))
+		    ||  dioctl(videofd, VIDEO_PLAY, NULL))
 			ret = false;
 	}
 
-	if (audioTrack && audioTrack->stream && audiofd > -1 && get_codecpar(audioTrack->stream)) {
+	if (audioTrack && audioTrack->stream && audiofd > -1 && get_codecpar(audioTrack->stream))
+	{
 		audioWriter = Writer::GetWriter(get_codecpar(audioTrack->stream)->codec_id, get_codecpar(audioTrack->stream)->codec_type, audioTrack->ac3flags);
 		audioWriter->Init(audiofd, audioTrack->stream, player);
 		audio_encoding_t audioEncoding = AUDIO_ENCODING_LPCMA;
 		if (audioTrack->ac3flags != 6)
 			audioEncoding = audioWriter->GetAudioEncoding(get_codecpar(audioTrack->stream)->codec_id);
 		if (dioctl(audiofd, AUDIO_SET_ENCODING, audioEncoding)
-		||  dioctl(audiofd, AUDIO_PLAY, NULL))
+		    ||  dioctl(audiofd, AUDIO_PLAY, NULL))
 			ret = false;
 	}
 	return ret;
@@ -155,7 +160,8 @@ bool Output::Stop()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videofd > -1) {
+	if (videofd > -1)
+	{
 		ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 		/* set back to normal speed (end trickmodes) */
 		dioctl(videofd, VIDEO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
@@ -163,7 +169,8 @@ bool Output::Stop()
 			ret = false;
 	}
 
-	if (audiofd > -1) {
+	if (audiofd > -1)
+	{
 		ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 		/* set back to normal speed (end trickmodes) */
 		dioctl(audiofd, AUDIO_SET_SPEED, DVB_SPEED_NORMAL_PLAY);
@@ -181,12 +188,14 @@ bool Output::Pause()
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 
-	if (videofd > -1) {
+	if (videofd > -1)
+	{
 		if (dioctl(videofd, VIDEO_FREEZE, NULL))
 			ret = false;
 	}
 
-	if (audiofd > -1) {
+	if (audiofd > -1)
+	{
 		if (dioctl(audiofd, AUDIO_PAUSE, NULL))
 			ret = false;
 	}
@@ -228,7 +237,8 @@ bool Output::Flush()
 	if (videofd > -1 && ioctl(videofd, VIDEO_FLUSH, NULL))
 		ret = false;
 
-	if (audiofd > -1 && audioWriter) {
+	if (audiofd > -1 && audioWriter)
+	{
 		// flush audio decoder
 		AVPacket packet;
 		packet.data = NULL;
@@ -283,7 +293,7 @@ bool Output::GetPts(int64_t &pts)
 {
 	pts = 0;
 	return ((videofd > -1 && !ioctl(videofd, VIDEO_GET_PTS, (void *) &pts)) ||
-		(audiofd > -1 && !ioctl(audiofd, AUDIO_GET_PTS, (void *) &pts)));
+	        (audiofd > -1 && !ioctl(audiofd, AUDIO_GET_PTS, (void *) &pts)));
 }
 
 bool Output::GetFrameCount(int64_t &framecount)
@@ -291,7 +301,8 @@ bool Output::GetFrameCount(int64_t &framecount)
 	dvb_play_info_t playInfo;
 
 	if ((videofd > -1 && !dioctl(videofd, VIDEO_GET_PLAY_INFO, (void *) &playInfo)) ||
-	    (audiofd > -1 && !dioctl(audiofd, AUDIO_GET_PLAY_INFO, (void *) &playInfo))) {
+	    (audiofd > -1 && !dioctl(audiofd, AUDIO_GET_PLAY_INFO, (void *) &playInfo)))
+	{
 		framecount = playInfo.frame_count;
 		return true;
 	}
@@ -303,20 +314,23 @@ bool Output::SwitchAudio(Track *track)
 	OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 	if (audioTrack && track->stream == audioTrack->stream)
 		return true;
-	if (audiofd > -1) {
+	if (audiofd > -1)
+	{
 		dioctl(audiofd, AUDIO_STOP, NULL);
 		ioctl(audiofd, AUDIO_CLEAR_BUFFER, NULL);
 	}
 	audioTrack = track;
-	if (track->stream) {
+	if (track->stream)
+	{
 		if (!get_codecpar(audioTrack->stream))
 			return false;
-			audioWriter = Writer::GetWriter(get_codecpar(audioTrack->stream)->codec_id, get_codecpar(audioTrack->stream)->codec_type, audioTrack->ac3flags);
-			audioWriter->Init(audiofd, audioTrack->stream, player);
-		if (audiofd > -1) {
+		audioWriter = Writer::GetWriter(get_codecpar(audioTrack->stream)->codec_id, get_codecpar(audioTrack->stream)->codec_type, audioTrack->ac3flags);
+		audioWriter->Init(audiofd, audioTrack->stream, player);
+		if (audiofd > -1)
+		{
 			audio_encoding_t audioEncoding = AUDIO_ENCODING_LPCMA;
-		if (audioTrack->ac3flags != 6)
-			audioEncoding = Writer::GetAudioEncoding(get_codecpar(audioTrack->stream)->codec_id);
+			if (audioTrack->ac3flags != 6)
+				audioEncoding = Writer::GetAudioEncoding(get_codecpar(audioTrack->stream)->codec_id);
 			dioctl(audiofd, AUDIO_SET_ENCODING, audioEncoding);
 			dioctl(audiofd, AUDIO_PLAY, NULL);
 		}
@@ -329,17 +343,20 @@ bool Output::SwitchVideo(Track *track)
 	OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 	if (videoTrack && track->stream == videoTrack->stream)
 		return true;
-	if (videofd > -1) {
+	if (videofd > -1)
+	{
 		dioctl(videofd, VIDEO_STOP, NULL);
 		ioctl(videofd, VIDEO_CLEAR_BUFFER, NULL);
 	}
 	videoTrack = track;
-	if (track->stream) {
+	if (track->stream)
+	{
 		if (!get_codecpar(videoTrack->stream))
 			return false;
 		videoWriter = Writer::GetWriter(get_codecpar(videoTrack->stream)->codec_id, get_codecpar(videoTrack->stream)->codec_type, videoTrack->type);
 		videoWriter->Init(videofd, videoTrack->stream, player);
-		if (videofd > -1) {
+		if (videofd > -1)
+		{
 			dioctl(videofd, VIDEO_SET_ENCODING, Writer::GetVideoEncoding(get_codecpar(videoTrack->stream)->codec_id));
 			dioctl(videofd, VIDEO_PLAY, NULL);
 		}
@@ -349,12 +366,15 @@ bool Output::SwitchVideo(Track *track)
 
 bool Output::Write(AVStream *stream, AVPacket *packet, int64_t pts)
 {
-	switch (get_codecpar(stream)->codec_type) {
-		case AVMEDIA_TYPE_VIDEO: {
+	switch (get_codecpar(stream)->codec_type)
+	{
+		case AVMEDIA_TYPE_VIDEO:
+		{
 			OpenThreads::ScopedLock<OpenThreads::Mutex> v_lock(videoMutex);
 			return videofd > -1 && videoWriter && videoWriter->Write(packet, pts);
 		}
-		case AVMEDIA_TYPE_AUDIO: {
+		case AVMEDIA_TYPE_AUDIO:
+		{
 			OpenThreads::ScopedLock<OpenThreads::Mutex> a_lock(audioMutex);
 			return audiofd > -1 && audioWriter && audioWriter->Write(packet, pts);
 		}

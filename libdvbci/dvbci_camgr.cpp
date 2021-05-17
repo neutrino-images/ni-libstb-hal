@@ -20,7 +20,7 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 {
 	printf("[CI CA] SESSION(%d)/CA %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
-		printf("%02x ", ((const unsigned char*)data)[i]);
+		printf("%02x ", ((const unsigned char *)data)[i]);
 	printf("\n");
 
 	if ((tag[0] == 0x9f) && (tag[1] == 0x80))
@@ -32,8 +32,8 @@ int eDVBCICAManagerSession::receivedAPDU(const unsigned char *tag, const void *d
 				printf("[CI CA] ca info:\n");
 				for (int i = 0; i < len; i += 2)
 				{
-					printf("%04x ", (((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
-					caids.push_back((((const unsigned char*)data)[i] << 8) | (((const unsigned char*)data)[i + 1]));
+					printf("%04x ", (((const unsigned char *)data)[i] << 8) | (((const unsigned char *)data)[i + 1]));
+					caids.push_back((((const unsigned char *)data)[i] << 8) | (((const unsigned char *)data)[i + 1]));
 				}
 				if (!caids.empty())
 				{
@@ -85,7 +85,7 @@ int eDVBCICAManagerSession::doAction()
 		}
 		case stateFinal:
 			printf("[CI CA] stateFinal and action should not happen\n");
-			// fall through
+		// fall through
 		default:
 			return 0;
 	}

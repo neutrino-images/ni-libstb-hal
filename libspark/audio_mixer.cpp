@@ -19,7 +19,8 @@
 
 #include <audio_mixer.h>
 
-mixerVolume::mixerVolume(const char *name, const char *card, long volume) {
+mixerVolume::mixerVolume(const char *name, const char *card, long volume)
+{
 	snd_mixer_selem_id_t *sid = NULL;
 	elem = NULL;
 	handle = NULL;
@@ -49,7 +50,8 @@ mixerVolume::mixerVolume(const char *name, const char *card, long volume) {
 	snd_mixer_selem_id_set_index(sid, 0);
 	snd_mixer_selem_id_set_name(sid, name);
 	elem = snd_mixer_find_selem(handle, sid);
-	if (elem) {
+	if (elem)
+	{
 		snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
 		setVolume(volume);
 	}
@@ -60,9 +62,10 @@ mixerVolume::~mixerVolume()
 		snd_mixer_close(handle);
 }
 
-bool mixerVolume::setVolume(long volume) {
+bool mixerVolume::setVolume(long volume)
+{
 	return elem
-		&& (volume > -1)
-		&& (volume < 101)
-		&& !snd_mixer_selem_set_playback_volume_all(elem, min + volume * (max - min)/100);
+	    && (volume > -1)
+	    && (volume < 101)
+	    && !snd_mixer_selem_set_playback_volume_all(elem, min + volume * (max - min) / 100);
 }

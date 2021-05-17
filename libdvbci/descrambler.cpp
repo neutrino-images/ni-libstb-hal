@@ -13,13 +13,14 @@
 
 #include <config.h>
 
-static const char * FILENAME = "[descrambler]";
+static const char *FILENAME = "[descrambler]";
 
 static int desc_fd = -1;
 static int desc_user_count = 0;
 
 #ifndef CA_SET_PID
-typedef struct ca_pid {
+typedef struct ca_pid
+{
 	unsigned int pid;
 	int index;      /* -1 == disable*/
 } ca_pid_t;
@@ -28,17 +29,20 @@ typedef struct ca_pid {
 #endif
 
 #ifndef CA_SET_DESCR_DATA
-enum ca_descr_data_type {
+enum ca_descr_data_type
+{
 	CA_DATA_IV,
 	CA_DATA_KEY,
 };
 
-enum ca_descr_parity {
+enum ca_descr_parity
+{
 	CA_PARITY_EVEN,
 	CA_PARITY_ODD,
 };
 
-struct ca_descr_data {
+struct ca_descr_data
+{
 	unsigned int index;
 	enum ca_descr_parity parity;
 	enum ca_descr_data_type data_type;
@@ -173,8 +177,9 @@ bool descrambler_open(void)
 {
 	if (desc_fd > 0)
 		return true;
-	desc_fd = open(descrambler_filename, O_RDWR | O_NONBLOCK );
-	if (desc_fd <= 0) {
+	desc_fd = open(descrambler_filename, O_RDWR | O_NONBLOCK);
+	if (desc_fd <= 0)
+	{
 		printf("cannot open %s\n", descrambler_filename);
 		return false;
 	}

@@ -44,15 +44,16 @@ extern cVideo *videoDecoder;
 #define hal_info_c(args...) _hal_info(HAL_DEBUG_DEMUX, NULL, args)
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
-	hal_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
-		__func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
-} while(0);
+		hal_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
+		    __func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
+	} while(0);
 
 cDemux *videoDemux = NULL;
 cDemux *audioDemux = NULL;
 //cDemux *pcrDemux = NULL;
 
-static const char *DMX_T[] = {
+static const char *DMX_T[] =
+{
 	"DMX_INVALID",
 	"DMX_VIDEO",
 	"DMX_AUDIO",
@@ -64,7 +65,8 @@ static const char *DMX_T[] = {
 };
 
 /* map the device numbers. for now only demux0 is used */
-static const char *devname[] = {
+static const char *devname[] =
+{
 	"/dev/dvb/adapter0/demux0",
 	"/dev/dvb/adapter0/demux0",
 	"/dev/dvb/adapter0/demux0"
@@ -97,7 +99,7 @@ cDemux::~cDemux()
 bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBufferSize)
 {
 	int devnum = num;
-	int flags = O_RDWR|O_CLOEXEC;
+	int flags = O_RDWR | O_CLOEXEC;
 	if (fd > -1)
 		hal_info("%s FD ALREADY OPENED? fd = %d\n", __FUNCTION__, fd);
 
@@ -112,12 +114,12 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		return false;
 	}
 	hal_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
-		 num, DMX_T[pes_type], pes_type, uBufferSize, fd);
+	    num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	if (dmx_type == DMX_VIDEO_CHANNEL)
-		uBufferSize = 0x100000;		/* 1MB */
+		uBufferSize = 0x100000;     /* 1MB */
 	if (dmx_type == DMX_AUDIO_CHANNEL)
-		uBufferSize = 0x10000;		/* 64k */
+		uBufferSize = 0x10000;      /* 64k */
 #if 0
 	if (!pesfds.empty())
 	{
@@ -191,17 +193,17 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 #if 0
 	if (len != 4095 && timeout != 100)
 		fprintf(stderr, "cDemux::%s #%d fd: %d type: %s len: %d timeout: %d\n",
-			__FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
+		    __FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
 #endif
 	int rc;
 	struct pollfd ufds;
 	ufds.fd = fd;
-	ufds.events = POLLIN|POLLPRI|POLLERR;
+	ufds.events = POLLIN | POLLPRI | POLLERR;
 	ufds.revents = 0;
 
 	if (timeout > 0)
 	{
- retry:
+retry:
 		rc = ::poll(&ufds, 1, timeout);
 		if (!rc)
 			return 0; // timeout
@@ -242,9 +244,9 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	return rc;
 }
 
-bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filter,
-			   const unsigned char * const mask, int len, int timeout,
-			   const unsigned char * const negmask)
+bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filter,
+    const unsigned char *const mask, int len, int timeout,
+    const unsigned char *const negmask)
 {
 	struct dmx_sct_filter_params s_flt;
 	memset(&s_flt, 0, sizeof(s_flt));
@@ -263,79 +265,80 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 	if (negmask != NULL)
 		memcpy(s_flt.filter.mode, negmask, len);
 
-	s_flt.flags = DMX_IMMEDIATE_START|DMX_CHECK_CRC;
+	s_flt.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
 
 	int to = 0;
-	switch (filter[0]) {
-	case 0x00: /* program_association_section */
-		to = 2000;
-		break;
-	case 0x01: /* conditional_access_section */
-		to = 6000;
-		break;
-	case 0x02: /* program_map_section */
-		to = 1500;
-		break;
-	case 0x03: /* transport_stream_description_section */
-		to = 10000;
-		break;
-	/* 0x04 - 0x3F: reserved */
-	case 0x40: /* network_information_section - actual_network */
-		to = 10000;
-		break;
-	case 0x41: /* network_information_section - other_network */
-		to = 15000;
-		break;
-	case 0x42: /* service_description_section - actual_transport_stream */
-		to = 10000;
-		break;
-	/* 0x43 - 0x45: reserved for future use */
-	case 0x46: /* service_description_section - other_transport_stream */
-		to = 10000;
-		break;
-	/* 0x47 - 0x49: reserved for future use */
-	case 0x4A: /* bouquet_association_section */
-		to = 11000;
-		break;
-	/* 0x4B - 0x4D: reserved for future use */
-	case 0x4E: /* event_information_section - actual_transport_stream, present/following */
-		to = 2000;
-		break;
-	case 0x4F: /* event_information_section - other_transport_stream, present/following */
-		to = 10000;
-		break;
-	/* 0x50 - 0x5F: event_information_section - actual_transport_stream, schedule */
-	/* 0x60 - 0x6F: event_information_section - other_transport_stream, schedule */
-	case 0x70: /* time_date_section */
-		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
-		//s_flt.pid     = 0x0014;
-		to = 30000;
-		break;
-	case 0x71: /* running_status_section */
-		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
-		to = 0;
-		break;
-	case 0x72: /* stuffing_section */
-		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
-		to = 0;
-		break;
-	case 0x73: /* time_offset_section */
-		//s_flt.pid     = 0x0014;
-		to = 30000;
-		break;
-	/* 0x74 - 0x7D: reserved for future use */
-	case 0x7E: /* discontinuity_information_section */
-		s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
-		to = 0;
-		break;
-	case 0x7F: /* selection_information_section */
-		to = 0;
-		break;
-	/* 0x80 - 0x8F: ca_message_section */
-	/* 0x90 - 0xFE: user defined */
-	/*        0xFF: reserved */
-	default:
-		break;
+	switch (filter[0])
+	{
+		case 0x00: /* program_association_section */
+			to = 2000;
+			break;
+		case 0x01: /* conditional_access_section */
+			to = 6000;
+			break;
+		case 0x02: /* program_map_section */
+			to = 1500;
+			break;
+		case 0x03: /* transport_stream_description_section */
+			to = 10000;
+			break;
+		/* 0x04 - 0x3F: reserved */
+		case 0x40: /* network_information_section - actual_network */
+			to = 10000;
+			break;
+		case 0x41: /* network_information_section - other_network */
+			to = 15000;
+			break;
+		case 0x42: /* service_description_section - actual_transport_stream */
+			to = 10000;
+			break;
+		/* 0x43 - 0x45: reserved for future use */
+		case 0x46: /* service_description_section - other_transport_stream */
+			to = 10000;
+			break;
+		/* 0x47 - 0x49: reserved for future use */
+		case 0x4A: /* bouquet_association_section */
+			to = 11000;
+			break;
+		/* 0x4B - 0x4D: reserved for future use */
+		case 0x4E: /* event_information_section - actual_transport_stream, present/following */
+			to = 2000;
+			break;
+		case 0x4F: /* event_information_section - other_transport_stream, present/following */
+			to = 10000;
+			break;
+		/* 0x50 - 0x5F: event_information_section - actual_transport_stream, schedule */
+		/* 0x60 - 0x6F: event_information_section - other_transport_stream, schedule */
+		case 0x70: /* time_date_section */
+			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+			//s_flt.pid     = 0x0014;
+			to = 30000;
+			break;
+		case 0x71: /* running_status_section */
+			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+			to = 0;
+			break;
+		case 0x72: /* stuffing_section */
+			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+			to = 0;
+			break;
+		case 0x73: /* time_offset_section */
+			//s_flt.pid     = 0x0014;
+			to = 30000;
+			break;
+		/* 0x74 - 0x7D: reserved for future use */
+		case 0x7E: /* discontinuity_information_section */
+			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+			to = 0;
+			break;
+		case 0x7F: /* selection_information_section */
+			to = 0;
+			break;
+		/* 0x80 - 0x8F: ca_message_section */
+		/* 0x90 - 0xFE: user defined */
+		/*        0xFF: reserved */
+		default:
+			break;
 //		return -1;
 	}
 	/* the negmask == NULL is a hack: the users of negmask are PMT-update
@@ -345,15 +348,22 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char * const filt
 		s_flt.timeout = to;
 
 	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
-		pid, fd, DMX_T[dmx_type], len, s_flt.timeout,s_flt.flags, s_flt.filter.filter[0]);
+	    pid, fd, DMX_T[dmx_type], len, s_flt.timeout, s_flt.flags, s_flt.filter.filter[0]);
 
-	if (debuglevel == 2) {
-		fprintf(stderr,"filt: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.filter[i]);fprintf(stderr,"\n");
-		fprintf(stderr,"mask: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.mask  [i]);fprintf(stderr,"\n");
-		fprintf(stderr,"mode: ");for(int i=0;i<DMX_FILTER_SIZE;i++)fprintf(stderr,"%02hhx ",s_flt.filter.mode  [i]);fprintf(stderr,"\n");
+	if (debuglevel == 2)
+	{
+		fprintf(stderr, "filt: ");
+		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.filter[i]);
+		fprintf(stderr, "\n");
+		fprintf(stderr, "mask: ");
+		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mask  [i]);
+		fprintf(stderr, "\n");
+		fprintf(stderr, "mode: ");
+		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mode  [i]);
+		fprintf(stderr, "\n");
 	}
 
-	ioctl (fd, DMX_STOP);
+	ioctl(fd, DMX_STOP);
 	if (ioctl(fd, DMX_SET_FILTER, &s_flt) < 0)
 		return false;
 
@@ -369,7 +379,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 	 * this check originally is from tuxbox cvs but I'm not sure
 	 * what it is good for...
 	if (pid <= 0x0001 && dmx_type != DMX_PCR_ONLY_CHANNEL)
-		return false;
+	    return false;
 	 */
 	if ((pid >= 0x0002 && pid <= 0x000f) || pid >= 0x1fff)
 		return false;
@@ -381,35 +391,36 @@ bool cDemux::pesFilter(const unsigned short _pid)
 	p_flt.output = DMX_OUT_DECODER;
 	p_flt.input  = DMX_IN_FRONTEND;
 
-	switch (dmx_type) {
-	case DMX_PCR_ONLY_CHANNEL:
-		p_flt.pes_type = DMX_PES_PCR;
-		if (HAL_nodec)
-			return true;
-		break;
-	case DMX_AUDIO_CHANNEL:
-		p_flt.pes_type = DMX_PES_OTHER;
-		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
-		if (HAL_nodec)	/* no need to demux if we don't decode... */
-			return true;
-		break;
-	case DMX_VIDEO_CHANNEL:
-		p_flt.pes_type = DMX_PES_OTHER;
-		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
-		if (HAL_nodec)
-			return true;
-		break;
-	case DMX_PES_CHANNEL:
-		p_flt.pes_type = DMX_PES_OTHER;
-		p_flt.output  = DMX_OUT_TAP;
-		break;
-	case DMX_TP_CHANNEL:
-		p_flt.pes_type = DMX_PES_OTHER;
-		p_flt.output  = DMX_OUT_TSDEMUX_TAP;
-		break;
-	default:
-		hal_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);
-		return false;
+	switch (dmx_type)
+	{
+		case DMX_PCR_ONLY_CHANNEL:
+			p_flt.pes_type = DMX_PES_PCR;
+			if (HAL_nodec)
+				return true;
+			break;
+		case DMX_AUDIO_CHANNEL:
+			p_flt.pes_type = DMX_PES_OTHER;
+			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			if (HAL_nodec)  /* no need to demux if we don't decode... */
+				return true;
+			break;
+		case DMX_VIDEO_CHANNEL:
+			p_flt.pes_type = DMX_PES_OTHER;
+			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			if (HAL_nodec)
+				return true;
+			break;
+		case DMX_PES_CHANNEL:
+			p_flt.pes_type = DMX_PES_OTHER;
+			p_flt.output  = DMX_OUT_TAP;
+			break;
+		case DMX_TP_CHANNEL:
+			p_flt.pes_type = DMX_PES_OTHER;
+			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			break;
+		default:
+			hal_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);
+			return false;
 	}
 	return (ioctl(fd, DMX_SET_PES_FILTER, &p_flt) >= 0);
 }
@@ -461,7 +472,8 @@ void cDemux::removePid(unsigned short Pid)
 	}
 	for (std::vector<pes_pids>::iterator i = pesfds.begin(); i != pesfds.end(); ++i)
 	{
-		if ((*i).pid == Pid) {
+		if ((*i).pid == Pid)
+		{
 			hal_debug("removePid: removing demux fd %d pid 0x%04x\n", fd, Pid);
 			if (ioctl(fd, DMX_REMOVE_PID, Pid) < 0)
 				hal_info("%s: (DMX_REMOVE_PID, 0x%04hx): %m\n", __func__, Pid);
@@ -472,7 +484,7 @@ void cDemux::removePid(unsigned short Pid)
 	hal_info("%s pid 0x%04x not found\n", __FUNCTION__, Pid);
 }
 
-void cDemux::getSTC(int64_t * STC)
+void cDemux::getSTC(int64_t *STC)
 {
 	int64_t pts = 0;
 	if (videoDecoder)

@@ -43,9 +43,9 @@
 #include "wmv.cpp"
 //#include "aac.cpp"
 
-static std::map<enum AVCodecID,Writer *>writers __attribute__ ((init_priority (200)));
-static std::map<enum AVCodecID,video_encoding_t>vencoding __attribute__ ((init_priority (200)));
-static std::map<enum AVCodecID,audio_encoding_t>aencoding __attribute__ ((init_priority (200)));
+static std::map<enum AVCodecID, Writer *>writers __attribute__((init_priority(200)));
+static std::map<enum AVCodecID, video_encoding_t>vencoding __attribute__((init_priority(200)));
+static std::map<enum AVCodecID, audio_encoding_t>aencoding __attribute__((init_priority(200)));
 
 void Writer::Register(Writer *w, enum AVCodecID id, video_encoding_t encoding)
 {
@@ -64,17 +64,19 @@ bool Writer::Write(AVPacket * /* packet */, int64_t /* pts */)
 	return false;
 }
 
-static Writer writer __attribute__ ((init_priority (300)));
+static Writer writer __attribute__((init_priority(300)));
 
 Writer *Writer::GetWriter(enum AVCodecID id, enum AVMediaType codec_type, int track_type)
 {
 	fprintf(stderr, "GETWRITER %d %d %d", id, codec_type, track_type);
-	if (track_type != 6) { // hack for ACC resampling
-		std::map<enum AVCodecID,Writer*>::iterator it = writers.find(id);
+	if (track_type != 6)   // hack for ACC resampling
+	{
+		std::map<enum AVCodecID, Writer *>::iterator it = writers.find(id);
 		if (it != writers.end())
 			return it->second;
 	}
-	switch (codec_type) {
+	switch (codec_type)
+	{
 		case AVMEDIA_TYPE_AUDIO:
 			if (id == AV_CODEC_ID_INJECTPCM) // should not happen
 				break;
@@ -91,7 +93,7 @@ Writer *Writer::GetWriter(enum AVCodecID id, enum AVMediaType codec_type, int tr
 
 video_encoding_t Writer::GetVideoEncoding(enum AVCodecID id)
 {
-	std::map<enum AVCodecID,video_encoding_t>::iterator it = vencoding.find(id);
+	std::map<enum AVCodecID, video_encoding_t>::iterator it = vencoding.find(id);
 	if (it != vencoding.end())
 		return it->second;
 	return VIDEO_ENCODING_AUTO;
@@ -99,7 +101,7 @@ video_encoding_t Writer::GetVideoEncoding(enum AVCodecID id)
 
 audio_encoding_t Writer::GetAudioEncoding(enum AVCodecID id)
 {
-	std::map<enum AVCodecID,audio_encoding_t>::iterator it = aencoding.find(id);
+	std::map<enum AVCodecID, audio_encoding_t>::iterator it = aencoding.find(id);
 	if (it != aencoding.end())
 		return it->second;
 	return AUDIO_ENCODING_LPCMA;

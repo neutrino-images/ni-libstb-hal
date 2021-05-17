@@ -36,7 +36,7 @@
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_CA, this, args)
 
-static const char * FILENAME = "[ca_ci]";
+static const char *FILENAME = "[ca_ci]";
 #if HAVE_DUCKBOX_HARDWARE
 const char ci_path[] = "/dev/dvb/adapter0/ci%d";
 ca_slot_info_t info;
@@ -48,9 +48,10 @@ static int last_source = -1;
 static bool checkLiveSlot = false;
 static bool CertChecked = false;
 static bool Cert_OK = false;
-static uint8_t NullPMT[50]={0x9F,0x80,0x32,0x2E,0x03,0x6E,0xA7,0x37,0x00,0x00,0x1B,0x15,0x7D,0x00,0x00,0x03,0x15,0x7E,0x00,0x00,0x03,0x15,0x7F,0x00,
-0x00,0x06,0x15,0x80,0x00,0x00,0x06,0x15,0x82,0x00,0x00,0x0B,0x08,0x7B,0x00,0x00,0x05,0x09,0x42,0x00,0x00,0x06,0x15,0x81,0x00,0x00};
-static cCA* pcCAInstance = NULL;
+static uint8_t NullPMT[50] = {0x9F, 0x80, 0x32, 0x2E, 0x03, 0x6E, 0xA7, 0x37, 0x00, 0x00, 0x1B, 0x15, 0x7D, 0x00, 0x00, 0x03, 0x15, 0x7E, 0x00, 0x00, 0x03, 0x15, 0x7F, 0x00,
+        0x00, 0x06, 0x15, 0x80, 0x00, 0x00, 0x06, 0x15, 0x82, 0x00, 0x00, 0x0B, 0x08, 0x7B, 0x00, 0x00, 0x05, 0x09, 0x42, 0x00, 0x00, 0x06, 0x15, 0x81, 0x00, 0x00
+    };
+static cCA *pcCAInstance = NULL;
 
 /* für callback */
 /* nur diese Message wird vom CI aus neutrinoMessages.h benutzt */
@@ -82,7 +83,7 @@ cCA::~cCA()
 	printf("%s -> %s\n", FILENAME, __func__);
 }
 
-cCA * cCA::GetInstance()
+cCA *cCA::GetInstance()
 {
 	if (pcCAInstance == NULL)
 	{
@@ -94,7 +95,7 @@ cCA * cCA::GetInstance()
 	return pcCAInstance;
 }
 
-bool cCA::checkQueueSize(eDVBCISlot* slot)
+bool cCA::checkQueueSize(eDVBCISlot *slot)
 {
 	return (slot->sendqueue.size() > 0);
 }
@@ -106,11 +107,11 @@ void cCA::write_ci_info(int slot, CaIdVector caids)
 	char mname[200];
 	char fname[20];
 	int count, cx, cy, i;
-	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d" , slot);
+	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d", slot);
 	ModuleName(CA_SLOT_TYPE_CI, slot, mname);
-	FILE* fd = fopen(fname, "w");
+	FILE *fd = fopen(fname, "w");
 	if (fd == NULL) return;
-	snprintf(buf, sizeof(buf), "%s\n" , mname);
+	snprintf(buf, sizeof(buf), "%s\n", mname);
 	fputs(buf, fd);
 	if (caids.size() > 40)
 		count = 40;
@@ -130,22 +131,22 @@ void cCA::write_ci_info(int slot, CaIdVector caids)
 void cCA::del_ci_info(int slot)
 {
 	char fname[20];
-	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d" , slot);
+	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d", slot);
 	if (access(fname, F_OK) == 0) remove(fname);
 }
 
 /* helper function to call the cpp thread loop */
-void* execute_thread(void *c)
+void *execute_thread(void *c)
 {
-	eDVBCISlot* slot = (eDVBCISlot*) c;
-	cCA *obj = (cCA*)slot->pClass;
+	eDVBCISlot *slot = (eDVBCISlot *) c;
+	cCA *obj = (cCA *)slot->pClass;
 	obj->slot_pollthread(c);
 	return NULL;
 }
 
 /* from dvb-apps */
-int asn_1_decode(uint16_t * length, unsigned char * asn_1_array,
-		 uint32_t asn_1_array_len)
+int asn_1_decode(uint16_t *length, unsigned char *asn_1_array,
+    uint32_t asn_1_array_len)
 {
 	uint8_t length_field;
 
@@ -180,7 +181,7 @@ int asn_1_decode(uint16_t * length, unsigned char * asn_1_array,
 }
 
 //wait for a while for some data und read it if some
-eData waitData(int fd, unsigned char* buffer, int* len)
+eData waitData(int fd, unsigned char *buffer, int *len)
 {
 	int retval;
 	struct pollfd fds;
@@ -203,7 +204,7 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 	{
 		if (fds.revents & POLLIN)
 		{
-			int n = read (fd, buffer, *len);
+			int n = read(fd, buffer, *len);
 			if (n > 0)
 			{
 				*len = n;
@@ -234,7 +235,7 @@ eData waitData(int fd, unsigned char* buffer, int* len)
 	return eDataError;
 }
 
-static bool transmitData(eDVBCISlot* slot, unsigned char* d, int len)
+static bool transmitData(eDVBCISlot *slot, unsigned char *d, int len)
 {
 	printf("%s -> %s len(%d)\n", FILENAME, __func__, len);
 
@@ -265,19 +266,20 @@ static bool transmitData(eDVBCISlot* slot, unsigned char* d, int len)
 }
 
 //send some data on an fd, for a special slot and connection_id
-eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
+eData sendData(eDVBCISlot *slot, unsigned char *data, int len)
 {
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-		unsigned char *d = (unsigned char*) malloc(len);
-		memcpy(d, data, len);
-		transmitData(slot, d, len);
+	unsigned char *d = (unsigned char *) malloc(len);
+	memcpy(d, data, len);
+	transmitData(slot, d, len);
 #else
 	// only poll connection if we are not awaiting an answer
 	slot->pollConnection = false;
 
 	//send data_last and data
-	if (len < 127) {
-		unsigned char *d = (unsigned char*) malloc(len + 5);
+	if (len < 127)
+	{
+		unsigned char *d = (unsigned char *) malloc(len + 5);
 		memcpy(d + 5, data, len);
 		d[0] = slot->slot;
 		d[1] = slot->connection_id;
@@ -287,8 +289,9 @@ eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
 		len += 5;
 		transmitData(slot, d, len);
 	}
-	else if (len > 126 && len < 255) {
-		unsigned char *d = (unsigned char*) malloc(len + 6);
+	else if (len > 126 && len < 255)
+	{
+		unsigned char *d = (unsigned char *) malloc(len + 6);
 		memcpy(d + 6, data, len);
 		d[0] = slot->slot;
 		d[1] = slot->connection_id;
@@ -299,8 +302,9 @@ eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
 		len += 6;
 		transmitData(slot, d, len);
 	}
-	else if (len > 254) {
-		unsigned char *d = (unsigned char*) malloc(len + 7);
+	else if (len > 254)
+	{
+		unsigned char *d = (unsigned char *) malloc(len + 7);
 		memcpy(d + 7, data, len);
 		d[0] = slot->slot;
 		d[1] = slot->connection_id;
@@ -320,14 +324,14 @@ eData sendData(eDVBCISlot* slot, unsigned char* data, int len)
 #if HAVE_DUCKBOX_HARDWARE
 
 //send a transport connection create request
-bool sendCreateTC(eDVBCISlot* slot)
+bool sendCreateTC(eDVBCISlot *slot)
 {
 	unsigned char data[5];
 	data[0] = slot->slot;
-	data[1] = slot->slot + 1; 	/* conid */
+	data[1] = slot->slot + 1;   /* conid */
 	data[2] = T_CREATE_T_C;
 	data[3] = 1;
-	data[4] = slot->slot + 1 	/* conid */;
+	data[4] = slot->slot + 1    /* conid */;
 	printf("Create TC: ");
 	for (int i = 0; i < 5; i++)
 		printf("%02x ", data[i]);
@@ -336,7 +340,7 @@ bool sendCreateTC(eDVBCISlot* slot)
 	return true;
 }
 
-static bool sendDataLast(eDVBCISlot* slot)
+static bool sendDataLast(eDVBCISlot *slot)
 {
 	unsigned char data[5];
 	slot->pollConnection = false;
@@ -356,7 +360,7 @@ static bool sendDataLast(eDVBCISlot* slot)
 	return true;
 }
 
-static bool sendRCV(eDVBCISlot* slot)
+static bool sendRCV(eDVBCISlot *slot)
 {
 	unsigned char send_data[5];
 	slot->pollConnection = false;
@@ -376,7 +380,7 @@ static bool sendRCV(eDVBCISlot* slot)
 	return true;
 }
 
-void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int asn_data_length, int /*con_id*/)
+void cCA::process_tpdu(eDVBCISlot *slot, unsigned char tpdu_tag, __u8 *data, int asn_data_length, int /*con_id*/)
 {
 	switch (tpdu_tag)
 	{
@@ -402,7 +406,7 @@ void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int
 		{
 			int new_data_length = slot->receivedLen + asn_data_length;
 			printf("%s %s Got \"Data More\" from Module\n", FILENAME, __FUNCTION__);
-			__u8 *new_data_buffer = (__u8*) realloc(slot->receivedData, new_data_length);
+			__u8 *new_data_buffer = (__u8 *) realloc(slot->receivedData, new_data_length);
 			slot->receivedData = new_data_buffer;
 			memcpy(slot->receivedData + slot->receivedLen, data, asn_data_length);
 			slot->receivedLen = new_data_length;
@@ -428,11 +432,11 @@ void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int
 			}
 			else
 			{
-				/* chained package 
+				/* chained package
 				?? DBO: I never have seen one */
 				int new_data_length = slot->receivedLen + asn_data_length;
 				printf("%s -> chained data\n", FILENAME);
-				__u8 *new_data_buffer = (__u8*) realloc(slot->receivedData, new_data_length);
+				__u8 *new_data_buffer = (__u8 *) realloc(slot->receivedData, new_data_length);
 				slot->receivedData = new_data_buffer;
 				memcpy(slot->receivedData + slot->receivedLen, data, asn_data_length);
 				slot->receivedLen = new_data_length;
@@ -482,7 +486,7 @@ void cCA::process_tpdu(eDVBCISlot* slot, unsigned char tpdu_tag, __u8* data, int
 bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
 	hal_debug("%s\n", __func__);
-	if(cam_messenger)
+	if (cam_messenger)
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		cam_messenger(EVT_CA_MESSAGE, (uintptr_t) msg);
 #else
@@ -503,7 +507,7 @@ void cCA::MenuEnter(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -531,7 +535,7 @@ void cCA::MenuAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint32_t choice)
 {
 	printf("%s -> %s Slot(%d) choice(%d)\n", FILENAME, __func__, bSlotIndex, choice);
 
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -543,18 +547,18 @@ void cCA::MenuAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint32_t choice)
 	}
 }
 
-void cCA::InputAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint8_t * pBuffer, int nLength)
+void cCA::InputAnswer(enum CA_SLOT_TYPE, uint32_t bSlotIndex, uint8_t *pBuffer, int nLength)
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->slot == bSlotIndex)
 		{
 			if ((*it)->hasMMIManager)
-				(*it)->mmiSession->answerEnq((char*) pBuffer, nLength);
+				(*it)->mmiSession->answerEnq((char *) pBuffer, nLength);
 			break;
 		}
 	}
@@ -564,7 +568,7 @@ void cCA::MenuClose(enum CA_SLOT_TYPE, uint32_t bSlotIndex)
 {
 	printf("%s -> %s Slot(%d)\n", FILENAME, __func__, bSlotIndex);
 
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -589,9 +593,9 @@ uint32_t cCA::GetNumberSmartCardSlots(void)
 	return 0;
 }
 
-void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t slot, char * Name)
+void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t slot, char *Name)
 {
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->slot == slot)
@@ -604,7 +608,7 @@ void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t slot, char * Name)
 
 bool cCA::ModulePresent(enum CA_SLOT_TYPE, uint32_t slot)
 {
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
@@ -619,7 +623,7 @@ bool cCA::ModulePresent(enum CA_SLOT_TYPE, uint32_t slot)
 
 int cCA::GetCAIDS(CaIdVector &Caids)
 {
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		if ((*it)->camIsReady)
@@ -631,10 +635,10 @@ int cCA::GetCAIDS(CaIdVector &Caids)
 	return 0;
 }
 
-bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
+bool cCA::StopLiveCI(u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -650,10 +654,10 @@ bool cCA::StopLiveCI( u64 TP, u16 SID, u8 source, u32 calen)
 	return false;
 }
 
-bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
+bool cCA::StopRecordCI(u64 TP, u16 SID, u8 source, u32 calen)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
 		for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -672,7 +676,7 @@ bool cCA::StopRecordCI( u64 TP, u16 SID, u8 source, u32 calen)
 SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, u8 scrambled)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	ca_map_iterator_t caIt;
 	unsigned int i;
 	int count = 0;
@@ -680,7 +684,10 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, u8 scramble
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 	{
-		if (!scrambled) { continue; }
+		if (!scrambled)
+		{
+			continue;
+		}
 
 		if ((*it)->init)
 			count++;
@@ -721,8 +728,15 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, u8 scramble
 		if ((*it)->bsids.size())
 		{
 			for (i = 0; i < (*it)->bsids.size(); i++)
-				if ((*it)->bsids[i] == SID) {tmpSidBlackListed = true; break;}
-			if (i == (*it)->bsids.size()) {(*it)->SidBlackListed = false;}
+				if ((*it)->bsids[i] == SID)
+				{
+					tmpSidBlackListed = true;
+					break;
+				}
+			if (i == (*it)->bsids.size())
+			{
+				(*it)->SidBlackListed = false;
+			}
 		}
 
 		for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -743,7 +757,7 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, u8 scramble
 			{
 				if ((*it)->source == source && (!checkLiveSlot || !liveUse_found))
 				{
-					SendNullPMT((eDVBCISlot*)(*it));
+					SendNullPMT((eDVBCISlot *)(*it));
 					(*it)->SidBlackListed = true;
 					for (int j = 0; j < CI_MAX_MULTI; j++)
 						(*it)->SID[j] = 0;
@@ -786,7 +800,7 @@ SlotIt cCA::FindFreeSlot(u64 TP, u8 source, u16 SID, ca_map_t camap, u8 scramble
 }
 
 /* erstmal den capmt wie er von Neutrino kommt in den Slot puffern */
-bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
+bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char *cabuf, u32 calen, const unsigned char * /*rawpmt*/, u32 /*rawlen*/, enum CA_SLOT_TYPE /*SlotType*/, unsigned char scrambled, ca_map_t cm, int mode, bool enabled)
 {
 	u16 SID = (u16)(tpid & 0xFFFF);
 	u64 TP = tpid >> 16;
@@ -794,7 +808,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 	bool sid_found = false;
 	bool recordUse_found = false;
 	printf("%s -> %s\n", FILENAME, __func__);
-	if (!num_slots) return true;	/* stb's without ci-slots */
+	if (!num_slots) return true;    /* stb's without ci-slots */
 #if x_debug
 	printf("TP: %llX\n", TP);
 	printf("SID: %04X\n", SID);
@@ -846,7 +860,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 				else
 				{
-					SendNullPMT((eDVBCISlot*)(*It2));
+					SendNullPMT((eDVBCISlot *)(*It2));
 					(*It2)->scrambled = 0;
 					(*It2)->TP = 0;
 					for (int j = 0; j < CI_MAX_MULTI; j++)
@@ -869,14 +883,14 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			(*It)->ci_use_count++;
 
 			if (!(cabuf[pos] & 0x80))
-				pos +=1;
+				pos += 1;
 			else
 				pos += ((cabuf[pos] & 0x7F) + 1);
 
 			(*It)->pmtlen = calen;
 			for (i = 0; i < calen; i++)
 				(*It)->pmtdata[i] = cabuf[i];
-			(*It)->pmtdata[pos] = 0x04;		// CAPMT_ADD
+			(*It)->pmtdata[pos] = 0x04;     // CAPMT_ADD
 			(*It)->newCapmt = true;
 		}
 
@@ -888,8 +902,8 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 			(*It)->ci_use_count = 1;
 			(*It)->TP = TP;
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-			if(!checkLiveSlot && mode && (*It)->source != source)
-				setInputSource((eDVBCISlot*)(*It), false);
+			if (!checkLiveSlot && mode && (*It)->source != source)
+				setInputSource((eDVBCISlot *)(*It), false);
 #endif
 			(*It)->source = source;
 			(*It)->pmtlen = calen;
@@ -900,7 +914,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if ((*It)->newCapmt)
-			extractPids((eDVBCISlot*)(*It));
+			extractPids((eDVBCISlot *)(*It));
 #endif
 		if ((*It)->scrambled && !(*It)->SidBlackListed)
 		{
@@ -910,7 +924,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				{
 					if (mode)
 					{
-						if(!checkLiveSlot)
+						if (!checkLiveSlot)
 							(*It)->liveUse[j] = false;
 						(*It)->recordUse[j] = true;
 					}
@@ -921,13 +935,13 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 		}
 
 		if (!(*It)->newCapmt && (*It)->ccmgr_ready && (*It)->hasCCManager && (*It)->scrambled && !(*It)->SidBlackListed)
-			(*It)->ccmgrSession->resendKey((eDVBCISlot*)(*It));
+			(*It)->ccmgrSession->resendKey((eDVBCISlot *)(*It));
 
 	}
 	else
 	{
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-		std::list<eDVBCISlot*>::iterator it;
+		std::list<eDVBCISlot *>::iterator it;
 		recordUse_found = false;
 		for (it = slot_data.begin(); it != slot_data.end(); ++it)
 		{
@@ -940,7 +954,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 				}
 				if (!recordUse_found && (*it)->init)
 				{
-					setInputSource((eDVBCISlot*)(*it), false);
+					setInputSource((eDVBCISlot *)(*it), false);
 				}
 			}
 			if (!(*it)->init)
@@ -968,17 +982,17 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char * cabuf,
 }
 
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-void cCA::extractPids(eDVBCISlot* slot)
+void cCA::extractPids(eDVBCISlot *slot)
 {
 	u32 prg_info_len;
 	u32 es_info_len = 0;
 	u16 pid;
-	u8 * data = slot->pmtdata;
+	u8 *data = slot->pmtdata;
 	u32 len = slot->pmtlen;
 	int pos = 3;
 
 	slot->pids.clear();
-	
+
 	if (!(data[pos] & 0x80))
 		pos += 5;
 	else
@@ -987,8 +1001,9 @@ void cCA::extractPids(eDVBCISlot* slot)
 	prg_info_len = ((data[pos] << 8) | data[pos + 1]) & 0xFFF;
 	pos += prg_info_len + 2;
 
-	for (u32 i = pos; i < len; i += es_info_len + 5) {
-		pid = (data[i+1] << 8 | data[i+2]) & 0x1FFF;
+	for (u32 i = pos; i < len; i += es_info_len + 5)
+	{
+		pid = (data[i + 1] << 8 | data[i + 2]) & 0x1FFF;
 		es_info_len = ((data[i + 3] << 8) | data[i + 4]) & 0xfff;
 		slot->pids.push_back(pid);
 	}
@@ -1004,13 +1019,13 @@ void cCA::extractPids(eDVBCISlot* slot)
 }
 #endif
 
-void cCA::setSource(eDVBCISlot* slot)
+void cCA::setSource(eDVBCISlot *slot)
 {
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_input", slot->slot);
 	FILE *ci = fopen(buf, "wb");
 
-	if (ci > (void*)0)
+	if (ci > (void *)0)
 	{
 		switch (slot->source)
 		{
@@ -1096,13 +1111,16 @@ void cCA::setSource(eDVBCISlot* slot)
 }
 
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-static std::string getTunerLetter(int number) { return std::string(1, char(65 + number)); }
+static std::string getTunerLetter(int number)
+{
+	return std::string(1, char(65 + number));
+}
 
 void cCA::setInputs()
 {
 	char input[64];
 	char choices[64];
-	FILE * fd = 0;
+	FILE *fd = 0;
 
 #if BOXMODEL_VUULTIMO4K
 	for (int number = 0; number < 24; number++) // tuner A to X, input 0 to 23
@@ -1115,7 +1133,7 @@ void cCA::setInputs()
 #endif
 	{
 		snprintf(choices, 64, "/proc/stb/tsmux/input%d_choices", number);
-		if(access(choices, R_OK) < 0)
+		if (access(choices, R_OK) < 0)
 		{
 			printf("no choices for input%d\n", number);
 			continue;
@@ -1126,7 +1144,7 @@ void cCA::setInputs()
 		if (fd)
 		{
 			printf("set input%d to tuner %s\n", number, getTunerLetter(number).c_str());
-			fprintf(fd,"%s", getTunerLetter(number).c_str());
+			fprintf(fd, "%s", getTunerLetter(number).c_str());
 			fclose(fd);
 		}
 		else
@@ -1136,14 +1154,14 @@ void cCA::setInputs()
 	}
 }
 
-void cCA::setInputSource(eDVBCISlot* slot, bool ci)
+void cCA::setInputSource(eDVBCISlot *slot, bool ci)
 {
 	char buf[64];
 	printf("%s set input%d to %s%d\n", FILENAME, slot->source, ci ? "ci" : "tuner", ci ? slot->slot : slot->source);
 	snprintf(buf, 64, "/proc/stb/tsmux/input%d", slot->source);
 	FILE *input = fopen(buf, "wb");
 
-	if (input > (void*)0)
+	if (input > (void *)0)
 	{
 		if (ci)
 		{
@@ -1255,7 +1273,7 @@ cCA::cCA(int Slots)
 
 	for (int i = 0; i < Slots; i++)
 	{
-		eDVBCISlot* slot = (eDVBCISlot*) malloc(sizeof(eDVBCISlot));
+		eDVBCISlot *slot = (eDVBCISlot *) malloc(sizeof(eDVBCISlot));
 		slot->slot = i;
 		slot->fd = -1;
 		slot->connection_id = 0;
@@ -1318,7 +1336,7 @@ cCA::cCA(int Slots)
 		/* create a thread for each slot */
 		if (slot->fd > 0)
 		{
-			if (pthread_create(&slot->slot_thread, 0, execute_thread, (void*)slot))
+			if (pthread_create(&slot->slot_thread, 0, execute_thread, (void *)slot))
 			{
 				printf("pthread_create");
 			}
@@ -1330,7 +1348,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	bool haveFound = false;
 
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -1347,11 +1365,11 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		usleep(200000);
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		last_source = (int)(*it)->source;
-		setInputSource((eDVBCISlot*)(*it), false);
+		setInputSource((eDVBCISlot *)(*it), false);
 #endif
 		if ((*it)->hasCCManager)
-			(*it)->ccmgrSession->ci_ccmgr_doClose((eDVBCISlot*)(*it));
-		eDVBCISession::deleteSessions((eDVBCISlot*)(*it));
+			(*it)->ccmgrSession->ci_ccmgr_doClose((eDVBCISlot *)(*it));
+		eDVBCISession::deleteSessions((eDVBCISlot *)(*it));
 		(*it)->mmiSession = NULL;
 		(*it)->hasMMIManager = false;
 		(*it)->hasCAManager = false;
@@ -1389,9 +1407,9 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 		(*it)->camask = 0;
 		memset((*it)->pmtdata, 0, sizeof((*it)->pmtdata));
 
-		while((*it)->sendqueue.size())
+		while ((*it)->sendqueue.size())
 		{
-			delete [] (*it)->sendqueue.top().data;
+			delete [](*it)->sendqueue.top().data;
 			(*it)->sendqueue.pop();
 		}
 
@@ -1406,7 +1424,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 	}
 }
 
-void cCA::ci_inserted(eDVBCISlot* slot)
+void cCA::ci_inserted(eDVBCISlot *slot)
 {
 	printf("1. cam (%d) status changed ->cam now present\n", slot->slot);
 
@@ -1425,7 +1443,7 @@ void cCA::ci_inserted(eDVBCISlot* slot)
 	slot->connection_id = slot->slot + 1;
 #endif
 	/* Send a message to Neutrino cam_menu handler */
-	CA_MESSAGE* pMsg = (CA_MESSAGE*) malloc(sizeof(CA_MESSAGE));
+	CA_MESSAGE *pMsg = (CA_MESSAGE *) malloc(sizeof(CA_MESSAGE));
 	memset(pMsg, 0, sizeof(CA_MESSAGE));
 	pMsg->MsgId = CA_MESSAGE_MSG_INSERTED;
 	pMsg->SlotType = CA_SLOT_TYPE_CI;
@@ -1435,12 +1453,12 @@ void cCA::ci_inserted(eDVBCISlot* slot)
 	slot->camIsReady = true;
 }
 
-void cCA::ci_removed(eDVBCISlot* slot)
+void cCA::ci_removed(eDVBCISlot *slot)
 {
 	printf("cam (%d) status changed ->cam now _not_ present\n", slot->slot);
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
-		last_source = (int)slot->source;
-		setInputSource(slot, false);
+	last_source = (int)slot->source;
+	setInputSource(slot, false);
 #endif
 	if (slot->hasCCManager)
 		slot->ccmgrSession->ci_ccmgr_doClose(slot);
@@ -1485,14 +1503,14 @@ void cCA::ci_removed(eDVBCISlot* slot)
 	/* delete ci info file */
 	del_ci_info(slot->slot);
 	/* Send a message to Neutrino cam_menu handler */
-	CA_MESSAGE* pMsg = (CA_MESSAGE*) malloc(sizeof(CA_MESSAGE));
+	CA_MESSAGE *pMsg = (CA_MESSAGE *) malloc(sizeof(CA_MESSAGE));
 	memset(pMsg, 0, sizeof(CA_MESSAGE));
 	pMsg->MsgId = CA_MESSAGE_MSG_REMOVED;
 	pMsg->SlotType = CA_SLOT_TYPE_CI;
 	pMsg->Slot = slot->slot;
 	SendMessage(pMsg);
 
-	while(slot->sendqueue.size())
+	while (slot->sendqueue.size())
 	{
 		delete [] slot->sendqueue.top().data;
 		slot->sendqueue.pop();
@@ -1504,14 +1522,14 @@ void cCA::ci_removed(eDVBCISlot* slot)
 void cCA::slot_pollthread(void *c)
 {
 	unsigned char data[1024 * 4];
-	eDVBCISlot* slot = (eDVBCISlot*) c;
+	eDVBCISlot *slot = (eDVBCISlot *) c;
 	bool wait = false;
 
 	while (1)
 	{
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE /* Armbox/Mipsbox */
 
-		int len = 1024 *4;
+		int len = 1024 * 4;
 		eData status;
 
 		switch (slot->status)
@@ -1531,7 +1549,8 @@ void cCA::slot_pollthread(void *c)
 					{
 #if y_debug
 // test was kommt
-						if (len) {
+						if (len)
+						{
 							printf("1. received : > ");
 							for (int i = 0; i < len; i++)
 								printf("%02x ", data[i]);
@@ -1546,7 +1565,7 @@ void cCA::slot_pollthread(void *c)
 				/* slow down the loop, if no CI cam present */
 //				printf("***sleep\n");
 				sleep(1);
-			} /* case statusnone */
+				} /* case statusnone */
 			break;
 			case eStatusWait:
 			{
@@ -1594,9 +1613,9 @@ FROM_FIRST:
 				printf("unknown state %d\n", slot->status);
 				break;
 		} /* switch(slot->status) */
-#else		/* Duckbox */
-		int len = 1024 *4;
-		unsigned char* d;
+#else       /* Duckbox */
+		int len = 1024 * 4;
+		unsigned char *d;
 		eData status;
 
 		switch (slot->status)
@@ -1639,7 +1658,7 @@ FROM_FIRST:
 						}
 					}
 				}
-			} /* case statusnone */
+				} /* case statusnone */
 			break;
 			case eStatusWait:
 			{
@@ -1649,7 +1668,8 @@ FROM_FIRST:
 					slot->pollConnection = false;
 					d = data;
 #if z_debug
-					if ((len == 6 && d[4] == 0x80) || len > 6) { 
+					if ((len == 6 && d[4] == 0x80) || len > 6)
+					{
 						printf("slot: %d con-id: %d tpdu-tag: %02X len: %d\n", d[0], d[1], d[2], len);
 						printf("received data: >");
 						for (int i = 0; i < len; i++)
@@ -1749,7 +1769,7 @@ FROM_FIRST:
 				printf("unknown state %d\n", slot->status);
 				break;
 		} /* switch(slot->status) */
-#endif		/* end Duckbox */
+#endif      /* end Duckbox */
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if (!slot->init && slot->camIsReady && last_source > -1)
 		{
@@ -1776,7 +1796,7 @@ FROM_FIRST:
 			write_ci_info(slot->slot, slot->cam_caids);
 
 			/* Send a message to Neutrino cam_menu handler */
-			CA_MESSAGE* pMsg = (CA_MESSAGE*) malloc(sizeof(CA_MESSAGE));
+			CA_MESSAGE *pMsg = (CA_MESSAGE *) malloc(sizeof(CA_MESSAGE));
 			memset(pMsg, 0, sizeof(CA_MESSAGE));
 			pMsg->MsgId = CA_MESSAGE_MSG_INIT_OK;
 			pMsg->SlotType = CA_SLOT_TYPE_CI;
@@ -1784,7 +1804,7 @@ FROM_FIRST:
 			SendMessage(pMsg);
 			/* resend a capmt if we have one. this is not very proper but I cant any mechanism in
 			neutrino currently. so if a cam is inserted a pmt is not resend */
-			/* not necessary: the arrived capmt will be automaticly send */ 
+			/* not necessary: the arrived capmt will be automaticly send */
 			//SendCaPMT(slot);
 		}
 		if (slot->hasCAManager && slot->hasAppManager && slot->newCapmt)
@@ -1800,7 +1820,7 @@ FROM_FIRST:
 	}
 }
 
-bool cCA::SendCaPMT(eDVBCISlot* slot)
+bool cCA::SendCaPMT(eDVBCISlot *slot)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
 	if (slot->fd > 0)
@@ -1863,14 +1883,14 @@ void cCA::SetInitMask(enum CA_INIT_MASK p)
 
 SlotIt cCA::GetSlot(unsigned int slot)
 {
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
 		if ((*it)->slot == slot && (*it)->init)
 			return it;
 	return it;
 }
 
-bool cCA::SendNullPMT(eDVBCISlot* slot)
+bool cCA::SendNullPMT(eDVBCISlot *slot)
 {
 	printf("%s > %s >**\n", FILENAME, __func__);
 	if ((slot->fd > 0) && (slot->camIsReady) && (slot->hasCAManager))
@@ -1882,7 +1902,7 @@ bool cCA::SendNullPMT(eDVBCISlot* slot)
 
 bool cCA::CheckCerts(void)
 {
-	if(!CertChecked)
+	if (!CertChecked)
 	{
 		if (access(ROOT_CERT, F_OK) == 0 && access(ROOT_CERT, F_OK) == 0 && access(ROOT_CERT, F_OK) == 0)
 			Cert_OK = true;
@@ -1893,7 +1913,7 @@ bool cCA::CheckCerts(void)
 
 bool cCA::checkChannelID(u64 chanID)
 {
-	std::list<eDVBCISlot*>::iterator it;
+	std::list<eDVBCISlot *>::iterator it;
 	u16 SID = (u16)(chanID & 0xFFFF);
 	u64 TP = chanID >> 16;
 	for (it = slot_data.begin(); it != slot_data.end(); ++it)
@@ -1917,16 +1937,16 @@ void cCA::setCheckLiveSlot(int check)
 
 void cCA::SetTSClock(u32 Speed, int slot)
 {
-/* TODO:
- * For now using the coolstream values from neutrino cam_menu
- * where 6 ( == 6000000 Hz ) means : 'normal'
- * and other values mean : 'high'
- * also only ci0 will be changed
- * for more than one ci slot code must be changed in neutrino cam_menu
- * and in zapit where ci_clock is set during start.
- * and here too.
- * On the other hand: or ci_clock will be set here for all ci slots ????
- */ 
+	/* TODO:
+	 * For now using the coolstream values from neutrino cam_menu
+	 * where 6 ( == 6000000 Hz ) means : 'normal'
+	 * and other values mean : 'high'
+	 * also only ci0 will be changed
+	 * for more than one ci slot code must be changed in neutrino cam_menu
+	 * and in zapit where ci_clock is set during start.
+	 * and here too.
+	 * On the other hand: or ci_clock will be set here for all ci slots ????
+	 */
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_tsclk", slot);
 	FILE *ci = fopen(buf, "wb");
@@ -1935,8 +1955,7 @@ void cCA::SetTSClock(u32 Speed, int slot)
 	{
 		if (Speed > 9 * 1000000)
 			fprintf(ci, "extra_high");
-		else
-		if (Speed > 6 * 1000000)
+		else if (Speed > 6 * 1000000)
 			fprintf(ci, "high");
 		else
 			fprintf(ci, "normal");

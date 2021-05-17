@@ -16,18 +16,19 @@ extern GLFramebuffer *glfb;
 #define fb_pixel_t uint32_t
 #endif
 
-int main(int argc __attribute__((unused)), char ** argv __attribute__((unused)))
+int main(int argc __attribute__((unused)), char **argv __attribute__((unused)))
 {
 	hal_api_init();
 #if HAVE_GENERIC_HARDWARE
 	int available = glfb->getOSDBuffer()->size(); /* allocated in glfb constructor */
-	fb_pixel_t *lfb = reinterpret_cast<fb_pixel_t*>(glfb->getOSDBuffer()->data());
+	fb_pixel_t *lfb = reinterpret_cast<fb_pixel_t *>(glfb->getOSDBuffer()->data());
 
 	int x = 0;
 #endif
-	while (1) {
+	while (1)
+	{
 #if HAVE_GENERIC_HARDWARE
-		fb_pixel_t c = (0xff << (8 * x))|0xff000000;
+		fb_pixel_t c = (0xff << (8 * x)) | 0xff000000;
 		x++;
 		if (x > 3) x = 0;
 		for (int i = 0; i < available / 4; i++)

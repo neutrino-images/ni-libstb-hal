@@ -22,7 +22,7 @@ int eDVBCIDateTimeSession::receivedAPDU(const unsigned char *tag, const void *da
 {
 	printf("[CI DT] SESSION(%d)/DATETIME %02x %02x %02x: ", session_nb, tag[0], tag[1], tag[2]);
 	for (int i = 0; i < len; i++)
-		printf("%02x ", ((const unsigned char*)data)[i]);
+		printf("%02x ", ((const unsigned char *)data)[i]);
 	printf("\n");
 
 	if ((tag[0] == 0x9f) && (tag[1] == 0x84))
@@ -52,7 +52,7 @@ int eDVBCIDateTimeSession::doAction()
 			return 0;
 		case stateFinal:
 			printf("stateFinal und action! kann doch garnicht sein ;)\n");
-			// fall through
+		// fall through
 		default:
 			return 0;
 	}
@@ -66,7 +66,7 @@ void eDVBCIDateTimeSession::sendDateTime()
 	unsigned char msg[7] = {0, 0, 0, 0, 0, 0, 0};
 	printf("[CI DT] -> %s\n", __FUNCTION__);
 	time_t t = time(NULL);
-	if ( gmtime_r(&t, &tm_gmt) && localtime_r(&t, &tm_loc) )
+	if (gmtime_r(&t, &tm_gmt) && localtime_r(&t, &tm_loc))
 	{
 		int Y = tm_gmt.tm_year;
 		int M = tm_gmt.tm_mon + 1;

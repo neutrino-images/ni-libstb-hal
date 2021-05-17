@@ -10,8 +10,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <ctype.h>	/* isspace */
-#include <stdio.h>	/* sscanf */
+#include <ctype.h>  /* isspace */
+#include <stdio.h>  /* sscanf */
 
 #include "proc_tools.h"
 
@@ -35,12 +35,12 @@ int proc_get(const char *path, char *value, const int len)
 	if (pfd < 0)
 		return pfd;
 	ret = read(pfd, value, len);
-	value[len-1] = '\0'; /* make sure string is terminated */
+	value[len - 1] = '\0'; /* make sure string is terminated */
 	if (ret >= 0)
 	{
-		while (ret > 0 && isspace(value[ret-1]))
-			ret--;		/* remove trailing whitespace */
-		value[ret] = '\0';	/* terminate, even if ret = 0 */
+		while (ret > 0 && isspace(value[ret - 1]))
+			ret--;      /* remove trailing whitespace */
+		value[ret] = '\0';  /* terminate, even if ret = 0 */
 	}
 	ret2 = close(pfd);
 	if (ret2 < 0)

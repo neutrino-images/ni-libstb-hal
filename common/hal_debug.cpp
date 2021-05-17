@@ -55,8 +55,6 @@ void hal_debug_init(void)
 	int i = 0;
 	char *tmp = getenv("HAL_DEBUG");
 	if (! tmp)
-		tmp = getenv("TRIPLE_DEBUG"); /* backwards compatibility... */
-	if (! tmp)
 		debuglevel = 0;
 	else
 		debuglevel = (int) strtol(tmp, NULL, 0);

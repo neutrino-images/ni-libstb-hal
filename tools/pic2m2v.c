@@ -25,11 +25,7 @@
 #include <time.h>
 #include <utime.h>
 
-#if HAVE_TRIPLEDRAGON
-#define TARGETRES "704x576"
-#else
 #define TARGETRES "1280x720"
-#endif
 
 int main(int argc, char **argv)
 {

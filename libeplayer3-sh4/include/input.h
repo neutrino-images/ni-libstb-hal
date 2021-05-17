@@ -38,7 +38,7 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
-#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+#if LIBAVFORMAT_VERSION_INT > AV_VERSION_INT(57,25,100)
 #define EPLAYER_MAX_CODECS 16
 struct CodecList
 {
@@ -71,7 +71,7 @@ class Input
 
 		Player *player;
 		AVFormatContext *avfc;
-#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+#if LIBAVFORMAT_VERSION_INT > AV_VERSION_INT(57,25,100)
 		CodecList codecs[EPLAYER_MAX_CODECS];
 #endif
 		uint64_t readCount;

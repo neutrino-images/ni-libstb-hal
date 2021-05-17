@@ -327,7 +327,7 @@ AVCodecContext* open_codec(AVMediaType mediaType, AVFormatContext* formatContext
 	AVCodec * codec = NULL;
 	AVCodecContext * codecContext = NULL;
 	int stream_index;
-#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 57,25,101 ))
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(57,25,101)
 	stream_index = av_find_best_stream(formatContext, mediaType, -1, -1, NULL, 0);
 	if (stream_index >= 0) {
 		codecContext = formatContext->streams[stream_index]->codec;

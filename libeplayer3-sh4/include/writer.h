@@ -38,7 +38,7 @@ extern "C" {
 #define AV_CODEC_ID_INJECTPCM AV_CODEC_ID_PCM_S16LE
 
 /* wrapper */
-#if (LIBAVFORMAT_VERSION_INT > AV_VERSION_INT( 57,25,100 ))
+#if LIBAVFORMAT_VERSION_INT > AV_VERSION_INT(57,25,100)
 static AVCodecParameters __attribute__ ((unused)) *get_codecpar(AVStream *stream)
 {
 	return stream->codecpar;

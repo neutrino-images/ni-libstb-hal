@@ -28,9 +28,9 @@ hw_caps_t *get_hwcaps(void)
 
 #if BOXMODEL_UFS910
 	initialized = 1;
-	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS910");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7100");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -46,9 +46,9 @@ hw_caps_t *get_hwcaps(void)
 #endif
 #if BOXMODEL_UFS912
 	initialized = 1;
-	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS912");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7111");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -64,9 +64,9 @@ hw_caps_t *get_hwcaps(void)
 #endif
 #if BOXMODEL_UFS913
 	initialized = 1;
-	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS913");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7105");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -82,9 +82,9 @@ hw_caps_t *get_hwcaps(void)
 #endif
 #if BOXMODEL_UFS922
 	initialized = 1;
-	strcpy(caps.boxvendor, "DUCKBOX");
+	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS922");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -101,7 +101,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "ATEVIO7500");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7105");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -119,7 +119,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "HDBOX");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -137,7 +137,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "OCTAGON1008");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -154,7 +154,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -169,7 +169,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-MINI");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -184,7 +184,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-MINI2");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.has_HDMI = 1;
 	caps.has_SCART = 1;
@@ -201,7 +201,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-250HD");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -216,7 +216,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-2000HD");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -231,7 +231,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-3000HD");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -246,7 +246,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX9900");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -261,7 +261,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX99");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -276,7 +276,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX55");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;
@@ -291,7 +291,7 @@ hw_caps_t *get_hwcaps(void)
 	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "TF7700");
-	strcpy(caps.boxarch, caps.boxname);
+	strcpy(caps.boxarch, "STX7109");
 	caps.can_shutdown = 1;
 	caps.display_can_set_brightness = 0;
 	caps.display_can_deepstandby = 0;

@@ -282,7 +282,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
 	strcpy(caps.boxvendor, "AirDigital");
-	strcpy(caps.boxname, "Zgemma H7C/S");
+	strcpy(caps.boxname, "Zgemma H7");
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
 #if BOXMODEL_OSMINI4K

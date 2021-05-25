@@ -307,7 +307,7 @@ typedef enum
 {
 	FP_DISPLAY_TEXT_NONE    = 0,
 	FP_DISPLAY_TEXT_LIMITED,
-	FP_DISPLAY_TEXT_ALL,
+	FP_DISPLAY_TEXT_ALL
 } fp_display_text_type_t;
 
 typedef enum

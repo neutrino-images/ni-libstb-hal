@@ -302,6 +302,5 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_fan = 0;
 	caps.has_CI = 2;
 #endif
-
 	return &caps;
 }

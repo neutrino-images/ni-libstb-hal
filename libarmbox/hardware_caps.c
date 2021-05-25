@@ -199,7 +199,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
-	strcpy(caps.boxvendor, "AX-Technologies");
+	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD51");
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
@@ -220,7 +220,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
-	strcpy(caps.boxvendor, "AX-Technologies");
+	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD60");
 	strcpy(caps.boxarch, "HI3798M");
 #endif
@@ -239,7 +239,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
-	strcpy(caps.boxvendor, "AX-Technologies");
+	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD61");
 	strcpy(caps.boxarch, "HI3798M");
 #endif

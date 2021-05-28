@@ -243,6 +243,27 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "HD61");
 	strcpy(caps.boxarch, "HI3798M");
 #endif
+#if BOXMODEL_MULTIBOXSE
+	initialized = 1;
+	caps.has_CI = 0;
+	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
+	caps.can_shutdown = 1;
+	caps.display_xres = 4;
+	caps.display_type = HW_DISPLAY_LED_ONLY;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_umlauts = 0;
+	caps.display_has_statusline = 0;
+	caps.display_has_colon = 1;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxvendor, "Maxytec");
+	strcpy(caps.boxname, "Multibox SE 4K");
+	strcpy(caps.boxarch, "HI3798M");
+#endif
 #if BOXMODEL_BRE2ZE4K
 	initialized = 1;
 	caps.has_CI = 1;
@@ -301,6 +322,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_timer = 1;
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP");
 	strcpy(caps.boxvendor, "Edision");
 	strcpy(caps.boxname, "OS mini 4K");
 	strcpy(caps.boxarch, "BCM72604");

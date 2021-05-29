@@ -31,8 +31,6 @@ hw_caps_t *get_hwcaps(void)
 
 	if (access("/dev/dvb/adapter0/video1", F_OK) != -1)
 		caps.can_pip = 1;
-	else
-		caps.can_pip = 0;
 
 	caps.has_CI = 0;
 	caps.can_cec = 1;

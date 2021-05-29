@@ -29,6 +29,9 @@ hw_caps_t *get_hwcaps(void)
 
 	memset(&caps, 0, sizeof(hw_caps_t));
 
+	if (access("/dev/dvb/adapter0/video1", F_OK) != -1)
+		caps.can_pip = 1;
+
 #if BOXMODEL_VUDUO
 	initialized = 1;
 	caps.has_CI = 2;

@@ -35,7 +35,6 @@ hw_caps_t *get_hwcaps(void)
 		caps.can_pip = 0;
 
 #if BOXMODEL_VUDUO
-	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -56,5 +55,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "DUO");
 	strcpy(caps.boxarch, "BCM7335");
 #endif
+
+	initialized = 1;
 	return &caps;
 }

@@ -34,7 +34,6 @@ hw_caps_t *get_hwcaps(void)
 	else
 		caps.can_pip = 0;
 
-	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 1;
@@ -178,5 +177,7 @@ hw_caps_t *get_hwcaps(void)
 			tmp = "(NO STB_ID FOUND)";
 		strcpy(caps.boxname, tmp);
 	}
+
+	initialized = 1;
 	return &caps;
 }

@@ -25,7 +25,9 @@ hw_caps_t *get_hwcaps(void)
 
 	memset(&caps, 0, sizeof(hw_caps_t));
 
-	initialized = 1;
+	if (access("/dev/dvb/adapter0/video1", F_OK) != -1)
+		caps.can_pip = 1;
+
 	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;  /* for testing */
 	caps.display_type = HW_DISPLAY_LINE_TEXT;
@@ -37,5 +39,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxvendor, "Raspberry");
 	strcpy(caps.boxname, "Pi");
 
+	initialized = 1;
 	return &caps;
 }

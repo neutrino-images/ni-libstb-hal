@@ -29,8 +29,10 @@ hw_caps_t *get_hwcaps(void)
 
 	memset(&caps, 0, sizeof(hw_caps_t));
 
+	if (access("/dev/dvb/adapter0/video1", F_OK) != -1)
+		caps.can_pip = 1;
+
 #if BOXMODEL_VUSOLO4K
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -52,7 +54,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7376");
 #endif
 #if BOXMODEL_VUDUO4K
-	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -75,7 +76,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7278");
 #endif
 #if BOXMODEL_VUDUO4KSE
-	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_shutdown = 1;
@@ -97,7 +97,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7444S");
 #endif
 #if BOXMODEL_VUULTIMO4K
-	initialized = 1;
 	caps.has_CI = 2;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -120,7 +119,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7444S");
 #endif
 #if BOXMODEL_VUZERO4K
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -140,7 +138,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM72604");
 #endif
 #if BOXMODEL_VUUNO4KSE
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -163,7 +160,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7252S");
 #endif
 #if BOXMODEL_VUUNO4K
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -183,7 +179,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7252S");
 #endif
 #if BOXMODEL_HD51
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -203,48 +198,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "HD51");
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
-#if BOXMODEL_HD60
-	initialized = 1;
-	caps.has_CI = 0;
-	caps.can_cec = 1;
-	caps.can_cpufreq = 0;
-	caps.can_shutdown = 1;
-	caps.display_xres = 4;
-	caps.display_type = HW_DISPLAY_LED_NUM;
-	caps.display_can_deepstandby = 0;
-	caps.display_can_set_brightness = 1;
-	caps.display_can_umlauts = 0;
-	caps.display_has_statusline = 0;
-	caps.display_has_colon = 1;
-	caps.has_button_timer = 1;
-	caps.has_button_vformat = 0;
-	caps.has_HDMI = 1;
-	strcpy(caps.startup_file, "STARTUP_LINUX");
-	strcpy(caps.boxvendor, "AX");
-	strcpy(caps.boxname, "HD60");
-	strcpy(caps.boxarch, "HI3798M");
-#endif
-#if BOXMODEL_HD61
-	initialized = 1;
-	caps.has_CI = 2;
-	caps.can_cec = 1;
-	caps.can_shutdown = 1;
-	caps.display_xres = 4;
-	caps.display_type = HW_DISPLAY_LED_NUM;
-	caps.display_can_deepstandby = 0;
-	caps.display_can_set_brightness = 1;
-	caps.display_can_umlauts = 0;
-	caps.display_has_statusline = 0;
-	caps.has_button_timer = 1;
-	caps.has_button_vformat = 0;
-	caps.has_HDMI = 1;
-	strcpy(caps.startup_file, "STARTUP_LINUX");
-	strcpy(caps.boxvendor, "AX");
-	strcpy(caps.boxname, "HD61");
-	strcpy(caps.boxarch, "HI3798M");
-#endif
 #if BOXMODEL_BRE2ZE4K
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -265,7 +219,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
 #if BOXMODEL_H7
-	initialized = 1;
 	caps.has_CI = 1;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -285,8 +238,65 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "Zgemma H7");
 	strcpy(caps.boxarch, "BCM7251S");
 #endif
+#if BOXMODEL_HD60
+	caps.has_CI = 0;
+	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
+	caps.can_shutdown = 1;
+	caps.display_xres = 4;
+	caps.display_type = HW_DISPLAY_LED_NUM;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_umlauts = 0;
+	caps.display_has_statusline = 0;
+	caps.display_has_colon = 1;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxvendor, "AX");
+	strcpy(caps.boxname, "HD60");
+	strcpy(caps.boxarch, "HI3798M");
+#endif
+#if BOXMODEL_HD61
+	caps.has_CI = 2;
+	caps.can_cec = 1;
+	caps.can_shutdown = 1;
+	caps.display_xres = 4;
+	caps.display_type = HW_DISPLAY_LED_NUM;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_umlauts = 0;
+	caps.display_has_statusline = 0;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxvendor, "AX");
+	strcpy(caps.boxname, "HD61");
+	strcpy(caps.boxarch, "HI3798M");
+#endif
+#if BOXMODEL_MULTIBOXSE
+	caps.has_CI = 0;
+	caps.can_cec = 1;
+	caps.can_cpufreq = 0;
+	caps.can_shutdown = 1;
+	caps.display_xres = 4;
+	caps.display_type = HW_DISPLAY_LED_ONLY;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_can_umlauts = 0;
+	caps.display_has_statusline = 0;
+	caps.display_has_colon = 1;
+	caps.has_button_timer = 1;
+	caps.has_button_vformat = 0;
+	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxvendor, "Maxytec");
+	strcpy(caps.boxname, "Multibox SE 4K");
+	strcpy(caps.boxarch, "HI3798M");
+#endif
 #if BOXMODEL_OSMINI4K
-	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -301,12 +311,12 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_timer = 1;
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
+	strcpy(caps.startup_file, "STARTUP");
 	strcpy(caps.boxvendor, "Edision");
 	strcpy(caps.boxname, "OS mini 4K");
 	strcpy(caps.boxarch, "BCM72604");
 #endif
 #if BOXMODEL_OSMIO4K
-	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -327,7 +337,6 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxarch, "BCM72604");
 #endif
 #if BOXMODEL_OSMIO4KPLUS
-	initialized = 1;
 	caps.has_CI = 0;
 	caps.can_cec = 1;
 	caps.can_cpufreq = 0;
@@ -348,5 +357,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.boxname, "OS mio+ 4K");
 	strcpy(caps.boxarch, "BCM72604");
 #endif
+
+	initialized = 1;
 	return &caps;
 }

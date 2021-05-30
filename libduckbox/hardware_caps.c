@@ -26,8 +26,10 @@ hw_caps_t *get_hwcaps(void)
 
 	memset(&caps, 0, sizeof(hw_caps_t));
 
+	if (access("/dev/dvb/adapter0/video1", F_OK) != -1)
+		caps.can_pip = 1;
+
 #if BOXMODEL_UFS910
-	initialized = 1;
 	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS910");
 	strcpy(caps.boxarch, "STX7100");
@@ -45,7 +47,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 16;
 #endif
 #if BOXMODEL_UFS912
-	initialized = 1;
 	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS912");
 	strcpy(caps.boxarch, "STX7111");
@@ -63,7 +64,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 16;
 #endif
 #if BOXMODEL_UFS913
-	initialized = 1;
 	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS913");
 	strcpy(caps.boxarch, "STX7105");
@@ -81,7 +81,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 16;
 #endif
 #if BOXMODEL_UFS922
-	initialized = 1;
 	strcpy(caps.boxvendor, "KATHREIN");
 	strcpy(caps.boxname, "UFS922");
 	strcpy(caps.boxarch, "STX7109");
@@ -98,7 +97,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 16;
 #endif
 #if BOXMODEL_ATEVIO7500
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "ATEVIO7500");
 	strcpy(caps.boxarch, "STX7105");
@@ -116,7 +114,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 12;
 #endif
 #if BOXMODEL_FORTIS_HDBOX
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "HDBOX");
 	strcpy(caps.boxarch, "STX7109");
@@ -134,7 +131,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 12;
 #endif
 #if BOXMODEL_OCTAGON1008
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "OCTAGON1008");
 	strcpy(caps.boxarch, "STX7109");
@@ -151,7 +147,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 8;
 #endif
 #if BOXMODEL_CUBEREVO
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO");
 	strcpy(caps.boxarch, "STX7109");
@@ -166,7 +161,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 2;
 #endif
 #if BOXMODEL_CUBEREVO_MINI
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-MINI");
 	strcpy(caps.boxarch, "STX7109");
@@ -181,7 +175,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 2;
 #endif
 #if BOXMODEL_CUBEREVO_MINI2
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-MINI2");
 	strcpy(caps.boxarch, "STX7109");
@@ -198,7 +191,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.display_xres = 14;
 #endif
 #if BOXMODEL_CUBEREVO_250HD
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-250HD");
 	strcpy(caps.boxarch, "STX7109");
@@ -213,7 +205,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 #endif
 #if BOXMODEL_CUBEREVO_2000HD
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-2000HD");
 	strcpy(caps.boxarch, "STX7109");
@@ -228,7 +219,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 #endif
 #if BOXMODEL_CUBEREVO_3000HD
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "CUBEREVO-3000HD");
 	strcpy(caps.boxarch, "STX7109");
@@ -243,7 +233,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 2;
 #endif
 #if BOXMODEL_IPBOX9900
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX9900");
 	strcpy(caps.boxarch, "STX7109");
@@ -258,7 +247,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 2;
 #endif
 #if BOXMODEL_IPBOX99
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX99");
 	strcpy(caps.boxarch, "STX7109");
@@ -273,7 +261,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 #endif
 #if BOXMODEL_IPBOX55
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "IPBOX55");
 	strcpy(caps.boxarch, "STX7109");
@@ -288,7 +275,6 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_CI = 0;
 #endif
 #if BOXMODEL_TF7700
-	initialized = 1;
 	strcpy(caps.boxvendor, "DUCKBOX");
 	strcpy(caps.boxname, "TF7700");
 	strcpy(caps.boxarch, "STX7109");
@@ -302,5 +288,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_fan = 0;
 	caps.has_CI = 2;
 #endif
+
+	initialized = 1;
 	return &caps;
 }

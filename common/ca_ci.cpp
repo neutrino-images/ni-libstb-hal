@@ -71,7 +71,8 @@ void cs_register_messenger(cs_messenger messenger)
 	return;
 }
 
-cCA *CA = cCA::GetInstance();
+//let Neutrino start this function
+//cCA *CA = cCA::GetInstance();
 
 cCA::cCA(void)
 {
@@ -237,14 +238,14 @@ eData waitData(int fd, unsigned char *buffer, int *len)
 
 static bool transmitData(eDVBCISlot *slot, unsigned char *d, int len)
 {
-	printf("%s -> %s len(%d)\n", FILENAME, __func__, len);
+	printf("%s -> %s len(%d) -> ", FILENAME, __func__, len);
 
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUZERO4K
 #if y_debug
 	for (int i = 0; i < len; i++)
 		printf("%02x ", d[i]);
-	printf("\n");
 #endif
+	printf("\n");
 	int res = write(slot->fd, d, len);
 	printf("send: %d len: %d\n", res, len);
 
@@ -1266,6 +1267,7 @@ cCA::cCA(int Slots)
 {
 	printf("%s -> %s %d\n", FILENAME, __func__, Slots);
 
+	zapitReady = false;
 	num_slots = Slots;
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 	setInputs();
@@ -1525,6 +1527,18 @@ void cCA::slot_pollthread(void *c)
 	eDVBCISlot *slot = (eDVBCISlot *) c;
 	bool wait = false;
 
+#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
+	//prevert zapit fail on booting with CI
+	if (!zapitReady)
+	{
+		printf("[CA] Slot%d: Waiting for zapit\n", slot->slot);
+		while (!zapitReady)
+		{
+			usleep( 3 * 1000000); //wait for 3 seconds
+		}
+		printf("[CA] Slot%d: zapit is ready\n", slot->slot);
+	}
+#endif
 	while (1)
 	{
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE /* Armbox/Mipsbox */
@@ -1950,7 +1964,7 @@ void cCA::SetTSClock(u32 Speed, int slot)
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_tsclk", slot);
 	FILE *ci = fopen(buf, "wb");
-	printf("%s -> %s to: %s\n", FILENAME, __func__, Speed > 9 * 1000000 ? "extra_high" : Speed > 6 * 1000000 ? "high" : "normal");
+	printf("%s -> %s for Slot%d to: %s\n", FILENAME, __func__, slot, Speed > 9 * 1000000 ? "extra_high" : Speed > 6 * 1000000 ? "high" : "normal");
 	if (ci)
 	{
 		if (Speed > 9 * 1000000)
@@ -1969,7 +1983,7 @@ void cCA::SetCIDelay(int Delay)
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/rmx_delay");
 	FILE *ci = fopen(buf, "wb");
-	printf("%s -> %s to: %i\n", FILENAME, __func__, Delay);
+	printf("%s -> %s for all Slots to: %i\n", FILENAME, __func__, Delay);
 	if (ci)
 	{
 		fprintf(ci, "%i", Delay);
@@ -1982,7 +1996,7 @@ void cCA::SetCIRelevantPidsRouting(int RPR, int slot)
 	char buf[64];
 	snprintf(buf, 64, "/proc/stb/tsmux/ci%d_relevant_pids_routing", slot);
 	FILE *ci = fopen(buf, "wb");
-	printf("%s -> %s to: %i\n", FILENAME, __func__, RPR);
+	printf("%s -> %s for Slot%d to: %i\n", FILENAME, __func__, slot, RPR);
 	if (ci)
 	{
 		fprintf(ci, "%s", RPR == 1 ? "yes" : "no");

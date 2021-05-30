@@ -315,6 +315,7 @@ class cCA
 		pthread_mutex_t ciMutex;
 		std::list<eDVBCISlot *> slot_data;
 		pthread_t slot_thread;
+		bool zapitReady;
 
 	public:
 		/// sh4 unused
@@ -386,6 +387,9 @@ class cCA
 		void setCheckLiveSlot(int check);
 		/// as the name says
 		bool CheckCerts(void);
+		/// start pollthread after zapit is ready
+		virtual void setZapitReady(){zapitReady = true;};
+		virtual bool getZapitReady(){return zapitReady;};
 		/// Virtual destructor
 		virtual ~cCA();
 };

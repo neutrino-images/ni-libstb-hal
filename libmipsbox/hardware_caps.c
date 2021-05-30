@@ -18,7 +18,6 @@
 
 #include <hardware_caps.h>
 
-#define FP_DEV "/dev/dbox/oled0"
 static int initialized = 0;
 static hw_caps_t caps;
 

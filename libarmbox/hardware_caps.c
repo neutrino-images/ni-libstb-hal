@@ -18,7 +18,6 @@
 
 #include <hardware_caps.h>
 
-#define FP_DEV "/dev/dbox/oled0"
 static int initialized = 0;
 static hw_caps_t caps;
 
@@ -282,9 +281,9 @@ hw_caps_t *get_hwcaps(void)
 	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 4;
-	caps.display_type = HW_DISPLAY_LED_ONLY;
+	caps.display_type = HW_DISPLAY_NONE;
 	caps.display_can_deepstandby = 0;
-	caps.display_can_set_brightness = 1;
+	caps.display_can_set_brightness = 0;
 	caps.display_can_umlauts = 0;
 	caps.display_has_statusline = 0;
 	caps.display_has_colon = 1;

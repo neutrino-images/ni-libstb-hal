@@ -96,6 +96,8 @@ class cCA
 {
 	private:
 		cCA(void);
+		bool zapitReady;
+
 	public:
 		uint32_t GetNumberCISlots(void);
 		uint32_t GetNumberSmartCardSlots(void);
@@ -135,6 +137,10 @@ class cCA
 		{
 			return;
 		};
+		/// start pollthread after zapit is ready
+		virtual void setZapitReady(){zapitReady = true;};
+		virtual bool getZapitReady(){return zapitReady;};
+		/// Virtual destructor
 		virtual ~cCA();
 };
 

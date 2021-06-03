@@ -1532,12 +1532,21 @@ void cCA::slot_pollthread(void *c)
 	if (!zapitReady)
 	{
 		printf("[CA] Slot%d: Waiting for zapit\n", slot->slot);
+		const int waiting = 3 * 1000000; // wait for 3 seconds
+		const int maxwait = waiting * 6;
+		int timeout = 0;
+
 		while (!zapitReady)
 		{
-			usleep( 3 * 1000000); //wait for 3 seconds
+			usleep(waiting);
+			if (timeout >= maxwait)
+				zapitReady = true;
+			else
+				timeout += waiting;
 		}
-		printf("[CA] Slot%d: zapit is ready\n", slot->slot);
+		printf("[CA] Slot%d: %s\n", slot->slot, timeout >= maxwait ? "waiting timeout!" : "zapit is ready");
 	}
+	printf("[CA] Slot%d: start pollthread\n", slot->slot);
 #endif
 	while (1)
 	{

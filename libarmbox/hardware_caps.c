@@ -255,7 +255,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.startup_file, "STARTUP_LINUX");
 	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD60");
-	strcpy(caps.boxarch, "HI3798M");
+	strcpy(caps.boxarch, "HI3798MV200");
 #endif
 #if BOXMODEL_HD61
 	caps.has_CI = 2;
@@ -273,7 +273,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.startup_file, "STARTUP_LINUX");
 	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD61");
-	strcpy(caps.boxarch, "HI3798M");
+	strcpy(caps.boxarch, "HI3798MV200");
 #endif
 #if BOXMODEL_MULTIBOXSE
 	caps.has_CI = 0;
@@ -293,7 +293,7 @@ hw_caps_t *get_hwcaps(void)
 	strcpy(caps.startup_file, "STARTUP_LINUX");
 	strcpy(caps.boxvendor, "Maxytec");
 	strcpy(caps.boxname, "Multibox SE 4K");
-	strcpy(caps.boxarch, "HI3798M");
+	strcpy(caps.boxarch, "HI3798MV200");
 #endif
 #if BOXMODEL_OSMINI4K
 	caps.has_CI = 0;

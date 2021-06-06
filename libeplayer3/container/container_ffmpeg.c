@@ -3334,7 +3334,7 @@ static int container_ffmpeg_av_context(Context_t *context, AVFormatContext *ext_
 	else
 	{
 		ext_avContext->streams = NULL;
-		ext_avContext->nb_streams = NULL;
+		ext_avContext->nb_streams = 0;
 	}
 
 	return cERR_CONTAINER_FFMPEG_NO_ERROR;

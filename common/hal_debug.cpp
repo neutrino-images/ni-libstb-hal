@@ -28,7 +28,7 @@ static const char *hal_facility[] =
 void _hal_info(int facility, const void *func, const char *fmt, ...)
 {
 	/* %p does print "(nil)" instead of 0x00000000 for NULL */
-	fprintf(stderr, "[HAL:%08lx:%s] ", (long) func, hal_facility[facility]);
+	fprintf(stderr, "[\033[36mHAL:\033[0m %08lx:%s] ", (long) func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
@@ -39,12 +39,12 @@ void _hal_info(int facility, const void *func, const char *fmt, ...)
 void _hal_debug(int facility, const void *func, const char *fmt, ...)
 {
 	if (debuglevel < 0)
-		fprintf(stderr, "hal_debug: debuglevel not initialized!\n");
+		fprintf(stderr, "[\033[36mHAL:\033[0m hal_debug] debuglevel not initialized!\n");
 
 	if (!((1 << facility) & debuglevel))
 		return;
 
-	fprintf(stderr, "[HAL:%08lx:%s] ", (long)func, hal_facility[facility]);
+	fprintf(stderr, "[\033[36mHAL:\033[0m %08lx:%s] ", (long)func, hal_facility[facility]);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
@@ -62,7 +62,7 @@ void hal_debug_init(void)
 
 	if (debuglevel == 0)
 	{
-		fprintf(stderr, "libstb-hal debug options can be set by exporting HAL_DEBUG.\n");
+		fprintf(stderr, "[\033[36mHAL:\033[0m hal_debug] libstb-hal debug options can be set by exporting HAL_DEBUG.\n");
 		fprintf(stderr, "The following values (or bitwise OR combinations) are valid:\n");
 		while (hal_facility[i])
 		{
@@ -73,7 +73,7 @@ void hal_debug_init(void)
 	}
 	else
 	{
-		fprintf(stderr, "libstb-hal debug is active for the following components:\n");
+		fprintf(stderr, "\033[36mHAL:\033[0m hal_debug] libstb-hal debug is active for the following components:\n");
 		while (hal_facility[i])
 		{
 			if (debuglevel & (1 << i))

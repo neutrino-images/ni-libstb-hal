@@ -6,7 +6,6 @@
 #define log_error(fmt, x...) do { printf("[%s:%s] " fmt, __FILENAME__, __FUNCTION__, ## x); } while (0)
 #define log_printf(maxlevel, level, fmt, x...) do { if (maxlevel >= level) printf("[%s:%s] " fmt, __FILENAME__, __FUNCTION__, ## x); } while (0)
 
-
 /*******************************************
  * ffmpeg
  *******************************************/

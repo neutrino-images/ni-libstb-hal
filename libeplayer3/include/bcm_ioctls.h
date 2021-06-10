@@ -35,7 +35,6 @@ typedef enum
 	CT_VP9
 } video_codec_type_t;
 
-
 typedef enum
 {
 	STREAMTYPE_UNKNOWN = -1,
@@ -55,10 +54,8 @@ typedef enum
 	STREAMTYPE_DIVX5 = 15,
 	STREAMTYPE_VB6 = 18,
 	STREAMTYPE_SPARK = 21,
-	STREAMTYPE_MJPEG = 30,
+	STREAMTYPE_MJPEG = 30
 } video_stream_type_t;
-
-
 
 typedef enum
 {
@@ -79,8 +76,4 @@ typedef enum
 	AUDIOTYPE_RAW = 0x30
 } audio_stream_type_t;
 
-
-
-
 #endif /* H_DVB_BCM_H */
-

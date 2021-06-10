@@ -207,5 +207,3 @@ static int64_t wrapped_frame_get_best_effort_timestamp(const AVFrame *frame)
 	return frame->best_effort_timestamp;
 #endif
 }
-
-

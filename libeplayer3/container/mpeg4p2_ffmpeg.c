@@ -141,4 +141,3 @@ static void mpeg4p2_context_close(Mpeg4P2Context *context)
 		return;
 	}
 }
-

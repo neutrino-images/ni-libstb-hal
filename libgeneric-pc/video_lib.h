@@ -253,7 +253,7 @@ class cVideo : public OpenThreads::Thread
 		{
 			return 0;
 		};
-		void SetAudioDestination(int audio_dest)
+		void SetAudioDestination(int /*audio_dest*/)
 		{
 			return;
 		};

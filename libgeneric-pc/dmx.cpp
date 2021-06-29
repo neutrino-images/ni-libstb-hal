@@ -201,10 +201,18 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 	ufds.events = POLLIN | POLLPRI | POLLERR;
 	ufds.revents = 0;
 
-	if (timeout > 0)
+	/* hack: if the frontend loses and regains lock, the demuxer often will not
+	 * return from read(), so as a "emergency exit" for e.g. NIT scan, set a (long)
+	 * timeout here */
+	int to = timeout;
+	if (dmx_type == DMX_PSI_CHANNEL && timeout <= 0){
+		to = 60 * 1000;
+	}
+
+	if (to > 0)
 	{
 retry:
-		rc = ::poll(&ufds, 1, timeout);
+		rc = ::poll(&ufds, 1, to);
 		if (!rc)
 			return 0; // timeout
 		else if (rc < 0)

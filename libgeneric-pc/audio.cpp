@@ -36,6 +36,7 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libavutil/samplefmt.h>
 #include <libswresample/swresample.h>
+#include <libavcodec/avcodec.h>
 #include <ao/ao.h>
 }
 /* ffmpeg buf 2k */
@@ -351,9 +352,14 @@ void cAudio::run()
 	av_register_all();
 #endif
 
-	AVCodec *codec;
-	AVFormatContext *avfc = NULL;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(59,0,100)
 	AVInputFormat *inp;
+	AVCodec *codec;
+#else
+	const AVInputFormat *inp;
+	const AVCodec *codec;
+#endif
+	AVFormatContext *avfc = NULL;
 	AVFrame *frame;
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;

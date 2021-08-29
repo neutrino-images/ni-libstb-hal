@@ -2,6 +2,7 @@
 // mpeg4-part2 in mipsel receivers
 // http://forums.openpli.org/topic/39326-gstreamer10-and-mpeg4-part2/?hl=%2Bmpeg4+%2Bpart2
 //
+#include <libavcodec/bsf.h>
 
 // mpeg4_unpack_bframes
 typedef struct

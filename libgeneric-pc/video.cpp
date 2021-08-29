@@ -33,6 +33,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
+#include <libavcodec/avcodec.h>
 }
 
 /* ffmpeg buf 32k */
@@ -259,7 +260,7 @@ bool cVideo::ShowPicture(const char *fname)
 	AVFormatContext *avfc = NULL;
 	AVCodecContext *c = NULL;
 	AVCodecParameters *p = NULL;
-	AVCodec *codec;
+	const AVCodec *codec;
 	AVFrame *frame, *rgbframe;
 	AVPacket avpkt;
 
@@ -495,11 +496,16 @@ static int my_read(void *, uint8_t *buf, int buf_size)
 void cVideo::run(void)
 {
 	hal_info("====================== start decoder thread ================================\n");
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(59,0,100)
+	AVInputFormat *inp;
 	AVCodec *codec;
+#else
+	const AVInputFormat *inp;
+	const AVCodec *codec;
+#endif
 	AVCodecParameters *p = NULL;
 	AVCodecContext *c = NULL;
 	AVFormatContext *avfc = NULL;
-	AVInputFormat *inp;
 	AVFrame *frame, *rgbframe;
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;

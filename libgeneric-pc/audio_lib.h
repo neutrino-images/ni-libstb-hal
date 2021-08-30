@@ -78,6 +78,12 @@ class cAudio : public OpenThreads::Thread
 		{
 			return NULL;
 		};
+
+		void setAVInput(int val)
+		{
+			return;
+		};
+
 		/* shut up */
 		int mute(bool remember = true)
 		{

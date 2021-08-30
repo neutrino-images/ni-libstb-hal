@@ -208,6 +208,10 @@ class cVideo : public OpenThreads::Thread
 		{
 			return NULL;
 		};
+		void setAVInput(int val)
+		{
+			return;
+		};
 
 		/* aspect ratio */
 		int getAspectRatio(void);

@@ -208,7 +208,7 @@ class cVideo : public OpenThreads::Thread
 		{
 			return NULL;
 		};
-		void setAVInput(int val)
+		void setAVInput(int /*val*/)
 		{
 			return;
 		};

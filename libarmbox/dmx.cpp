@@ -437,7 +437,11 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 			//s_flt.pid     = 0x0014;
 			to = 30000;
 			break;
-		/* 0x74 - 0x7D: reserved for future use */
+		case 0x74: /* application_information_section */
+			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
+			to = 12000;
+			break;
+		/* 0x75 - 0x7D: reserved for future use */
 		case 0x7E: /* discontinuity_information_section */
 			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
 			to = 0;

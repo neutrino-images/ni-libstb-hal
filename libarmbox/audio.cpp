@@ -8,6 +8,7 @@
 
 #include <linux/dvb/audio.h>
 
+#include <hardware_caps.h>
 #include <proc_tools.h>
 
 #include "audio_lib.h"
@@ -50,7 +51,8 @@ static const char *ADEV[] =
 
 cAudio::cAudio(void *, void *, void *, unsigned int unit)
 {
-	if (unit > 3)
+	hw_caps_t *hwcaps = get_hwcaps();
+	if (unit > (unsigned int) hwcaps->pip_devs)
 	{
 		hal_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
 		devnum = 0;

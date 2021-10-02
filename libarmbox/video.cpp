@@ -38,6 +38,7 @@
 #include "hal_debug.h"
 #include "hdmi_cec.h"
 
+#include <hardware_caps.h>
 #include <proc_tools.h>
 
 extern "C"
@@ -508,7 +509,8 @@ cVideo::cVideo(int, void *, void *, unsigned int unit)
 	hue = -1;
 	video_standby = 0;
 	blank_mode = 0;
-	if (unit > 3)
+	hw_caps_t *hwcaps = get_hwcaps();
+	if (unit > (unsigned int) hwcaps->pip_devs)
 	{
 		hal_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
 		devnum = 0;

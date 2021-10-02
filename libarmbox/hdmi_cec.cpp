@@ -674,6 +674,7 @@ void hdmi_cec::Receive(int what)
 					txmessage.length = 3;
 					if (!standby)
 						SendCECMessage(txmessage);
+					break;
 				}
 				case CEC_OPCODE_REPORT_AUDIO_STATUS:
 				{

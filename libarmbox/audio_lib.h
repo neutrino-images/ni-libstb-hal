@@ -27,6 +27,7 @@ class cAudio
 	private:
 		int fd;
 		bool fdd;
+		unsigned int devnum;
 		bool Muted;
 
 		int clipfd; /* for pcm playback */
@@ -43,7 +44,7 @@ class cAudio
 		void setBypassMode(bool disable);
 	public:
 		/* construct & destruct */
-		cAudio(void *, void *, void *);
+		cAudio(void *, void *, void *, unsigned int unit = 0);
 		~cAudio(void);
 
 		/* used internally by playback */

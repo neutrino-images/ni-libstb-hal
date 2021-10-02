@@ -8,13 +8,13 @@
 
 #include <linux/dvb/audio.h>
 
+#include <hardware_caps.h>
 #include <proc_tools.h>
 
 #include "audio_lib.h"
 #include "audio_mixer.h"
 #include "hal_debug.h"
 
-#define AUDIO_DEVICE    "/dev/dvb/adapter0/audio0"
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
@@ -27,9 +27,26 @@ enum
 };
 
 cAudio *audioDecoder = NULL;
+cAudio *pipAudioDecoder = NULL;
 
-cAudio::cAudio(void *, void *, void *)
+static const char *ADEV[] =
 {
+	"/dev/dvb/adapter0/audio0",
+	"/dev/dvb/adapter0/audio1",
+	"/dev/dvb/adapter0/audio2",
+	"/dev/dvb/adapter0/audio3"
+};
+
+cAudio::cAudio(void *, void *, void *, unsigned int unit)
+{
+	hw_caps_t *hwcaps = get_hwcaps();
+	if (unit > (unsigned int) hwcaps->pip_devs)
+	{
+		hal_info("%s: unit %d out of range, setting to 0\n", __func__, unit);
+		devnum = 0;
+	}
+	else
+		devnum = unit;
 	fd = -1;
 	clipfd = -1;
 	mixer_fd = -1;
@@ -54,7 +71,7 @@ void cAudio::openDevice(void)
 
 	if (fd < 0)
 	{
-		if ((fd = open(AUDIO_DEVICE, O_RDWR)) < 0)
+		if ((fd = open(ADEV[devnum], O_RDWR)) < 0)
 			hal_info("openDevice: open failed (%m)\n");
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
 		do_mute(true, false);

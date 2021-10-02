@@ -503,31 +503,50 @@ bool cDemux::pesFilter(const unsigned short _pid)
 
 	memset(&p_flt, 0, sizeof(p_flt));
 	p_flt.pid    = pid;
-	p_flt.output = DMX_OUT_DECODER;
 	p_flt.input  = DMX_IN_FRONTEND;
+	p_flt.output = DMX_OUT_DECODER;
 	p_flt.flags  = DMX_IMMEDIATE_START;
 
 	switch (dmx_type)
 	{
-		case DMX_PCR_ONLY_CHANNEL:
-			p_flt.pes_type = DMX_PES_PCR;
+		case DMX_VIDEO_CHANNEL:
+			switch (num)
+			{
+				case 0: p_flt.pes_type = DMX_PES_VIDEO0; break;
+				case 1: p_flt.pes_type = DMX_PES_VIDEO1; break;
+				case 2: p_flt.pes_type = DMX_PES_VIDEO2; break;
+				case 3: p_flt.pes_type = DMX_PES_VIDEO3; break;
+			}
 			break;
 		case DMX_AUDIO_CHANNEL:
-			p_flt.pes_type = DMX_PES_AUDIO;
-			break;
-		case DMX_VIDEO_CHANNEL:
-			p_flt.pes_type = DMX_PES_VIDEO;
-			break;
-		case DMX_PIP_CHANNEL: /* PIP is a special version of DMX_VIDEO_CHANNEL */
-			p_flt.pes_type = DMX_PES_VIDEO1;
+			switch (num)
+			{
+				case 0: p_flt.pes_type = DMX_PES_AUDIO0; break;
+				case 1: p_flt.pes_type = DMX_PES_AUDIO1; break;
+				case 2: p_flt.pes_type = DMX_PES_AUDIO2; break;
+				case 3: p_flt.pes_type = DMX_PES_AUDIO3; break;
+			}
 			break;
 		case DMX_PES_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TAP;
+			p_flt.output   = DMX_OUT_TAP;
 			break;
+#if 0
+		case DMX_PSI_CHANNEL:
+			break;
+#endif
 		case DMX_TP_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			p_flt.output   = DMX_OUT_TSDEMUX_TAP;
+			break;
+		case DMX_PCR_ONLY_CHANNEL:
+			switch (num)
+			{
+				case 0: p_flt.pes_type = DMX_PES_PCR0; break;
+				case 1: p_flt.pes_type = DMX_PES_PCR1; break;
+				case 2: p_flt.pes_type = DMX_PES_PCR2; break;
+				case 3: p_flt.pes_type = DMX_PES_PCR3; break;
+			}
 			break;
 		default:
 			hal_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);

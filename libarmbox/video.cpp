@@ -900,13 +900,9 @@ int cVideo::getBlank(void)
 }
 
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
-void cVideo::QuadPiP(bool active)
+void cVideo::QuadPiP(bool active, int _x, int _y, int _w, int _h)
 {
 	char buffer[64];
-	int _x = 0;
-	int _y = 0;
-	int _w = 360;
-	int _h = 288;
 	int _a = 1;
 	if (active) {
 		proc_put("/proc/stb/video/decodermode", "mosaic", strlen("mosaic"));

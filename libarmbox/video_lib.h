@@ -274,7 +274,7 @@ class cVideo
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
 
-#if BOXMODEL_VUPLUS_ARM
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 		void QuadPiP(bool active = false);
 #endif
 

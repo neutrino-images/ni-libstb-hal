@@ -149,7 +149,6 @@ static const char *VMPEG_dst_left[] =
 	"/proc/stb/vmpeg/3/dst_left"
 };
 
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 static const char *VMPEG_dst_apply[] =
 {
 	"/proc/stb/vmpeg/0/dst_apply",
@@ -157,7 +156,6 @@ static const char *VMPEG_dst_apply[] =
 	"/proc/stb/vmpeg/2/dst_apply",
 	"/proc/stb/vmpeg/3/dst_apply"
 };
-#endif
 
 static const char *VMPEG_framerate[] =
 {
@@ -899,13 +897,14 @@ int cVideo::getBlank(void)
 #endif
 }
 
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 void cVideo::QuadPiP(bool active, int _x, int _y, int _w, int _h)
 {
 	char buffer[64];
 	int _a = 1;
 	if (active) {
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 		proc_put("/proc/stb/video/decodermode", "mosaic", strlen("mosaic"));
+#endif
 		for (unsigned int i = 0; i < 4; i++) {
 			sprintf(buffer, "%x", _x);
 			proc_put(VMPEG_dst_left[i], buffer, strlen(buffer));
@@ -931,10 +930,11 @@ void cVideo::QuadPiP(bool active, int _x, int _y, int _w, int _h)
 			sprintf(buffer, "%x", _a);
 			proc_put(VMPEG_dst_apply[i], buffer, strlen(buffer));
 		}
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 		proc_put("/proc/stb/video/decodermode", "normal", strlen("normal"));
+#endif
 	}
 }
-#endif
 
 void cVideo::ShowPig(int _x)
 {
@@ -989,6 +989,9 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 
 	sprintf(buffer, "%x", _h);
 	proc_put(VMPEG_dst_height[devnum], buffer, strlen(buffer));
+
+	sprintf(buffer, "%x", 1);
+	proc_put(VMPEG_dst_apply[i], buffer, strlen(buffer));
 }
 
 static inline int rate2csapi(int rate)

@@ -273,11 +273,7 @@ class cVideo
 		void SetControl(int, int);
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
-
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 		void QuadPiP(bool active = false, int _x = 0, int _y = 0, int _w = 360, int _h = 288);
-#endif
-
 		void SetDBDR(int)
 		{
 			return;

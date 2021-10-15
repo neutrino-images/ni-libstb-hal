@@ -273,6 +273,11 @@ class cVideo
 		void SetControl(int, int);
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
+
+#if BOXMODEL_VUPLUS_ARM
+		void QuadPiP(bool active = false);
+#endif
+
 		void SetDBDR(int)
 		{
 			return;

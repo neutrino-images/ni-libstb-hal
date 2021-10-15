@@ -4,6 +4,7 @@
 #define __AUDIO_LIB_H__
 
 #include "cs_types.h"
+#include <config.h>
 
 typedef enum
 {

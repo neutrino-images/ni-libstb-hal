@@ -13,7 +13,6 @@
 
 #include "audio_lib.h"
 #include "hal_debug.h"
-#include <config.h>
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)

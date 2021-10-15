@@ -991,7 +991,7 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 	proc_put(VMPEG_dst_height[devnum], buffer, strlen(buffer));
 
 	sprintf(buffer, "%x", 1);
-	proc_put(VMPEG_dst_apply[i], buffer, strlen(buffer));
+	proc_put(VMPEG_dst_apply[devnum], buffer, strlen(buffer));
 }
 
 static inline int rate2csapi(int rate)

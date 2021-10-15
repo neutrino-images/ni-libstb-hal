@@ -149,6 +149,16 @@ static const char *VMPEG_dst_left[] =
 	"/proc/stb/vmpeg/3/dst_left"
 };
 
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
+static const char *VMPEG_dst_apply[] =
+{
+	"/proc/stb/vmpeg/0/dst_apply",
+	"/proc/stb/vmpeg/1/dst_apply",
+	"/proc/stb/vmpeg/2/dst_apply",
+	"/proc/stb/vmpeg/3/dst_apply"
+};
+#endif
+
 static const char *VMPEG_framerate[] =
 {
 	"/proc/stb/vmpeg/0/framerate",
@@ -892,10 +902,29 @@ int cVideo::getBlank(void)
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 void cVideo::QuadPiP(bool active)
 {
-	if (active)
+	char buffer[64];
+	int _x = 0;
+	int _y = 0;
+	int _w = 360;
+	int _h = 288;
+	int _a = 1;
+	if (active) {
 		proc_put("/proc/stb/video/decodermode", "mosaic", strlen("mosaic"));
-	else
+		for (unsigned int i = 0; i < 4; i++) {
+			sprintf(buffer, "%x", _x);
+			proc_put(VMPEG_dst_left[i], buffer, strlen(buffer));
+			sprintf(buffer, "%x", _y);
+			proc_put(VMPEG_dst_top[i], buffer, strlen(buffer));
+			sprintf(buffer, "%x", _w);
+			proc_put(VMPEG_dst_width[i], buffer, strlen(buffer));
+			sprintf(buffer, "%x", _h);
+			proc_put(VMPEG_dst_height[i], buffer, strlen(buffer));
+			sprintf(buffer, "%x", _a);
+			proc_put(VMPEG_dst_apply[i], buffer, strlen(buffer));
+		}
+	} else {
 		proc_put("/proc/stb/video/decodermode", "normal", strlen("normal"));
+	}
 }
 #endif
 

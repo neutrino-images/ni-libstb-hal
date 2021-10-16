@@ -50,6 +50,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_timer = 1;
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
+	caps.pip_devs = 2; // has only 3 real usable video devices
 	strcpy(caps.startup_file, "STARTUP");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "SOLO4K");

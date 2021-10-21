@@ -435,6 +435,8 @@ cPlayback::cPlayback(int num)
 	const gchar *nano_str;
 	guint major, minor, micro, nano;
 
+	if (!gst_init_check(NULL, NULL, NULL))
+		gst_deinit();
 	gst_init(NULL, NULL);
 
 	gst_version(&major, &minor, &micro, &nano);
@@ -471,6 +473,7 @@ cPlayback::~cPlayback()
 	if (m_stream_tags)
 		gst_tag_list_unref(m_stream_tags);
 	pthread_mutex_unlock(&mutex_tag_ist);
+	gst_deinit();
 }
 
 //Used by Fileplay

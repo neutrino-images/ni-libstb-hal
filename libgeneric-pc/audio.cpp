@@ -379,7 +379,9 @@ void cAudio::run()
 	char tmp[64] = "unknown";
 
 	curr_pts = 0;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
 	        0,      // bWriteable (1=true,0=false)

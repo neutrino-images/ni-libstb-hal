@@ -261,8 +261,9 @@ bool Input::Play()
 		}
 
 		AVPacket packet;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 		av_init_packet(&packet);
-
+#endif
 		int err = av_read_frame(avfc, &packet);
 		if (err == AVERROR(EAGAIN))
 		{
@@ -449,8 +450,9 @@ bool Input::ReadSubtitle(const char *filename, const char *format, int pid)
 	}
 
 	AVPacket packet;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&packet);
-
+#endif
 	while (av_read_frame(subavfc, &packet) > -1)
 	{
 		AVSubtitle sub;

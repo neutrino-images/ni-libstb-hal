@@ -265,7 +265,9 @@ void write_frame(AVFrame *in_frame, int fd)
 			if (avcodec_open2(codec_context, codec, 0) != -1)
 			{
 				AVPacket pkt;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 				av_init_packet(&pkt);
+#endif
 				/* encode the image */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 				int got_output = 0;
@@ -430,7 +432,9 @@ int image_to_mpeg2(const char *image_name, int fd)
 		if (codecContext)
 		{
 			AVPacket packet;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 			av_init_packet(&packet);
+#endif
 			if ((ret = av_read_frame(formatContext, &packet)) != -1)
 			{
 				if ((ret = decode_frame(codecContext, packet, fd)) != 1)

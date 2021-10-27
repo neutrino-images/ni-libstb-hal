@@ -300,7 +300,9 @@ bool cVideo::ShowPicture(const char *fname)
 		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out_free;
 	}
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#endif
 	if (av_read_frame(avfc, &avpkt) < 0)
 	{
 		hal_info("%s: av_read_frame < 0\n", __func__);
@@ -520,8 +522,9 @@ void cVideo::run(void)
 	buf_in = 0;
 	buf_out = 0;
 	dec_r = 0;
-
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
 	        0,      // bWriteable (1=true,0=false)

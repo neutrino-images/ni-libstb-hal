@@ -65,6 +65,16 @@ extern bool HAL_nodec;
 
 static uint8_t *dmxbuf;
 static int bufpos;
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
+static void get_packet_defaults(AVPacket *pkt)
+{
+    memset(pkt, 0, sizeof(*pkt));
+
+    pkt->pts             = AV_NOPTS_VALUE;
+    pkt->dts             = AV_NOPTS_VALUE;
+    pkt->pos             = -1;
+}
+#endif
 
 static const AVRational aspect_ratios[6] =
 {
@@ -302,6 +312,8 @@ bool cVideo::ShowPicture(const char *fname)
 	}
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#else
+	get_packet_defaults(&avpkt);
 #endif
 	if (av_read_frame(avfc, &avpkt) < 0)
 	{
@@ -524,6 +536,8 @@ void cVideo::run(void)
 	dec_r = 0;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#else
+	get_packet_defaults(&avpkt);
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size

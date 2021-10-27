@@ -58,6 +58,16 @@ static ao_sample_format sformat;
 
 static AVCodecContext *c = NULL;
 static AVCodecParameters *p = NULL;
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
+static void get_packet_defaults(AVPacket *pkt)
+{
+    memset(pkt, 0, sizeof(*pkt));
+
+    pkt->pts             = AV_NOPTS_VALUE;
+    pkt->dts             = AV_NOPTS_VALUE;
+    pkt->pos             = -1;
+}
+#endif
 
 cAudio::cAudio(void *, void *, void *)
 {
@@ -381,6 +391,8 @@ void cAudio::run()
 	curr_pts = 0;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
+#else
+	get_packet_defaults(&avpkt);
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size

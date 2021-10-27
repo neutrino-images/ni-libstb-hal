@@ -155,6 +155,17 @@ static const char *vid_modes[] =
 	NULL
 };
 
+#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
+static void get_packet_defaults(AVPacket *pkt)
+{
+    memset(pkt, 0, sizeof(*pkt));
+
+    pkt->pts             = AV_NOPTS_VALUE;
+    pkt->dts             = AV_NOPTS_VALUE;
+    pkt->pos             = -1;
+}
+#endif
+
 #define VIDEO_STREAMTYPE_MPEG2 0
 #define VIDEO_STREAMTYPE_MPEG4_H264 1
 #define VIDEO_STREAMTYPE_VC1 3
@@ -232,6 +243,8 @@ void write_frame(AVFrame *in_frame, FILE *fp)
 				AVPacket pkt;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 				av_init_packet(&pkt);
+#else
+				get_packet_defaults(&pkt);
 #endif
 				/* encode the image */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
@@ -399,6 +412,8 @@ int image_to_mpeg2(const char *image_name, const char *encode_name)
 			AVPacket packet;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 			av_init_packet(&packet);
+#else
+			get_packet_defaults(&packet);
 #endif
 			if ((ret = av_read_frame(formatContext, &packet)) != -1)
 			{

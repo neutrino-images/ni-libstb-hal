@@ -1396,6 +1396,10 @@ int SAM_ReadFunc(void *ptr, uint8_t *buffer, int lSize)
 	if (!io->pMoovFile)
 	{
 		ret = (int)fread((void *) buffer, (size_t) 1, (size_t) lSize, io->pFile);
+#if (LIBAVFORMAT_VERSION_MAJOR > 58) || ((LIBAVFORMAT_VERSION_MAJOR == 79) && (LIBAVFORMAT_VERSION_MINOR > 100))
+		if(ret==0)
+			ret = AVERROR_EOF;
+#endif
 	}
 	else
 	{

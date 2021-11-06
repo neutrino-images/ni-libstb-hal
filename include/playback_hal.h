@@ -7,11 +7,7 @@
 #if ENABLE_GSTREAMER
 #include "../libarmbox/playback_gst.h"
 #else
-#if BOXMODEL_HISILICON
-#include "../libarmbox/playback_hisilicon.h"
-#else
 #include "../libarmbox/playback_libeplayer3.h"
-#endif
 #endif
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/playback_libeplayer3.h"

@@ -32,16 +32,11 @@ AM_LDFLAGS += \
 	-lgsttag-1.0 \
 	-lgstmpegts-1.0
 else
-#if BOXMODEL_HISILICON
-#libarmbox_la_SOURCES += \
-#	playback_hisilicon.cpp
-#else
 libarmbox_la_SOURCES += \
 	playback_libeplayer3.cpp
 
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/libeplayer3/include
-#endif
 
 AM_LDFLAGS += \
 	-lass

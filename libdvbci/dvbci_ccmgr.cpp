@@ -340,7 +340,6 @@ static X509 *certificate_import_and_check(struct cert_ctx *ctx, const uint8_t *d
 	return cert;
 }
 
-
 /* CI+ credentials */
 
 #define MAX_ELEMENTS    33
@@ -393,7 +392,6 @@ struct cc_ctrl_data
 	/* private key of device-cert */
 	RSA *rsa_device_key;
 };
-
 
 static struct element *element_get(struct cc_ctrl_data *cc_data, unsigned int id)
 {
@@ -964,20 +962,16 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 			/* generate DHSK & AKH */
 			check_dh_challenge(cc_data);
 			break;
-
 		case 19:        /* auth_nonce - triggers new dh keychallenge - invalidates DHSK & AKH */
 			/* generate DHPH & Signature_A */
 			restart_dh_challenge(cc_data);
 			break;
-
 		case 21:        /* Ns_module - triggers SAC key calculation */
 			generate_ns_host(cc_data);
 			generate_key_seed(cc_data);
 			generate_SAK_SEK(cc_data->sak, cc_data->sek, cc_data->ks_host);
 			break;
-
 		/* SAC data messages */
-
 		case 6:                 //CICAM_id
 		case 12:                //keyprecursor
 			check_new_key(cc_data);
@@ -989,7 +983,6 @@ static int data_get_handle_new(struct cc_ctrl_data *cc_data, unsigned int id)
 		case 28:                //key register
 			check_new_key(cc_data);
 			break;
-
 		default:
 			printf("%s -> %s unhandled ID (%d)\n", FILENAME, __FUNCTION__, id);
 			break;
@@ -1218,7 +1211,7 @@ bool eDVBCIContentControlManagerSession::ci_ccmgr_cc_data_req(eDVBCISlot *tslot,
 
 void eDVBCIContentControlManagerSession::ci_ccmgr_cc_sac_sync_req(eDVBCISlot *tslot, const uint8_t *data, unsigned int
 #if y_debug
-    len
+	len
 #endif
 )
 {
@@ -1406,7 +1399,6 @@ int eDVBCIContentControlManagerSession::receivedAPDU(const unsigned char *tag, c
 
 int eDVBCIContentControlManagerSession::doAction()
 {
-
 	printf("%s > %s\n", FILENAME, __FUNCTION__);
 	switch (state)
 	{

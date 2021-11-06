@@ -135,7 +135,6 @@ int descrambler_set_key(int index, int parity, unsigned char *data)
 
 		printf("Index: %d Parity: (%d) -> ", d.index, d.parity);
 		hexdump(d.data, 32);
-
 	}
 	return 0;
 }
@@ -171,7 +170,6 @@ int descrambler_set_pid(int index, int enable, int pid)
 
 	return 0;
 }
-
 
 bool descrambler_open(void)
 {

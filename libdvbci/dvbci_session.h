@@ -33,15 +33,7 @@ class eDVBCISession
 		static void deleteSessions(const eDVBCISlot *slot);
 		void sendSPDU(unsigned char tag, const void *data, int len, const void *apdu = 0, int alen = 0);
 
-		int poll()
-		{
-			if (action)
-			{
-				action = doAction();
-				return 1;
-			}
-			return 0;
-		}
+		int poll() { if (action) { action = doAction(); return 1; } return 0; }
 		enum { stateInCreation, stateBusy, stateInDeletion, stateStarted, statePrivate};
 
 		static int parseLengthField(const unsigned char *pkt, int &len);
@@ -49,14 +41,8 @@ class eDVBCISession
 
 		static void receiveData(eDVBCISlot *slot, const unsigned char *ptr, size_t len);
 
-		int getState()
-		{
-			return state;
-		}
-		int getStatus()
-		{
-			return status;
-		}
+		int getState() { return state; }
+		int getStatus() { return status; }
 
 		static int pollAll();
 };
@@ -74,6 +60,5 @@ class eDVBCIHostControlSession: public eDVBCISession
 		eDVBCIHostControlSession(eDVBCISlot *tslot);
 		~eDVBCIHostControlSession();
 };
-
 
 #endif

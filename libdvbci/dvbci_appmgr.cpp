@@ -130,10 +130,12 @@ bool eDVBCIApplicationManagerSession::readBlist()
 			for (i = 0; i < 4; i++)
 			{
 				rc = fgetc(fd);
-				if (rc == ',' || rc == EOF) break;
+				if (rc == ',' || rc == EOF)
+					break;
 				cSid[i] = (char)rc;
 			}
-			if (rc == EOF) goto fin;
+			if (rc == EOF)
+				goto fin;
 			if (i == 4)
 			{
 				Sid = (u16)strtol(cSid, NULL, 16);

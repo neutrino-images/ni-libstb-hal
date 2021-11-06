@@ -18,10 +18,7 @@ class eDVBCICAManagerSession: public eDVBCISession
 		eDVBCICAManagerSession(eDVBCISlot *tslot);
 		~eDVBCICAManagerSession();
 
-		const std::vector<uint16_t> &getCAIDs() const
-		{
-			return caids;
-		}
+		const std::vector<uint16_t> &getCAIDs() const { return caids; }
 		int sendCAPMT(unsigned char *pmt, int len);
 };
 

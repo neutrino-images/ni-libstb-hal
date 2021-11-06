@@ -52,8 +52,8 @@ static int pkcs_1_mgf1(const uint8_t *seed, unsigned long seedlen, uint8_t *mask
 }
 
 static int pkcs_1_pss_encode(const uint8_t *msghash, unsigned int msghashlen,
-    unsigned long saltlen, unsigned long modulus_bitlen,
-    uint8_t *out, unsigned int outlen)
+	unsigned long saltlen, unsigned long modulus_bitlen,
+	uint8_t *out, unsigned int outlen)
 {
 	unsigned char *DB, *mask, *salt, *hash;
 	unsigned long x, y, hLen, modulus_len;
@@ -210,7 +210,6 @@ int dh_mod_exp(uint8_t *dest, int dest_len, uint8_t *base, int base_len, uint8_t
 	bn_dest = BN_new();
 	BN_mod_exp(bn_dest, bn_base, bn_exp, bn_mod, ctx);
 	BN_CTX_free(ctx);
-
 
 	len = BN_num_bytes(bn_dest);
 	if (len > dest_len)

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <config.h>
 
 #include "pwrmngr.h"
@@ -60,47 +61,15 @@ unsigned long cCpuFreqManager::GetDelta(void)
 	return 0;
 }
 
-#if HAVE_DUCKBOX_HARDWARE
-unsigned long cCpuFreqManager::GetCpuFreq(void)
-{
-	int freq = 0;
-	if (FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "r"))
-	{
-		char buffer[120];
-		while (fgets(buffer, sizeof(buffer), pll0))
-		{
-			if (1 == sscanf(buffer, "SH4 = %d MHZ", &freq))
-				break;
-		}
-		fclose(pll0);
-		return 1000 * 1000 * (unsigned long) freq;
-	}
-	return 0;
-}
-#else
 unsigned long cCpuFreqManager::GetCpuFreq(void)
 {
 	hal_debug("%s\n", __func__);
 	return 0;
 }
-#endif
 
 bool cCpuFreqManager::SetCpuFreq(unsigned long f)
 {
 	hal_info("%s(%lu) => set standby = %s\n", __func__, f, f ? "true" : "false");
-#if HAVE_DUCKBOX_HARDWARE
-	if (f)
-	{
-		FILE *pll0 = fopen("/proc/cpu_frequ/pll0_ndiv_mdiv", "w");
-		if (pll0)
-		{
-			f /= 1000000;
-			fprintf(pll0, "%lu\n", (f / 10 << 8) | 3);
-			fclose(pll0);
-			return false;
-		}
-	}
-#endif
 	return true;
 }
 

@@ -87,10 +87,8 @@ Makefile
 common/Makefile
 libmipsbox/Makefile
 libarmbox/Makefile
-libduckbox/Makefile
 libdvbci/Makefile
 libeplayer3/Makefile
-libeplayer3-sh4/Makefile
 libgeneric-pc/Makefile
 libraspi/Makefile
 tools/Makefile

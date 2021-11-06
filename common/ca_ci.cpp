@@ -37,10 +37,6 @@
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_CA, this, args)
 
 static const char *FILENAME = "[ca_ci]";
-#if HAVE_DUCKBOX_HARDWARE
-const char ci_path[] = "/dev/dvb/adapter0/ci%d";
-ca_slot_info_t info;
-#endif
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 const char ci_path[] = "/dev/ci%d";
 static int last_source = -1;
@@ -321,168 +317,6 @@ eData sendData(eDVBCISlot *slot, unsigned char *data, int len)
 
 	return eDataReady;
 }
-
-#if HAVE_DUCKBOX_HARDWARE
-
-//send a transport connection create request
-bool sendCreateTC(eDVBCISlot *slot)
-{
-	unsigned char data[5];
-	data[0] = slot->slot;
-	data[1] = slot->slot + 1;   /* conid */
-	data[2] = T_CREATE_T_C;
-	data[3] = 1;
-	data[4] = slot->slot + 1    /* conid */;
-	printf("Create TC: ");
-	for (int i = 0; i < 5; i++)
-		printf("%02x ", data[i]);
-	printf("\n");
-	write(slot->fd, data, 5);
-	return true;
-}
-
-static bool sendDataLast(eDVBCISlot *slot)
-{
-	unsigned char data[5];
-	slot->pollConnection = false;
-	slot->DataLast = false;
-	data[0] = slot->slot;
-	data[1] = slot->connection_id;
-	data[2] = T_DATA_LAST;
-	data[3] = 1;
-	data[4] = slot->connection_id;
-#if tsb_debug
-	printf("*** > Data Last: ");
-	for (int i = 0; i < 5; i++)
-		printf("%02x ", data[i]);
-	printf("\n");
-#endif
-	write(slot->fd, data, 5);
-	return true;
-}
-
-static bool sendRCV(eDVBCISlot *slot)
-{
-	unsigned char send_data[5];
-	slot->pollConnection = false;
-	slot->DataRCV = false;
-	send_data[0] = slot->slot;
-	send_data[1] = slot->connection_id;
-	send_data[2] = T_RCV;
-	send_data[3] = 1;
-	send_data[4] = slot->connection_id;
-#if tsb_debug
-	printf("*** > T_RCV: ");
-	for (int i = 0; i < 5; i++)
-		printf("%02x ", send_data[i]);
-	printf("\n");
-#endif
-	write(slot->fd, send_data, 5);
-	return true;
-}
-
-void cCA::process_tpdu(eDVBCISlot *slot, unsigned char tpdu_tag, __u8 *data, int asn_data_length, int /*con_id*/)
-{
-	switch (tpdu_tag)
-	{
-		case T_C_T_C_REPLY:
-#if x_debug
-			printf("%s -> %s > Got CTC Replay (slot %d, con %d)\n", FILENAME, __FUNCTION__, slot->slot, slot->connection_id);
-#endif
-			/*answer with data last (and if we have with data)
-			--> DataLast flag will be generated in next loop from received APDU*/
-			break;
-		case T_DELETE_T_C:
-			//FIXME: close sessions etc; slot->reset ?
-			//we must answer here with t_c_replay
-			printf("%s %s Got \"Delete Transport Connection\" from module ->currently not handled!\n", FILENAME, __FUNCTION__);
-			break;
-		case T_D_T_C_REPLY:
-			printf("%s %s Got \"Delete Transport Connection Replay\" from module!\n", FILENAME, __FUNCTION__);
-			break;
-		case T_REQUEST_T_C:
-			printf("%s %s Got \"Request Transport Connection\" from Module ->currently not handled!\n", FILENAME, __FUNCTION__);
-			break;
-		case T_DATA_MORE:
-		{
-			int new_data_length = slot->receivedLen + asn_data_length;
-			printf("%s %s Got \"Data More\" from Module\n", FILENAME, __FUNCTION__);
-			__u8 *new_data_buffer = (__u8 *) realloc(slot->receivedData, new_data_length);
-			slot->receivedData = new_data_buffer;
-			memcpy(slot->receivedData + slot->receivedLen, data, asn_data_length);
-			slot->receivedLen = new_data_length;
-			break;
-		}
-		case T_DATA_LAST:
-			/* single package */
-			if (slot->receivedData == NULL)
-			{
-				printf("%s -> %s > single package\n", FILENAME, __func__);
-#if z_debug
-				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
-				for (int i = 0; i < asn_data_length; i++)
-					printf("%02x ", data[i]);
-				printf("\n");
-#endif
-				/* to avoid illegal session number: only if > 0 */
-				if (asn_data_length)
-				{
-					eDVBCISession::receiveData(slot, data, asn_data_length);
-					eDVBCISession::pollAll();
-				}
-			}
-			else
-			{
-				/* chained package
-				?? DBO: I never have seen one */
-				int new_data_length = slot->receivedLen + asn_data_length;
-				printf("%s -> chained data\n", FILENAME);
-				__u8 *new_data_buffer = (__u8 *) realloc(slot->receivedData, new_data_length);
-				slot->receivedData = new_data_buffer;
-				memcpy(slot->receivedData + slot->receivedLen, data, asn_data_length);
-				slot->receivedLen = new_data_length;
-#if z_debug
-				printf("%s -> calling receiveData with data (len %d)\n", FILENAME, asn_data_length);
-				for (int i = 0; i < slot->receivedLen; i++)
-					printf("%02x ", slot->receivedData[i]);
-				printf("\n");
-#endif
-				eDVBCISession::receiveData(slot, slot->receivedData, slot->receivedLen);
-				eDVBCISession::pollAll();
-
-				free(slot->receivedData);
-				slot->receivedData = NULL;
-				slot->receivedLen = 0;
-			}
-			break;
-		case T_SB:
-		{
-			if (data[0] & 0x80)
-			{
-				/* we now wait for an answer so dont poll */
-				slot->pollConnection = false;
-				/* set the RCV Flag and set DataLast Flag false */
-				slot->DataRCV = true;
-				slot->DataLast = false;
-			}
-			else
-			{
-				/* set DataLast Flag if it is false*/
-				if (!slot->DataLast)
-				{
-					slot->DataLast = true;
-#if tsb_debug
-					printf("**** > T_SB\n");
-#endif
-				}
-			}
-			break;
-		}
-		default:
-			printf("%s unhandled tpdu_tag 0x%0x\n", FILENAME, tpdu_tag);
-	}
-}
-#endif
 
 bool cCA::SendMessage(const CA_MESSAGE *msg)
 {
@@ -1329,13 +1163,7 @@ cCA::cCA(int Slots)
 		{
 			printf("failed to open %s ->%m", slot->ci_dev);
 		}
-#if HAVE_DUCKBOX_HARDWARE
-		/* now reset the slot so the poll pri can happen in the thread */
-		if (ioctl(slot->fd, CA_RESET, i) < 0)
-			printf("IOCTL CA_RESET failed for slot %p\n", slot);
-#else
 		ioctl(slot->fd, 0);
-#endif
 		usleep(200000);
 		/* create a thread for each slot */
 		if (slot->fd > 0)
@@ -1417,12 +1245,7 @@ void cCA::ModuleReset(enum CA_SLOT_TYPE, uint32_t slot)
 			(*it)->sendqueue.pop();
 		}
 
-#if HAVE_DUCKBOX_HARDWARE
-		if (ioctl((*it)->fd, CA_RESET, (*it)->slot) < 0)
-			printf("IOCTL CA_RESET failed for slot %d\n", slot);
-#else
 		ioctl((*it)->fd, 0);
-#endif
 		usleep(200000);
 		(*it)->status = eStatusNone;
 	}
@@ -1440,12 +1263,8 @@ void cCA::ci_inserted(eDVBCISlot *slot)
 	slot->mmiOpened = false;
 	slot->init = false;
 	sprintf(slot->name, "unknown module %d", slot->slot);
-#if HAVE_DUCKBOX_HARDWARE
-	slot->status = eStatusNone;
-#else
 	slot->status = eStatusWait;
 	slot->connection_id = slot->slot + 1;
-#endif
 	/* Send a message to Neutrino cam_menu handler */
 	CA_MESSAGE *pMsg = (CA_MESSAGE *) malloc(sizeof(CA_MESSAGE));
 	memset(pMsg, 0, sizeof(CA_MESSAGE));
@@ -1638,164 +1457,7 @@ FROM_FIRST:
 				printf("unknown state %d\n", slot->status);
 				break;
 		} /* switch(slot->status) */
-#else       /* Duckbox */
-		int len = 1024 * 4;
-		unsigned char *d;
-		eData status;
 
-		switch (slot->status)
-		{
-			case eStatusReset:
-				while (slot->status == eStatusReset)
-				{
-					usleep(1000);
-				}
-				break;
-			case eStatusNone:
-			{
-				if (slot->camIsReady)
-				{
-					if (sendCreateTC(slot))
-					{
-						slot->status = eStatusWait;
-					}
-					else
-					{
-						usleep(100000);
-					}
-				}
-				else
-				{
-					/* wait for pollpri */
-					status = waitData(slot->fd, data, &len);
-					if (status == eDataStatusChanged)
-					{
-						info.num = slot->slot;
-
-						if (ioctl(slot->fd, CA_GET_SLOT_INFO, &info) < 0)
-							printf("IOCTL CA_GET_SLOT_INFO failed for slot %d\n", slot->slot);
-
-						printf("flags %d %d %d ->slot %d\n", info.flags, CA_CI_MODULE_READY, info.flags & CA_CI_MODULE_READY, slot->slot);
-
-						if (info.flags & CA_CI_MODULE_READY)
-						{
-							ci_inserted(slot);
-						}
-					}
-				}
-				} /* case statusnone */
-			break;
-			case eStatusWait:
-			{
-				status = waitData(slot->fd, data, &len);
-				if (status == eDataReady)
-				{
-					slot->pollConnection = false;
-					d = data;
-#if z_debug
-					if ((len == 6 && d[4] == 0x80) || len > 6)
-					{
-						printf("slot: %d con-id: %d tpdu-tag: %02X len: %d\n", d[0], d[1], d[2], len);
-						printf("received data: >");
-						for (int i = 0; i < len; i++)
-							printf("%02x ", data[i]);
-						printf("\n");
-					}
-#endif
-					/* taken from the dvb-apps */
-					int data_length = len - 2;
-					d += 2; /* remove leading slot and connection id */
-					while (data_length > 0)
-					{
-						unsigned char tpdu_tag = d[0];
-						unsigned short asn_data_length;
-						int length_field_len;
-						if ((length_field_len = asn_1_decode(&asn_data_length, d + 1, data_length - 1)) < 0)
-						{
-							printf("Received data with invalid asn from module on slot %02x\n", slot->slot);
-							break;
-						}
-
-						if ((asn_data_length < 1) || (asn_data_length > (data_length - (1 + length_field_len))))
-						{
-							printf("Received data with invalid length from module on slot %02x\n", slot->slot);
-							break;
-						}
-						slot->connection_id = d[1 + length_field_len];
-#if z_debug
-						printf("Setting connection_id from received data to %d\n", slot->connection_id);
-#endif
-						d += 1 + length_field_len + 1;
-						data_length -= (1 + length_field_len + 1);
-						asn_data_length--;
-#if z_debug
-						printf("****tpdu_tag: 0x%02X\n", tpdu_tag);
-#endif
-						process_tpdu(slot, tpdu_tag, d, asn_data_length, slot->connection_id);
-						// skip over the consumed data
-						d += asn_data_length;
-						data_length -= asn_data_length;
-					} // while (data_length)
-				} /*if data ready */
-				else if (status == eDataWrite)
-				{
-					/* only writing any data here while status = eDataWrite */
-					if (!slot->sendqueue.empty())
-					{
-						const queueData &qe = slot->sendqueue.top();
-						int res = write(slot->fd, qe.data, qe.len);
-						if (res >= 0 && (unsigned int)res == qe.len)
-						{
-							delete [] qe.data;
-							slot->sendqueue.pop();
-						}
-						else
-						{
-							printf("r = %d, %m\n", res);
-						}
-					}
-					/* check for activate the pollConnection */
-					if (!checkQueueSize(slot) && (slot->DataRCV || slot->mmiOpened || slot->counter > 5))
-					{
-						slot->pollConnection = true;
-					}
-					if (slot->counter < 6)
-						slot->counter++;
-					else
-						slot->counter = 0;
-					/* if Flag: send a DataLast */
-					if (!checkQueueSize(slot) && slot->pollConnection && slot->DataLast)
-					{
-						sendDataLast(slot);
-					}
-					/* if Flag: send a RCV */
-					if (!checkQueueSize(slot) && slot->pollConnection && slot->DataRCV)
-					{
-						sendRCV(slot);
-					}
-				}
-				else if (status == eDataStatusChanged)
-				{
-					info.num = slot->slot;
-
-					if (ioctl(slot->fd, CA_GET_SLOT_INFO, &info) < 0)
-						printf("IOCTL CA_GET_SLOT_INFO failed for slot %d\n", slot->slot);
-
-					printf("flags %d %d %d ->slot %d\n", info.flags, CA_CI_MODULE_READY, info.flags & CA_CI_MODULE_READY, slot->slot);
-
-					if ((slot->camIsReady) && (!(info.flags & CA_CI_MODULE_READY)))
-					{
-						ci_removed(slot);
-					}
-				}
-			}
-			break;
-			default:
-				printf("unknown state %d\n", slot->status);
-				break;
-		} /* switch(slot->status) */
-#endif      /* end Duckbox */
-#if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE
 		if (!slot->init && slot->camIsReady && last_source > -1)
 		{
 			slot->source = (u8)last_source;

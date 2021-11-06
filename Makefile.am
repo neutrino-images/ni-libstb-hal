@@ -24,15 +24,6 @@ libstb_hal_la_LIBADD += \
 endif
 endif
 
-if BOXTYPE_DUCKBOX
-#libstb_hal_test_LDADD += -lasound
-SUBDIRS += libduckbox libeplayer3-sh4 libdvbci
-libstb_hal_la_LIBADD += \
-	libduckbox/libduckbox.la \
-	libeplayer3-sh4/libeplayer3_sh4.la \
-	libdvbci/libdvbci.la
-endif
-
 if BOXTYPE_ARMBOX
 if BOXMODEL_HD60
 SUBDIRS += libarmbox
@@ -69,11 +60,9 @@ endif
 endif
 endif
 endif
-if !ENABLE_GSTREAMER
 SUBDIRS += libeplayer3
 libstb_hal_la_LIBADD += \
 	libeplayer3/libeplayer3.la
-endif
 endif
 
 if BOXTYPE_MIPSBOX
@@ -81,6 +70,7 @@ SUBDIRS += libmipsbox libdvbci
 libstb_hal_la_LIBADD += \
 	libmipsbox/libmipsbox.la \
 	libdvbci/libdvbci.la
+
 SUBDIRS += libeplayer3
 libstb_hal_la_LIBADD += \
 	libeplayer3/libeplayer3.la

@@ -7,11 +7,6 @@ AM_CXXFLAGS += \
 
 AM_LDFLAGS = -lpthread
 
-if BOXTYPE_DUCKBOX
-AM_CXXFLAGS += \
-	-I $(top_srcdir)/libdvbci
-endif
-
 if BOXTYPE_ARMBOX
 AM_CXXFLAGS += \
 	-I $(top_srcdir)/libdvbci
@@ -23,10 +18,6 @@ AM_CXXFLAGS += \
 endif
 
 if BOXTYPE_MIPSBOX
-libcommon_la_SOURCES = \
-	ca_ci.cpp
-else
-if BOXTYPE_DUCKBOX
 libcommon_la_SOURCES = \
 	ca_ci.cpp
 else
@@ -49,7 +40,6 @@ libcommon_la_SOURCES = \
 else
 libcommon_la_SOURCES = \
 	ca_ci.cpp
-endif
 endif
 endif
 endif

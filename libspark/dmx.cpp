@@ -2,8 +2,6 @@
  * cDemux implementation for SH4 receivers (tested on fulan spark and
  * fulan spark7162 hardware)
  *
- * derived from libtriple/dmx_td.cpp
- *
  * (C) 2010-2013 Stefan Seyfried
  *
  * This program is free software; you can redistribute it and/or modify

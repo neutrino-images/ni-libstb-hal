@@ -1,5 +1,5 @@
-/* compatibility header for tripledragon. I'm lazy, so I just left it
-   as "cs_api.h" so that I don't need too many ifdefs in the code */
+/* compatibility header. I'm lazy, so I just left it as "cs_api.h"
+   so that I don't need too many ifdefs in the code */
 
 #ifndef __CS_API_H__
 #define __CS_API_H__

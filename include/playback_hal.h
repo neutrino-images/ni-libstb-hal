@@ -4,11 +4,7 @@
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/playback_libeplayer3.h"
 #elif HAVE_ARM_HARDWARE
-#if ENABLE_GSTREAMER
-#include "../libarmbox/playback_gst.h"
-#else
 #include "../libarmbox/playback_libeplayer3.h"
-#endif
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/playback_libeplayer3.h"
 #elif HAVE_GENERIC_HARDWARE

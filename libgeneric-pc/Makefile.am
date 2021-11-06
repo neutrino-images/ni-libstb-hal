@@ -42,6 +42,7 @@ endif
 if ENABLE_GSTREAMER
 libgeneric_la_SOURCES += \
 	playback_gst.cpp
+
 AM_LDFLAGS += \
 	-lgstreamer-1.0 \
 	-lgsttag-1.0 \

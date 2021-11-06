@@ -110,14 +110,14 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				if (err->code == GST_STREAM_ERROR_CODEC_NOT_FOUND)
 				{
 					if (g_strrstr(sourceName, "videosink"))
-						hal_info_c("%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+						hal_info_c("%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 					else if (g_strrstr(sourceName, "audiosink"))
-						hal_info_c("%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+						hal_info_c("%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 				}
 			}
 			g_error_free(err);
 
-			end_eof = 1;        // NOTE: just to exit
+			end_eof = 1; // NOTE: just to exit
 
 			break;
 		}
@@ -132,7 +132,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			if (inf->domain == GST_STREAM_ERROR && inf->code == GST_STREAM_ERROR_DECODE)
 			{
 				if (g_strrstr(sourceName, "videosink"))
-					hal_info_c("%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+					hal_info_c("%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 			}
 			g_error_free(inf);
 			break;
@@ -166,7 +166,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				//FIXME: how shall playback handle this event???
 			}
 			gst_tag_list_free(tags);
-			hal_info_c("%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+			hal_info_c("%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 			break;
 		}
 
@@ -188,7 +188,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				case GST_STATE_CHANGE_NULL_TO_READY:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_READY_TO_PAUSED:
 				{
 					GstIterator *children;
@@ -212,10 +213,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				break;
 				case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_PAUSED_TO_READY:
 				{
 					if (audioSink)
@@ -232,7 +235,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				break;
 				case GST_STATE_CHANGE_READY_TO_NULL:
 				{
-				}   break;
+				}
+				break;
 			}
 			break;
 		}
@@ -279,8 +283,7 @@ cPlayback::cPlayback(int num)
 		nano_str = "";
 
 	hal_info("%s:%s - This program is linked against GStreamer %d.%d.%d %s\n",
-	    FILENAME, __FUNCTION__,
-	    major, minor, micro, nano_str);
+		FILENAME, __FUNCTION__, major, minor, micro, nano_str);
 
 	mAudioStream = 0;
 	mSpeed = 0;
@@ -621,7 +624,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 		unsigned long long int sec = 0;
 
 		gst_element_query_position(m_gst_playbin, &fmt, &pts);
-		position = pts /  1000000.0;
+		position = pts / 1000000.0;
 
 		// duration
 		GstFormat fmt_d = GST_FORMAT_TIME; //Returns time in nanosecs
@@ -709,17 +712,17 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 				switch (mpegversion)
 				{
 					case 1:
-						/*
-						{
-						    gst_structure_get_int (structure, "layer", &layer);
-						    if ( layer == 3 )
-						        return atMP3;
-						    else
-						        return atMPEG;
-						        ac3flags[0] = 4;
-						    break;
-						}
-						*/
+					/*
+					{
+						gst_structure_get_int (structure, "layer", &layer);
+						if ( layer == 3 )
+							return atMP3;
+						else
+							return atMPEG;
+							ac3flags[0] = 4;
+						break;
+					}
+					*/
 						ac3flags[i] = 4;
 					case 2:
 						//return atAAC;

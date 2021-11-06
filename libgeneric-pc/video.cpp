@@ -68,11 +68,11 @@ static int bufpos;
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
 static void get_packet_defaults(AVPacket *pkt)
 {
-    memset(pkt, 0, sizeof(*pkt));
+	memset(pkt, 0, sizeof(*pkt));
 
-    pkt->pts             = AV_NOPTS_VALUE;
-    pkt->dts             = AV_NOPTS_VALUE;
-    pkt->pos             = -1;
+	pkt->pts = AV_NOPTS_VALUE;
+	pkt->dts = AV_NOPTS_VALUE;
+	pkt->pos = -1;
 }
 #endif
 
@@ -145,14 +145,14 @@ int cVideo::getAspectRatio(void)
 	ar = w * 100 * a.num / h / a.den;
 	if (ar < 100 || ar > 225) /* < 4:3, > 20:9 */
 		; /* ret = 0: N/A */
-	else if (ar < 140)  /* 4:3 */
+	else if (ar < 140) /* 4:3 */
 		ret = 1;
-	else if (ar < 165)  /* 14:9 */
+	else if (ar < 165) /* 14:9 */
 		ret = 2;
-	else if (ar < 200)  /* 16:9 */
+	else if (ar < 200) /* 16:9 */
 		ret = 3;
 	else
-		ret = 4;    /* 20:9 */
+		ret = 4; /* 20:9 */
 out:
 	buf_m.unlock();
 	return ret;
@@ -349,8 +349,8 @@ bool cVideo::ShowPicture(const char *fname)
 	{
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
-		        c->width, c->height, VDEC_PIXFMT,
-		        SWS_BICUBIC, 0, 0, 0);
+			c->width, c->height, VDEC_PIXFMT,
+			SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
 			hal_info("%s: ERROR setting up SWS context\n", __func__);
 		else
@@ -360,9 +360,9 @@ bool cVideo::ShowPicture(const char *fname)
 			if (f->size() < need)
 				f->resize(need);
 			av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
-			    c->width, c->height, 1);
+				c->width, c->height, 1);
 			sws_scale(convert, frame->data, frame->linesize, 0, c->height,
-			    rgbframe->data, rgbframe->linesize);
+				rgbframe->data, rgbframe->linesize);
 			sws_freeContext(convert);
 			f->width(c->width);
 			f->height(c->height);
@@ -485,7 +485,7 @@ static int my_read(void *, uint8_t *buf, int buf_size)
 	int tmp = 0;
 	if (videoDecoder && bufpos < DMX_BUF_SZ - 4096)
 	{
-		while (bufpos < buf_size && ++tmp < 20)   /* retry max 20 times */
+		while (bufpos < buf_size && ++tmp < 20) /* retry max 20 times */
 		{
 			int ret = videoDemux->Read(dmxbuf + bufpos, DMX_BUF_SZ - bufpos, 20);
 			if (ret > 0)
@@ -541,11 +541,11 @@ void cVideo::run(void)
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
-	        0,      // bWriteable (1=true,0=false)
-	        NULL,       // user data; will be passed to our callback functions
-	        my_read,    // read callback
-	        NULL,       // write callback
-	        NULL);      // seek callback
+		0,		// bWriteable (1=true,0=false)
+		NULL,		// user data; will be passed to our callback functions
+		my_read,	// read callback
+		NULL,		// write callback
+		NULL);		// seek callback
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
@@ -639,9 +639,9 @@ void cVideo::run(void)
 		{
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
-			        c->width, c->height, c->pix_fmt,
-			        c->width, c->height, VDEC_PIXFMT,
-			        SWS_BICUBIC, 0, 0, 0);
+				c->width, c->height, c->pix_fmt,
+				c->width, c->height, VDEC_PIXFMT,
+				SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
 				hal_info("%s: ERROR setting up SWS context\n", __func__);
 			else
@@ -650,14 +650,11 @@ void cVideo::run(void)
 				SWFramebuffer *f = &buffers[buf_in];
 				if (f->size() < need)
 					f->resize(need);
-				av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT,
-				    c->width, c->height, 1);
-				sws_scale(convert, frame->data, frame->linesize, 0, c->height,
-				    rgbframe->data, rgbframe->linesize);
+				av_image_fill_arrays(rgbframe->data, rgbframe->linesize, &(*f)[0], VDEC_PIXFMT, c->width, c->height, 1);
+				sws_scale(convert, frame->data, frame->linesize, 0, c->height, rgbframe->data, rgbframe->linesize);
 				if (dec_w != c->width || dec_h != c->height)
 				{
-					hal_info("%s: pic changed %dx%d -> %dx%d\n", __func__,
-					    dec_w, dec_h, c->width, c->height);
+					hal_info("%s: pic changed %dx%d -> %dx%d\n", __func__, dec_w, dec_h, c->width, c->height);
 					dec_w = c->width;
 					dec_h = c->height;
 					w_h_changed = true;
@@ -697,13 +694,14 @@ void cVideo::run(void)
 				dec_r = c->time_base.den / (c->time_base.num * c->ticks_per_frame);
 				buf_m.unlock();
 			}
-			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n", __func__,
-			    c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
+			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n",
+				__func__, c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
 #if (LIBAVUTIL_VERSION_MAJOR < 54)
-			    av_frame_get_best_effort_timestamp(frame));
+				av_frame_get_best_effort_timestamp(frame)
 #else
-			    frame->best_effort_timestamp);
+				frame->best_effort_timestamp
 #endif
+				);
 		}
 		else
 			hal_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);
@@ -789,7 +787,7 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
 	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-	    __func__, data, xres, yres, get_video, get_osd, scale_to_video);
+		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	SWFramebuffer video;
 	std::vector<unsigned char> *osd = NULL;
 	std::vector<unsigned char> s_osd; /* scaled OSD */
@@ -825,13 +823,13 @@ bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get
 		osd = glfb_priv->getOSDBuffer();
 	unsigned int need = av_image_get_buffer_size(AV_PIX_FMT_RGB32, xres, yres, 1);
 	data = (unsigned char *)realloc(data, need); /* will be freed by caller */
-	if (data == NULL)   /* out of memory? */
+	if (data == NULL) /* out of memory? */
 		return false;
 
 	if (get_video)
 	{
 #if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
-		if (vid_w != xres || vid_h != yres)  /* scale video into data... */
+		if (vid_w != xres || vid_h != yres) /* scale video into data... */
 		{
 #endif
 			bool ret = swscale(&video[0], data, vid_w, vid_h, xres, yres, VDEC_PIXFMT);
@@ -842,7 +840,7 @@ bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get
 			}
 #if USE_OPENGL //memcpy dont work with copy BGR24 to RGB32
 		}
-		else   /* get_video and no fancy scaling needed */
+		else /* get_video and no fancy scaling needed */
 		{
 			memcpy(data, &video[0], xres * yres * sizeof(uint32_t));
 		}
@@ -878,7 +876,7 @@ bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get
 				{
 					uint8_t *in = (uint8_t *)(pixpos);
 					uint8_t *out = (uint8_t *)d;
-					int a = in[3];  /* TODO: big/little endian? */
+					int a = in[3]; /* TODO: big/little endian? */
 					*out = (*out + ((*in - *out) * a) / 256);
 					in++;
 					out++;

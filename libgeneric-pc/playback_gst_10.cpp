@@ -225,16 +225,16 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				if (err->code == GST_STREAM_ERROR_CODEC_NOT_FOUND)
 				{
 					if (g_strrstr(sourceName, "videosink"))
-						hal_info_c("%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+						hal_info_c("%s:%s - GST_MESSAGE_ERROR: videosink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 					else if (g_strrstr(sourceName, "audiosink"))
-						hal_info_c("%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+						hal_info_c("%s:%s - GST_MESSAGE_ERROR: audioSink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 				}
 			}
 			g_error_free(err);
 			if (sourceName)
 				g_free(sourceName);
 
-			end_eof = 1;        // NOTE: just to exit
+			end_eof = 1; // NOTE: just to exit
 
 			break;
 		}
@@ -250,7 +250,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				gchar *sourceName = gst_object_get_name(source);
 				if (g_strrstr(sourceName, "videosink"))
-					hal_info_c("%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+					hal_info_c("%s:%s - GST_MESSAGE_INFO: videosink\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 				if (sourceName)
 					g_free(sourceName);
 
@@ -314,7 +314,7 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			}
 			if (tags)
 				gst_tag_list_unref(tags);
-			hal_debug_c("%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__);   //FIXME: how shall playback handle this event???
+			hal_debug_c("%s:%s - GST_MESSAGE_INFO: update info tags\n", FILENAME, __FUNCTION__); // FIXME: how shall playback handle this event???
 			break;
 		}
 		case GST_MESSAGE_ELEMENT:
@@ -357,7 +357,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			{
 				case GST_STATE_CHANGE_NULL_TO_READY:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_READY_TO_PAUSED:
 				{
 					GstIterator *children;
@@ -396,10 +397,12 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				break;
 				case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
 				{
-				}   break;
+				}
+				break;
 				case GST_STATE_CHANGE_PAUSED_TO_READY:
 				{
 					if (audioSink)
@@ -416,7 +419,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 				break;
 				case GST_STATE_CHANGE_READY_TO_NULL:
 				{
-				}   break;
+				}
+				break;
 			}
 			break;
 		}
@@ -453,8 +457,7 @@ cPlayback::cPlayback(int num)
 		nano_str = "";
 
 	hal_info("%s:%s - This program is linked against GStreamer %d.%d.%d %s\n",
-	    FILENAME, __FUNCTION__,
-	    major, minor, micro, nano_str);
+		FILENAME, __FUNCTION__, major, minor, micro, nano_str);
 
 	mAudioStream = 0;
 	mSpeed = 0;
@@ -599,7 +602,7 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 
 	hal_info("%s:%s - filename=%s\n", FILENAME, __FUNCTION__, filename);
 
-	guint flags =   GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_NATIVE_VIDEO;
+	guint flags = GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_NATIVE_VIDEO;
 
 	/* increase the default 2 second / 2 MB buffer limitations to 5s / 5MB */
 	int m_buffer_size = 5 * 1024 * 1024;
@@ -849,7 +852,7 @@ bool cPlayback::GetPosition(int &position, int &duration)
 				hal_info("%s - %d failed\n", __FUNCTION__, __LINE__);
 			}
 		}
-		position = pts /  1000000.0;
+		position = pts / 1000000.0;
 		// duration
 		GstFormat fmt_d = GST_FORMAT_TIME; //Returns time in nanosecs
 		double length = 0;
@@ -978,7 +981,7 @@ void cPlayback::FindAllPids(int *apids, unsigned int *ac3flags, unsigned int *nu
 			if (caps)
 				gst_caps_unref(caps);
 
-			//(ac3flags[i] > 2) ?   ac3flags[i] = 1 : ac3flags[i] = 0;
+			//(ac3flags[i] > 2) ? ac3flags[i] = 1 : ac3flags[i] = 0;
 
 			g_signal_emit_by_name(m_gst_playbin, "get-audio-tags", i, &tags);
 			if (tags)

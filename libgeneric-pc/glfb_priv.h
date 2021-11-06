@@ -46,7 +46,7 @@ class GLFbPC
 		~GLFbPC();
 		std::vector<unsigned char> *getOSDBuffer()
 		{
-			return osd_buf;    /* pointer to OSD bounce buffer */
+			return osd_buf; /* pointer to OSD bounce buffer */
 		}
 		int getOSDWidth()
 		{
@@ -77,23 +77,23 @@ class GLFbPC
 		fb_var_screeninfo si;
 		int *mX;
 		int *mY;
-		int _mX[2];         /* output window size */
-		int _mY[2];         /* [0] = normal, [1] = fullscreen */
-		AVRational mOA;         /* output window aspect ratio */
-		AVRational mVA;         /* video aspect ratio */
-		AVRational _mVA;        /* for detecting changes in mVA */
+		int _mX[2]; /* output window size */
+		int _mY[2]; /* [0] = normal, [1] = fullscreen */
+		AVRational mOA; /* output window aspect ratio */
+		AVRational mVA; /* video aspect ratio */
+		AVRational _mVA; /* for detecting changes in mVA */
 		bool mVAchanged;
-		float zoom;         /* for cropping */
-		float xscale;           /* and aspect ratio */
-		int mCrop;          /* DISPLAY_AR_MODE */
+		float zoom; /* for cropping */
+		float xscale; /* and aspect ratio */
+		int mCrop; /* DISPLAY_AR_MODE */
 
-		bool mFullscreen;       /* fullscreen? */
-		bool mReInit;           /* setup things for GL */
+		bool mFullscreen; /* fullscreen? */
+		bool mReInit; /* setup things for GL */
 		OpenThreads::Mutex mReInitLock;
-		bool mShutDown;         /* if set main loop is left */
-		bool mInitDone;         /* condition predicate */
-		// OpenThreads::Condition mInitCond;    /* condition variable for init */
-		// mutable OpenThreads::Mutex mMutex;   /* lock our data */
+		bool mShutDown; /* if set main loop is left */
+		bool mInitDone; /* condition predicate */
+		// OpenThreads::Condition mInitCond; /* condition variable for init */
+		// mutable OpenThreads::Mutex mMutex; /* lock our data */
 
 		std::vector<unsigned char> *osd_buf; /* silly bounce buffer */
 
@@ -108,36 +108,36 @@ class GLFbPC
 		int64_t last_apts;
 		void run();
 
-		static void rendercb();     /* callback for GLUT */
-		void render();          /* actual render function */
+		static void rendercb(); /* callback for GLUT */
+		void render(); /* actual render function */
 #if USE_OPENGL
 		static void keyboardcb(unsigned char key, int x, int y);
 		static void specialcb(int key, int x, int y);
 		static void resizecb(int w, int h);
 		void checkReinit(int w, int h); /* e.g. in case window was resized */
-		void setupGLObjects();      /* PBOs, textures and stuff */
+		void setupGLObjects(); /* PBOs, textures and stuff */
 		void releaseGLObjects();
-		void drawSquare(float size, float x_factor = 1);    /* do not be square */
+		void drawSquare(float size, float x_factor = 1); /* do not be square */
 #endif
 #if USE_CLUTTER
 		static bool keyboardcb(ClutterActor *actor, ClutterEvent *event, gpointer user_data);
 #endif
 
-		void initKeys();        /* setup key bindings for window */
+		void initKeys(); /* setup key bindings for window */
 #if 0
-		void setupCtx();        /* create the window and make the context current */
-		void setupOSDBuffer();      /* create the OSD buffer */
+		void setupCtx(); /* create the window and make the context current */
+		void setupOSDBuffer(); /* create the OSD buffer */
 #endif
 
 		struct
 		{
-			int width;      /* width and height, fixed for a framebuffer instance */
+			int width; /* width and height, fixed for a framebuffer instance */
 			int height;
 			bool blit;
 #if USE_OPENGL
-			GLuint osdtex;      /* holds the OSD texture */
-			GLuint pbo;     /* PBO we use for transfer to texture */
-			GLuint displaytex;  /* holds the display texture */
+			GLuint osdtex; /* holds the OSD texture */
+			GLuint pbo; /* PBO we use for transfer to texture */
+			GLuint displaytex; /* holds the display texture */
 			GLuint displaypbo;
 #endif
 		} mState;

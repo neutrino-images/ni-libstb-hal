@@ -19,7 +19,7 @@
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-    TODO:   AV-Sync code is "experimental" at best
+    TODO: AV-Sync code is "experimental" at best
 */
 
 #include "config.h"
@@ -85,14 +85,14 @@ void GLFramebuffer::blit()
 GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mShutDown(false), mInitDone(false)
 {
 	osd_buf = &buf;
-	mState.width  = x;
+	mState.width = x;
 	mState.height = y;
 	mX = &_mX[0];
 	mY = &_mY[0];
 	*mX = x;
 	*mY = y;
 	av_reduce(&mOA.num, &mOA.den, x, y, INT_MAX);
-	mVA = mOA;  /* initial aspect ratios are from the FB resolution, those */
+	mVA = mOA; /* initial aspect ratios are from the FB resolution, those */
 	_mVA = mVA; /* will be updated by the videoDecoder functions anyway */
 	mVAchanged = true;
 	mCrop = DISPLAY_AR_MODE_PANSCAN;
@@ -142,10 +142,10 @@ void GLFbPC::initKeys()
 	mKeyMap[CLUTTER_KEY_Left]  = KEY_LEFT;
 	mKeyMap[CLUTTER_KEY_Right] = KEY_RIGHT;
 
-	mKeyMap[CLUTTER_KEY_F1] = KEY_RED;
-	mKeyMap[CLUTTER_KEY_F2] = KEY_GREEN;
-	mKeyMap[CLUTTER_KEY_F3] = KEY_YELLOW;
-	mKeyMap[CLUTTER_KEY_F4] = KEY_BLUE;
+	mKeyMap[CLUTTER_KEY_F1]  = KEY_RED;
+	mKeyMap[CLUTTER_KEY_F2]  = KEY_GREEN;
+	mKeyMap[CLUTTER_KEY_F3]  = KEY_YELLOW;
+	mKeyMap[CLUTTER_KEY_F4]  = KEY_BLUE;
 
 	mKeyMap[CLUTTER_KEY_F5]  = KEY_RECORD;
 	mKeyMap[CLUTTER_KEY_F6]  = KEY_PLAY;
@@ -163,40 +163,40 @@ void GLFbPC::initKeys()
 	mKeyMap[CLUTTER_KEY_Return] = KEY_OK;
 	mKeyMap[CLUTTER_KEY_Escape] = KEY_EXIT;
 
-	mKeyMap['0']  = KEY_0;
-	mKeyMap['1']  = KEY_1;
-	mKeyMap['2']  = KEY_2;
-	mKeyMap['3']  = KEY_3;
-	mKeyMap['4']  = KEY_4;
-	mKeyMap['5']  = KEY_5;
-	mKeyMap['6']  = KEY_6;
-	mKeyMap['7']  = KEY_7;
-	mKeyMap['8']  = KEY_8;
-	mKeyMap['9']  = KEY_9;
+	mKeyMap['0'] = KEY_0;
+	mKeyMap['1'] = KEY_1;
+	mKeyMap['2'] = KEY_2;
+	mKeyMap['3'] = KEY_3;
+	mKeyMap['4'] = KEY_4;
+	mKeyMap['5'] = KEY_5;
+	mKeyMap['6'] = KEY_6;
+	mKeyMap['7'] = KEY_7;
+	mKeyMap['8'] = KEY_8;
+	mKeyMap['9'] = KEY_9;
 
-	mKeyMap['+']  = KEY_VOLUMEUP;
-	mKeyMap['-']  = KEY_VOLUMEDOWN;
-	mKeyMap['.']  = KEY_MUTE;
-	mKeyMap['a']  = KEY_AUDIO;
-	mKeyMap['e']  = KEY_EPG;
-	//     ['f']    is reserved to toggle fullscreen;
-	mKeyMap['g']  = KEY_GAMES;
-	mKeyMap['h']  = KEY_HELP;
-	mKeyMap['i']  = KEY_INFO;
-	mKeyMap['m']  = KEY_MENU;
-	mKeyMap['p']  = KEY_POWER;
-	mKeyMap['r']  = KEY_RADIO;
-	mKeyMap['s']  = KEY_SUBTITLE;
-	mKeyMap['t']  = KEY_TV;
-	mKeyMap['v']  = KEY_VIDEO;
-	mKeyMap['z']  = KEY_SLEEP;
+	mKeyMap['+'] = KEY_VOLUMEUP;
+	mKeyMap['-'] = KEY_VOLUMEDOWN;
+	mKeyMap['.'] = KEY_MUTE;
+	mKeyMap['a'] = KEY_AUDIO;
+	mKeyMap['e'] = KEY_EPG;
+	//     ['f']   is reserved to toggle fullscreen;
+	mKeyMap['g'] = KEY_GAMES;
+	mKeyMap['h'] = KEY_HELP;
+	mKeyMap['i'] = KEY_INFO;
+	mKeyMap['m'] = KEY_MENU;
+	mKeyMap['p'] = KEY_POWER;
+	mKeyMap['r'] = KEY_RADIO;
+	mKeyMap['s'] = KEY_SUBTITLE;
+	mKeyMap['t'] = KEY_TV;
+	mKeyMap['v'] = KEY_VIDEO;
+	mKeyMap['z'] = KEY_SLEEP;
 
 	/* shift keys */
-	mKeyMap['F']  = KEY_FAVORITES;
-	mKeyMap['M']  = KEY_MODE;
-	mKeyMap['S']  = KEY_SAT;
-	mKeyMap['T']  = KEY_TEXT;
-	mKeyMap['W']  = KEY_WWW;
+	mKeyMap['F'] = KEY_FAVORITES;
+	mKeyMap['M'] = KEY_MODE;
+	mKeyMap['S'] = KEY_SAT;
+	mKeyMap['T'] = KEY_TEXT;
+	mKeyMap['W'] = KEY_WWW;
 }
 
 static ClutterActor *stage = NULL;
@@ -311,9 +311,9 @@ void GLFramebuffer::run()
 	std::map<int, int>::const_iterator i = glfb_priv->mKeyMap.find(key);
 	if (i == glfb_priv->mKeyMap.end())
 		return true;
-	ev.code  = i->second;
+	ev.code = i->second;
 	ev.value = keystate; /* key own */
-	ev.type  = EV_KEY;
+	ev.type = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	ssize_t w = write(glfb_priv->input_fd, &ev, sizeof(ev));
@@ -353,8 +353,7 @@ void GLFbPC::render()
 //			*mX = *mY * mOA.num / mOA.den;
 			clutter_actor_set_size(stage, *mX, *mY);
 		}
-		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
-		    __func__, *mX, *mY, xoff, yoff, mFullscreen);
+		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n", __func__, *mX, *mY, xoff, yoff, mFullscreen);
 	}
 	mReInitLock.unlock();
 
@@ -378,11 +377,11 @@ void GLFbPC::render()
 		switch (cmp)
 		{
 			default:
-			case INT_MIN:   /* invalid */
-			case 0:     /* identical */
+			case INT_MIN: /* invalid */
+			case 0: /* identical */
 				hal_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
 				break;
-			case 1:     /* mVA > mOA -- video is wider than display */
+			case 1: /* mVA > mOA -- video is wider than display */
 				hal_debug("%s: mVA > mOA\n", __func__);
 				switch (mCrop)
 				{
@@ -402,7 +401,7 @@ void GLFbPC::render()
 						break;
 				}
 				break;
-			case -1:    /* mVA < mOA -- video is taller than display */
+			case -1: /* mVA < mOA -- video is taller than display */
 				hal_debug("%s: mVA < mOA\n", __func__);
 				switch (mCrop)
 				{
@@ -518,5 +517,5 @@ void GLFbPC::bltDisplayBuffer()
 			sleep_us = 1;
 	}
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
-	    buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
+		buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
 }

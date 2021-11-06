@@ -61,11 +61,11 @@ static AVCodecParameters *p = NULL;
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
 static void get_packet_defaults(AVPacket *pkt)
 {
-    memset(pkt, 0, sizeof(*pkt));
+	memset(pkt, 0, sizeof(*pkt));
 
-    pkt->pts             = AV_NOPTS_VALUE;
-    pkt->dts             = AV_NOPTS_VALUE;
-    pkt->pos             = -1;
+	pkt->pts = AV_NOPTS_VALUE;
+	pkt->dts = AV_NOPTS_VALUE;
+	pkt->pos = -1;
 }
 #endif
 
@@ -160,8 +160,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int le)
 	hal_debug("%s ch %d srate %d bits %d le %d adevice %p\n", __func__, ch, srate, bits, le, adevice);;
 	int driver;
 	int byte_format = le ? AO_FMT_LITTLE : AO_FMT_BIG;
-	if (sformat.bits != bits || sformat.channels != ch || sformat.rate != srate ||
-	    sformat.byte_format != byte_format || adevice == NULL)
+	if (sformat.bits != bits || sformat.channels != ch || sformat.rate != srate || sformat.byte_format != byte_format || adevice == NULL)
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = bits;
@@ -173,10 +172,8 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int le)
 			ao_close(adevice);
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ao_info *ai = ao_driver_info(driver);
-		hal_info("%s: changed params ch %d srate %d bits %d le %d adevice %p\n",
-		    __func__, ch, srate, bits, le, adevice);;
-		hal_info("libao driver: %d name '%s' short '%s' author '%s'\n",
-		    driver, ai->name, ai->short_name, ai->author);
+		hal_info("%s: changed params ch %d srate %d bits %d le %d adevice %p\n", __func__, ch, srate, bits, le, adevice);;
+		hal_info("libao driver: %d name '%s' short '%s' author '%s'\n", driver, ai->name, ai->short_name, ai->author);
 	}
 	return 0;
 };
@@ -213,10 +210,10 @@ int cAudio::StopClip()
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
 	type = 0;
-	layer = 0;  /* not used */
+	layer = 0; /* not used */
 	freq = 0;
-	bitrate = 0;    /* not used, but easy to get :-) */
-	mode = 0;   /* default: stereo */
+	bitrate = 0; /* not used, but easy to get :-) */
+	mode = 0; /* default: stereo */
 	printf("cAudio::getAudioInfo c %p\n", c);
 	if (c)
 	{
@@ -256,37 +253,35 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 			switch (c->channel_layout)
 			{
 				case AV_CH_LAYOUT_MONO:
-					mode = 1;   // "C"
+					mode = 1; // "C"
 					break;
 				case AV_CH_LAYOUT_STEREO:
-					mode = 2;   // "L/R"
+					mode = 2; // "L/R"
 					break;
 				case AV_CH_LAYOUT_2_1:
 				case AV_CH_LAYOUT_SURROUND:
-					mode = 3;   // "L/C/R"
+					mode = 3; // "L/C/R"
 					break;
 				case AV_CH_LAYOUT_2POINT1:
-					mode = 4;   // "L/R/S"
+					mode = 4; // "L/R/S"
 					break;
 				case AV_CH_LAYOUT_3POINT1:
-					mode = 5;   // "L/C/R/S"
+					mode = 5; // "L/C/R/S"
 					break;
 				case AV_CH_LAYOUT_2_2:
 				case AV_CH_LAYOUT_QUAD:
-					mode = 6;   // "L/R/SL/SR"
+					mode = 6; // "L/R/SL/SR"
 					break;
 				case AV_CH_LAYOUT_5POINT0:
 				case AV_CH_LAYOUT_5POINT1:
-					mode = 7;   // "L/C/R/SL/SR"
+					mode = 7; // "L/C/R/SL/SR"
 					break;
 				default:
-					hal_info("%s: unknown ch_layout 0x%" PRIx64 "\n",
-					    __func__, c->channel_layout);
+					hal_info("%s: unknown ch_layout 0x%" PRIx64 "\n", __func__, c->channel_layout);
 			}
 		}
 	}
-	hal_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n",
-	    __func__, type, layer, freq, bitrate, mode, c ? c->codec_id : -1);
+	hal_debug("%s t: %d l: %d f: %d b: %d m: %d codec_id: %x\n", __func__, type, layer, freq, bitrate, mode, c ? c->codec_id : -1);
 };
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
@@ -329,7 +324,7 @@ int cAudio::my_read(uint8_t *buf, int buf_size)
 	int tmp = 0;
 	if (audioDecoder && bufpos < DMX_BUF_SZ - 4096)
 	{
-		while (bufpos < buf_size && ++tmp < 20)   /* retry max 20 times */
+		while (bufpos < buf_size && ++tmp < 20) /* retry max 20 times */
 		{
 			int ret = audioDemux->Read(dmxbuf + bufpos, DMX_BUF_SZ - bufpos, 10);
 			if (ret > 0)
@@ -396,11 +391,11 @@ void cAudio::run()
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
-	        0,      // bWriteable (1=true,0=false)
-	        NULL,       // user data; will be passed to our callback functions
-	        _my_read,   // read callback
-	        NULL,       // write callback
-	        NULL);      // seek callback
+		0,		// bWriteable (1=true,0=false)
+		NULL,		// user data; will be passed to our callback functions
+		_my_read,	// read callback
+		NULL,		// write callback
+		NULL);		// seek callback
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
@@ -450,11 +445,10 @@ void cAudio::run()
 		goto out2;
 	}
 	/* output sample rate, channels, layout could be set here if necessary */
-	o_ch = p->channels;     /* 2 */
-	o_sr = p->sample_rate;      /* 48000 */
-	o_layout = p->channel_layout;   /* AV_CH_LAYOUT_STEREO */
-	if (sformat.channels != o_ch || sformat.rate != o_sr ||
-	    sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
+	o_ch = p->channels; /* 2 */
+	o_sr = p->sample_rate; /* 48000 */
+	o_layout = p->channel_layout; /* AV_CH_LAYOUT_STEREO */
+	if (sformat.channels != o_ch || sformat.rate != o_sr || sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 	{
 		driver = ao_default_driver_id();
 		sformat.bits = 16;
@@ -466,11 +460,9 @@ void cAudio::run()
 			ao_close(adevice);
 		adevice = ao_open_live(driver, &sformat, NULL);
 		ai = ao_driver_info(driver);
-		hal_info("%s: changed params ch %d srate %d bits %d adevice %p\n",
-		    __func__, o_ch, o_sr, 16, adevice);
+		hal_info("%s: changed params ch %d srate %d bits %d adevice %p\n", __func__, o_ch, o_sr, 16, adevice);
 		if (ai)
-			hal_info("libao driver: %d name '%s' short '%s' author '%s'\n",
-			    driver, ai->name, ai->short_name, ai->author);
+			hal_info("libao driver: %d name '%s' short '%s' author '%s'\n", driver, ai->name, ai->short_name, ai->author);
 	}
 #if 0
 	hal_info(" driver options:");
@@ -479,12 +471,11 @@ void cAudio::run()
 	fprintf(stderr, "\n");
 #endif
 	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
-	hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
-	    avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
+	hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n", avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
 	swr = swr_alloc_set_opts(swr,
-	        o_layout, AV_SAMPLE_FMT_S16, o_sr,         /* output */
-	        p->channel_layout, c->sample_fmt, p->sample_rate,  /* input */
-	        0, NULL);
+		o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
+		p->channel_layout, c->sample_fmt, p->sample_rate, /* input */
+		0, NULL);
 	if (! swr)
 	{
 		hal_info("could not alloc resample context\n");
@@ -526,8 +517,7 @@ void cAudio::run()
 			{
 				hal_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
 				av_free(obuf);
-				if (av_samples_alloc(&obuf, &out_linesize, o_ch,
-				        frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0)
+				if (av_samples_alloc(&obuf, &out_linesize, o_ch, frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0)
 				{
 					hal_info("av_samples_alloc failed\n");
 					av_packet_unref(&avpkt);
@@ -535,8 +525,7 @@ void cAudio::run()
 				}
 				obuf_sz_max = obuf_sz;
 			}
-			obuf_sz = swr_convert(swr, &obuf, obuf_sz,
-			        (const uint8_t **)frame->extended_data, frame->nb_samples);
+			obuf_sz = swr_convert(swr, &obuf, obuf_sz, (const uint8_t **)frame->extended_data, frame->nb_samples);
 #if (LIBAVUTIL_VERSION_MAJOR < 54)
 			curr_pts = av_frame_get_best_effort_timestamp(frame);
 #else

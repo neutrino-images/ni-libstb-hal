@@ -19,7 +19,7 @@
     based on Carjay's neutrino-hd-dvbapi work, see
         http://gitorious.org/neutrino-hd/neutrino-hd-dvbapi
 
-    TODO:   AV-Sync code is "experimental" at best
+    TODO: AV-Sync code is "experimental" at best
 */
 
 #include "config.h"
@@ -83,14 +83,14 @@ void GLFramebuffer::blit()
 GLFbPC::GLFbPC(int x, int y, std::vector<unsigned char> &buf): mReInit(true), mShutDown(false), mInitDone(false)
 {
 	osd_buf = &buf;
-	mState.width  = x;
+	mState.width = x;
 	mState.height = y;
 	mX = &_mX[0];
 	mY = &_mY[0];
 	*mX = x;
 	*mY = y;
 	av_reduce(&mOA.num, &mOA.den, x, y, INT_MAX);
-	mVA = mOA;  /* initial aspect ratios are from the FB resolution, those */
+	mVA = mOA; /* initial aspect ratios are from the FB resolution, those */
 	_mVA = mVA; /* will be updated by the videoDecoder functions anyway */
 	mVAchanged = true;
 	mCrop = DISPLAY_AR_MODE_PANSCAN;
@@ -165,40 +165,40 @@ void GLFbPC::initKeys()
 	mKeyMap[0x0d] = KEY_OK;
 	mKeyMap[0x1b] = KEY_EXIT;
 
-	mKeyMap['0']  = KEY_0;
-	mKeyMap['1']  = KEY_1;
-	mKeyMap['2']  = KEY_2;
-	mKeyMap['3']  = KEY_3;
-	mKeyMap['4']  = KEY_4;
-	mKeyMap['5']  = KEY_5;
-	mKeyMap['6']  = KEY_6;
-	mKeyMap['7']  = KEY_7;
-	mKeyMap['8']  = KEY_8;
-	mKeyMap['9']  = KEY_9;
+	mKeyMap['0'] = KEY_0;
+	mKeyMap['1'] = KEY_1;
+	mKeyMap['2'] = KEY_2;
+	mKeyMap['3'] = KEY_3;
+	mKeyMap['4'] = KEY_4;
+	mKeyMap['5'] = KEY_5;
+	mKeyMap['6'] = KEY_6;
+	mKeyMap['7'] = KEY_7;
+	mKeyMap['8'] = KEY_8;
+	mKeyMap['9'] = KEY_9;
 
-	mKeyMap['+']  = KEY_VOLUMEUP;
-	mKeyMap['-']  = KEY_VOLUMEDOWN;
-	mKeyMap['.']  = KEY_MUTE;
-	mKeyMap['a']  = KEY_AUDIO;
-	mKeyMap['e']  = KEY_EPG;
-	//     ['f']    is reserved to toggle fullscreen;
-	mKeyMap['g']  = KEY_GAMES;
-	mKeyMap['h']  = KEY_HELP;
-	mKeyMap['i']  = KEY_INFO;
-	mKeyMap['m']  = KEY_MENU;
-	mKeyMap['p']  = KEY_POWER;
-	mKeyMap['r']  = KEY_RADIO;
-	mKeyMap['s']  = KEY_SUBTITLE;
-	mKeyMap['t']  = KEY_TV;
-	mKeyMap['v']  = KEY_VIDEO;
-	mKeyMap['z']  = KEY_SLEEP;
+	mKeyMap['+'] = KEY_VOLUMEUP;
+	mKeyMap['-'] = KEY_VOLUMEDOWN;
+	mKeyMap['.'] = KEY_MUTE;
+	mKeyMap['a'] = KEY_AUDIO;
+	mKeyMap['e'] = KEY_EPG;
+	//     ['f']   is reserved to toggle fullscreen;
+	mKeyMap['g'] = KEY_GAMES;
+	mKeyMap['h'] = KEY_HELP;
+	mKeyMap['i'] = KEY_INFO;
+	mKeyMap['m'] = KEY_MENU;
+	mKeyMap['p'] = KEY_POWER;
+	mKeyMap['r'] = KEY_RADIO;
+	mKeyMap['s'] = KEY_SUBTITLE;
+	mKeyMap['t'] = KEY_TV;
+	mKeyMap['v'] = KEY_VIDEO;
+	mKeyMap['z'] = KEY_SLEEP;
 
 	/* shift keys */
-	mKeyMap['F']  = KEY_FAVORITES;
-	mKeyMap['M']  = KEY_MODE;
-	mKeyMap['S']  = KEY_SAT;
-	mKeyMap['T']  = KEY_TEXT;
-	mKeyMap['W']  = KEY_WWW;
+	mKeyMap['F'] = KEY_FAVORITES;
+	mKeyMap['M'] = KEY_MODE;
+	mKeyMap['S'] = KEY_SAT;
+	mKeyMap['T'] = KEY_TEXT;
+	mKeyMap['W'] = KEY_WWW;
 }
 
 void GLFramebuffer::run()
@@ -226,7 +226,7 @@ void GLFramebuffer::run()
 		if ((!GLEW_VERSION_1_5) || (!GLEW_EXT_pixel_buffer_object) || (!GLEW_ARB_texture_non_power_of_two))
 		{
 			hal_info("GLFB: Sorry, your graphics card is not supported. "
-			    "Needs at least OpenGL 1.5, pixel buffer objects and NPOT textures.\n");
+				"Needs at least OpenGL 1.5, pixel buffer objects and NPOT textures.\n");
 			hal_info("incompatible graphics card: %m");
 			_exit(1); /* Life is hard */
 		}
@@ -334,9 +334,9 @@ void GLFbPC::releaseGLObjects()
 	std::map<unsigned char, int>::const_iterator i = glfb_priv->mKeyMap.find(key);
 	if (i == glfb_priv->mKeyMap.end())
 		return;
-	ev.code  = i->second;
+	ev.code = i->second;
 	ev.value = 1; /* key own */
-	ev.type  = EV_KEY;
+	ev.type = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
@@ -351,9 +351,9 @@ void GLFbPC::releaseGLObjects()
 	std::map<int, int>::const_iterator i = glfb_priv->mSpecialMap.find(key);
 	if (i == glfb_priv->mSpecialMap.end())
 		return;
-	ev.code  = i->second;
+	ev.code = i->second;
 	ev.value = 1;
-	ev.type  = EV_KEY;
+	ev.type = EV_KEY;
 	gettimeofday(&ev.time, NULL);
 	hal_debug_c("GLFB::%s: pushing 0x%x\n", __func__, ev.code);
 	write(glfb_priv->input_fd, &ev, sizeof(ev));
@@ -394,8 +394,7 @@ void GLFbPC::render()
 		}
 		else
 			*mX = *mY * mOA.num / mOA.den;
-		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n",
-		    __func__, *mX, *mY, xoff, yoff, mFullscreen);
+		hal_info("%s: reinit mX:%d mY:%d xoff:%d yoff:%d fs %d\n", __func__, *mX, *mY, xoff, yoff, mFullscreen);
 		glViewport(xoff, yoff, *mX, *mY);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -438,11 +437,11 @@ void GLFbPC::render()
 		switch (cmp)
 		{
 			default:
-			case INT_MIN:   /* invalid */
-			case 0:     /* identical */
+			case INT_MIN: /* invalid */
+			case 0: /* identical */
 				hal_debug("%s: mVA == mOA (or fullscreen mode :-)\n", __func__);
 				break;
-			case 1:     /* mVA > mOA -- video is wider than display */
+			case 1: /* mVA > mOA -- video is wider than display */
 				hal_debug("%s: mVA > mOA\n", __func__);
 				xscale = av_q2d(mVA) / av_q2d(mOA);
 				switch (mCrop)
@@ -459,7 +458,7 @@ void GLFbPC::render()
 						break;
 				}
 				break;
-			case -1:    /* mVA < mOA -- video is taller than display */
+			case -1: /* mVA < mOA -- video is taller than display */
 				hal_debug("%s: mVA < mOA\n", __func__);
 				xscale = av_q2d(mVA) / av_q2d(mOA);
 				switch (mCrop)
@@ -531,10 +530,10 @@ void GLFbPC::drawSquare(float size, float x_factor)
 {
 	GLfloat vertices[] =
 	{
-		1.0f,  1.0f,
+		 1.0f,  1.0f,
 		-1.0f,  1.0f,
 		-1.0f, -1.0f,
-		1.0f, -1.0f,
+		 1.0f, -1.0f,
 	};
 
 	GLubyte indices[] = { 0, 1, 2, 3 };
@@ -546,11 +545,11 @@ void GLFbPC::drawSquare(float size, float x_factor)
 		0.0, 1.0,
 		1.0, 1.0,
 	};
-	if (x_factor > -99.0)   /* x_factor == -100 => OSD */
+	if (x_factor > -99.0) /* x_factor == -100 => OSD */
 	{
 		if (videoDecoder &&
-		    videoDecoder->pig_x > 0 && videoDecoder->pig_y > 0 &&
-		    videoDecoder->pig_w > 0 && videoDecoder->pig_h > 0)
+			videoDecoder->pig_x > 0 && videoDecoder->pig_y > 0 &&
+			videoDecoder->pig_w > 0 && videoDecoder->pig_h > 0)
 		{
 			/* these calculations even consider cropping and panscan mode
 			 * maybe this could be done with some clever opengl tricks? */
@@ -562,14 +561,14 @@ void GLFbPC::drawSquare(float size, float x_factor)
 			double h = (double)videoDecoder->pig_h / h2;
 			x += ((1.0l - x_factor * size) / 2.0l) * w / x_factor / size;
 			y += ((size - 1.0l) / 2.0l) * h / size;
-			vertices[0] = x + w;        /* top right x */
-			vertices[1] = y;        /* top right y */
-			vertices[2] = x;        /* top left x */
-			vertices[3] = y;        /* top left y */
-			vertices[4] = x;        /* bottom left x */
-			vertices[5] = y - h;        /* bottom left y */
-			vertices[6] = vertices[0];  /* bottom right x */
-			vertices[7] = vertices[5];  /* bottom right y */
+			vertices[0] = x + w; /* top right x */
+			vertices[1] = y; /* top right y */
+			vertices[2] = x; /* top left x */
+			vertices[3] = y; /* top left y */
+			vertices[4] = x; /* bottom left x */
+			vertices[5] = y - h; /* bottom left y */
+			vertices[6] = vertices[0]; /* bottom right x */
+			vertices[7] = vertices[5]; /* bottom right y */
 		}
 	}
 	else
@@ -590,7 +589,7 @@ void GLFbPC::drawSquare(float size, float x_factor)
 
 void GLFbPC::bltOSDBuffer()
 {
-	/* FIXME: copy each time  */
+	/* FIXME: copy each time */
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mState.pbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, osd_buf->size(), osd_buf->data(), GL_STREAM_DRAW_ARB);
 
@@ -662,5 +661,5 @@ void GLFbPC::bltDisplayBuffer()
 			sleep_us = 1;
 	}
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
-	    buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
+		buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
 }

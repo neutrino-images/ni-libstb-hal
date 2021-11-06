@@ -18,6 +18,7 @@
  * for the Raspberry Pi
  *
  */
+
 #include <cstring>
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,24 +50,24 @@ static keymap_t kmap;
 static void init_keymap(void)
 {
 	/* same as generic-pc/glfb.cpp */
-	kmap[KEY_ENTER] = KEY_OK;
-	kmap[KEY_ESC]   = KEY_EXIT;
-	kmap[KEY_E] = KEY_EPG;
-	kmap[KEY_I] = KEY_INFO;
-	kmap[KEY_M] = KEY_MENU;
-	kmap[KEY_F12]   = KEY_VOLUMEUP;     /* different than glfb, as we */
-	kmap[KEY_F11]   = KEY_VOLUMEDOWN;   /* don't consider the keyboard */
-	kmap[KEY_F10]   = KEY_MUTE;     /* layout... */
-	kmap[KEY_H] = KEY_HELP;
-	kmap[KEY_P] = KEY_POWER;
-	kmap[KEY_F1]    = KEY_RED;
-	kmap[KEY_F2]    = KEY_GREEN;
-	kmap[KEY_F3]    = KEY_YELLOW;
-	kmap[KEY_F4]    = KEY_BLUE;
-	kmap[KEY_F5]    = KEY_WWW;
-	kmap[KEY_F6]    = KEY_SUBTITLE;
-	kmap[KEY_F7]    = KEY_MOVE;
-	kmap[KEY_F8]    = KEY_SLEEP;
+	kmap[KEY_ENTER]	= KEY_OK;
+	kmap[KEY_ESC]	= KEY_EXIT;
+	kmap[KEY_E]	= KEY_EPG;
+	kmap[KEY_I]	= KEY_INFO;
+	kmap[KEY_M]	= KEY_MENU;
+	kmap[KEY_F12]	= KEY_VOLUMEUP; /* different than glfb, as we */
+	kmap[KEY_F11]	= KEY_VOLUMEDOWN; /* don't consider the keyboard */
+	kmap[KEY_F10]	= KEY_MUTE; /* layout... */
+	kmap[KEY_H]	= KEY_HELP;
+	kmap[KEY_P]	= KEY_POWER;
+	kmap[KEY_F1]	= KEY_RED;
+	kmap[KEY_F2]	= KEY_GREEN;
+	kmap[KEY_F3]	= KEY_YELLOW;
+	kmap[KEY_F4]	= KEY_BLUE;
+	kmap[KEY_F5]	= KEY_WWW;
+	kmap[KEY_F6]	= KEY_SUBTITLE;
+	kmap[KEY_F7]	= KEY_MOVE;
+	kmap[KEY_F8]	= KEY_SLEEP;
 }
 
 class Input: public OpenThreads::Thread

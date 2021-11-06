@@ -50,10 +50,10 @@ static VC_IMAGE_TYPE_T type = VC_IMAGE_ARGB8888;
 static OpenThreads::Mutex blit_mutex;
 static OpenThreads::Condition blit_cond;
 
-static bool goodbye = false;    /* if set main loop is left */
-static bool ready = false;  /* condition predicate */
+static bool goodbye = false; /* if set main loop is left */
+static bool ready = false; /* condition predicate */
 
-static int width;       /* width and height, fixed for a framebuffer instance */
+static int width; /* width and height, fixed for a framebuffer instance */
 static int height;
 
 GLFramebuffer::GLFramebuffer(int x, int y)
@@ -126,7 +126,7 @@ void GLFramebuffer::setup()
 	/* 32bit FB depth, *2 because tuxtxt uses a shadow buffer */
 	osd_buf.resize(pitch * height * 2);
 	hal_info("GLFB: Display is %d x %d, FB is %d x %d, memory size %d\n",
-	    info.width, info.height, width, height, osd_buf.size());
+		info.width, info.height, width, height, osd_buf.size());
 	image = &osd_buf[0];
 	/* initialize to half-transparent grey */
 	memset(image, 0x7f, osd_buf.size());
@@ -143,15 +143,15 @@ void GLFramebuffer::setup()
 	vc_dispmanx_rect_set(&src_rect, 0, 0, width << 16, height << 16);
 	vc_dispmanx_rect_set(&dsp_rect, 0, 0, info.width, info.height);
 	element = vc_dispmanx_element_add(update,
-	        display,
-	        2000 /*layer*/,
-	        &dsp_rect,
-	        res[curr_res],
-	        &src_rect,
-	        DISPMANX_PROTECTION_NONE,
-	        &alpha,
-	        NULL,
-	        DISPMANX_NO_ROTATE);
+		display,
+		2000 /*layer*/,
+		&dsp_rect,
+		res[curr_res],
+		&src_rect,
+		DISPMANX_PROTECTION_NONE,
+		&alpha,
+		NULL,
+		DISPMANX_NO_ROTATE);
 	ret = vc_dispmanx_update_submit_sync(update);
 	CHECK(ret == 0);
 	curr_res = !curr_res;

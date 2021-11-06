@@ -105,7 +105,7 @@ typedef enum
 	VIDEO_STD_1080P24,
 	VIDEO_STD_1080P25,
 	VIDEO_STD_AUTO,
-	VIDEO_STD_1080P50,  /* SPARK only */
+	VIDEO_STD_1080P50, /* SPARK only */
 	VIDEO_STD_MAX
 } VIDEO_STD;
 
@@ -133,44 +133,21 @@ class cVideo
 {
 		friend class GLFramebuffer;
 		friend class cDemux;
+
 	private:
 		/* called from GL thread */
 		class SWFramebuffer : public std::vector<unsigned char>
 		{
 			public:
 				SWFramebuffer() : mWidth(0), mHeight(0) {}
-				void width(int w)
-				{
-					mWidth = w;
-				}
-				void height(int h)
-				{
-					mHeight = h;
-				}
-				void pts(uint64_t p)
-				{
-					mPts = p;
-				}
-				void AR(AVRational a)
-				{
-					mAR = a;
-				}
-				int width() const
-				{
-					return mWidth;
-				}
-				int height() const
-				{
-					return mHeight;
-				}
-				int64_t pts() const
-				{
-					return mPts;
-				}
-				AVRational AR() const
-				{
-					return mAR;
-				}
+				void width(int w) { mWidth = w; }
+				void height(int h) { mHeight = h; }
+				void pts(uint64_t p) { mPts = p; }
+				void AR(AVRational a) { mAR = a; }
+				int width() const { return mWidth; }
+				int height() const { return mHeight; }
+				int64_t pts() const { return mPts; }
+				AVRational AR() const { return mAR; }
 			private:
 				int mWidth;
 				int mHeight;
@@ -179,19 +156,14 @@ class cVideo
 		};
 		int buf_in, buf_out, buf_num;
 		int64_t GetPTS(void);
+
 	public:
 		/* constructor & destructor */
 		cVideo(int mode, void *, void *, unsigned int unit = 0);
 		~cVideo(void);
 
-		void *GetTVEnc()
-		{
-			return NULL;
-		};
-		void *GetTVEncSD()
-		{
-			return NULL;
-		};
+		void *GetTVEnc() { return NULL; };
+		void *GetTVEncSD() { return NULL; };
 
 		/* aspect ratio */
 		int getAspectRatio(void);
@@ -217,58 +189,26 @@ class cVideo
 		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
 		void SetSyncMode(AVSYNC_TYPE mode);
-		bool SetCECMode(VIDEO_HDMI_CEC_MODE)
-		{
-			return true;
-		};
-		void SetCECAutoView(bool)
-		{
-			return;
-		};
-		void SetCECAutoStandby(bool)
-		{
-			return;
-		};
+		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
+		void SetCECAutoView(bool) { return; };
+		void SetCECAutoStandby(bool) { return; };
 		bool ShowPicture(const char *fname);
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
-		void SetControl(int, int)
-		{
-			return;
-		};
+		void SetControl(int, int) { return; };
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
-		void SetDBDR(int)
-		{
-			return;
-		};
-		void SetAudioHandle(void *)
-		{
-			return;
-		};
-		void SetAutoModes(int [VIDEO_STD_MAX])
-		{
-			return;
-		};
-		int  OpenVBI(int)
-		{
-			return 0;
-		};
-		int  CloseVBI(void)
-		{
-			return 0;
-		};
-		int  StartVBI(unsigned short)
-		{
-			return 0;
-		};
-		int  StopVBI(void)
-		{
-			return 0;
-		};
+		void SetDBDR(int) { return; };
+		void SetAudioHandle(void *) { return; };
+		void SetAutoModes(int [VIDEO_STD_MAX]) { return; };
+		int OpenVBI(int) { return 0; };
+		int CloseVBI(void) { return 0; };
+		int StartVBI(unsigned short) { return 0; };
+		int StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
+
 	private:
 		SWFramebuffer buffers[VDEC_MAXBUFS];
 		int dec_w, dec_h;

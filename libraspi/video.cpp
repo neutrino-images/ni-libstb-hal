@@ -173,7 +173,7 @@ int cVideo::SetStreamType(VIDEO_FORMAT v)
 bool cVideo::GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video, bool get_osd, bool scale_to_video)
 {
 	hal_info("%s: data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-	    __func__, data, xres, yres, get_video, get_osd, scale_to_video);
+		__func__, data, xres, yres, get_video, get_osd, scale_to_video);
 	return false;
 }
 

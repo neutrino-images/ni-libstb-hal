@@ -45,7 +45,7 @@ extern cVideo *videoDecoder;
 
 #define dmx_err(_errfmt, _errstr, _revents) do { \
 		hal_info("%s " _errfmt " fd:%d, ev:0x%x %s pid:0x%04hx flt:0x%02hx\n", \
-		    __func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
+			__func__, _errstr, fd, _revents, DMX_T[dmx_type], pid, flt); \
 	} while(0);
 
 cDemux *videoDemux = NULL;
@@ -111,13 +111,13 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 		hal_info("%s %s: %m\n", __FUNCTION__, devname[devnum]);
 		return false;
 	}
-	hal_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n", __func__,
-	    num, DMX_T[pes_type], pes_type, uBufferSize, fd);
+	hal_debug("%s #%d pes_type: %s(%d), uBufferSize: %d fd: %d\n",
+		__func__, num, DMX_T[pes_type], pes_type, uBufferSize, fd);
 
 	if (dmx_type == DMX_VIDEO_CHANNEL)
-		uBufferSize = 0x100000;     /* 1MB */
+		uBufferSize = 0x100000; /* 1MB */
 	if (dmx_type == DMX_AUDIO_CHANNEL)
-		uBufferSize = 0x10000;      /* 64k */
+		uBufferSize = 0x10000; /* 64k */
 #if 0
 	if (!pesfds.empty())
 	{
@@ -192,7 +192,7 @@ int cDemux::Read(unsigned char *buff, int len, int timeout)
 #if 0
 	if (len != 4095 && timeout != 100)
 		fprintf(stderr, "cDemux::%s #%d fd: %d type: %s len: %d timeout: %d\n",
-		    __FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
+			__FUNCTION__, num, fd, DMX_T[dmx_type], len, timeout);
 #endif
 	int rc;
 	struct pollfd ufds;
@@ -244,8 +244,8 @@ retry:
 }
 
 bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filter,
-    const unsigned char *const mask, int len, int timeout,
-    const unsigned char *const negmask)
+	const unsigned char *const mask, int len, int timeout,
+	const unsigned char *const negmask)
 {
 	struct dmx_sct_filter_params s_flt;
 	memset(&s_flt, 0, sizeof(s_flt));
@@ -260,7 +260,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
 	memcpy(s_flt.filter.filter, filter, len);
-	memcpy(s_flt.filter.mask,   mask,   len);
+	memcpy(s_flt.filter.mask, mask, len);
 	if (negmask != NULL)
 		memcpy(s_flt.filter.mode, negmask, len);
 
@@ -310,7 +310,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 		/* 0x60 - 0x6F: event_information_section - other_transport_stream, schedule */
 		case 0x70: /* time_date_section */
 			s_flt.flags &= ~DMX_CHECK_CRC; /* section has no CRC */
-			//s_flt.pid     = 0x0014;
+			//s_flt.pid = 0x0014;
 			to = 30000;
 			break;
 		case 0x71: /* running_status_section */
@@ -322,7 +322,7 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 			to = 0;
 			break;
 		case 0x73: /* time_offset_section */
-			//s_flt.pid     = 0x0014;
+			//s_flt.pid = 0x0014;
 			to = 30000;
 			break;
 		/* 0x74 - 0x7D: reserved for future use */
@@ -346,8 +346,8 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 	if (timeout == 0 && negmask == NULL)
 		s_flt.timeout = to;
 
-	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n", __func__, num,
-	    pid, fd, DMX_T[dmx_type], len, s_flt.timeout, s_flt.flags, s_flt.filter.filter[0]);
+	hal_debug("%s #%d pid:0x%04hx fd:%d type:%s len:%d to:%d flags:%x flt[0]:%02x\n",
+		__func__, num, pid, fd, DMX_T[dmx_type], len, s_flt.timeout, s_flt.flags, s_flt.filter.filter[0]);
 
 	if (debuglevel == 2)
 	{
@@ -355,10 +355,10 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.filter[i]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, "mask: ");
-		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mask  [i]);
+		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mask[i]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, "mode: ");
-		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mode  [i]);
+		for (int i = 0; i < DMX_FILTER_SIZE; i++)fprintf(stderr, "%02hhx ", s_flt.filter.mode[i]);
 		fprintf(stderr, "\n");
 	}
 
@@ -378,7 +378,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 	 * this check originally is from tuxbox cvs but I'm not sure
 	 * what it is good for...
 	if (pid <= 0x0001 && dmx_type != DMX_PCR_ONLY_CHANNEL)
-	    return false;
+		return false;
 	 */
 	if ((pid >= 0x0002 && pid <= 0x000f) || pid >= 0x1fff)
 		return false;
@@ -388,30 +388,30 @@ bool cDemux::pesFilter(const unsigned short _pid)
 	memset(&p_flt, 0, sizeof(p_flt));
 	p_flt.pid = pid;
 	p_flt.output = DMX_OUT_DECODER;
-	p_flt.input  = DMX_IN_FRONTEND;
+	p_flt.input = DMX_IN_FRONTEND;
 
 	switch (dmx_type)
 	{
 		case DMX_PCR_ONLY_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TAP;
+			p_flt.output = DMX_OUT_TAP;
 			return true;
 			break;
 		case DMX_AUDIO_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			p_flt.output = DMX_OUT_TSDEMUX_TAP;
 			break;
 		case DMX_VIDEO_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			p_flt.output = DMX_OUT_TSDEMUX_TAP;
 			break;
 		case DMX_PES_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TAP;
+			p_flt.output = DMX_OUT_TAP;
 			break;
 		case DMX_TP_CHANNEL:
 			p_flt.pes_type = DMX_PES_OTHER;
-			p_flt.output  = DMX_OUT_TSDEMUX_TAP;
+			p_flt.output = DMX_OUT_TSDEMUX_TAP;
 			break;
 		default:
 			hal_info("%s #%d invalid dmx_type %d!\n", __func__, num, dmx_type);

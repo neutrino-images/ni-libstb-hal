@@ -32,6 +32,7 @@ class cDemux
 {
 		friend class cRecord;
 		friend class cPlayback;
+
 	public:
 		bool Open(DMX_CHANNEL_TYPE pes_type, void *x = NULL, int y = 0);
 		void Close(void);
@@ -43,19 +44,13 @@ class cDemux
 		void SetSyncMode(AVSYNC_TYPE mode);
 		void *getBuffer();
 		void *getChannel();
-		DMX_CHANNEL_TYPE getChannelType(void)
-		{
-			return dmx_type;
-		};
+		DMX_CHANNEL_TYPE getChannelType(void) { return dmx_type; };
 		bool addPid(unsigned short pid);
 		void getSTC(int64_t *STC);
 		int getUnit(void);
 		static bool SetSource(int unit, int source);
 		static int GetSource(int unit);
-		int getFD(void)
-		{
-			return fd;
-		};     /* needed by cPlayback class */
+		int getFD(void) { return fd; }; /* needed by cPlayback class */
 		cDemux(int num = 0);
 		~cDemux();
 

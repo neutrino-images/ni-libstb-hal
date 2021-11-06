@@ -1,9 +1,9 @@
 #ifndef __MMI_H__
 #define __MMI_H__
 
-#define MAX_MMI_ITEMS           40
-#define MAX_MMI_TEXT_LEN        255
-#define MAX_MMI_CHOICE_TEXT_LEN     255
+#define MAX_MMI_ITEMS 40
+#define MAX_MMI_TEXT_LEN 255
+#define MAX_MMI_CHOICE_TEXT_LEN 255
 
 typedef enum
 {
@@ -49,7 +49,7 @@ typedef struct
 } MMI_ENQUIRY_INFO;
 
 /* compat */
-#define enguiryText      enquiryText
+#define enguiryText enquiryText
 #define MMI_ENGUIRY_INFO MMI_ENQUIRY_INFO
 
 #endif // __MMI_H__

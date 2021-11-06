@@ -19,8 +19,8 @@ inline void cs_api_exit()
 	hal_api_exit();
 };
 
-#define cs_malloc_uncached  malloc
-#define cs_free_uncached    free
+#define cs_malloc_uncached malloc
+#define cs_free_uncached free
 
 // Callback function helpers
 #if HAVE_DUCKBOX_HARDWARE \
@@ -33,25 +33,13 @@ inline void cs_api_exit()
     )
 void cs_register_messenger(cs_messenger messenger);
 #else
-static inline void cs_register_messenger(cs_messenger)
-{
-	return;
-};
+static inline void cs_register_messenger(cs_messenger) { return; };
 #endif
-static inline void cs_deregister_messenger(void)
-{
-	return;
-};
+static inline void cs_deregister_messenger(void) { return; };
 
 /* compat... HD1 seems to be version 6. everything newer ist > 6... */
-static inline unsigned int cs_get_revision(void)
-{
-	return 1;
-};
-static inline unsigned int cs_get_chip_type(void)
-{
-	return 0;
-};
+static inline unsigned int cs_get_revision(void) { return 1; };
+static inline unsigned int cs_get_chip_type(void) { return 0; };
 extern int cnxt_debug;
 
 #endif // __CS_API_H__

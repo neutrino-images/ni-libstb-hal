@@ -28,15 +28,9 @@ class GLFramebuffer : public OpenThreads::Thread
 	public:
 		GLFramebuffer(int x, int y);
 		~GLFramebuffer();
-		std::vector<unsigned char> *getOSDBuffer()
-		{
-			return &osd_buf;    /* pointer to OSD bounce buffer */
-		}
+		std::vector<unsigned char> *getOSDBuffer() { return &osd_buf; } /* pointer to OSD bounce buffer */
 		void blit();
-		fb_var_screeninfo getScreenInfo()
-		{
-			return si;
-		}
+		fb_var_screeninfo getScreenInfo() { return si; }
 
 	private:
 		fb_var_screeninfo si;
@@ -44,7 +38,7 @@ class GLFramebuffer : public OpenThreads::Thread
 		void run(); /* for OpenThreads::Thread */
 		void setup();
 		void blit_osd();
-		void *pdata;    /* not yet used */
+		void *pdata; /* not yet used */
 };
 
 #endif // __GLFB_H__

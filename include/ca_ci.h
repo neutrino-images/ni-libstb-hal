@@ -15,20 +15,20 @@
 #include "cs_api.h"
 
 /* constants taken from dvb-apps */
-#define T_SB                0x80    // sb                           primitive   h<--m
-#define T_RCV               0x81    // receive                      primitive   h-->m
-#define T_CREATE_T_C        0x82    // create transport connection  primitive   h-->m
-#define T_C_T_C_REPLY       0x83    // ctc reply                    primitive   h<--m
-#define T_DELETE_T_C        0x84    // delete tc                    primitive   h<->m
-#define T_D_T_C_REPLY       0x85    // dtc reply                    primitive   h<->m
-#define T_REQUEST_T_C       0x86    // request transport connection primitive   h<--m
-#define T_NEW_T_C           0x87    // new tc / reply to t_request  primitive   h-->m
-#define T_T_C_ERROR         0x77    // error creating tc            primitive   h-->m
-#define T_DATA_LAST         0xA0    // convey data from higher      constructed h<->m
-#define T_DATA_MORE         0xA1    // convey data from higher      constructed h<->m
+#define T_SB		0x80	// sb				primitive   h<--m
+#define T_RCV		0x81	// receive			primitive   h-->m
+#define T_CREATE_T_C	0x82	// create transport connection	primitive   h-->m
+#define T_C_T_C_REPLY	0x83	// ctc reply			primitive   h<--m
+#define T_DELETE_T_C	0x84	// delete tc			primitive   h<->m
+#define T_D_T_C_REPLY	0x85	// dtc reply			primitive   h<->m
+#define T_REQUEST_T_C	0x86	// request transport connection	primitive   h<--m
+#define T_NEW_T_C	0x87	// new tc / reply to t_request	primitive   h-->m
+#define T_T_C_ERROR	0x77	// error creating tc		primitive   h-->m
+#define T_DATA_LAST	0xA0	// convey data from higher	constructed h<->m
+#define T_DATA_MORE	0xA1	// convey data from higher	constructed h<->m
 
 /* max multi decrypt per ci-cam */
-#define CI_MAX_MULTI            5
+#define CI_MAX_MULTI 5
 
 enum CA_INIT_MASK
 {
@@ -46,29 +46,29 @@ enum CA_SLOT_TYPE
 
 enum CA_MESSAGE_FLAGS
 {
-	CA_MESSAGE_EMPTY        = (1 << 0),
-	CA_MESSAGE_HAS_PARAM1_DATA  = (1 << 1), /// Free after use!
-	CA_MESSAGE_HAS_PARAM1_INT   = (1 << 2),
-	CA_MESSAGE_HAS_PARAM1_PTR   = (1 << 3),
-	CA_MESSAGE_HAS_PARAM2_INT   = (1 << 4),
-	CA_MESSAGE_HAS_PARAM2_PTR   = (1 << 5),
-	CA_MESSAGE_HAS_PARAM2_DATA  = (1 << 6),
-	CA_MESSAGE_HAS_PARAM3_DATA  = (1 << 7), /// Free after use!
-	CA_MESSAGE_HAS_PARAM3_INT   = (1 << 8),
-	CA_MESSAGE_HAS_PARAM3_PTR   = (1 << 9),
-	CA_MESSAGE_HAS_PARAM4_INT   = (1 << 10),
-	CA_MESSAGE_HAS_PARAM4_PTR   = (1 << 11),
-	CA_MESSAGE_HAS_PARAM4_DATA  = (1 << 12),
-	CA_MESSAGE_HAS_PARAM5_INT   = (1 << 13),
-	CA_MESSAGE_HAS_PARAM5_PTR   = (1 << 14),
-	CA_MESSAGE_HAS_PARAM5_DATA  = (1 << 15),
-	CA_MESSAGE_HAS_PARAM6_INT   = (1 << 16),
-	CA_MESSAGE_HAS_PARAM6_PTR   = (1 << 17),
-	CA_MESSAGE_HAS_PARAM6_DATA  = (1 << 18),
-	CA_MESSAGE_HAS_PARAM1_LONG  = (1 << 19),
-	CA_MESSAGE_HAS_PARAM2_LONG  = (1 << 20),
-	CA_MESSAGE_HAS_PARAM3_LONG  = (1 << 21),
-	CA_MESSAGE_HAS_PARAM4_LONG  = (1 << 22)
+	CA_MESSAGE_EMPTY		= (1 << 0),
+	CA_MESSAGE_HAS_PARAM1_DATA	= (1 << 1), /// Free after use!
+	CA_MESSAGE_HAS_PARAM1_INT	= (1 << 2),
+	CA_MESSAGE_HAS_PARAM1_PTR	= (1 << 3),
+	CA_MESSAGE_HAS_PARAM2_INT	= (1 << 4),
+	CA_MESSAGE_HAS_PARAM2_PTR	= (1 << 5),
+	CA_MESSAGE_HAS_PARAM2_DATA	= (1 << 6),
+	CA_MESSAGE_HAS_PARAM3_DATA	= (1 << 7), /// Free after use!
+	CA_MESSAGE_HAS_PARAM3_INT	= (1 << 8),
+	CA_MESSAGE_HAS_PARAM3_PTR	= (1 << 9),
+	CA_MESSAGE_HAS_PARAM4_INT	= (1 << 10),
+	CA_MESSAGE_HAS_PARAM4_PTR	= (1 << 11),
+	CA_MESSAGE_HAS_PARAM4_DATA	= (1 << 12),
+	CA_MESSAGE_HAS_PARAM5_INT	= (1 << 13),
+	CA_MESSAGE_HAS_PARAM5_PTR	= (1 << 14),
+	CA_MESSAGE_HAS_PARAM5_DATA	= (1 << 15),
+	CA_MESSAGE_HAS_PARAM6_INT	= (1 << 16),
+	CA_MESSAGE_HAS_PARAM6_PTR	= (1 << 17),
+	CA_MESSAGE_HAS_PARAM6_DATA	= (1 << 18),
+	CA_MESSAGE_HAS_PARAM1_LONG	= (1 << 19),
+	CA_MESSAGE_HAS_PARAM2_LONG	= (1 << 20),
+	CA_MESSAGE_HAS_PARAM3_LONG	= (1 << 21),
+	CA_MESSAGE_HAS_PARAM4_LONG	= (1 << 22)
 };
 
 enum CA_MESSAGE_MSGID
@@ -113,19 +113,19 @@ typedef struct CA_MESSAGE
 typedef std::set<int> ca_map_t;
 typedef ca_map_t::iterator ca_map_iterator_t;
 
-typedef std::vector<u16>            bSIDVector;
+typedef std::vector<u16> bSIDVector;
 
-typedef std::vector<u16>            CaIdVector;
-typedef std::vector<u16>::iterator      CaIdVectorIterator;
-typedef std::vector<u16>::const_iterator    CaIdVectorConstIterator;
+typedef std::vector<u16> CaIdVector;
+typedef std::vector<u16>::iterator CaIdVectorIterator;
+typedef std::vector<u16>::const_iterator CaIdVectorConstIterator;
 
-#define CA_MESSAGE_SIZE     sizeof(CA_MESSAGE)
-#define CA_MESSAGE_ENTRIES  256
-#define CA_MESSAGE_ENTRIES_CI   128
-#define CA_MESSAGE_ENTRIES_SC   64
+#define CA_MESSAGE_SIZE		sizeof(CA_MESSAGE)
+#define CA_MESSAGE_ENTRIES	256
+#define CA_MESSAGE_ENTRIES_CI	128
+#define CA_MESSAGE_ENTRIES_SC	64
 
 #ifndef CS_CA_PDATA
-#define CS_CA_PDATA     void
+#define CS_CA_PDATA void
 #endif
 
 typedef enum
@@ -376,7 +376,7 @@ class cCA
 		int GetCAIDS(CaIdVector &Caids);
 		/// Send a CA-PMT object and Raw unparsed PMT to the CA layer
 		bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/, enum CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL,
-		    unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
+			unsigned char scrambled = 0, ca_map_t camap = std::set<int>(), int mode = 0, bool enabled = false);
 		/// sh4 unused
 		bool SendDateTime(void);
 		/// the main loop
@@ -388,8 +388,8 @@ class cCA
 		/// as the name says
 		bool CheckCerts(void);
 		/// start pollthread after zapit is ready
-		virtual void setZapitReady(){zapitReady = true;};
-		virtual bool getZapitReady(){return zapitReady;};
+		virtual void setZapitReady() { zapitReady = true; };
+		virtual bool getZapitReady() { return zapitReady; };
 		/// Virtual destructor
 		virtual ~cCA();
 };

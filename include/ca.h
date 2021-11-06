@@ -5,9 +5,10 @@
 #include "cs_types.h"
 #include <vector>
 #include <set>
-typedef std::vector<u16>            CaIdVector;
-typedef std::vector<u16>::iterator      CaIdVectorIterator;
-typedef std::vector<u16>::const_iterator    CaIdVectorConstIterator;
+
+typedef std::vector<u16> CaIdVector;
+typedef std::vector<u16>::iterator CaIdVectorIterator;
+typedef std::vector<u16>::const_iterator CaIdVectorConstIterator;
 
 enum CA_INIT_MASK
 {
@@ -25,29 +26,29 @@ enum CA_SLOT_TYPE
 
 enum CA_MESSAGE_FLAGS
 {
-	CA_MESSAGE_EMPTY        = (1 << 0),
-	CA_MESSAGE_HAS_PARAM1_DATA  = (1 << 1), // Free after use!
-	CA_MESSAGE_HAS_PARAM1_INT   = (1 << 2),
-	CA_MESSAGE_HAS_PARAM1_PTR   = (1 << 3),
-	CA_MESSAGE_HAS_PARAM2_INT   = (1 << 4),
-	CA_MESSAGE_HAS_PARAM2_PTR   = (1 << 5),
-	CA_MESSAGE_HAS_PARAM2_DATA  = (1 << 6),
-	CA_MESSAGE_HAS_PARAM3_DATA  = (1 << 7), // Free after use!
-	CA_MESSAGE_HAS_PARAM3_INT   = (1 << 8),
-	CA_MESSAGE_HAS_PARAM3_PTR   = (1 << 9),
-	CA_MESSAGE_HAS_PARAM4_INT   = (1 << 10),
-	CA_MESSAGE_HAS_PARAM4_PTR   = (1 << 11),
-	CA_MESSAGE_HAS_PARAM4_DATA  = (1 << 12),
-	CA_MESSAGE_HAS_PARAM5_INT   = (1 << 13),
-	CA_MESSAGE_HAS_PARAM5_PTR   = (1 << 14),
-	CA_MESSAGE_HAS_PARAM5_DATA  = (1 << 15),
-	CA_MESSAGE_HAS_PARAM6_INT   = (1 << 16),
-	CA_MESSAGE_HAS_PARAM6_PTR   = (1 << 17),
-	CA_MESSAGE_HAS_PARAM6_DATA  = (1 << 18),
-	CA_MESSAGE_HAS_PARAM1_LONG  = (1 << 19),
-	CA_MESSAGE_HAS_PARAM2_LONG  = (1 << 20),
-	CA_MESSAGE_HAS_PARAM3_LONG  = (1 << 21),
-	CA_MESSAGE_HAS_PARAM4_LONG  = (1 << 22)
+	CA_MESSAGE_EMPTY		= (1 << 0),
+	CA_MESSAGE_HAS_PARAM1_DATA	= (1 << 1), // Free after use!
+	CA_MESSAGE_HAS_PARAM1_INT	= (1 << 2),
+	CA_MESSAGE_HAS_PARAM1_PTR	= (1 << 3),
+	CA_MESSAGE_HAS_PARAM2_INT	= (1 << 4),
+	CA_MESSAGE_HAS_PARAM2_PTR	= (1 << 5),
+	CA_MESSAGE_HAS_PARAM2_DATA	= (1 << 6),
+	CA_MESSAGE_HAS_PARAM3_DATA	= (1 << 7), // Free after use!
+	CA_MESSAGE_HAS_PARAM3_INT	= (1 << 8),
+	CA_MESSAGE_HAS_PARAM3_PTR	= (1 << 9),
+	CA_MESSAGE_HAS_PARAM4_INT	= (1 << 10),
+	CA_MESSAGE_HAS_PARAM4_PTR	= (1 << 11),
+	CA_MESSAGE_HAS_PARAM4_DATA	= (1 << 12),
+	CA_MESSAGE_HAS_PARAM5_INT	= (1 << 13),
+	CA_MESSAGE_HAS_PARAM5_PTR	= (1 << 14),
+	CA_MESSAGE_HAS_PARAM5_DATA	= (1 << 15),
+	CA_MESSAGE_HAS_PARAM6_INT	= (1 << 16),
+	CA_MESSAGE_HAS_PARAM6_PTR	= (1 << 17),
+	CA_MESSAGE_HAS_PARAM6_DATA	= (1 << 18),
+	CA_MESSAGE_HAS_PARAM1_LONG	= (1 << 19),
+	CA_MESSAGE_HAS_PARAM2_LONG	= (1 << 20),
+	CA_MESSAGE_HAS_PARAM3_LONG	= (1 << 21),
+	CA_MESSAGE_HAS_PARAM4_LONG	= (1 << 22)
 };
 
 enum CA_MESSAGE_MSGID
@@ -103,18 +104,12 @@ class cCA
 		uint32_t GetNumberSmartCardSlots(void);
 		static cCA *GetInstance(void);
 		bool SendPMT(int Unit, unsigned char *Data, int Len, CA_SLOT_TYPE SlotType = CA_SLOT_TYPE_ALL);
-//	bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/) { return true; };
+//		bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/) { return true; };
 		bool SendCAPMT(u64 /*Source*/, u8 /*DemuxSource*/, u8 /*DemuxMask*/, const unsigned char * /*CAPMT*/, u32 /*CAPMTLen*/, const unsigned char * /*RawPMT*/, u32 /*RawPMTLen*/, enum CA_SLOT_TYPE
-		    /*SlotType*/, unsigned char /*scrambled = 0*/, ca_map_t /*camap = std::set<int>()*/, int /*mode = 0*/, bool /*enabled = false*/)
-		{
-			return true;
-		};
+			/*SlotType*/, unsigned char /*scrambled = 0*/, ca_map_t /*camap = std::set<int>()*/, int /*mode = 0*/, bool /*enabled = false*/) { return true; };
 		bool SendMessage(const CA_MESSAGE *Msg);
 		void SetInitMask(enum CA_INIT_MASK InitMask);
-		int GetCAIDS(CaIdVector & /*Caids*/)
-		{
-			return 0;
-		};
+		int GetCAIDS(CaIdVector & /*Caids*/) { return 0; };
 		bool Start(void);
 		void Stop(void);
 		void Ready(bool Set);
@@ -125,21 +120,12 @@ class cCA
 		void MenuAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint32_t choice);
 		void InputAnswer(enum CA_SLOT_TYPE, uint32_t Slot, uint8_t *Data, int Len);
 		void MenuClose(enum CA_SLOT_TYPE, uint32_t Slot);
-		void SetTSClock(u32 /*Speed*/, int /*slot*/)
-		{
-			return;
-		};
-		bool checkChannelID(u64 /*chanID*/)
-		{
-			return false;
-		};
-		void setCheckLiveSlot(int /*check*/)
-		{
-			return;
-		};
+		void SetTSClock(u32 /*Speed*/, int /*slot*/) { return; };
+		bool checkChannelID(u64 /*chanID*/) { return false; };
+		void setCheckLiveSlot(int /*check*/) { return; };
 		/// start pollthread after zapit is ready
-		virtual void setZapitReady(){zapitReady = true;};
-		virtual bool getZapitReady(){return zapitReady;};
+		virtual void setZapitReady() { zapitReady = true; };
+		virtual bool getZapitReady() { return zapitReady; };
 		/// Virtual destructor
 		virtual ~cCA();
 };

@@ -39,16 +39,9 @@ if USE_OPENGL
 libgeneric_la_SOURCES += glfb.cpp
 endif
 
-if ENABLE_GSTREAMER_01
+if ENABLE_GSTREAMER
 libgeneric_la_SOURCES += \
-	playback_gst_01.cpp
-AM_LDFLAGS += \
-	-lgstreamer-0.10 \
-	-lgstinterfaces-0.10
-else
-if ENABLE_GSTREAMER_10
-libgeneric_la_SOURCES += \
-	playback_gst_10.cpp
+	playback_gst.cpp
 AM_LDFLAGS += \
 	-lgstreamer-1.0 \
 	-lgsttag-1.0 \
@@ -56,5 +49,4 @@ AM_LDFLAGS += \
 else
 libgeneric_la_SOURCES += \
 	playback.cpp
-endif
 endif

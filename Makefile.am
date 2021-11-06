@@ -77,7 +77,7 @@ endif
 endif
 endif
 endif
-if !ENABLE_GSTREAMER_10
+if !ENABLE_GSTREAMER
 SUBDIRS += libeplayer3
 libstb_hal_la_LIBADD += \
 	libeplayer3/libeplayer3.la

@@ -23,7 +23,7 @@ libarmbox_la_SOURCES = \
 	record.cpp \
 	hdmi_cec.cpp
 
-if ENABLE_GSTREAMER_10
+if ENABLE_GSTREAMER
 libarmbox_la_SOURCES += \
 	playback_gst.cpp
 

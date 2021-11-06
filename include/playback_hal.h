@@ -4,7 +4,7 @@
 #elif HAVE_SPARK_HARDWARE
 #include "../libspark/playback_libeplayer3.h"
 #elif HAVE_ARM_HARDWARE
-#if ENABLE_GSTREAMER_10
+#if ENABLE_GSTREAMER
 #include "../libarmbox/playback_gst.h"
 #else
 #if BOXMODEL_HISILICON

@@ -54,23 +54,23 @@ extern "C"
 #define hal_debug_c(args...) _hal_debug(HAL_DEBUG_VIDEO, NULL, args)
 #define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
 
-#define fop(cmd, args...) ({                \
-		int _r;                     \
-		if (fd >= 0) {                  \
-			if ((_r = ::cmd(fd, args)) < 0)     \
+#define fop(cmd, args...) ({					\
+		int _r;						\
+		if (fd >= 0) {					\
+			if ((_r = ::cmd(fd, args)) < 0)		\
 				hal_info(#cmd"(fd, "#args")\n");\
-			else                    \
+			else					\
 				hal_debug(#cmd"(fd, "#args")\n");\
-		}                       \
-		else { _r = fd; }               \
-		_r;                     \
+		}						\
+		else { _r = fd; }				\
+		_r;						\
 	})
 
 #ifndef VIDEO_GET_SIZE
-#define VIDEO_GET_SIZE             _IOR('o', 55, video_size_t)
+#define VIDEO_GET_SIZE _IOR('o', 55, video_size_t)
 #endif
 #ifndef VIDEO_GET_FRAME_RATE
-#define VIDEO_GET_FRAME_RATE       _IOR('o', 56, unsigned int)
+#define VIDEO_GET_FRAME_RATE _IOR('o', 56, unsigned int)
 #endif
 
 enum
@@ -189,8 +189,8 @@ static const char *vid_modes[] =
 	"1080p25",  // VIDEO_STD_1080P25
 	"1080p50",  // VIDEO_STD_1080P50
 	"1080p60",  // VIDEO_STD_1080P60
-	"1080p2397",    // VIDEO_STD_1080P2397
-	"1080p2997",    // VIDEO_STD_1080P2997
+	"1080p2397",// VIDEO_STD_1080P2397
+	"1080p2997",// VIDEO_STD_1080P2997
 	"2160p24",  // VIDEO_STD_2160P24
 	"2160p25",  // VIDEO_STD_2160P25
 	"2160p30",  // VIDEO_STD_2160P30
@@ -209,11 +209,11 @@ static const char *vid_modes[] =
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
 static void get_packet_defaults(AVPacket *pkt)
 {
-    memset(pkt, 0, sizeof(*pkt));
+	memset(pkt, 0, sizeof(*pkt));
 
-    pkt->pts             = AV_NOPTS_VALUE;
-    pkt->dts             = AV_NOPTS_VALUE;
-    pkt->pos             = -1;
+	pkt->pts = AV_NOPTS_VALUE;
+	pkt->dts = AV_NOPTS_VALUE;
+	pkt->pos = -1;
 }
 #endif
 ssize_t write_all(int fd, const void *buf, size_t count)
@@ -607,7 +607,7 @@ int cVideo::setAspectRatio(int aspect, int mode)
 	int n;
 
 	int mo = (mode < 0 || mode > 3) ? 4 : mode;
-	hal_debug("%s: a:%d m:%d  %s\n", __func__, aspect, mode, m[mo]);
+	hal_debug("%s: a:%d m:%d %s\n", __func__, aspect, mode, m[mo]);
 
 	if (aspect > 3 || aspect == 0)
 		hal_info("%s: invalid aspect: %d\n", __func__, aspect);
@@ -673,7 +673,7 @@ int cVideo::Start(void * /*PcrChannel*/, unsigned short /*PcrPid*/, unsigned sho
 #if 0
 	if (playstate == VIDEO_PLAYING)
 		return 0;
-	if (playstate == VIDEO_FREEZED)  /* in theory better, but not in practice :-) */
+	if (playstate == VIDEO_FREEZED) /* in theory better, but not in practice :-) */
 		fop(ioctl, MPEG_VID_CONTINUE);
 #endif
 	/* implicitly do StopPicture() on video->Start() */
@@ -1048,9 +1048,9 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 		int n = proc_get(VMPEG_framerate[devnum], buf, 16);
 		if (n > 0)
 			sscanf(buf, "%i", &r);
-		width  = proc_get_hex(VMPEG_xres[devnum]);
+		width = proc_get_hex(VMPEG_xres[devnum]);
 		height = proc_get_hex(VMPEG_yres[devnum]);
-		rate   = rate2csapi(r);
+		rate = rate2csapi(r);
 		return;
 	}
 	ioctl(fd, VIDEO_GET_SIZE, &s);
@@ -1236,7 +1236,7 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format)
 bool getvideo2(unsigned char *video, int xres, int yres)
 {
 	bool ret = false;
-	if (video ==  NULL)
+	if (video == NULL)
 		return ret;
 	char videosnapshot[] = "/dev/dvb/adapter0/video0";
 	int fd_video = open(videosnapshot, O_RDONLY);
@@ -1380,7 +1380,7 @@ void get_osd_buf(unsigned char *osd_data)
 	close(fb);
 }
 
-inline void rgb24torgb32(unsigned char  *src, unsigned char *dest, int picsize)
+inline void rgb24torgb32(unsigned char *src, unsigned char *dest, int picsize)
 {
 	for (int i = 0; i < picsize; i++)
 	{
@@ -1397,7 +1397,7 @@ bool cVideo::GetScreenImage(unsigned char *&out_data, int &xres, int &yres, bool
 #define VDEC_PIXFMT AV_PIX_FMT_BGR24
 
 	hal_info("%s: out_data 0x%p xres %d yres %d vid %d osd %d scale %d\n",
-	    __func__, out_data, xres, yres, get_video, get_osd, scale_to_video);
+		__func__, out_data, xres, yres, get_video, get_osd, scale_to_video);
 	int aspect = 0;
 	getPictureInfo(xres, yres, aspect); /* aspect is dummy here */
 	aspect = getAspectRatio();
@@ -1440,7 +1440,7 @@ bool cVideo::GetScreenImage(unsigned char *&out_data, int &xres, int &yres, bool
 			free(video_src);
 			return false;
 		}
-		if (grab_w != xres || grab_h != yres)  /* scale video into data... */
+		if (grab_w != xres || grab_h != yres) /* scale video into data... */
 		{
 			bool ret = swscale(video_src, out_data, grab_w, grab_h, xres, yres, VDEC_PIXFMT);
 			if (!ret)
@@ -1450,7 +1450,7 @@ bool cVideo::GetScreenImage(unsigned char *&out_data, int &xres, int &yres, bool
 				return false;
 			}
 		}
-		else   /* get_video and no fancy scaling needed */
+		else /* get_video and no fancy scaling needed */
 		{
 			rgb24torgb32(video_src, out_data, grab_w * grab_h);
 		}
@@ -1506,7 +1506,7 @@ bool cVideo::GetScreenImage(unsigned char *&out_data, int &xres, int &yres, bool
 				{
 					uint8_t *in = (uint8_t *)(pixpos);
 					uint8_t *out = (uint8_t *)d;
-					int a = in[3];  /* TODO: big/little endian? */
+					int a = in[3]; /* TODO: big/little endian? */
 					*out = (*out + ((*in - *out) * a) / 256);
 					in++;
 					out++;

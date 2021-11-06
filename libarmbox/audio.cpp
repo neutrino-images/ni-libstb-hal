@@ -17,16 +17,16 @@
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
-#define fop(cmd, args...) ({                \
-		int _r;                     \
-		if (fd >= 0) {                  \
-			if ((_r = ::cmd(fd, args)) < 0)     \
+#define fop(cmd, args...) ({					\
+		int _r;						\
+		if (fd >= 0) {					\
+			if ((_r = ::cmd(fd, args)) < 0)		\
 				hal_info(#cmd"(fd, "#args")\n");\
-			else                    \
+			else					\
 				hal_debug(#cmd"(fd, "#args")\n");\
-		}                       \
-		else { _r = fd; }               \
-		_r;                     \
+		}						\
+		else { _r = fd; }				\
+		_r;						\
 	})
 
 #include <linux/soundcard.h>
@@ -287,14 +287,14 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	{
 		if (dsp_dev)
 			hal_info("%s: DSP_DEVICE is set (%s) but cannot be opened,"
-			    " fall back to /dev/dsp\n", __func__, dsp_dev);
+				" fall back to /dev/dsp\n", __func__, dsp_dev);
 		dsp_dev = "/dev/dsp";
 	}
 	if ((!mix_dev) || (access(mix_dev, W_OK)))
 	{
 		if (mix_dev)
 			hal_info("%s: MIX_DEVICE is set (%s) but cannot be opened,"
-			    " fall back to /dev/mixer\n", __func__, dsp_dev);
+				" fall back to /dev/mixer\n", __func__, dsp_dev);
 		mix_dev = "/dev/mixer";
 	}
 	hal_info("cAudio::%s: dsp_dev %s mix_dev %s\n", __func__, dsp_dev, mix_dev); /* NULL mix_dev is ok */
@@ -346,7 +346,7 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	if (usable == 0)
 	{
 		hal_info("%s: devmask: %08x stereo: %08x, no usable dev :-(\n",
-		    __func__, devmask, stereo);
+			__func__, devmask, stereo);
 		close(mixer_fd);
 		mixer_fd = -1;
 		return 0; /* TODO: should we treat this as error? */
@@ -356,13 +356,13 @@ int cAudio::PrepareClipPlay(int ch, int srate, int bits, int little_endian)
 	{
 		/* TODO: this code is not yet tested as I have only single-mixer devices... */
 		hal_info("%s: more than one mixer control: devmask %08x stereo %08x\n"
-		    "%s: querying MIX_NUMBER environment variable...\n",
-		    __func__, devmask, stereo, __func__);
+			"%s: querying MIX_NUMBER environment variable...\n",
+			__func__, devmask, stereo, __func__);
 		const char *tmp = getenv("MIX_NUMBER");
 		if (tmp)
 			mixer_num = atoi(tmp);
 		hal_info("%s: mixer_num is %d -> device %08x\n",
-		    __func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
+			__func__, mixer_num, (mixer_num >= 0) ? (1 << mixer_num) : 0);
 		/* no error checking, you'd better know what you are doing... */
 	}
 	else
@@ -457,13 +457,13 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 	/* this does not work, some of the values are negative?? */
 	AMPEGStatus A;
 	memcpy(&A, &i.word00, sizeof(i.word00));
-	layer   = A.audio_mpeg_layer;
-	mode    = A.audio_mpeg_mode;
+	layer = A.audio_mpeg_layer;
+	mode = A.audio_mpeg_mode;
 	bitrate = A.audio_mpeg_bitrate;
 	switch (A.audio_mpeg_frequency)
 #endif
 		/* layer and bitrate are not used anyway... */
-		layer   = 0; //(i.word00 >> 17) & 3;
+		layer = 0; //(i.word00 >> 17) & 3;
 	bitrate = 0; //(i.word00 >> 12) & 3;
 	switch (type)
 	{
@@ -490,7 +490,7 @@ void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int
 
 void cAudio::SetHdmiDD(bool enable)
 {
-	const char *opt[] = {  "downmix", "passthrough" };
+	const char *opt[] = { "downmix", "passthrough" };
 	hal_debug("%s %d\n", __func__, enable);
 	proc_put("/proc/stb/audio/ac3", opt[enable], strlen(opt[enable]));
 }
@@ -498,7 +498,7 @@ void cAudio::SetHdmiDD(bool enable)
 void cAudio::SetSpdifDD(bool enable)
 {
 	//using this function for dts passthrough
-	const char *opt[] = {  "downmix", "passthrough" };
+	const char *opt[] = { "downmix", "passthrough" };
 	hal_debug("%s %d\n", __func__, enable);
 	proc_put("/proc/stb/audio/dts", opt[enable], strlen(opt[enable]));
 }
@@ -513,7 +513,7 @@ void cAudio::EnableAnalogOut(bool enable)
 	hal_debug("%s %d\n", __FUNCTION__, enable);
 }
 
-#define AUDIO_BYPASS_ON  0
+#define AUDIO_BYPASS_ON 0
 #define AUDIO_BYPASS_OFF 1
 void cAudio::setBypassMode(bool disable)
 {

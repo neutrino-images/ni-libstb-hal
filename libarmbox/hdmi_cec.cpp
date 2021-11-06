@@ -52,24 +52,24 @@
 #define hal_debug_c(args...) _hal_debug(HAL_DEBUG_INIT, NULL, args)
 #define hal_info_c(args...) _hal_info(HAL_DEBUG_INIT, NULL, args)
 
-#define fop(cmd, args...) ({                \
-		int _r;                     \
-		if (fd >= 0) {                  \
-			if ((_r = ::cmd(fd, args)) < 0)     \
-				hal_info(#cmd"(fd, "#args")\n");    \
-			else                    \
+#define fop(cmd, args...) ({					\
+		int _r;						\
+		if (fd >= 0) {					\
+			if ((_r = ::cmd(fd, args)) < 0)		\
+				hal_info(#cmd"(fd, "#args")\n");\
+			else					\
 				hal_debug(#cmd"(fd, "#args")\n");\
-		}                       \
-		else { _r = fd; }               \
-		_r;                     \
+		}						\
+		else { _r = fd; }				\
+		_r;						\
 	})
 
 #define CEC_FALLBACK_DEVICE "/dev/cec0"
 #define CEC_HDMIDEV "/dev/hdmi_cec"
 #if BOXMODEL_H7
-#define RC_DEVICE  "/dev/input/event2"
+#define RC_DEVICE "/dev/input/event2"
 #else
-#define RC_DEVICE  "/dev/input/event1"
+#define RC_DEVICE "/dev/input/event1"
 #endif
 
 hdmi_cec *hdmi_cec::hdmi_cec_instance = NULL;
@@ -689,9 +689,7 @@ void hdmi_cec::Receive(int what)
 				case CEC_OPCODE_DEVICE_VENDOR_ID:
 				case CEC_OPCODE_VENDOR_COMMAND_WITH_ID:
 				{
-					uint64_t iVendorId = ((uint64_t)rxmessage.data[1] << 16) +
-					    ((uint64_t)rxmessage.data[2] << 8) +
-					    (uint64_t)rxmessage.data[3];
+					uint64_t iVendorId = ((uint64_t)rxmessage.data[1] << 16) + ((uint64_t)rxmessage.data[2] << 8) + (uint64_t)rxmessage.data[3];
 					hal_info(GREEN "[CEC] decoded message '%s' (%s)\n" NORMAL, ToString((cec_opcode)rxmessage.opcode), ToString((cec_vendor_id)iVendorId));
 					break;
 				}

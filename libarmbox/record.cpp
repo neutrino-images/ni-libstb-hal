@@ -286,8 +286,8 @@ void cRecord::RecordThread()
 			if (toread > readsize)
 				toread = readsize;
 			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
-			hal_debug("%s: buf_pos %6d s %6d / %6d\n", __func__,
-			    buf_pos, (int)s, bufsize - buf_pos);
+			hal_debug("%s: buf_pos %6d s %6d / %6d\n",
+				__func__, buf_pos, (int)s, bufsize - buf_pos);
 			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
@@ -328,7 +328,7 @@ void cRecord::RecordThread()
 			hal_debug("%s: aio in progress, free: %d\n", __func__, bufsize - buf_pos);
 			continue;
 		}
-		// not calling aio_return causes a memory leak  --martii
+		// not calling aio_return causes a memory leak --martii
 		r = aio_return(&a);
 		if (r < 0)
 		{

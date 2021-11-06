@@ -2,9 +2,6 @@
 #if HAVE_DUCKBOX_HARDWARE
 #include "../libduckbox/audio_lib.h"
 #include "../libduckbox/audio_mixer.h"
-#elif HAVE_SPARK_HARDWARE
-#include "../libspark/audio_lib.h"
-#include "../libspark/audio_mixer.h"
 #elif HAVE_ARM_HARDWARE
 #include "../libarmbox/audio_lib.h"
 #elif HAVE_MIPS_HARDWARE

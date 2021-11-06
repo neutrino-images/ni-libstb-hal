@@ -93,7 +93,6 @@ libeplayer3/Makefile
 libeplayer3-sh4/Makefile
 libgeneric-pc/Makefile
 libraspi/Makefile
-libspark/Makefile
 tools/Makefile
 ])
 

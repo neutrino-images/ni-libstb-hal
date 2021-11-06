@@ -96,18 +96,9 @@ class hdmi_cec : public OpenThreads::Thread
 		void vol_up();
 		void vol_down();
 		void toggle_mute();
-		int GetVolume()
-		{
-			return volume;
-		};
-		bool isMuted()
-		{
-			return muted;
-		};
-		int GetAudioDestination()
-		{
-			return (int)audio_destination;
-		}
+		int GetVolume() { return volume; };
+		bool isMuted() { return muted; };
+		int GetAudioDestination() { return (int)audio_destination; }
 		void SetAudioDestination(int audio_dest);
 };
 

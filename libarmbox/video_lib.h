@@ -222,14 +222,8 @@ class cVideo
 
 		void setAVInput(int val);
 
-		void *GetTVEnc()
-		{
-			return NULL;
-		};
-		void *GetTVEncSD()
-		{
-			return NULL;
-		};
+		void *GetTVEnc() { return NULL; };
+		void *GetTVEncSD() { return NULL; };
 
 		/* aspect ratio */
 		int getAspectRatio(void);
@@ -263,7 +257,7 @@ class cVideo
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE);
 		void SetCECAutoView(bool);
 		void SetCECAutoStandby(bool);
-		int  GetAudioDestination();
+		int GetAudioDestination();
 		void SetAudioDestination(int audio_dest);
 		bool ShowPicture(const char *fname);
 		void StopPicture();
@@ -274,34 +268,13 @@ class cVideo
 		void setContrast(int val);
 		void SetVideoMode(analog_mode_t mode);
 		void QuadPiP(bool active = false, int _x = 0, int _y = 0, int _w = 360, int _h = 288);
-		void SetDBDR(int)
-		{
-			return;
-		};
-		void SetAudioHandle(void *)
-		{
-			return;
-		};
-		void SetAutoModes(int [VIDEO_STD_MAX])
-		{
-			return;
-		};
-		int  OpenVBI(int)
-		{
-			return 0;
-		};
-		int  CloseVBI(void)
-		{
-			return 0;
-		};
-		int  StartVBI(unsigned short)
-		{
-			return 0;
-		};
-		int  StopVBI(void)
-		{
-			return 0;
-		};
+		void SetDBDR(int) { return; };
+		void SetAudioHandle(void *) { return; };
+		void SetAutoModes(int [VIDEO_STD_MAX]) { return; };
+		int OpenVBI(int) { return 0; };
+		int CloseVBI(void) { return 0; };
+		int StartVBI(unsigned short) { return 0; };
+		int StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		void SetColorFormat(COLOR_FORMAT color_format);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);

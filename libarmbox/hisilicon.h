@@ -8,35 +8,35 @@
 #define HI_FORMAT_MAX_LANGUAGE_NUM          (4)
 #define HI_FORMAT_SERVICE_DESCRIPT_LEN      (64)
 
-typedef uint8_t           HI_U8;
-typedef uint16_t          HI_U16;
-typedef uint32_t            HI_U32;
-typedef int8_t             HI_S8;
-typedef int16_t                   HI_S16;
-typedef int32_t                     HI_S32;
-typedef uint64_t      HI_U64;
-typedef int64_t               HI_S64;
+typedef uint8_t  HI_U8;
+typedef uint16_t HI_U16;
+typedef uint32_t HI_U32;
+typedef int8_t   HI_S8;
+typedef int16_t  HI_S16;
+typedef int32_t  HI_S32;
+typedef uint64_t HI_U64;
+typedef int64_t  HI_S64;
 typedef void HI_VOID;
 typedef char HI_CHAR;
 
 typedef enum
 {
-	HI_FALSE    = 0,
-	HI_TRUE     = 1,
+	HI_FALSE = 0,
+	HI_TRUE = 1,
 } HI_BOOL;
 
 typedef enum hiFORMAT_SUBTITLE_TYPE_E
 {
-	HI_FORMAT_SUBTITLE_ASS = 0x0,    /**< ASS subtitle */
+	HI_FORMAT_SUBTITLE_ASS = 0x0, /**< ASS subtitle */
 	HI_FORMAT_SUBTITLE_LRC,       /**< LRC subtitle */
 	HI_FORMAT_SUBTITLE_SRT,       /**< SRT subtitle */
 	HI_FORMAT_SUBTITLE_SMI,       /**< SMI subtitle */
 	HI_FORMAT_SUBTITLE_SUB,       /**< SUB subtitle */
 	HI_FORMAT_SUBTITLE_TXT,       /**< RAW UTF8 subtitle */
-	HI_FORMAT_SUBTITLE_HDMV_PGS,      /**< pgs subtitle */
-	HI_FORMAT_SUBTITLE_DVB_SUB,       /**< DVB subtitle */
-	HI_FORMAT_SUBTITLE_DVD_SUB,       /**< DVD subtitle */
-	HI_FORMAT_SUBTITLE_TTML,          /**< TTML subtitle */
+	HI_FORMAT_SUBTITLE_HDMV_PGS,  /**< pgs subtitle */
+	HI_FORMAT_SUBTITLE_DVB_SUB,   /**< DVB subtitle */
+	HI_FORMAT_SUBTITLE_DVD_SUB,   /**< DVD subtitle */
+	HI_FORMAT_SUBTITLE_TTML,      /**< TTML subtitle */
 	HI_FORMAT_SUBTITLE_WEBVTT,
 	HI_FORMAT_SUBTITLE_BUTT
 } HI_FORMAT_SUBTITLE_TYPE_E;
@@ -75,7 +75,7 @@ typedef enum hiFORMAT_AUDIO_TYPE_E
 	HI_FORMAT_AUDIO_IMC,
 	HI_FORMAT_AUDIO_MUSEPACK7,
 	HI_FORMAT_AUDIO_MLP,
-	HI_FORMAT_AUDIO_GSM_MS, /**< as found in WAV.*/
+	HI_FORMAT_AUDIO_GSM_MS,       /**< as found in WAV.*/
 	HI_FORMAT_AUDIO_ATRAC3,
 	HI_FORMAT_AUDIO_VOXWARE,
 	HI_FORMAT_AUDIO_APE,
@@ -98,12 +98,12 @@ typedef enum hiFORMAT_AUDIO_TYPE_E
 	HI_FORMAT_AUDIO_DRA,
 	HI_FORMAT_AUDIO_DTS_EXPRESS,
 
-	HI_FORMAT_AUDIO_PCM = 0x100,   /**< various PCM codecs. */
+	HI_FORMAT_AUDIO_PCM = 0x100,  /**< various PCM codecs. */
 	HI_FORMAT_AUDIO_PCM_BLURAY = 0x121,
 
 	HI_FORMAT_AUDIO_ADPCM = 0x130, /**< various ADPCM codecs. */
 
-	HI_FORMAT_AUDIO_AMR_NB = 0x160,/**< various AMR codecs. */
+	HI_FORMAT_AUDIO_AMR_NB = 0x160, /**< various AMR codecs. */
 	HI_FORMAT_AUDIO_AMR_WB,
 	HI_FORMAT_AUDIO_AMR_AWB,
 
@@ -165,7 +165,7 @@ typedef enum hiFORMAT_VIDEO_TYPE_E
 	HI_FORMAT_VIDEO_HEVC,        /**< HEVC(H265)*/
 	HI_FORMAT_VIDEO_DV,
 	HI_FORMAT_VIDEO_HUFFYUV,
-	HI_FORMAT_VIDEO_DIVX,           /**< DIVX,not supported*/
+	HI_FORMAT_VIDEO_DIVX,        /**< DIVX,not supported*/
 	HI_FORMAT_VIDEO_REALMAGICMPEG4, /**< REALMAGIC MPEG4,not supported*/
 	HI_FORMAT_VIDEO_VP9,         /**<VP9*/
 	HI_FORMAT_VIDEO_WMV3,
@@ -175,9 +175,9 @@ typedef enum hiFORMAT_VIDEO_TYPE_E
 
 typedef enum hiFORMAT_SOURCE_TYPE_E
 {
-	HI_FORMAT_SOURCE_LOCAL = 0x0,   /**< Local file */
-	HI_FORMAT_SOURCE_NET_VOD,       /**< Net VOD file */
-	HI_FORMAT_SOURCE_NET_LIVE,      /**< Net Live stream */
+	HI_FORMAT_SOURCE_LOCAL = 0x0, /**< Local file */
+	HI_FORMAT_SOURCE_NET_VOD,     /**< Net VOD file */
+	HI_FORMAT_SOURCE_NET_LIVE,    /**< Net Live stream */
 	HI_FORMAT_SOURCE_BUTT
 } HI_FORMAT_SOURCE_TYPE_E;
 
@@ -207,7 +207,7 @@ typedef struct hiFORMAT_AUD_INFO_S
 	HI_U32 u32Role;                          /**< Role descriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value may be the bitwise '|' result of value define in HI_FORMAT_ROLE_VALUE_E*/
 	HI_U32 u32Accessibility;                 /**<  Accessbilitydescriptor value of mpeg dash. the most 8 bits is scheme value(refer to HI_FORMAT_ROLE_SCHEME_E), the left 24 bits is descriptor value, the descriptor value type is number*/
 	HI_S64 s64Duration;                      /**< Duration of audio stream, in the unit of ms. */
-	HI_U32 u32CodecTag; /**< Codec tag of audio stream format, fourcc (LSB first, so "ABCD" -> ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A'). */
+	HI_U32 u32CodecTag;                      /**< Codec tag of audio stream format, fourcc (LSB first, so "ABCD" -> ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A'). */
 } HI_FORMAT_AUD_INFO_S;
 
 typedef struct hiFORMAT_VID_INFO_S

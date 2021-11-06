@@ -83,18 +83,9 @@ class cPlayback
 		bool SetVPid(int /*pid*/);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);
-		int GetAPid(void)
-		{
-			return mAudioStream;
-		}
-		int GetVPid(void)
-		{
-			return 0;
-		}
-		int GetSubtitlePid(void)
-		{
-			return mSubtitleStream;
-		}
+		int GetAPid(void) { return mAudioStream; }
+		int GetVPid(void) { return 0; }
+		int GetSubtitlePid(void) { return mSubtitleStream; }
 		int GetTeletextPid(void);
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;
@@ -133,7 +124,9 @@ class netlink_event : public OpenThreads::Thread
 		int m_player_state;
 		enum
 		{
-			stIdle, stRunning, stStopped,
+			stIdle,
+			stRunning,
+			stStopped,
 		};
 		struct streamid
 		{
@@ -157,10 +150,7 @@ class netlink_event : public OpenThreads::Thread
 		void Receive();
 	public:
 		static netlink_event *getInstance();
-		uint64_t getDuration()
-		{
-			return fileinfo.s64Duration;
-		};
+		uint64_t getDuration() { return fileinfo.s64Duration; };
 		bool Start(cPlayback *player);
 		bool Stop();
 };

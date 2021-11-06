@@ -64,14 +64,14 @@ double mod_julian_date(struct tm *t)
 	int day;
 	int year;
 
-	year  = t->tm_year + 1900;
+	year = t->tm_year + 1900;
 	month = t->tm_mon + 1;
-	day   = t->tm_mday;
+	day = t->tm_mday;
 
 	date = day - 32076 +
-	    1461 * (year + 4800 + (month - 14) / 12) / 4 +
-	    367 * (month - 2 - (month - 14) / 12 * 12) / 12 -
-	    3 * ((year + 4900 + (month - 14) / 12) / 100) / 4;
+		1461 * (year + 4800 + (month - 14) / 12) / 4 +
+		367 * (month - 2 - (month - 14) / 12 * 12) / 12 -
+		3 * ((year + 4900 + (month - 14) / 12) / 100) / 4;
 
 	date += (t->tm_hour + 12.0) / 24.0;
 	date += (t->tm_min) / 1440.0;
@@ -212,10 +212,10 @@ int main(int argc, char **argv)
 				}
 				tmp = gmtime(&t2);
 				fprintf(stderr, "current time: %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
-				    tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
+					tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 				tmp = gmtime(&t);
 				fprintf(stderr, "wakeup time:  %04d-%02d-%02d %02d:%02d:%02d\n", tmp->tm_year + 1900,
-				    tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
+					tmp->tm_mon + 1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 				ret = ioctl(fd, VFDSETPOWERONTIME, &t);
 				break;
 			case 'P':
@@ -254,6 +254,7 @@ int main(int argc, char **argv)
 					ret = val;
 				}
 				break;
+
 // Reminder to myself, here's a semi-sane default for Pingulux boxes:
 // spark_fp -S 0:9966da25 -S 1:11eeda25 -S 2:cc33ba45 -S 3:dd227887 -S 4:aa557887 -B 0:996640bf -B 1:11ee40bf -B 2:cc33b847 -B 3:dd2228d7 -B 4:aa5528d7
 // Not sure whether these are the original settings. --martii

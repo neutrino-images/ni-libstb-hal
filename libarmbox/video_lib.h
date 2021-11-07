@@ -3,7 +3,7 @@
 
 #include <linux/dvb/video.h>
 #include "cs_types.h"
-#include "dmx.h"
+#include "dmx_hal.h"
 
 typedef struct cs_vs_format_t
 {

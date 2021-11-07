@@ -6,7 +6,7 @@
 #include <vector>
 #include <linux/dvb/video.h>
 #include "cs_types.h"
-#include "dmx.h"
+#include "dmx_hal.h"
 extern "C" {
 #include <libavutil/rational.h>
 }

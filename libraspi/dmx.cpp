@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <string>
 #include <sys/ioctl.h>
-#include "dmx_lib.h"
+#include "dmx.h"
 #include "hal_debug.h"
 
 #include "video_lib.h"

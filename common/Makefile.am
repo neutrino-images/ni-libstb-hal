@@ -54,4 +54,4 @@ libcommon_la_SOURCES += \
 	hal_debug.cpp \
 	proc_tools.c \
 	pwrmngr.cpp \
-	version_hal.cpp
+	version.cpp

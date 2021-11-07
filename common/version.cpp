@@ -16,7 +16,7 @@
  */
 #include <libstb-hal-config.h>
 
-#include <version_hal.h>
+#include <version.h>
 
 
 void hal_get_lib_version(hal_libversion_t *ver)

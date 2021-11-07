@@ -1,5 +1,5 @@
-#ifndef __DMX_LIB_H__
-#define __DMX_LIB_H__
+#ifndef __DMX_H__
+#define __DMX_H__
 
 #include <cstdlib>
 #include <vector>
@@ -66,4 +66,4 @@ class cDemux
 		void *pdata;
 };
 
-#endif // __DMX_LIB_H__
+#endif // __DMX_H__

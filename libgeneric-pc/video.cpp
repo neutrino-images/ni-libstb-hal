@@ -49,7 +49,7 @@ extern "C" {
 #endif
 
 #include "video_lib.h"
-#include "dmx_hal.h"
+#include "dmx.h"
 #include "glfb_priv.h"
 #include "hal_debug.h"
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)

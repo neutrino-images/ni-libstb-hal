@@ -2,7 +2,7 @@
 #define __RECORD_LIB_H__
 
 #include <semaphore.h>
-#include "dmx_hal.h"
+#include "dmx.h"
 
 #define REC_STATUS_OK 0
 #define REC_STATUS_SLOW 1

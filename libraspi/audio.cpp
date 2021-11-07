@@ -21,7 +21,7 @@
 #include <cstdlib>
 
 #include "audio_lib.h"
-#include "dmx_hal.h"
+#include "dmx.h"
 #include "hal_debug.h"
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_AUDIO, this, args)

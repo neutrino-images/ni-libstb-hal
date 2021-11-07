@@ -33,7 +33,7 @@
 #include <sys/ioctl.h>
 #include <OpenThreads/Mutex>
 #include <OpenThreads/ScopedLock>
-#include "dmx_hal.h"
+#include "dmx.h"
 #include "hal_debug.h"
 
 #include "video_lib.h"

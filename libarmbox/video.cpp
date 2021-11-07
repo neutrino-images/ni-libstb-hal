@@ -918,11 +918,13 @@ void cVideo::QuadPiP(bool active, int _x, int _y, int _w, int _h)
 {
 	char buffer[64];
 	int _a = 1;
-	if (active) {
+	if (active)
+	{
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 		proc_put("/proc/stb/video/decodermode", "mosaic", strlen("mosaic"));
 #endif
-		for (unsigned int i = 0; i < 4; i++) {
+		for (unsigned int i = 0; i < 4; i++)
+		{
 			sprintf(buffer, "%x", _x);
 			proc_put(VMPEG_dst_left[i], buffer, strlen(buffer));
 			sprintf(buffer, "%x", _y);
@@ -934,8 +936,11 @@ void cVideo::QuadPiP(bool active, int _x, int _y, int _w, int _h)
 			sprintf(buffer, "%x", _a);
 			proc_put(VMPEG_dst_apply[i], buffer, strlen(buffer));
 		}
-	} else {
-		for (unsigned int i = 0; i < 4; i++) {
+	}
+	else
+	{
+		for (unsigned int i = 0; i < 4; i++)
+		{
 			sprintf(buffer, "%x", 0);
 			proc_put(VMPEG_dst_left[i], buffer, strlen(buffer));
 			sprintf(buffer, "%x", 0);

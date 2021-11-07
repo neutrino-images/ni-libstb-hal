@@ -391,11 +391,11 @@ void cAudio::run()
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
-		0,		// bWriteable (1=true,0=false)
-		NULL,		// user data; will be passed to our callback functions
-		_my_read,	// read callback
-		NULL,		// write callback
-		NULL);		// seek callback
+			0,		// bWriteable (1=true,0=false)
+			NULL,		// user data; will be passed to our callback functions
+			_my_read,	// read callback
+			NULL,		// write callback
+			NULL);		// seek callback
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
@@ -473,9 +473,9 @@ void cAudio::run()
 	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
 	hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n", avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
 	swr = swr_alloc_set_opts(swr,
-		o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
-		p->channel_layout, c->sample_fmt, p->sample_rate, /* input */
-		0, NULL);
+			o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
+			p->channel_layout, c->sample_fmt, p->sample_rate, /* input */
+			0, NULL);
 	if (! swr)
 	{
 		hal_info("could not alloc resample context\n");

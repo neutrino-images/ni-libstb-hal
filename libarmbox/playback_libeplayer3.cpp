@@ -693,7 +693,7 @@ int cPlayback::GetTeletextPid(void)
 
 	/*
 	if (player && player->manager && player->manager->teletext)
-	{       
+	{
 		char **TrackList = NULL;
 		player->manager->teletext->Command(player, MANAGER_LIST, &TrackList);
 		if (TrackList != NULL)

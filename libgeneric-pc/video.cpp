@@ -349,8 +349,8 @@ bool cVideo::ShowPicture(const char *fname)
 	{
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
-			c->width, c->height, VDEC_PIXFMT,
-			SWS_BICUBIC, 0, 0, 0);
+				c->width, c->height, VDEC_PIXFMT,
+				SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
 			hal_info("%s: ERROR setting up SWS context\n", __func__);
 		else
@@ -541,11 +541,11 @@ void cVideo::run(void)
 #endif
 	inp = av_find_input_format("mpegts");
 	AVIOContext *pIOCtx = avio_alloc_context(inbuf, INBUF_SIZE, // internal Buffer and its size
-		0,		// bWriteable (1=true,0=false)
-		NULL,		// user data; will be passed to our callback functions
-		my_read,	// read callback
-		NULL,		// write callback
-		NULL);		// seek callback
+			0,		// bWriteable (1=true,0=false)
+			NULL,		// user data; will be passed to our callback functions
+			my_read,	// read callback
+			NULL,		// write callback
+			NULL);		// seek callback
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
@@ -639,9 +639,9 @@ void cVideo::run(void)
 		{
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
-				c->width, c->height, c->pix_fmt,
-				c->width, c->height, VDEC_PIXFMT,
-				SWS_BICUBIC, 0, 0, 0);
+					c->width, c->height, c->pix_fmt,
+					c->width, c->height, VDEC_PIXFMT,
+					SWS_BICUBIC, 0, 0, 0);
 			if (!convert)
 				hal_info("%s: ERROR setting up SWS context\n", __func__);
 			else
@@ -701,7 +701,7 @@ void cVideo::run(void)
 #else
 				frame->best_effort_timestamp
 #endif
-				);
+			);
 		}
 		else
 			hal_debug("%s: got_frame: %d stillpicture: %d\n", __func__, got_frame, stillpicture);

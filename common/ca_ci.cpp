@@ -45,8 +45,8 @@ static bool checkLiveSlot = false;
 static bool CertChecked = false;
 static bool Cert_OK = false;
 static uint8_t NullPMT[50] = {0x9F, 0x80, 0x32, 0x2E, 0x03, 0x6E, 0xA7, 0x37, 0x00, 0x00, 0x1B, 0x15, 0x7D, 0x00, 0x00, 0x03, 0x15, 0x7E, 0x00, 0x00, 0x03, 0x15, 0x7F, 0x00,
-        0x00, 0x06, 0x15, 0x80, 0x00, 0x00, 0x06, 0x15, 0x82, 0x00, 0x00, 0x0B, 0x08, 0x7B, 0x00, 0x00, 0x05, 0x09, 0x42, 0x00, 0x00, 0x06, 0x15, 0x81, 0x00, 0x00
-    };
+		0x00, 0x06, 0x15, 0x80, 0x00, 0x00, 0x06, 0x15, 0x82, 0x00, 0x00, 0x0B, 0x08, 0x7B, 0x00, 0x00, 0x05, 0x09, 0x42, 0x00, 0x00, 0x06, 0x15, 0x81, 0x00, 0x00
+	};
 static cCA *pcCAInstance = NULL;
 
 /* für callback */
@@ -107,7 +107,8 @@ void cCA::write_ci_info(int slot, CaIdVector caids)
 	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d", slot);
 	ModuleName(CA_SLOT_TYPE_CI, slot, mname);
 	FILE *fd = fopen(fname, "w");
-	if (fd == NULL) return;
+	if (fd == NULL)
+		return;
 	snprintf(buf, sizeof(buf), "%s\n", mname);
 	fputs(buf, fd);
 	if (caids.size() > 40)
@@ -129,7 +130,8 @@ void cCA::del_ci_info(int slot)
 {
 	char fname[20];
 	snprintf(fname, sizeof(fname), "/tmp/ci-slot%d", slot);
-	if (access(fname, F_OK) == 0) remove(fname);
+	if (access(fname, F_OK) == 0)
+		remove(fname);
 }
 
 /* helper function to call the cpp thread loop */
@@ -143,7 +145,7 @@ void *execute_thread(void *c)
 
 /* from dvb-apps */
 int asn_1_decode(uint16_t *length, unsigned char *asn_1_array,
-    uint32_t asn_1_array_len)
+	uint32_t asn_1_array_len)
 {
 	uint8_t length_field;
 
@@ -645,7 +647,8 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char *cabuf, 
 	bool sid_found = false;
 	bool recordUse_found = false;
 	printf("%s -> %s\n", FILENAME, __func__);
-	if (!num_slots) return true;    /* stb's without ci-slots */
+	if (!num_slots)
+		return true; /* stb's without ci-slots */
 #if x_debug
 	printf("TP: %llX\n", TP);
 	printf("SID: %04X\n", SID);
@@ -727,7 +730,7 @@ bool cCA::SendCAPMT(u64 tpid, u8 source, u8 camask, const unsigned char *cabuf, 
 			(*It)->pmtlen = calen;
 			for (i = 0; i < calen; i++)
 				(*It)->pmtdata[i] = cabuf[i];
-			(*It)->pmtdata[pos] = 0x04;     // CAPMT_ADD
+			(*It)->pmtdata[pos] = 0x04; // CAPMT_ADD
 			(*It)->newCapmt = true;
 		}
 

@@ -1,2 +1,1 @@
-libstb-hal
-==========
+# NI \o/ - libstb-hal

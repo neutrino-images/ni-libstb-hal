@@ -336,7 +336,7 @@ void hdmi_cec::SendCECMessage(struct cec_message &txmessage, int sleeptime)
 			::write(hdmiFd, &message, 2 + message.length);
 		}
 
-		usleep(sleeptime * 10000);
+		usleep(sleeptime * 1000);
 	}
 }
 

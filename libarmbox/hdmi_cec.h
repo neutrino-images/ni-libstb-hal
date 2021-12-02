@@ -89,7 +89,7 @@ class hdmi_cec : public OpenThreads::Thread
 		void SetCECAutoView(bool);
 		void SetCECAutoStandby(bool);
 		void GetCECAddressInfo();
-		void SendCECMessage(struct cec_message &message, int sleeptime = 10);
+		void SendCECMessage(struct cec_message &message, int sleeptime = 250);
 		void SetCECState(bool state);
 		void ReportPhysicalAddress();
 		bool standby_cec_activ;

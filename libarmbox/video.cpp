@@ -1238,6 +1238,28 @@ void cVideo::SetColorFormat(COLOR_FORMAT color_format)
 		proc_put("/proc/stb/video/hdmi_colorspace", p, strlen(p));
 }
 
+void cVideo::SetHdmiMode(HDMI_MODE hdmi_mode)
+{
+	const char *p = NULL;
+	switch (hdmi_mode)
+	{
+		case HDMI_MODE_AUTO:
+			p = "auto";
+			break;
+		case HDMI_MODE_BT2020NCL:
+			p = "bt2020ncl";
+			break;
+		case HDMI_MODE_BT2020CL:
+			p = "bt2020cl";
+			break;
+		case HDMI_MODE_BT709:
+			p = "bt709";
+			break;
+	}
+	if (p)
+		proc_put("/proc/stb/video/hdmi_colorimetry", p, strlen(p));
+}
+
 bool getvideo2(unsigned char *video, int xres, int yres)
 {
 	bool ret = false;

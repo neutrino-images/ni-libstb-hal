@@ -38,6 +38,14 @@ typedef enum
 
 typedef enum
 {
+	HDMI_MODE_AUTO,
+	HDMI_MODE_BT2020NCL,
+	HDMI_MODE_BT2020CL,
+	HDMI_MODE_BT709
+}HDMI_MODE;
+
+typedef enum
+{
 	VIDEO_FORMAT_MPEG2 = 0,
 	VIDEO_FORMAT_MPEG4_H264,
 	VIDEO_FORMAT_VC1,
@@ -277,6 +285,7 @@ class cVideo
 		int StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		void SetColorFormat(COLOR_FORMAT color_format);
+		void SetHdmiMode(HDMI_MODE hdmi_mode);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 

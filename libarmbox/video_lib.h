@@ -42,7 +42,7 @@ typedef enum
 	HDMI_MODE_BT2020NCL,
 	HDMI_MODE_BT2020CL,
 	HDMI_MODE_BT709
-}HDMI_MODE;
+} HDMI_MODE;
 
 typedef enum
 {

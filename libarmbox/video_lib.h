@@ -38,11 +38,11 @@ typedef enum
 
 typedef enum
 {
-	HDMI_MODE_AUTO,
-	HDMI_MODE_BT2020NCL,
-	HDMI_MODE_BT2020CL,
-	HDMI_MODE_BT709
-} HDMI_MODE;
+	HDMI_COLORIMETRY_AUTO,
+	HDMI_COLORIMETRY_BT2020NCL,
+	HDMI_COLORIMETRY_BT2020CL,
+	HDMI_COLORIMETRY_BT709
+} HDMI_COLORIMETRY;
 
 typedef enum
 {
@@ -284,8 +284,8 @@ class cVideo
 		int StartVBI(unsigned short) { return 0; };
 		int StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
+		void SetHDMIColorimetry(HDMI_COLORIMETRY hdmi_colorimetry);
 		void SetColorFormat(COLOR_FORMAT color_format);
-		void SetHdmiMode(HDMI_MODE hdmi_mode);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 

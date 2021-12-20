@@ -23,18 +23,6 @@ typedef enum
 	ANALOG_SCART_MASK = 0x10
 } analog_mode_t;
 
-typedef enum
-{
-	COLORFORMAT_RGB = 0x10, // keep compatible with analog_mode_t
-	COLORFORMAT_YUV,
-	COLORFORMAT_CVBS,
-	COLORFORMAT_SVIDEO,
-	COLORFORMAT_HDMI_AUTO,
-	COLORFORMAT_HDMI_RGB,
-	COLORFORMAT_HDMI_YCBCR444,
-	COLORFORMAT_HDMI_YCBCR422,
-	COLORFORMAT_HDMI_YCBCR420
-} COLOR_FORMAT;
 
 #if BOXMODEL_VUPLUS_ARM
 typedef enum
@@ -294,7 +282,6 @@ class cVideo
 		int StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		void SetHDMIColorimetry(HDMI_COLORIMETRY hdmi_colorimetry);
-		void SetColorFormat(COLOR_FORMAT color_format);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 };
 

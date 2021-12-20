@@ -1201,43 +1201,6 @@ void cVideo::SetControl(int control, int value)
 	}
 }
 
-void cVideo::SetColorFormat(COLOR_FORMAT color_format)
-{
-	const char *p = NULL;
-	switch (color_format)
-	{
-		case COLORFORMAT_RGB:
-			p = "rgb";
-			break;
-		case COLORFORMAT_YUV:
-			p = "yuv";
-			break;
-		case COLORFORMAT_CVBS:
-			p = "cvbs";
-			break;
-		case COLORFORMAT_SVIDEO:
-			p = "svideo";
-			break;
-		case COLORFORMAT_HDMI_AUTO:
-			p = "Edid(Auto)";
-			break;
-		case COLORFORMAT_HDMI_RGB:
-			p = "Hdmi_Rgb";
-			break;
-		case COLORFORMAT_HDMI_YCBCR444:
-			p = "444";
-			break;
-		case COLORFORMAT_HDMI_YCBCR422:
-			p = "422";
-			break;
-		case COLORFORMAT_HDMI_YCBCR420:
-			p = "420";
-			break;
-	}
-	if (p)
-		proc_put("/proc/stb/video/hdmi_colorspace", p, strlen(p));
-}
-
 #if BOXMODEL_VUPLUS_ARM
 void cVideo::SetHDMIColorimetry(HDMI_COLORIMETRY hdmi_colorimetry)
 {
@@ -1279,6 +1242,7 @@ void cVideo::SetHDMIColorimetry(HDMI_COLORIMETRY hdmi_colorimetry)
 	if (p)
 		proc_put("/proc/stb/video/hdmi_colorimetry", p, strlen(p));
 }
+#endif
 
 bool getvideo2(unsigned char *video, int xres, int yres)
 {

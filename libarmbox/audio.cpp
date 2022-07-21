@@ -162,6 +162,9 @@ int cAudio::do_mute(bool enable, bool remember)
 	sprintf(str, "%d", Muted);
 	proc_put("/proc/stb/audio/j1_mute", str, strlen(str));
 
+	if (fd < 1)
+		openDevice();
+
 	if (fd > 0)
 	{
 		if (ioctl(fd, AUDIO_SET_MUTE, enable) < 0)
@@ -203,6 +206,9 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 
 	mixer.volume_left = left;
 	mixer.volume_right = right;
+
+	if (fd < 1)
+		openDevice();
 
 	if (fd > 0)
 	{

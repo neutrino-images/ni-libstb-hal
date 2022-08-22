@@ -963,6 +963,8 @@ void cVideo::ShowPig(int _x)
 	char buffer[64];
 	sprintf(buffer, "%d", _x);
 	proc_put(VMPEG_visible[devnum], buffer, strlen(buffer));
+	if (_x == 0)
+		Pig(0,0,0,0);
 }
 
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, int starty, int endx, int endy)

@@ -124,7 +124,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		file = "file://";
 	file += filename;
 
-	if ((file.find(":31339/id=") != std::string::npos) || (file.find(":10000") != std::string::npos) || (file.find(":8001/") != std::string::npos)) // for LocalTV and Entertain-TV streaming
+	if ((file.find(":31339/id=") != std::string::npos) || (file.find(":17999/1:") != std::string::npos) || (file.find(":10000") != std::string::npos) || (file.find(":8001/") != std::string::npos)) // for LocalTV and Entertain-TV streaming
 		no_probe = true;
 
 	if (file.substr(0, 7) == "file://")

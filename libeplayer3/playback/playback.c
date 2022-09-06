@@ -200,7 +200,7 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 			context->playback->uri = tUri;
 		}
 
-		if (strstr(uri, ":10000") || strstr(uri, ":31339/id="))
+		if (strstr(uri, ":10000") || strstr(uri, ":31339/id=") || strstr(uri, ":17999/1:") || strstr(uri, ":8001/"))
 		{
 			context->playback->noprobe = 1;
 		}

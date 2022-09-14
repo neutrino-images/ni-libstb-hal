@@ -1845,7 +1845,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		wrapped_set_max_analyze_duration(avContextTab[AVIdx], 1);
 	}
 
-	if (!context->playback->noprobe)
+	if (strstr(filename, "127.0.0.1") == 0)
 	{
 		ffmpeg_printf(20, "find_streaminfo\n");
 

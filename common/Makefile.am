@@ -26,6 +26,10 @@ if BOXMODEL_HD60
 libcommon_la_SOURCES = \
 	ca.cpp
 else
+if BOXMODEL_MULTIBOX
+libcommon_la_SOURCES = \
+	ca.cpp
+else
 if BOXMODEL_MULTIBOXSE
 libcommon_la_SOURCES = \
 	ca.cpp
@@ -40,6 +44,7 @@ libcommon_la_SOURCES = \
 else
 libcommon_la_SOURCES = \
 	ca_ci.cpp
+endif
 endif
 endif
 endif

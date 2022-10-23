@@ -390,12 +390,12 @@ hw_caps_t *get_hwcaps(void)
 	caps.can_cpufreq = 0;
 	caps.can_shutdown = 1;
 	caps.display_xres = 128;
-	caps.display_yres = 64;
+	caps.display_yres = 32;
 	caps.display_type = HW_DISPLAY_GFX;
-	caps.display_can_umlauts = 0; // needs test
-	caps.display_can_deepstandby = 0;    // 0 because we use graphlcd/lcd4linux
-	caps.display_can_set_brightness = 0; // 0 because we use graphlcd/lcd4linux
-	caps.display_has_statusline = 0;     // 0 because we use graphlcd/lcd4linux
+	caps.display_can_umlauts = 0;
+	caps.display_can_deepstandby = 0;
+	caps.display_can_set_brightness = 1;
+	caps.display_has_statusline = 0;
 	caps.display_has_colon = 0;
 	caps.has_button_timer = 1;
 	caps.has_button_vformat = 1;

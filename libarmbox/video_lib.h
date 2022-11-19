@@ -137,20 +137,6 @@ typedef enum
 
 typedef enum
 {
-	VIDEO_HDMI_CEC_MODE_OFF = 0,
-	VIDEO_HDMI_CEC_MODE_TUNER = 3,
-	VIDEO_HDMI_CEC_MODE_RECORDER = 1
-} VIDEO_HDMI_CEC_MODE;
-
-typedef enum
-{
-	VIDEO_HDMI_CEC_VOL_OFF = 0,
-	VIDEO_HDMI_CEC_VOL_AUDIOSYSTEM = 1,
-	VIDEO_HDMI_CEC_VOL_TV = 2
-} VIDEO_HDMI_CEC_VOL;
-
-typedef enum
-{
 	VIDEO_CONTROL_BRIGHTNESS = 0,
 	VIDEO_CONTROL_CONTRAST,
 	VIDEO_CONTROL_SATURATION,
@@ -259,11 +245,6 @@ class cVideo
 		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
 		void SetSyncMode(AVSYNC_TYPE mode);
-		bool SetCECMode(VIDEO_HDMI_CEC_MODE);
-		void SetCECAutoView(bool);
-		void SetCECAutoStandby(bool);
-		int GetAudioDestination();
-		void SetAudioDestination(int audio_dest);
 		bool ShowPicture(const char *fname);
 		void StopPicture();
 		void Standby(unsigned int bOn);

@@ -1,1 +1,0 @@
-../libarmbox/hdmi_cec_types.h

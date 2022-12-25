@@ -1,8 +1,10 @@
 #include <config.h>
 #if HAVE_ARM_HARDWARE
 #include "../libarmbox/video_lib.h"
+#include "../libarmbox/hdmi_cec.h"
 #elif HAVE_MIPS_HARDWARE
 #include "../libmipsbox/video_lib.h"
+#include "../libmipsbox/hdmi_cec.h"
 #elif HAVE_GENERIC_HARDWARE
 #if BOXMODEL_RASPI
 #include "../libraspi/video_lib.h"

@@ -23,4 +23,5 @@ libarmbox_la_SOURCES = \
 	audio.cpp \
 	init.cpp \
 	record.cpp \
+	hdmi_cec.cpp \
 	playback_libeplayer3.cpp

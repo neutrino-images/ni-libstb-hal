@@ -9,6 +9,10 @@
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 0, 100)
+#include <libavcodec/bsf.h>
+#include <libavcodec/avcodec.h>
+#endif
 
 typedef enum
 {

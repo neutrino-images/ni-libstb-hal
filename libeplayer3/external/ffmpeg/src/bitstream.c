@@ -30,6 +30,7 @@
 
 #include <libavutil/avassert.h>
 #include <ffmpeg/put_bits.h>
+#include <string.h>
 
 
 void avpriv_align_put_bits(PutBitContext *s)

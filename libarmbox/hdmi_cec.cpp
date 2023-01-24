@@ -40,6 +40,8 @@
 #include "hdmi_cec_types.h"
 #include "hal_debug.h"
 
+#include <hardware_caps.h>
+
 #define RED "\x1B[31m"
 #define GREEN "\x1B[32m"
 #define NORMAL "\x1B[0m"
@@ -168,7 +170,8 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 				 * takes some time)
 				 */
 				laddrs.cec_version = CEC_OP_CEC_VERSION_2_0;
-				strcpy(laddrs.osd_name, "neutrino");
+				hw_caps_t *caps = get_hwcaps();
+				strcpy(laddrs.osd_name, caps->boxname);
 				laddrs.vendor_id = CEC_VENDOR_ID_NONE;
 
 				switch (deviceType)

@@ -518,10 +518,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 {
 	int ret = 0;
 	int c;
-	//int digit_optind = 0;
-	//int aopt = 0, bopt = 0;
-	//char *copt = 0, *dopt = 0;
-	while ((c = getopt(argc, argv, "we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:")) != -1)
+	while ((c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:T:")) != -1)
 	{
 		switch (c)
 		{
@@ -656,6 +653,11 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 					map_inter_file_path(playbackFiles->szFirstMoovAtomFile);
 				}
 				break;
+			case 'T':
+				PlaybackHandler.httpTimeout = (uint32_t) strtoul(optarg, NULL, 10);
+				printf("Setting http timeout to %u ms\n", PlaybackHandler.httpTimeout);
+				break;
+
 			default:
 				printf("?? getopt returned character code 0%o ??\n", c);
 				ret = -1;
@@ -700,6 +702,7 @@ int main(int argc, char *argv[])
 	char argvBuff[256];
 	memset(argvBuff, '\0', sizeof(argvBuff));
 	int commandRetVal = -1;
+
 	/* inform client that we can handle additional commands */
 	fprintf(stderr, "{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 55);
 

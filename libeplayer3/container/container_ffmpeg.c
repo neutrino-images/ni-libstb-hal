@@ -1804,7 +1804,10 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	else if (0 == strncmp(filename, "http://", 7) ||
 	    0 == strncmp(filename, "https://", 8))
 	{
-		av_dict_set(&avio_opts, "timeout", "20000000", 0); //20sec
+		char num[16];
+
+		sprintf(num, "%u000", context->playback->httpTimeout);
+		av_dict_set(&avio_opts, "timeout", num, 0); // default is 4s
 		av_dict_set(&avio_opts, "reconnect", "1", 0);
 		if (context->playback->isTSLiveMode) // special mode for live TS stream with skip packet
 		{

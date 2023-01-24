@@ -92,7 +92,6 @@ typedef enum
 	VIDEO_ENCODING_PRIVATE
 } video_encoding_t;
 
-
 /*
  * List of possible audio encodings - used to select frame parser and codec.
  */
@@ -199,92 +198,90 @@ typedef struct dvb_play_info_s
 typedef dvb_play_info_t                 video_play_info_t;
 typedef dvb_play_info_t                 audio_play_info_t;
 
-
 typedef enum
 {
-#define DVB_OPTION_VALUE_DISABLE                                                        0
-#define DVB_OPTION_VALUE_ENABLE                                                         1
+#define DVB_OPTION_VALUE_DISABLE                                                    0
+#define DVB_OPTION_VALUE_ENABLE                                                     1
 
-	DVB_OPTION_TRICK_MODE_AUDIO                                                         = 0,
-	DVB_OPTION_PLAY_24FPS_VIDEO_AT_25FPS                                                = 1,
+	DVB_OPTION_TRICK_MODE_AUDIO                                                 = 0,
+	DVB_OPTION_PLAY_24FPS_VIDEO_AT_25FPS                                        = 1,
 
-#define DVB_OPTION_VALUE_VIDEO_CLOCK_MASTER                                             0
-#define DVB_OPTION_VALUE_AUDIO_CLOCK_MASTER                                             1
-#define DVB_OPTION_VALUE_SYSTEM_CLOCK_MASTER                                            2
-	DVB_OPTION_MASTER_CLOCK                                                             = 2,
+#define DVB_OPTION_VALUE_VIDEO_CLOCK_MASTER                                         0
+#define DVB_OPTION_VALUE_AUDIO_CLOCK_MASTER                                         1
+#define DVB_OPTION_VALUE_SYSTEM_CLOCK_MASTER                                        2
+	DVB_OPTION_MASTER_CLOCK                                                     = 2,
 
-	DVB_OPTION_EXTERNAL_TIME_MAPPING                                                    = 3,
-	DVB_OPTION_EXTERNAL_TIME_MAPPING_VSYNC_LOCKED                                       = 31,
-	DVB_OPTION_AV_SYNC                                                                  = 4,
-	DVB_OPTION_DISPLAY_FIRST_FRAME_EARLY                                                = 5,
-	DVB_OPTION_VIDEO_BLANK                                                              = 6,
-	DVB_OPTION_STREAM_ONLY_KEY_FRAMES                                                   = 7,
-	DVB_OPTION_STREAM_SINGLE_GROUP_BETWEEN_DISCONTINUITIES                              = 8,
-	DVB_OPTION_CLAMP_PLAYBACK_INTERVAL_ON_PLAYBACK_DIRECTION_CHANGE                     = 9,
+	DVB_OPTION_EXTERNAL_TIME_MAPPING                                            = 3,
+	DVB_OPTION_EXTERNAL_TIME_MAPPING_VSYNC_LOCKED                               = 31,
+	DVB_OPTION_AV_SYNC                                                          = 4,
+	DVB_OPTION_DISPLAY_FIRST_FRAME_EARLY                                        = 5,
+	DVB_OPTION_VIDEO_BLANK                                                      = 6,
+	DVB_OPTION_STREAM_ONLY_KEY_FRAMES                                           = 7,
+	DVB_OPTION_STREAM_SINGLE_GROUP_BETWEEN_DISCONTINUITIES                      = 8,
+	DVB_OPTION_CLAMP_PLAYBACK_INTERVAL_ON_PLAYBACK_DIRECTION_CHANGE             = 9,
 
-#define DVB_OPTION_VALUE_PLAYOUT                                                        0
-#define DVB_OPTION_VALUE_DISCARD                                                        1
-	DVB_OPTION_PLAYOUT_ON_TERMINATE                                                     = 10,
-	DVB_OPTION_PLAYOUT_ON_SWITCH                                                        = 11,
-	DVB_OPTION_PLAYOUT_ON_DRAIN                                                         = 12,
+#define DVB_OPTION_VALUE_PLAYOUT                                                    0
+#define DVB_OPTION_VALUE_DISCARD                                                    1
+	DVB_OPTION_PLAYOUT_ON_TERMINATE                                             = 10,
+	DVB_OPTION_PLAYOUT_ON_SWITCH                                                = 11,
+	DVB_OPTION_PLAYOUT_ON_DRAIN                                                 = 12,
 
-	DVB_OPTION_VIDEO_ASPECT_RATIO                                                       = 13,
-	DVB_OPTION_VIDEO_DISPLAY_FORMAT                                                     = 14,
+	DVB_OPTION_VIDEO_ASPECT_RATIO                                               = 13,
+	DVB_OPTION_VIDEO_DISPLAY_FORMAT                                             = 14,
 
-#define DVB_OPTION_VALUE_TRICK_MODE_AUTO                                                0
-#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_ALL                                          1
-#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_ALL_DEGRADE_NON_REFERENCE_FRAMES             2
-#define DVB_OPTION_VALUE_TRICK_MODE_START_DISCARDING_NON_REFERENCE_FRAMES               3
-#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_REFERENCE_FRAMES_DEGRADE_NON_KEY_FRAMES      4
-#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_KEY_FRAMES                                   5
-#define DVB_OPTION_VALUE_TRICK_MODE_DISCONTINUOUS_KEY_FRAMES                            6
-	DVB_OPTION_TRICK_MODE_DOMAIN                                                        = 15,
+#define DVB_OPTION_VALUE_TRICK_MODE_AUTO                                            0
+#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_ALL                                      1
+#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_ALL_DEGRADE_NON_REFERENCE_FRAMES         2
+#define DVB_OPTION_VALUE_TRICK_MODE_START_DISCARDING_NON_REFERENCE_FRAMES           3
+#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_REFERENCE_FRAMES_DEGRADE_NON_KEY_FRAMES  4
+#define DVB_OPTION_VALUE_TRICK_MODE_DECODE_KEY_FRAMES                               5
+#define DVB_OPTION_VALUE_TRICK_MODE_DISCONTINUOUS_KEY_FRAMES                        6
+	DVB_OPTION_TRICK_MODE_DOMAIN                                                = 15,
 
-#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_NEVER                                      0
-#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_ALWAYS                                     1
-#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_AFTER_SYNCHRONIZE                          2
-	DVB_OPTION_DISCARD_LATE_FRAMES                                                      = 16,
-	DVB_OPTION_VIDEO_START_IMMEDIATE                                                    = 17,
-	DVB_OPTION_REBASE_ON_DATA_DELIVERY_LATE                                             = 18,
-	DVB_OPTION_REBASE_ON_FRAME_DECODE_LATE                                              = 19,
-	DVB_OPTION_LOWER_CODEC_DECODE_LIMITS_ON_FRAME_DECODE_LATE                           = 20,
-	DVB_OPTION_H264_ALLOW_NON_IDR_RESYNCHRONIZATION                                     = 21,
-	DVB_OPTION_MPEG2_IGNORE_PROGESSIVE_FRAME_FLAG                                       = 22,
-	DVB_OPTION_AUDIO_SPDIF_SOURCE                                                       = 23,
+#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_NEVER                                  0
+#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_ALWAYS                                 1
+#define DVB_OPTION_VALUE_DISCARD_LATE_FRAMES_AFTER_SYNCHRONIZE                      2
+	DVB_OPTION_DISCARD_LATE_FRAMES                                              = 16,
+	DVB_OPTION_VIDEO_START_IMMEDIATE                                            = 17,
+	DVB_OPTION_REBASE_ON_DATA_DELIVERY_LATE                                     = 18,
+	DVB_OPTION_REBASE_ON_FRAME_DECODE_LATE                                      = 19,
+	DVB_OPTION_LOWER_CODEC_DECODE_LIMITS_ON_FRAME_DECODE_LATE                   = 20,
+	DVB_OPTION_H264_ALLOW_NON_IDR_RESYNCHRONIZATION                             = 21,
+	DVB_OPTION_MPEG2_IGNORE_PROGESSIVE_FRAME_FLAG                               = 22,
+	DVB_OPTION_AUDIO_SPDIF_SOURCE                                               = 23,
 
-	DVB_OPTION_H264_ALLOW_BAD_PREPROCESSED_FRAMES                                       = 24,
-	DVB_OPTION_CLOCK_RATE_ADJUSTMENT_LIMIT_2_TO_THE_N_PARTS_PER_MILLION                 = 25,                /* Value = N */
-	DVB_OPTION_LIMIT_INPUT_INJECT_AHEAD                                                 = 26,
+	DVB_OPTION_H264_ALLOW_BAD_PREPROCESSED_FRAMES                               = 24,
+	DVB_OPTION_CLOCK_RATE_ADJUSTMENT_LIMIT_2_TO_THE_N_PARTS_PER_MILLION         = 25,   /* Value = N */
+	DVB_OPTION_LIMIT_INPUT_INJECT_AHEAD                                         = 26,
 
-#define DVB_OPTION_VALUE_MPEG2_APPLICATION_MPEG2                                        0
-#define DVB_OPTION_VALUE_MPEG2_APPLICATION_ATSC                                         1
-#define DVB_OPTION_VALUE_MPEG2_APPLICATION_DVB                                          2
-	DVB_OPTION_MPEG2_APPLICATION_TYPE                                                   = 27,
+#define DVB_OPTION_VALUE_MPEG2_APPLICATION_MPEG2                                    0
+#define DVB_OPTION_VALUE_MPEG2_APPLICATION_ATSC                                     1
+#define DVB_OPTION_VALUE_MPEG2_APPLICATION_DVB                                      2
+	DVB_OPTION_MPEG2_APPLICATION_TYPE                                           = 27,
 
-#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_DISABLED                               0
-#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_HALF                                   1
-#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_QUARTER                                2
-	DVB_OPTION_DECIMATE_DECODER_OUTPUT                                                  = 28,
+#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_DISABLED                           0
+#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_HALF                               1
+#define DVB_OPTION_VALUE_DECIMATE_DECODER_OUTPUT_QUARTER                            2
+	DVB_OPTION_DECIMATE_DECODER_OUTPUT                                           = 28,
 
-	DVB_OPTION_PTS_FORWARD_JUMP_DETECTION_THRESHOLD                                     = 29,
-	DVB_OPTION_H264_TREAT_DUPLICATE_DPB_AS_NON_REFERENCE_FRAME_FIRST                    = 30,
+	DVB_OPTION_PTS_FORWARD_JUMP_DETECTION_THRESHOLD                             = 29,
+	DVB_OPTION_H264_TREAT_DUPLICATE_DPB_AS_NON_REFERENCE_FRAME_FIRST            = 30,
 
-	DVB_OPTION_PIXEL_ASPECT_RATIO_CORRECTION                                            = 32,
+	DVB_OPTION_PIXEL_ASPECT_RATIO_CORRECTION                                    = 32,
 
 	DVB_OPTION_H264_FORCE_PIC_ORDER_CNT_IGNORE_DPB_DISPLAY_FRAME_ORDERING       = 33,
 
-	DVB_OPTION_PTS_SYMMETRIC_JUMP_DETECTION                                             = 34,
+	DVB_OPTION_PTS_SYMMETRIC_JUMP_DETECTION                                     = 34,
 
-	DVB_OPTION_ALLOW_FRAME_DISCARD_AT_NORMAL_SPEED                                      = 35,
+	DVB_OPTION_ALLOW_FRAME_DISCARD_AT_NORMAL_SPEED                              = 35,
 
 	/* OPTION_MAX must always be one greater than largest option - currently DVB_OPTION_ALLOW_FRAME_DISCARD_AT_NORMAL_SPEED */
 
-	DVB_OPTION_MAX                                                                      = 35
+	DVB_OPTION_MAX                                                              = 35
 } dvb_option_t;
 
 // Legacy typo correction
 #define DVP_OPTION_H264_FORCE_PIC_ORDER_CNT_IGNORE_DPB_DISPLAY_FRAME_ORDERING DVB_OPTION_H264_FORCE_PIC_ORDER_CNT_IGNORE_DPB_DISPLAY_FRAME_ORDERING
-
 
 typedef dvb_option_t                    video_option_t;
 
@@ -295,7 +292,6 @@ typedef dvb_option_t                    video_option_t;
 #define VIDEO_CMD_CONTINUE              (3)
 #define VIDEO_CMD_SET_OPTION            (4)
 #define VIDEO_CMD_GET_OPTION            (5)
-
 
 /* Flags for VIDEO_CMD_FREEZE */
 #define VIDEO_CMD_FREEZE_TO_BLACK       (1 << 0)

@@ -134,6 +134,5 @@ static const uint8 alternate_vertical_scan[64] =
 	38, 46, 54, 62, 39, 47, 55, 63,
 };
 
-
 #endif // M4V_H
 

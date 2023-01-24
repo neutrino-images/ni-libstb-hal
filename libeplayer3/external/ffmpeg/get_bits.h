@@ -91,57 +91,53 @@ typedef struct GetBitContext
  */
 
 #ifdef LONG_BITSTREAM_READER
-#   define MIN_CACHE_BITS 32
+#define MIN_CACHE_BITS 32
 #else
-#   define MIN_CACHE_BITS 25
+#define MIN_CACHE_BITS 25
 #endif
 
 #define OPEN_READER_NOSIZE(name, gb)            \
 	unsigned int name ## _index = (gb)->index;  \
 	unsigned int av_unused name ## _cache
 
-
 #define OPEN_READER(name, gb) OPEN_READER_NOSIZE(name, gb)
 #define BITS_AVAILABLE(name, gb) 1
-
 
 #define CLOSE_READER(name, gb) (gb)->index = name ## _index
 
 # ifdef LONG_BITSTREAM_READER
 
 # define UPDATE_CACHE_LE(name, gb) name ## _cache = \
-    AV_RL64((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
+	AV_RL64((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
 
 # define UPDATE_CACHE_BE(name, gb) name ## _cache = \
-    AV_RB64((gb)->buffer + (name ## _index >> 3)) >> (32 - (name ## _index & 7))
+	AV_RB64((gb)->buffer + (name ## _index >> 3)) >> (32 - (name ## _index & 7))
 
 #else
 
 # define UPDATE_CACHE_LE(name, gb) name ## _cache = \
-    AV_RL32((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
+	AV_RL32((gb)->buffer + (name ## _index >> 3)) >> (name ## _index & 7)
 
 # define UPDATE_CACHE_BE(name, gb) name ## _cache = \
-    AV_RB32((gb)->buffer + (name ## _index >> 3)) << (name ## _index & 7)
+	AV_RB32((gb)->buffer + (name ## _index >> 3)) << (name ## _index & 7)
 
 #endif
 
-
 #ifdef BITSTREAM_READER_LE
 
-# define UPDATE_CACHE(name, gb) UPDATE_CACHE_LE(name, gb)
+#define UPDATE_CACHE(name, gb) UPDATE_CACHE_LE(name, gb)
 
-# define SKIP_CACHE(name, gb, num) name ## _cache >>= (num)
+#define SKIP_CACHE(name, gb, num) name ## _cache >>= (num)
 
 #else
 
-# define UPDATE_CACHE(name, gb) UPDATE_CACHE_BE(name, gb)
+#define UPDATE_CACHE(name, gb) UPDATE_CACHE_BE(name, gb)
 
-# define SKIP_CACHE(name, gb, num) name ## _cache <<= (num)
+#define SKIP_CACHE(name, gb, num) name ## _cache <<= (num)
 
 #endif
 
 #define SKIP_COUNTER(name, gb, num) name ## _index += (num)
-
 
 #define BITS_LEFT(name, gb) ((int)((gb)->size_in_bits - name ## _index))
 
@@ -160,11 +156,11 @@ typedef struct GetBitContext
 #define SHOW_SBITS_BE(name, gb, num) NEG_SSR32(name ## _cache, num)
 
 #ifdef BITSTREAM_READER_LE
-#   define SHOW_UBITS(name, gb, num) SHOW_UBITS_LE(name, gb, num)
-#   define SHOW_SBITS(name, gb, num) SHOW_SBITS_LE(name, gb, num)
+#define SHOW_UBITS(name, gb, num) SHOW_UBITS_LE(name, gb, num)
+#define SHOW_SBITS(name, gb, num) SHOW_SBITS_LE(name, gb, num)
 #else
-#   define SHOW_UBITS(name, gb, num) SHOW_UBITS_BE(name, gb, num)
-#   define SHOW_SBITS(name, gb, num) SHOW_SBITS_BE(name, gb, num)
+#define SHOW_UBITS(name, gb, num) SHOW_UBITS_BE(name, gb, num)
+#define SHOW_SBITS(name, gb, num) SHOW_SBITS_BE(name, gb, num)
 #endif
 
 #define GET_CACHE(name, gb) ((uint32_t) name ## _cache)
@@ -388,8 +384,7 @@ static inline int check_marker(void *logctx __attribute__((unused)), GetBitConte
  * @param bit_size the size of the buffer in bits
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
-static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
-    int bit_size)
+static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer, int bit_size)
 {
 	int buffer_size;
 	int ret = 0;
@@ -420,8 +415,7 @@ static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
  * @param byte_size the size of the buffer in bytes
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
-static inline int init_get_bits8(GetBitContext *s, const uint8_t *buffer,
-    int byte_size)
+static inline int init_get_bits8(GetBitContext *s, const uint8_t *buffer, int byte_size)
 {
 	if (byte_size > INT_MAX / 8 || byte_size < 0)
 		byte_size = -1;
@@ -474,7 +468,7 @@ static inline const uint8_t *align_get_bits(GetBitContext *s)
 	} while (0)
 
 #define GET_RL_VLC(level, run, name, gb, table, bits,  \
-    max_depth, need_update)                      \
+	max_depth, need_update)                      \
 do {                                                        \
 	int n, nb_bits;                                         \
 	unsigned int index;                                     \
@@ -509,7 +503,6 @@ do {                                                        \
 	run = table[index].run;                                 \
 	SKIP_BITS(name, gb, n);                                 \
 } while (0)
-
 
 static inline int decode012(GetBitContext *gb)
 {

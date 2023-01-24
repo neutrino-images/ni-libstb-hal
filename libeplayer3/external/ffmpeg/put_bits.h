@@ -48,8 +48,7 @@ typedef struct PutBitContext
  * @param buffer the buffer where to put bits
  * @param buffer_size the size in bytes of buffer
  */
-static inline void init_put_bits(PutBitContext *s, uint8_t *buffer,
-    int buffer_size)
+static inline void init_put_bits(PutBitContext *s, uint8_t *buffer, int buffer_size)
 {
 	if (buffer_size < 0)
 	{
@@ -72,8 +71,7 @@ static inline void init_put_bits(PutBitContext *s, uint8_t *buffer,
  * @param buffer_size the size in bytes of buffer,
  *                    must be larger than the previous size
  */
-static inline void rebase_put_bits(PutBitContext *s, uint8_t *buffer,
-    int buffer_size)
+static inline void rebase_put_bits(PutBitContext *s, uint8_t *buffer, int buffer_size)
 {
 	av_assert0(8 * buffer_size > s->size_in_bits);
 
@@ -139,8 +137,7 @@ void avpriv_align_put_bits(PutBitContext *s);
  *
  * @param terminate_string 0-terminates the written string if value is 1
  */
-void avpriv_put_string(PutBitContext *pb, const char *string,
-    int terminate_string);
+void avpriv_put_string(PutBitContext *pb, const char *string, int terminate_string);
 
 /**
  * Copy the content of src to the bitstream.

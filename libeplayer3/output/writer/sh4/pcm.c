@@ -97,10 +97,10 @@ static uint32_t breakBufferFillSize = 0;
 static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32_t uBitsPerSample, uint8_t bLittleEndian __attribute__((unused)))
 {
 	printf("rate: %d ch: %d bits: %d (%d bps)\n",
-	    uSampleRate/*Format->dwSamplesPerSec*/,
-	    uNoOfChannels/*Format->wChannels*/,
-	    uBitsPerSample/*Format->wBitsPerSample*/,
-	    (uBitsPerSample/*Format->wBitsPerSample*/ / 8)
+		uSampleRate/*Format->dwSamplesPerSec*/,
+		uNoOfChannels/*Format->wChannels*/,
+		uBitsPerSample/*Format->wBitsPerSample*/,
+		(uBitsPerSample/*Format->wBitsPerSample*/ / 8)
 	);
 
 	SubFrameLen = 0;
@@ -203,7 +203,7 @@ static int32_t writeData(void *_call)
 
 	if (initialHeader)
 	{
-		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
+		uint32_t codecID = (uint32_t)pcmPrivateData->codec_id;
 		uint8_t LE = 0;
 		switch (codecID)
 		{

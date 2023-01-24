@@ -146,7 +146,7 @@ static int writeData(WriterAVCallData_t *call)
 }
 
 /* ***************************** */
-/* Writer  Definition            */
+/* Writer Definition             */
 /* ***************************** */
 
 static WriterCaps_t caps =

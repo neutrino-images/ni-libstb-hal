@@ -123,7 +123,9 @@ static int writeData(WriterAVCallData_t *call)
 		}
 
 		unsigned int codec_size = call->private_size;
-		if (codec_size > 4) codec_size = 4;
+
+		if (codec_size > 4)
+			codec_size = 4;
 
 		videocodecdata.length = 33;
 		uint8_t *data = videocodecdata.data = malloc(videocodecdata.length);
@@ -135,7 +137,10 @@ static int writeData(WriterAVCallData_t *call)
 		/* height */
 		*(data++) = (call->Height >> 8) & 0xff;
 		*(data++) = call->Height & 0xff;
-		if (call->private_data && codec_size) memcpy(data, call->private_data, codec_size);
+
+		if (call->private_data && codec_size)
+			memcpy(data, call->private_data, codec_size);
+
 		if (STB_DREAMBOX == GetSTBType() || 0 != ioctl(call->fd, VIDEO_SET_CODEC_DATA, &videocodecdata))
 		{
 			iov[ic].iov_base  = videocodecdata.data;
@@ -146,7 +151,7 @@ static int writeData(WriterAVCallData_t *call)
 
 	uint8_t needFrameStartCode = 0;
 	if (sizeof(Vc1FrameStartCode) >= call->len ||
-	    memcmp(call->data, Vc1FrameStartCode, sizeof(Vc1FrameStartCode)) != 0)
+		memcmp(call->data, Vc1FrameStartCode, sizeof(Vc1FrameStartCode)) != 0)
 	{
 		needFrameStartCode = 1;
 		PacketLength += sizeof(Vc1FrameStartCode);

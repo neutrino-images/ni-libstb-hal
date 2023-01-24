@@ -215,8 +215,8 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 
 	pFiles->szFirstFile = context->playback->uri;
 	if ((context->container->Command(context, CONTAINER_ADD, extension) < 0) ||
-	    (!context->container->selectedContainer) ||
-	    (context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
+		(!context->container->selectedContainer) ||
+		(context->container->selectedContainer->Command(context, CONTAINER_INIT, pFiles) < 0))
 	{
 		playback_err("CONTAINER_ADD failed\n");
 		if (context->playback->uri)
@@ -385,8 +385,8 @@ static int32_t PlaybackContinue(Context_t *context)
 	playback_printf(10, "\n");
 
 	if (context->playback->isPlaying &&
-	    (context->playback->isPaused || context->playback->isForwarding ||
-	        context->playback->BackWard || context->playback->SlowMotion))
+		(context->playback->isPaused || context->playback->isForwarding ||
+			context->playback->BackWard || context->playback->SlowMotion))
 	{
 		if (context->playback->SlowMotion || context->playback->isForwarding || context->playback->BackWard)
 			context->output->Command(context, OUTPUT_CLEAR, NULL);
@@ -422,6 +422,8 @@ static int32_t PlaybackStop(Context_t *context)
 	playback_printf(10, "\n");
 
 	PlaybackDieNow(1);
+
+	context->playback->stamp = (void *) -1;
 
 	if (context && context->playback && context->playback->isPlaying)
 	{
@@ -559,7 +561,7 @@ static int PlaybackFastBackward(Context_t *context, int *speed)
 
 	/* Audio only reverse play not supported */
 	if (context->playback->isVideo && !context->playback->isForwarding &&
-	    (!context->playback->isPaused || context->playback->isPlaying))
+		(!context->playback->isPaused || context->playback->isPlaying))
 	{
 		if ((*speed > 0) || (*speed < cMaxSpeed_fr))
 		{
@@ -649,12 +651,20 @@ static int32_t PlaybackSlowMotion(Context_t *context, int *speed)
 static int32_t PlaybackSeek(Context_t *context, int64_t *pos, uint8_t absolute)
 {
 	int32_t ret = cERR_PLAYBACK_NO_ERROR;
+	static uint32_t stamp = 0;
 
 	playback_printf(10, "pos: %" PRIu64 "\n", *pos);
 
 	if (context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused)
 	{
 		context->playback->isSeeking = 1;
+		/* We changing current stamp, so all frames with old stamps will be skipped
+		 * Without this there could be situation when the ffmpeg thread is
+		 * in the av_read_frame(), so, even if we flushed data,  still
+		 * data from the old position were written
+		 */
+		stamp += 1;
+		context->playback->stamp = (void *)stamp;
 		context->output->Command(context, OUTPUT_CLEAR, NULL);
 		if (absolute)
 		{

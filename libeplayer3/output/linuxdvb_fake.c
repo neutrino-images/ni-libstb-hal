@@ -73,6 +73,8 @@ bool isBufferedOutput = false;
 
 pthread_mutex_t LinuxDVBmutex;
 
+static int64_t last_pts = 0;
+
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
@@ -93,7 +95,6 @@ int LinuxDvbStop(Context_t *context, char *type);
 
 #define getLinuxDVBMutex() pthread_mutex_lock(&LinuxDVBmutex)
 #define releaseLinuxDVBMutex() pthread_mutex_unlock(&LinuxDVBmutex)
-
 
 int LinuxDvbOpen(Context_t *context __attribute__((unused)), char *type)
 {
@@ -196,7 +197,7 @@ int LinuxDvbClear(Context_t *context __attribute__((unused)), char *type __attri
 
 int LinuxDvbPts(Context_t *context __attribute__((unused)), unsigned long long int *pts)
 {
-	*((unsigned long long int *)pts) = (unsigned long long int)0;
+	*((unsigned long long int *)pts) = (unsigned long long int)last_pts;
 	return 0;
 }
 
@@ -207,7 +208,6 @@ int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned l
 
 int LinuxDvbSwitch(Context_t *context __attribute__((unused)), char *type __attribute__((unused)))
 {
-
 	return cERR_LINUXDVB_NO_ERROR;
 }
 
@@ -231,7 +231,7 @@ static int Write(Context_t *context, void *_out)
 	audio = !strcmp("audio", out->type);
 
 	linuxdvb_printf(20, "DataLength=%u PrivateLength=%u Pts=%"PRIu64" FrameRate=%d\n",
-	    out->len, out->extralen, out->pts, out->frameRate);
+		out->len, out->extralen, out->pts, out->frameRate);
 	linuxdvb_printf(20, "v%d a%d\n", video, audio);
 
 	if (video)
@@ -298,6 +298,16 @@ static int Write(Context_t *context, void *_out)
 						linuxdvb_err("unhandled DVBAPI Video Event %d\n", evt.type);
 					}
 				}
+			}
+
+			if (out->pts != INVALID_PTS_VALUE)
+			{
+				if (out->pts > last_pts)
+				{
+					usleep((out->pts - last_pts) / 90 * 900);
+					//usleep((out->pts - last_pts) / 90 * 500);
+				}
+				last_pts = out->pts;
 			}
 
 			call.fd           = videofd;

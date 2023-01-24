@@ -38,7 +38,7 @@ typedef struct _BR
 } BR;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static void init_br(BR *p, const uint8 *buf, uint32 size)
+static inline void init_br(BR *p, const uint8 *buf, uint32 size)
 {
 	p->buf = buf;
 	p->size = size;
@@ -51,7 +51,7 @@ static uint8 get_u8(BR *p)
 	return p->buf[p->read++];
 }
 
-static uint32 get_u24(BR *p)
+static inline uint32 get_u24(BR *p)
 {
 	uint32 a = get_u8(p);
 	uint32 b = get_u8(p);
@@ -60,7 +60,7 @@ static uint32 get_u24(BR *p)
 	return (a << 16) | (b << 8) | c;
 }
 
-static uint32 get_u32(BR *p)
+static inline uint32 get_u32(BR *p)
 {
 	uint32 a = get_u8(p);
 	uint32 b = get_u8(p);
@@ -70,12 +70,12 @@ static uint32 get_u32(BR *p)
 	return (a << 24) | (b << 16) | (c << 8) | d;
 }
 
-static int is_eob(BR *p)
+static inline int is_eob(BR *p)
 {
 	return p->read >= p->size;
 }
 
-static void skip(BR *p, uint32 skip)
+static inline void skip(BR *p, uint32 skip)
 {
 	p->read += skip;
 }
@@ -93,7 +93,7 @@ static uint32 show_bits(BR *p, uint32 bits)
 	return tmp;
 }
 
-static int32 show_sbits(BR *p, uint32 bits)
+static inline int32 show_sbits(BR *p, uint32 bits)
 {
 	const uint8 *pp;
 	int32 tmp;
@@ -106,7 +106,7 @@ static int32 show_sbits(BR *p, uint32 bits)
 	return tmp;
 }
 
-static void flash_bits(BR *p, uint32 bits)
+static inline void flash_bits(BR *p, uint32 bits)
 {
 	if (bits > 0)
 	{
@@ -116,21 +116,21 @@ static void flash_bits(BR *p, uint32 bits)
 	}
 }
 
-static uint32 get_bits(BR *p, uint32 bits)
+static inline uint32 get_bits(BR *p, uint32 bits)
 {
 	uint32 tmp = show_bits(p, bits);
 	flash_bits(p, bits);
 	return tmp;
 }
 
-static int32 get_sbits(BR *p, uint32 bits)
+static inline int32 get_sbits(BR *p, uint32 bits)
 {
 	int32 tmp = show_sbits(p, bits);
 	flash_bits(p, bits);
 	return tmp;
 }
 
-static void align_bits(BR *p)
+static inline void align_bits(BR *p)
 {
 	if (p->bitoffset > 0)
 	{

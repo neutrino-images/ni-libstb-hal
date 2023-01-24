@@ -328,7 +328,6 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 	return ret;
 }
 
-
 struct Manager_s VideoManager =
 {
 	"Video",

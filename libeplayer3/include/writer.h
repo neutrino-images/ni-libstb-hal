@@ -27,8 +27,6 @@ typedef struct
 	WriteV_t               WriteV;
 } WriterAVCallData_t;
 
-
-
 typedef struct WriterCaps_s
 {
 	char          *name;
@@ -61,8 +59,9 @@ extern Writer_t WriterAudioDTS;
 extern Writer_t WriterAudioWMA;
 extern Writer_t WriterAudioWMAPRO;
 extern Writer_t WriterAudioFLAC;
-extern Writer_t WriterAudioVORBIS;
 extern Writer_t WriterAudioAMR;
+extern Writer_t WriterAudioVORBIS;
+extern Writer_t WriterAudioOPUS;
 
 extern Writer_t WriterVideoMPEG1;
 extern Writer_t WriterVideoMPEG2;
@@ -84,6 +83,9 @@ extern Writer_t WriterVideoVP9;
 extern Writer_t WriterVideoMJPEG;
 extern Writer_t WriterFramebuffer;
 extern Writer_t WriterPipe;
+extern Writer_t WriterVideoRV30;
+extern Writer_t WriterVideoRV40;
+extern Writer_t WriterVideoAVS2;
 
 Writer_t *getWriter(char *encoding);
 
@@ -96,4 +98,45 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx, co
 void FlushPipe(int pipefd);
 
 ssize_t WriteExt(WriteV_t _call, int fd, void *data, size_t size);
+
+// Subtitles
+
+typedef enum
+{
+	SUBTITLE_CODEC_ID_UNKNOWN,
+	SUBTITLE_CODEC_ID_SUBRIP,
+	SUBTITLE_CODEC_ID_ASS,
+	SUBTITLE_CODEC_ID_WEBVTT,
+	SUBTITLE_CODEC_ID_PGS,
+	SUBTITLE_CODEC_ID_DVB,
+	SUBTITLE_CODEC_ID_XSUB
+} SubtitleCodecId_t;
+
+typedef struct
+{
+	SubtitleCodecId_t codecId;
+	uint32_t  trackId;
+	uint8_t  *data;
+	uint32_t  len;
+	int64_t   pts;
+	int64_t   dts;
+	uint8_t  *private_data;
+	uint32_t  private_size;
+
+	int64_t           durationMS; // duration in miliseconds
+
+	int width;
+	int height;
+} WriterSubCallData_t;
+
+typedef struct SubWriter_s
+{
+	int32_t (* open)(SubtitleCodecId_t codecId, uint8_t *extradata, int extradata_size);
+	int32_t (* close)();
+	int32_t (* reset)();
+	int32_t (* write)(WriterSubCallData_t *);
+} SubWriter_t;
+
+extern SubWriter_t WriterSubPGS;
+
 #endif

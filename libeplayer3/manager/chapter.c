@@ -151,8 +151,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 		tracklist[j] = NULL;
 	}
 
-	chapter_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME,
-	    __FUNCTION__, tracklist, j, TrackCount);
+	chapter_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
 
 	return tracklist;
 }

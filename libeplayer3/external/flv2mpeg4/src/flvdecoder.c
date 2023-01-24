@@ -38,7 +38,6 @@ static const uint8 zig_zag_scan[64] =
 	58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
 };
 
-
 static const VLCtab vlc_table_intra_MCBPC[] = //: table_size=72 table_allocated=128 bits=6
 {
 	{64, -3},
@@ -128,7 +127,6 @@ static const VLCtab vlc_table_rl_inter[] = //: table_size=554 table_allocated=10
 	{100, 3}, {101, 3}, {8, 1}, {7, 1}
 };
 
-
 static const VLCtab vlc_table_mv[] = //mv_vlc: table_size=538 table_allocated=1024 bits=9
 {
 	{512, -3}, {520, -2}, {524, -1}, {526, -1}, {528, -1}, {530, -1}, {532, -1}, {534, -1}, {536, -1}, {10, 9},
@@ -182,7 +180,9 @@ static inline int decode_DC(BR *p)
 		printf("illigal dc\n");
 		return -1;
 	}
-	if (level == 255) level = 128;
+
+	if (level == 255)
+		level = 128;
 
 //	printf("DC: %d\n", level);
 	return level;
@@ -225,7 +225,9 @@ static inline int decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 				run = get_bits(p, 6);
 				level = get_bits(p, 8);
 				sign = level >= 128;
-				if (sign) level = 256 - level;
+
+				if (sign)
+					level = 256 - level;
 			}
 		}
 		else
@@ -235,7 +237,9 @@ static inline int decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 			last = code >= rl_inter_last;
 
 			sign = get_bits(p, 1);
-			if (sign) level = -level;
+
+			if (sign)
+				level = -level;
 		}
 
 		i += run;
@@ -245,7 +249,9 @@ static inline int decode_AC(BR *p, BLOCK *block, int escape_type, int i)
 			return -1;
 		}
 		block->block[zig_zag_scan[i]] = level;
-		if (last) break;
+
+		if (last)
+			break;
 		i++;
 	}
 
@@ -270,7 +276,9 @@ static inline int decode_intra_block(BR *p, BLOCK *block, int escape_type, int c
 		return 0;
 	}
 
-	if (decode_AC(p, block, escape_type, 1) < 0) return -1;
+	if (decode_AC(p, block, escape_type, 1) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -283,7 +291,9 @@ static inline int decode_inter_block(BR *p, BLOCK *block, int escape_type, int c
 		return 0;
 	}
 
-	if (decode_AC(p, block, escape_type, 0) < 0) return -1;
+	if (decode_AC(p, block, escape_type, 0) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -293,7 +303,8 @@ static inline int get_intra_MCBPC(BR *br)
 	do
 	{
 		cbpc = get_vlc(br, vlc_table_intra_MCBPC, 6, 2);
-		if (cbpc < 0) return -1;
+		if (cbpc < 0)
+			return -1;
 	}
 	while (cbpc == 8);
 	return cbpc;
@@ -309,7 +320,8 @@ static inline int get_inter_MCBPC(BR *br)
 			return -2;
 		}
 		cbpc = get_vlc(br, vlc_table_inter_MCBPC, 7, 2);
-		if (cbpc < 0) return -1;
+		if (cbpc < 0)
+			return -1;
 	}
 	while (cbpc == 20);
 
@@ -375,7 +387,8 @@ static inline int decode_intra_mb_internal(BR *p, MICROBLOCK *mb, int escape_typ
 
 	for (i = 0; i < 6; i++)
 	{
-		if (decode_intra_block(p, &mb->block[i], escape_type, cbp & 32) != 0) return -1;
+		if (decode_intra_block(p, &mb->block[i], escape_type, cbp & 32) != 0)
+			return -1;
 		cbp += cbp;
 	}
 
@@ -423,7 +436,8 @@ static inline int decode_inter_mb_internal(BR *p, MICROBLOCK *mb, int escape_typ
 
 	for (i = 0; i < 6; i++)
 	{
-		if (decode_inter_block(p, &mb->block[i], escape_type, cbp & 32) != 0) return -1;
+		if (decode_inter_block(p, &mb->block[i], escape_type, cbp & 32) != 0)
+			return -1;
 		cbp += cbp;
 	}
 
@@ -496,14 +510,12 @@ int decode_picture_header(BR *p, PICTURE *picture)
 
 	if (get_bits(p, 17) != 1)
 	{
-		fprintf(stderr, "start code error\n");
 		return -1;
 	}
 
 	tmp = get_bits(p, 5);
 	if (tmp != 0 && tmp != 1)
 	{
-		fprintf(stderr, "picture format error\n");
 		return -1;
 	}
 
@@ -537,7 +549,6 @@ int decode_picture_header(BR *p, PICTURE *picture)
 			width = 160, height = 120;
 			break;
 		default:
-			fprintf(stderr, "size error\n");
 			return -1;
 	}
 

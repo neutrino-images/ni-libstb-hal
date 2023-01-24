@@ -124,7 +124,7 @@ static int writeData(WriterAVCallData_t *call)
 		int32_t block_align = 0;
 		int32_t byterate = 0;
 
-		uint32_t codecID = (uint32_t)pcmPrivateData->ffmpeg_codec_id;
+		uint32_t codecID = (uint32_t)pcmPrivateData->codec_id;
 
 		//uint8_t dataPrecision = 0;
 		uint8_t LE = 0;
@@ -271,7 +271,7 @@ static WriterCaps_t caps_pcm =
 	"pcm",
 	eAudio,
 	"A_PCM",
-	AUDIO_ENCODING_LPCMA,
+	-1,
 	0x30,
 	-1
 };
@@ -288,7 +288,7 @@ static WriterCaps_t caps_ipcm =
 	"ipcm",
 	eAudio,
 	"A_IPCM",
-	AUDIO_ENCODING_LPCMA,
+	-1,
 	0x30,
 	-1
 };

@@ -41,7 +41,6 @@ typedef struct _CONVCTX
 	M4V_VOL vol;
 } CONVCTX;
 
-
 typedef struct
 {
 	uint8   *out_buf;
@@ -64,7 +63,6 @@ static const uint8 ff_mpeg4_c_dc_scale_table[32] =
 //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
 	0, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22, 23, 24, 25
 };
-
 
 static void copy_vol(PICTURE *flv_pic, M4V_VOL *vol)
 {
@@ -122,7 +120,7 @@ static void copy_microblock(MICROBLOCK *flv_mb, M4V_MICROBLOCK *m4v_mb)
 	}
 }
 
-static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw, uint32 time)
+static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw, int time)
 {
 	// if any timecode padding is needed, then pad.
 	while (c->frame * 1000 / 30 < time)
@@ -139,10 +137,10 @@ static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw
 
 		// write frame
 		if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
-		        0,
-		        0,//c->frame,
-		        bw->buf,
-		        bw->pos) < 0)
+			0,
+			0,//c->frame,
+			bw->buf,
+			bw->pos) < 0)
 		{
 			return -1;
 		}
@@ -156,7 +154,7 @@ static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw
 	return 0;
 }
 
-static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, BW *bw, PICTURE *flvpic, uint32 time)
+static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, BW *bw, PICTURE *flvpic, uint32 time __attribute__((unused)))
 {
 	MICROBLOCK mb;
 	M4V_VOP vop;
@@ -181,7 +179,8 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
 			if (vop.picture_type == M4V_I_TYPE)
 			{
 				mb.intra = 1;
-				if (decode_I_mb(br, &mb, flvpic->escape_type, flvpic->qscale) < 0) return -1;
+				if (decode_I_mb(br, &mb, flvpic->escape_type, flvpic->qscale) < 0)
+					return -1;
 				m4v_mb.qscale = vop.qscale;
 				copy_microblock(&mb, &m4v_mb);
 				m4v_encode_I_dcpred(&m4v_mb, &c->vol.dcpred, x, y);
@@ -189,7 +188,8 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
 			}
 			else
 			{
-				if (decode_P_mb(br, &mb, flvpic->escape_type, flvpic->qscale) < 0) return -1;
+				if (decode_P_mb(br, &mb, flvpic->escape_type, flvpic->qscale) < 0)
+					return -1;
 				m4v_mb.qscale = vop.qscale;
 				copy_microblock(&mb, &m4v_mb);
 				m4v_encode_I_dcpred(&m4v_mb, &c->vol.dcpred, x, y);
@@ -203,10 +203,10 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
 
 	// write frame
 	if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
-	        vop.picture_type == M4V_I_TYPE,
-	        0,//c->frame,
-	        bw->buf,
-	        bw->pos) < 0)
+		vop.picture_type == M4V_I_TYPE,
+		0,//c->frame,
+		bw->buf,
+		bw->pos) < 0)
 	{
 		return -1;
 	}
@@ -223,10 +223,10 @@ static int write_m4v_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, BW *bw, u
 
 	memset(&picture, 0, sizeof(picture));
 	init_dcpred(&c->vol.dcpred);
-
-	if (decode_picture_header(br, &picture) < 0) return -1;
-	if (c->width != picture.width || c->height != picture.height) return -1; //size changed..
-
+	if (decode_picture_header(br, &picture) < 0)
+		return -1;
+	if (c->width != picture.width || c->height != picture.height)
+		return -1; //size changed..
 	copy_vol(&picture, &c->vol);
 
 	if (picture.picture_type == FLV_I_TYPE)
@@ -235,7 +235,8 @@ static int write_m4v_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, BW *bw, u
 	}
 	else
 	{
-		if (write_pad_not_coded_frames(pub_ctx, c, bw, time) < 0) return -1;
+		if (write_pad_not_coded_frames(pub_ctx, c, bw, time) < 0)
+			return -1;
 	}
 
 	if (write_m4v_picture_frame(pub_ctx, c, br, bw, &picture, time) < 0)
@@ -246,7 +247,7 @@ static int write_m4v_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, BW *bw, u
 	return 0;
 }
 
-int flv2mpeg4_process_flv_packet(flv2mpeg4_CTX *ctx, uint8 picture_type, const uint8 *buf, uint32 size, uint32 time)
+int flv2mpeg4_process_flv_packet(flv2mpeg4_CTX *ctx, uint8 picture_type __attribute__((unused)), const uint8 *buf, uint32 size, uint32 time)
 {
 	CTX *p = ctx->priv;
 	BR br;
@@ -319,6 +320,4 @@ void flv2mpeg4_release_ctx(flv2mpeg4_CTX **pub_ctx)
 	free(*pub_ctx);
 	*pub_ctx = NULL;
 }
-
-
 

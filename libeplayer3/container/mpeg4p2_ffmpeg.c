@@ -126,7 +126,6 @@ static int mpeg4p2_write_packet(Context_t *ctx, Mpeg4P2Context *mpeg4p2_ctx, Tra
 		{
 			ffmpeg_err("bsf setup failed error 0x%x\n", ret);
 		}
-
 	}
 	else
 	{

@@ -85,7 +85,6 @@ static int32_t selectContainer(Context_t *context, char *extension)
 	return ret;
 }
 
-
 static int Command(Context_t *context, ContainerCmd_t command, void *argument __attribute__((unused)))
 {
 	int ret = 0;
@@ -116,7 +115,6 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument __
 
 	return ret;
 }
-
 
 ContainerHandler_t ContainerHandler =
 {

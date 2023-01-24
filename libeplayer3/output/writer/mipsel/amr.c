@@ -77,37 +77,26 @@ static int reset()
 
 static int writeData(WriterAVCallData_t *call)
 {
-	unsigned char PesHeader[PES_MAX_HEADER_SIZE + 4 + 9];
+	uint8_t PesHeader[PES_MAX_HEADER_SIZE + 4 + 9];
 
 	amr_printf(10, "\n");
 
-	if (call == NULL)
+	if (call == NULL || call->data == NULL || call->len <= 0 || call->fd < 0)
 	{
-		amr_err("call data is NULL...\n");
+		amr_err("call error wrong data call: %p, data: %p, len: %d, fd: %d\n", call, call->data, call->len, call->fd);
 		return 0;
 	}
 
 	amr_printf(10, "AudioPts %lld\n", call->Pts);
+	size_t payload_len = call->len;
+	bool hasCodecData = true;
 
-	if ((call->data == NULL) || (call->len <= 0))
-	{
-		amr_err("parsing NULL Data. ignoring...\n");
-		return 0;
-	}
-
-	if (call->fd < 0)
-	{
-		amr_err("file pointer < 0. ignoring ...\n");
-		return 0;
-	}
-
-	uint8_t hasCodecData = 1;
 	if (NULL != call->private_data && call->private_size >= 17)
 	{
 		amr_err("wrong private_data. ignoring ...\n");
-		hasCodecData = 1;
+		hasCodecData = false;
 	}
-	size_t payload_len = call->len;
+
 	if (hasCodecData)
 	{
 		payload_len += 9;
@@ -122,10 +111,7 @@ static int writeData(WriterAVCallData_t *call)
 
 	if (hasCodecData)
 	{
-		uint8_t tmp[] = {0x45, 0x4d, 0x50, 0x20, 0x00, 0x00, 0x80, 0x00, 0x01};
-		memcpy(&PesHeader[headerSize], tmp, 9);
-		//memcpy(&PesHeader[headerSize], call->private_data + 8, 9);
-		//memset(&PesHeader[headerSize], 0, 9);
+		memcpy(&PesHeader[headerSize], call->private_data + 8, 9);
 	}
 
 	struct iovec iov[2];

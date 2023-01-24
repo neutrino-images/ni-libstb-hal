@@ -1,7 +1,7 @@
 #ifndef pes_123
 #define pes_123
 
-#define PES_HEADER_SIZE                         9                           ///< size of pes header
+#define PES_HEADER_SIZE                         9                       ///< size of pes header
 #define PES_MAX_HEADER_SIZE                     (PES_HEADER_SIZE + 256) ///< maximal header size
 #define PES_PRIVATE_DATA_FLAG                   0x80
 #define PES_PRIVATE_DATA_LENGTH                 8
@@ -13,9 +13,7 @@
 #define PES_START_CODE_RESERVED_4               0xfd
 #define PES_VERSION_FAKE_START_CODE             0x31
 
-
 #define MAX_PES_PACKET_SIZE                     (65535)
-
 
 /* start codes */
 #define PCM_PES_START_CODE                      0xbd

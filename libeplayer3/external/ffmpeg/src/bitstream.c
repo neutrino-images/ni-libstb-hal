@@ -32,7 +32,6 @@
 #include <ffmpeg/put_bits.h>
 #include <string.h>
 
-
 void avpriv_align_put_bits(PutBitContext *s)
 {
 	put_bits(s, s->bit_left & 7, 0);

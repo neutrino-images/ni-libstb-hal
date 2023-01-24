@@ -429,7 +429,6 @@ int LinuxDvbContinue(Context_t *context __attribute__((unused)), char *type)
 
 	linuxdvb_printf(10, "exiting\n");
 
-
 	return ret;
 }
 
@@ -489,7 +488,6 @@ int LinuxDvbAudioMute(Context_t *context __attribute__((unused)), char *flag)
 
 	return ret;
 }
-
 
 int LinuxDvbFlush(Context_t *context __attribute__((unused)), char *type)
 {
@@ -618,7 +616,6 @@ int LinuxDvbFastForward(Context_t *context, char *type)
 	return ret;
 }
 #endif
-
 
 int LinuxDvbReverse(Context_t *context __attribute__((unused)), char *type __attribute__((unused)))
 {
@@ -781,7 +778,8 @@ int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned l
 			linuxdvb_err("VIDEO_GET_PLAY_INFO: %s\n", strerror(errno));
 			ret = cERR_LINUXDVB_ERROR;
 		}
-		else linuxdvb_err("V: %llu\n", playInfo.frame_count);
+		else
+			linuxdvb_err("V: %llu\n", playInfo.frame_count);
 	}
 	else if (audiofd != -1)
 	{
@@ -791,7 +789,8 @@ int LinuxDvbGetFrameCount(Context_t *context __attribute__((unused)), unsigned l
 			linuxdvb_err("AUDIO_GET_PLAY_INFO: %s\n", strerror(errno));
 			ret = cERR_LINUXDVB_ERROR;
 		}
-		else linuxdvb_err("A: %llu\n", playInfo.frame_count);
+		else
+			linuxdvb_err("A: %llu\n", playInfo.frame_count);
 	}
 	else
 	{
@@ -934,7 +933,6 @@ int LinuxDvbSwitch(Context_t *context, char *type)
 		}
 
 		releaseLinuxDVBMutex();
-
 	}
 
 	linuxdvb_printf(10, "exiting\n");
@@ -963,7 +961,7 @@ static int Write(void *_context, void *_out)
 	audio = !strcmp("audio", out->type);
 
 	linuxdvb_printf(20, "DataLength=%u PrivateLength=%u Pts=%llu FrameRate=%f\n",
-	    out->len, out->extralen, out->pts, out->frameRate);
+		out->len, out->extralen, out->pts, out->frameRate);
 	linuxdvb_printf(20, "v%d a%d\n", video, audio);
 
 	if (video)
@@ -1228,6 +1226,7 @@ static int Command(void *_context, OutputCmd_t command, void *argument)
 		}
 		case OUTPUT_CLEAR:
 		{
+			reset(context);
 			ret = LinuxDvbClear(context, (char *)argument);
 			reset(context);
 			sCURRENT_PTS = 0;

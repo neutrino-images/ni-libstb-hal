@@ -113,26 +113,36 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
 						break;
 					}
 					// ignore flags + NAL type (1 byte)
+					int nal_type = data[pos] & 0x3f;
 					int nal_count = data[pos + 1] << 8 | data[pos + 2];
 					pos += 3;
 					for (j = 0; j < nal_count; j++)
 					{
 						if (pos + 2 > cd_len)
 						{
-							h265_printf(10, "Buffer underrun in extra nal header (%d >= %u)", pos + 2, cd_len);
+							h265_printf(10, "Buffer underrun in extra nal header (%d >= %u)\n", pos + 2, cd_len);
 							break;
 						}
 						int nal_size = data[pos] << 8 | data[pos + 1];
 						pos += 2;
+
 						if (pos + nal_size > cd_len)
 						{
-							h265_printf(10, "Buffer underrun in extra nal (%d >= %u)", pos + 2 + nal_size, cd_len);
+							h265_printf(10, "Buffer underrun in extra nal (%d >= %u)\n", pos + 2 + nal_size, cd_len);
 							break;
 						}
-						memcpy(tmp + tmp_len, "\x00\x00\x00\x01", 4);
-						tmp_len += 4;
-						memcpy(tmp + tmp_len, data + pos, nal_size);
-						tmp_len += nal_size;
+
+						if ((nal_type == 0x20 || nal_type == 0x21 || nal_type == 0x22) && ((tmp_len + 4 + nal_size) < sizeof(tmp)))  // use only VPS, SPS, PPS nals
+						{
+							memcpy(tmp + tmp_len, "\x00\x00\x00\x01", 4);
+							tmp_len += 4;
+							memcpy(tmp + tmp_len, data + pos, nal_size);
+							tmp_len += nal_size;
+						}
+						else if ((tmp_len + 4 + nal_size) >= sizeof(tmp))
+						{
+							h264_err("Ignoring nal as tmp buffer is too small tmp_len + nal = %d\n", tmp_len + 4 + nal_size);
+						}
 						pos += nal_size;
 					}
 				}
@@ -195,7 +205,7 @@ static int writeData(WriterAVCallData_t *call)
 		return 0;
 	}
 
-	if (call->InfoFlags & 0x1)  // TS container
+	if (call->InfoFlags & 0x1) // TS container
 	{
 		h265_printf(10, "H265 simple inject method!\n");
 		uint32_t PacketLength = 0;
@@ -258,6 +268,7 @@ static int writeData(WriterAVCallData_t *call)
 			if (ic >= IOVEC_SIZE)
 			{
 				h264_err(">> Drop data due to ic overflow\n");
+				exit(-1);
 				break;
 			}
 

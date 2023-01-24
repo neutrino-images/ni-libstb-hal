@@ -54,6 +54,7 @@ typedef struct BufferingNode_s
 {
 	uint32_t dataSize;
 	OutputType_t dataType;
+	void *stamp;
 	struct BufferingNode_s *next;
 } BufferingNode_t;
 
@@ -71,6 +72,7 @@ static pthread_t bufferingThread;
 static pthread_mutex_t bufferingMtx;
 static pthread_cond_t  bufferingExitCond;
 static pthread_cond_t  bufferingDataConsumedCond;
+static pthread_cond_t  bufferingWriteFinishedCond;
 static pthread_cond_t  bufferingdDataAddedCond;
 static bool hasBufferingThreadStarted = false;
 static BufferingNode_t *bufferingQueueHead = NULL;
@@ -84,6 +86,11 @@ static int audiofd = -1;
 static int g_pfd[2] = {-1, -1};
 
 static pthread_mutex_t *g_pDVBMtx = NULL;
+
+static bool g_bDuringWrite = false;
+static bool g_bSignalWriteFinish = false;
+
+static void *g_pWriteStamp = NULL;
 
 /* ***************************** */
 /* Prototypes                    */
@@ -147,6 +154,12 @@ static void LinuxDvbBuffThread(Context_t *context)
 	while (0 == PlaybackDieNow(0))
 	{
 		pthread_mutex_lock(&bufferingMtx);
+		g_bDuringWrite = false;
+		if (g_bSignalWriteFinish)
+		{
+			pthread_cond_signal(&bufferingWriteFinishedCond);
+			g_bSignalWriteFinish = false;
+		}
 		if (nodePtr)
 		{
 			free(nodePtr);
@@ -183,22 +196,27 @@ static void LinuxDvbBuffThread(Context_t *context)
 				bufferingDataSize = 0;
 			}
 		}
-		pthread_mutex_unlock(&bufferingMtx);
 
 		/* We will write data without mutex
 		 * this have some disadvantage because we can
 		 * write some portion of data after LinuxDvbBuffFlush,
-		 * for example after seek, this will be fixed later
+		 * for example after seek.
 		 */
-		if (nodePtr && !context->playback->isSeeking)
+		if (nodePtr && !context->playback->isSeeking && context->playback->stamp == nodePtr->stamp)
 		{
 			/* Write data to valid output */
 			uint8_t *dataPtr = (uint8_t *)nodePtr + sizeof(BufferingNode_t);
 			int fd = nodePtr->dataType == OUTPUT_VIDEO ? videofd : audiofd;
+			g_bDuringWrite = true;
+			pthread_mutex_unlock(&bufferingMtx);
 			if (0 != WriteWithRetry(context, g_pfd[0], fd, g_pDVBMtx, dataPtr, nodePtr->dataSize))
 			{
 				buff_err("Something is WRONG\n");
 			}
+		}
+		else
+		{
+			pthread_mutex_unlock(&bufferingMtx);
 		}
 	}
 
@@ -258,6 +276,7 @@ int32_t LinuxDvbBuffOpen(Context_t *context, char *type, int outfd, void *mtx)
 
 			pthread_cond_init(&bufferingExitCond, NULL);
 			pthread_cond_init(&bufferingDataConsumedCond, NULL);
+			pthread_cond_init(&bufferingWriteFinishedCond, NULL);
 			pthread_cond_init(&bufferingdDataAddedCond, NULL);
 		}
 	}
@@ -321,6 +340,7 @@ int32_t LinuxDvbBuffClose(Context_t *context __attribute__((unused)))
 			/*
 			pthread_mutex_destroy(&bufferingMtx);
 			pthread_cond_destroy(&bufferingDataConsumedCond);
+			pthread_cond_destroy(&bufferingWriteFinishedCond);
 			pthread_cond_destroy(&bufferingdDataAddedCond);
 			*/
 		}
@@ -356,6 +376,12 @@ int32_t LinuxDvbBuffFlush(Context_t *context __attribute__((unused)))
 
 	/* signal that queue is empty */
 	pthread_cond_signal(&bufferingDataConsumedCond);
+
+	while (g_bDuringWrite && !PlaybackDieNow(0))
+	{
+		g_bSignalWriteFinish = true;
+		pthread_cond_wait(&bufferingWriteFinishedCond, &bufferingMtx);
+	}
 	pthread_mutex_unlock(&bufferingMtx);
 	buff_printf(40, "EXIT\n");
 
@@ -370,6 +396,11 @@ int32_t LinuxDvbBuffResume(Context_t *context __attribute__((unused)))
 	WriteWakeUp();
 
 	return 0;
+}
+
+void LinuxDvbBuffSetStamp(void *stamp)
+{
+	g_pWriteStamp = stamp;
 }
 
 ssize_t BufferingWriteV(int fd, const struct iovec *iov, int ic)
@@ -445,6 +476,7 @@ ssize_t BufferingWriteV(int fd, const struct iovec *iov, int ic)
 			chunkSize -= sizeof(BufferingNode_t);
 			nodePtr->dataSize = chunkSize;
 			nodePtr->dataType = dataType;
+			nodePtr->stamp = g_pWriteStamp;
 			nodePtr->next = NULL;
 
 			/* signal that we added some data to queue */

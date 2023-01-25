@@ -170,8 +170,8 @@ bool hdmi_cec::SetCECMode(VIDEO_HDMI_CEC_MODE _deviceType)
 				 * takes some time)
 				 */
 				laddrs.cec_version = CEC_OP_CEC_VERSION_2_0;
-				hw_caps_t *caps = get_hwcaps();
-				strcpy(laddrs.osd_name, caps->boxname);
+				hw_caps_t *_caps = get_hwcaps();
+				strcpy(laddrs.osd_name, _caps->boxname);
 				laddrs.vendor_id = CEC_VENDOR_ID_NONE;
 
 				switch (deviceType)

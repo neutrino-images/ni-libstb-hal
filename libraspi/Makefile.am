@@ -5,7 +5,8 @@ AM_CPPFLAGS += \
 	-I/opt/vc/include \
 	-I/opt/vc/include/interface/vcos/pthreads/ \
 	-I/opt/vc/include/interface/vmcs_host/linux \
-	-I$(top_srcdir)/common
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/include
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 

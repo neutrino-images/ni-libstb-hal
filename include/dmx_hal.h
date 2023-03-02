@@ -23,7 +23,7 @@
 #include <vector>
 #include <inttypes.h>
 #include <linux/dvb/dmx.h>
-#include <cs_types.h>
+#include "cs_types.h"
 
 #if BOXMODEL_VUULTIMO4K
 #define MAX_DMX_UNITS 24

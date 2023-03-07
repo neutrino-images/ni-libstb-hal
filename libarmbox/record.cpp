@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
@@ -286,8 +287,7 @@ void cRecord::RecordThread()
 			if (toread > readsize)
 				toread = readsize;
 			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
-			hal_debug("%s: buf_pos %6d s %6d / %6d\n",
-				__func__, buf_pos, (int)s, bufsize - buf_pos);
+			hal_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
 			if (s < 0)
 			{
 				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))

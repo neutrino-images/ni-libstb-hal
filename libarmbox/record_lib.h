@@ -13,10 +13,10 @@ typedef enum
 {
 	RECORD_RUNNING,
 	RECORD_STOPPED,
-	RECORD_FAILED_READ, /* failed to read from DMX */
-	RECORD_FAILED_OVERFLOW, /* cannot write fast enough */
-	RECORD_FAILED_FILE, /* cannot write to file */
-	RECORD_FAILED_MEMORY /* out of memory */
+	RECORD_FAILED_READ,	/* failed to read from DMX */
+	RECORD_FAILED_OVERFLOW,	/* cannot write fast enough */
+	RECORD_FAILED_FILE,	/* cannot write to file */
+	RECORD_FAILED_MEMORY	/* out of memory */
 } record_state_t;
 
 class cRecord

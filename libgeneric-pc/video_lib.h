@@ -184,8 +184,8 @@ class cVideo : public OpenThreads::Thread
 
 		/* aspect ratio */
 		int getAspectRatio(void);
-		int setAspectRatio(int aspect, int mode);
 		void getPictureInfo(int &width, int &height, int &rate);
+		int setAspectRatio(int aspect, int mode);
 
 		/* cropping mode */
 		int setCroppingMode(int x = 0 /*vidDispMode_t x = VID_DISPMODE_NORM*/);

@@ -17,18 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <cstdio>
 #include <string>
-#include <unistd.h>
 #include <sys/ioctl.h>
 #include "dmx_hal.h"
 #include "hal_debug.h"
@@ -147,6 +147,7 @@ void cDemux::Close(void)
 		hal_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return;
 	}
+
 	pesfds.clear();
 	ioctl(fd, DMX_STOP);
 	close(fd);
@@ -264,9 +265,9 @@ bool cDemux::sectionFilter(unsigned short _pid, const unsigned char *const filte
 		hal_info("%s #%d: len too long: %d, DMX_FILTER_SIZE %d\n", __func__, num, len, DMX_FILTER_SIZE);
 		len = DMX_FILTER_SIZE;
 	}
+	flt = filter[0];
 	s_flt.pid = pid;
 	s_flt.timeout = timeout;
-	flt = filter[0];
 	memcpy(s_flt.filter.filter, filter, len);
 	memcpy(s_flt.filter.mask, mask, len);
 	if (negmask != NULL)

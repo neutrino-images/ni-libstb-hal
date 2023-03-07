@@ -180,6 +180,10 @@ class cVideo
 		int getBlank(void);
 		int setBlank(int enable);
 
+		/* set video_system */
+		int SetVideoSystem(int video_system, bool remember = true);
+		int GetVideoSystem();
+
 		/* change video play state. Parameters are all unused. */
 		int Start(void *PcrChannel = NULL, unsigned short PcrPid = 0, unsigned short VideoPid = 0, void *x = NULL);
 		int Stop(bool blank = true);

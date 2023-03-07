@@ -50,7 +50,7 @@ class cAudio
 		int mixer_fd; /* if we are using the OSS mixer */
 		int mixer_num; /* oss mixer to use, if any */
 
-		AUDIO_FORMAT StreamType;
+		int StreamType;
 		AUDIO_SYNC_MODE SyncMode;
 		bool started;
 		bool thread_started;
@@ -84,7 +84,8 @@ class cAudio
 		int Start(void);
 		int Stop(void);
 		bool Pause(bool Pcm = true);
-		void SetStreamType(AUDIO_FORMAT type);
+		void SetStreamType(int bypass);
+		int GetStreamType(void) { return StreamType; }
 		void SetSyncMode(AVSYNC_TYPE Mode);
 
 		/* select channels */

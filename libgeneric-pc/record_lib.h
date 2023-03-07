@@ -38,7 +38,6 @@ class cRecord
 #define RECORD_WRITER_CHUNKS 16
 		unsigned char *io_buf[RECORD_WRITER_CHUNKS];
 		size_t io_len[RECORD_WRITER_CHUNKS];
-
 	public:
 		cRecord(int num = 0, int bs_dmx = 2048 * 1024, int bs = 4096 * 1024);
 		void setFailureCallback(void (*f)(void *), void *d) { failureCallback = f; failureData = d; }

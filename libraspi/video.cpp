@@ -78,6 +78,18 @@ int cVideo::setBlank(int)
 	return 1;
 }
 
+int cVideo::GetVideoSystem()
+{
+	int current_video_system = VIDEO_STD_1080I50;
+
+	if (dec_w < 720)
+		current_video_system = VIDEO_STD_PAL;
+	else if (dec_w > 720 && dec_w <= 1280)
+		current_video_system = VIDEO_STD_720P50;
+
+	return current_video_system;
+}
+
 int cVideo::SetVideoSystem(int system, bool)
 {
 	int h;

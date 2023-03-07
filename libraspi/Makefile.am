@@ -22,6 +22,4 @@ libraspi_la_SOURCES = \
 	glfb.cpp \
 	init.cpp \
 	playback.cpp \
-	pwrmngr.cpp \
 	record.cpp
-

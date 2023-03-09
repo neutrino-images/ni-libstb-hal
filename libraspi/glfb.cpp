@@ -1,21 +1,21 @@
 /*
-    Copyright 2013 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
+	Copyright 2013 Stefan Seyfried <seife@tuxboxcvs.slipkontur.de>
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-    The GLFB namespace is just because it's already established by the
-    generic-pc implementation.
+	The GLFB namespace is just because it's already established by the
+	generic-pc implementation.
 */
 
 #include <vector>
@@ -50,10 +50,10 @@ static VC_IMAGE_TYPE_T type = VC_IMAGE_ARGB8888;
 static OpenThreads::Mutex blit_mutex;
 static OpenThreads::Condition blit_cond;
 
-static bool goodbye = false; /* if set main loop is left */
-static bool ready = false; /* condition predicate */
+static bool goodbye = false;	/* if set main loop is left */
+static bool ready = false;	/* condition predicate */
 
-static int width; /* width and height, fixed for a framebuffer instance */
+static int width;		/* width and height, fixed for a framebuffer instance */
 static int height;
 
 GLFramebuffer::GLFramebuffer(int x, int y)

@@ -19,12 +19,14 @@
  */
 
 #include <unistd.h>
+
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 
 #include "video_lib.h"
 #include "hal_debug.h"
+
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_VIDEO, this, args)
 #define hal_info_c(args...) _hal_info(HAL_DEBUG_VIDEO, NULL, args)
@@ -174,7 +176,7 @@ void cVideo::getPictureInfo(int &width, int &height, int &rate)
 
 void cVideo::SetSyncMode(AVSYNC_TYPE)
 {
-};
+}
 
 int cVideo::SetStreamType(VIDEO_FORMAT v)
 {

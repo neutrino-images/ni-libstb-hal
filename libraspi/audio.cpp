@@ -76,30 +76,30 @@ int cAudio::Stop(void)
 bool cAudio::Pause(bool /*Pcm*/)
 {
 	return true;
-};
+}
 
 void cAudio::SetSyncMode(AVSYNC_TYPE Mode)
 {
 	hal_debug("%s %d\n", __func__, Mode);
-};
+}
 
 void cAudio::SetStreamType(int bypass)
 {
 	StreamType = bypass;
 
 	hal_debug("%s %d (0x%x)\n", __FUNCTION__, bypass, bypass);
-};
+}
 
 int cAudio::setChannel(int /*channel*/)
 {
 	return 0;
-};
+}
 
 int cAudio::PrepareClipPlay(int ch, int srate, int bits, int le)
 {
 	hal_debug("%s ch %d srate %d bits %d le %d\n", __func__, ch, srate, bits, le);;
 	return 0;
-};
+}
 
 int cAudio::WriteClip(unsigned char *buffer, int size)
 {
@@ -111,17 +111,17 @@ int cAudio::StopClip()
 {
 	hal_debug("%s\n", __func__);
 	return 0;
-};
+}
 
 void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &mode)
 {
 	type = 0;
-	layer = 0; /* not used */
+	layer = 0;	/* not used */
 	freq = 0;
-	bitrate = 0; /* not used, but easy to get :-) */
-	mode = 0; /* default: stereo */
+	bitrate = 0;	/* not used, but easy to get :-) */
+	mode = 0;	/* default: stereo */
 	hal_debug("%s t: %d l: %d f: %d b: %d m: %d\n", __func__, type, layer, freq, bitrate, mode);
-};
+}
 
 void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int /*iq_level*/)
 {
@@ -131,22 +131,22 @@ void cAudio::SetSRS(int /*iq_enable*/, int /*nmgr_enable*/, int /*iq_mode*/, int
 void cAudio::SetHdmiDD(bool enable)
 {
 	hal_debug("%s %d\n", __func__, enable);
-};
+}
 
 void cAudio::SetSpdifDD(bool enable)
 {
 	hal_debug("%s %d\n", __func__, enable);
-};
+}
 
 void cAudio::ScheduleMute(bool On)
 {
 	hal_debug("%s %d\n", __func__, On);
-};
+}
 
 void cAudio::EnableAnalogOut(bool enable)
 {
 	hal_debug("%s %d\n", __func__, enable);
-};
+}
 
 void cAudio::setBypassMode(bool disable)
 {

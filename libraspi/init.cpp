@@ -55,9 +55,9 @@ static void init_keymap(void)
 	kmap[KEY_E]	= KEY_EPG;
 	kmap[KEY_I]	= KEY_INFO;
 	kmap[KEY_M]	= KEY_MENU;
-	kmap[KEY_F12]	= KEY_VOLUMEUP; /* different than glfb, as we */
-	kmap[KEY_F11]	= KEY_VOLUMEDOWN; /* don't consider the keyboard */
-	kmap[KEY_F10]	= KEY_MUTE; /* layout... */
+	kmap[KEY_F12]	= KEY_VOLUMEUP;		/* different than glfb, as we */
+	kmap[KEY_F11]	= KEY_VOLUMEDOWN;	/* don't consider the keyboard */
+	kmap[KEY_F10]	= KEY_MUTE;		/* layout... */
 	kmap[KEY_H]	= KEY_HELP;
 	kmap[KEY_P]	= KEY_POWER;
 	kmap[KEY_F1]	= KEY_RED;

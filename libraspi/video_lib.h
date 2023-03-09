@@ -23,7 +23,6 @@ typedef enum
 	ANALOG_SCART_MASK = 0x10
 } analog_mode_t;
 
-
 typedef enum
 {
 	VIDEO_FORMAT_MPEG2 = 0,
@@ -105,7 +104,7 @@ typedef enum
 	VIDEO_STD_1080P24,
 	VIDEO_STD_1080P25,
 	VIDEO_STD_AUTO,
-	VIDEO_STD_1080P50, /* SPARK only */
+	VIDEO_STD_1080P50,
 	VIDEO_STD_MAX
 } VIDEO_STD;
 
@@ -126,7 +125,6 @@ typedef enum
 	VIDEO_CONTROL_SHARPNESS,
 	VIDEO_CONTROL_MAX = VIDEO_CONTROL_SHARPNESS
 } VIDEO_CONTROL;
-
 
 #define VDEC_MAXBUFS 0x30
 class cVideo
@@ -167,8 +165,8 @@ class cVideo
 
 		/* aspect ratio */
 		int getAspectRatio(void);
-		void getPictureInfo(int &width, int &height, int &rate);
 		int setAspectRatio(int aspect, int mode);
+		void getPictureInfo(int &width, int &height, int &rate);
 
 		/* cropping mode */
 		int setCroppingMode(int x = 0 /*vidDispMode_t x = VID_DISPMODE_NORM*/);
@@ -189,14 +187,13 @@ class cVideo
 		int Stop(bool blank = true);
 		bool Pause(void);
 
-		/* set video_system */
-		int SetVideoSystem(int video_system, bool remember = true);
 		int SetStreamType(VIDEO_FORMAT type);
+		bool ShowPicture(const char *fname);
+
 		void SetSyncMode(AVSYNC_TYPE mode);
 		bool SetCECMode(VIDEO_HDMI_CEC_MODE) { return true; };
 		void SetCECAutoView(bool) { return; };
 		void SetCECAutoStandby(bool) { return; };
-		bool ShowPicture(const char *fname);
 		void StopPicture();
 		void Standby(unsigned int bOn);
 		void Pig(int x, int y, int w, int h, int osd_w = 1064, int osd_h = 600);
@@ -206,10 +203,10 @@ class cVideo
 		void SetDBDR(int) { return; };
 		void SetAudioHandle(void *) { return; };
 		void SetAutoModes(int [VIDEO_STD_MAX]) { return; };
-		int OpenVBI(int) { return 0; };
-		int CloseVBI(void) { return 0; };
-		int StartVBI(unsigned short) { return 0; };
-		int StopVBI(void) { return 0; };
+		int  OpenVBI(int) { return 0; };
+		int  CloseVBI(void) { return 0; };
+		int  StartVBI(unsigned short) { return 0; };
+		int  StopVBI(void) { return 0; };
 		void SetDemux(cDemux *dmx);
 		bool GetScreenImage(unsigned char *&data, int &xres, int &yres, bool get_video = true, bool get_osd = false, bool scale_to_video = false);
 

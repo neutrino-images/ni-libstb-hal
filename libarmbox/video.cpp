@@ -963,6 +963,11 @@ void cVideo::ShowPig(int _x)
 	char buffer[64];
 	sprintf(buffer, "%d", _x);
 	proc_put(VMPEG_visible[devnum], buffer, strlen(buffer));
+#if BOXMODEL_HISILICON
+	if (_x == 0)
+		Pig(-2, -2, -2, -2);
+#endif
+
 }
 
 void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, int starty, int endx, int endy)
@@ -981,6 +986,17 @@ void cVideo::Pig(int x, int y, int w, int h, int osd_w, int osd_h, int startx, i
 		_x = 0;
 		_y = 0;
 	}
+#if BOXMODEL_HISILICON
+	// reset with 0,0,0,0 or -1,-1,-1,-1 does not work.
+	// smallest pig size after activation is 18x23 pixel, so move black box outsize the screen
+	else if (x == -2 && y == -2 && w == -2 && h == -2)
+	{
+		_w = 0;
+		_h = 0;
+		_x = xres;
+		_y = yres;
+	}
+#endif
 	else
 	{
 		// need to do some additional adjustments because osd border is handled by blitter

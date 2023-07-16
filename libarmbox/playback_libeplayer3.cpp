@@ -472,10 +472,13 @@ bool cPlayback::GetPosition(int &position, int &duration, bool isWebChannel)
 	if (player && player->playback && !player->playback->isPlaying)
 	{
 		hal_info("%s !!!!EOF!!!! < -1\n", __func__);
-		if (isWebChannel) {				// WebTV/IPTV
+		if (isWebChannel)
+		{
 			position = duration - 1000;
 			return true;
-		} else {
+		}
+		else
+		{
 			position = duration + 1000;
 			return false;
 		}

@@ -74,7 +74,7 @@ class cPlayback
 		bool SetSpeed(int speed);
 		bool SetSlow(int slow);
 		bool GetSpeed(int &speed) const;
-		bool GetPosition(int &position, int &duration);
+		bool GetPosition(int &position, int &duration, bool isWebChannel = false);
 		void GetPts(uint64_t &pts);
 		int GetAPid(void);
 		int GetVPid(void);

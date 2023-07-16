@@ -820,7 +820,7 @@ bool cPlayback::GetSpeed(int &speed) const
 }
 
 // in milliseconds
-bool cPlayback::GetPosition(int &position, int &duration)
+bool cPlayback::GetPosition(int &position, int &duration, bool /*isWebChannel*/)
 {
 	if (playing == false)
 		return false;

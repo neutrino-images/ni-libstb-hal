@@ -54,7 +54,7 @@ class cPlayback
 		int GetTeletextPid(void);
 		bool SetSpeed(int speed);
 		bool GetSpeed(int &speed) const;
-		bool GetPosition(int &position, int &duration);
+		bool GetPosition(int &position, int &duration, bool isWebChannel = false);
 		void GetPts(uint64_t &pts);
 		bool SetPosition(int position, bool absolute = false);
 		void FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t *numpida, std::string *language);

@@ -439,7 +439,7 @@ void cPlayback::GetPts(uint64_t &pts)
 }
 
 // in milliseconds
-bool cPlayback::GetPosition(int &position, int &duration)
+bool cPlayback::GetPosition(int &position, int &duration, bool isWebChannel)
 {
 	bool got_duration = false;
 	hal_debug("%s %d %d\n", __func__, position, duration);
@@ -472,8 +472,13 @@ bool cPlayback::GetPosition(int &position, int &duration)
 	if (player && player->playback && !player->playback->isPlaying)
 	{
 		hal_info("%s !!!!EOF!!!! < -1\n", __func__);
-		position = duration + 1000;
-		return false;
+		if (isWebChannel) {				// WebTV/IPTV
+			position = duration - 1000;
+			return true;
+		} else {
+			position = duration + 1000;
+			return false;
+		}
 	}
 
 	int64_t vpts = 0;

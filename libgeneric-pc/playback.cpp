@@ -48,7 +48,7 @@ bool cPlayback::GetSpeed(int &/*speed*/) const
 	return true;
 }
 
-bool cPlayback::GetPosition(int &position, int &duration)
+bool cPlayback::GetPosition(int &position, int &duration, bool /*isWebChannel*/)
 {
 	printf("%s:%s %d %d\n", FILENAME, __func__, position, duration);
 	position = 0;

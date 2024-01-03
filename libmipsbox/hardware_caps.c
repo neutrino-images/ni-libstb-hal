@@ -55,6 +55,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_SCART = 1;
 //	caps.has_SCART_input = 1;
 	strcpy(caps.startup_file, "");
+	strcpy(caps.boxmodel, "vuduo");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "DUO");
 	strcpy(caps.boxarch, "BCM7335");

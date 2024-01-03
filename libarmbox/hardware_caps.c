@@ -56,6 +56,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 1;
 	caps.pip_devs = 2; // has only 3 real usable video devices
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vusolo4k");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "SOLO4K");
 	strcpy(caps.boxarch, "BCM7376");
@@ -78,6 +79,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 2;
 	caps.has_HDMI_input = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuduo4k");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "DUO4K");
 	strcpy(caps.boxarch, "BCM7278");
@@ -99,6 +101,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 2;
 	caps.has_HDMI_input = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuduo4kse");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "DUO4KSE");
 	strcpy(caps.boxarch, "BCM7444S");
@@ -121,6 +124,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 2;
 	caps.has_HDMI_input = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuultimo4k");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "ULTIMO4K");
 	strcpy(caps.boxarch, "BCM7444S");
@@ -140,6 +144,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuzero4k");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "ZERO4K");
 	strcpy(caps.boxarch, "BCM72604");
@@ -162,6 +167,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_HDMI = 2;
 	caps.has_HDMI_input = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuuno4kse");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "UNO4KSE");
 	strcpy(caps.boxarch, "BCM7252S");
@@ -181,6 +187,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "vuuno4k");
 	strcpy(caps.boxvendor, "VU+");
 	strcpy(caps.boxname, "UNO4K");
 	strcpy(caps.boxarch, "BCM7252S");
@@ -201,6 +208,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "hd51");
 	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD51");
 	strcpy(caps.boxarch, "BCM7251S");
@@ -221,6 +229,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "breeze4k");
 	strcpy(caps.boxvendor, "WWIO");
 	strcpy(caps.boxname, "BRE2ZE4K");
 	strcpy(caps.boxarch, "BCM7251S");
@@ -241,6 +250,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "h7");
 	strcpy(caps.boxvendor, "AirDigital");
 	strcpy(caps.boxname, "Zgemma H7");
 	strcpy(caps.boxarch, "BCM7251S");
@@ -262,6 +272,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "e4hdultra");
 	strcpy(caps.boxvendor, "AXAS");
 	strcpy(caps.boxname, "E4HD 4K ULTRA");
 	strcpy(caps.boxarch, "BCM7252S");
@@ -283,6 +294,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "protek4k");
 	strcpy(caps.boxvendor, "Protek");
 	strcpy(caps.boxname, "Protek 4K UHD");
 	strcpy(caps.boxarch, "BCM7252S");
@@ -303,6 +315,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxmodel, "hd60");
 	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD60");
 	strcpy(caps.boxarch, "HI3798MV200");
@@ -321,6 +334,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxmodel, "hd61");
 	strcpy(caps.boxvendor, "AX");
 	strcpy(caps.boxname, "HD61");
 	strcpy(caps.boxarch, "HI3798MV200");
@@ -341,6 +355,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxmodel, "multibox");
 	strcpy(caps.boxvendor, "Maxytec");
 	strcpy(caps.boxname, "Multibox 4K");
 	strcpy(caps.boxarch, "HI3798MV200");
@@ -361,6 +376,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 0;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP_LINUX");
+	strcpy(caps.boxmodel, "multiboxse");
 	strcpy(caps.boxvendor, "Maxytec");
 	strcpy(caps.boxname, "Multibox SE 4K");
 	strcpy(caps.boxarch, "HI3798MV200");
@@ -381,6 +397,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "osmini4k");
 	strcpy(caps.boxvendor, "Edision");
 	strcpy(caps.boxname, "OS mini 4K");
 	strcpy(caps.boxarch, "BCM72604");
@@ -401,6 +418,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "osmio4k");
 	strcpy(caps.boxvendor, "Edision");
 	strcpy(caps.boxname, "OS mio 4K");
 	strcpy(caps.boxarch, "BCM72604");
@@ -422,6 +440,7 @@ hw_caps_t *get_hwcaps(void)
 	caps.has_button_vformat = 1;
 	caps.has_HDMI = 1;
 	strcpy(caps.startup_file, "STARTUP");
+	strcpy(caps.boxmodel, "osmio4kplus");
 	strcpy(caps.boxvendor, "Edision");
 	strcpy(caps.boxname, "OS mio+ 4K");
 	strcpy(caps.boxarch, "BCM72604");

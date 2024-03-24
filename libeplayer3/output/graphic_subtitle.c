@@ -87,7 +87,7 @@ static bool IsRegular(const char *pPath)
 {
 	struct stat st = {0};
 
-	if (0 == lstat(pPath, &st) && S_ISREG(st.st_mode))
+	if (lstat(pPath, &st) == 0 && S_ISREG(st.st_mode))
 	{
 		return true;
 	}
@@ -100,7 +100,7 @@ static void RemoveAllRegularFiles(const char *mainDir, const char *filePattern)
 		return;
 
 	DIR *dirp = opendir(mainDir);
-	if (0 == dirp)
+	if (dirp == 0)
 		return;
 
 	struct dirent *pDir = 0;
@@ -111,7 +111,7 @@ static void RemoveAllRegularFiles(const char *mainDir, const char *filePattern)
 		while (1)
 		{
 			pDir = readdir(dirp);
-			if (0 == pDir)
+			if (pDir == 0)
 				break;
 
 			if (pDir->d_type != DT_REG && pDir->d_type != DT_UNKNOWN)
@@ -121,7 +121,7 @@ static void RemoveAllRegularFiles(const char *mainDir, const char *filePattern)
 			if (pDir->d_type == DT_UNKNOWN && !IsRegular(fullpath))
 				continue;
 
-			if (0 == fnmatch(filePattern, pDir->d_name, 0))
+			if (fnmatch(filePattern, pDir->d_name, 0) == 0)
 				remove(fullpath);
 		}
 	}
@@ -295,7 +295,7 @@ static int32_t Write(WriterSubCallData_t *subPacket)
 					g_sys->p_swctx = sws_getCachedContext(g_sys->p_swctx, rec->w, rec->h, AV_PIX_FMT_PAL8, desc_tab[j].w, desc_tab[j].h, AV_PIX_FMT_RGBA, SWS_BICUBIC, NULL, NULL, NULL); // SWS_FAST_BILINEAR
 					sws_scale(g_sys->p_swctx, (const uint8_t *const *)rec->data, rec->linesize, 0, rec->h, data, linesize);
 
-					if (0 == PNGPlugin_saveRGBAImage(filepath, &(data[0][0]), desc_tab[j].w, desc_tab[j].h))
+					if (PNGPlugin_saveRGBAImage(filepath, &(data[0][0]), desc_tab[j].w, desc_tab[j].h) == 0)
 					{
 						j += 1;
 					}

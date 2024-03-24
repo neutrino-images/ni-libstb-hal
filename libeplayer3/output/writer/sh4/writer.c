@@ -105,7 +105,7 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx, co
 	int retval = -1;
 	struct timeval tv;
 
-	while (size > 0 && 0 == PlaybackDieNow(0) && !context->playback->isSeeking)
+	while (size > 0 && PlaybackDieNow(0) == 0 && !context->playback->isSeeking)
 	{
 		if (context->playback->isPaused)
 		{

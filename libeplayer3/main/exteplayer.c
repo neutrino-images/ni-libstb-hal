@@ -44,7 +44,7 @@
 
 #include "debug.h"
 
-#define DUMP_BOOL(x) 0 == x ? "false"  : "true"
+#define DUMP_BOOL(x) x == 0 ? "false"  : "true"
 #define IPTV_MAX_FILE_PATH 1024
 
 extern int ffmpeg_av_dict_set(const char *key, const char *value, int flags);
@@ -80,7 +80,7 @@ static void TerminateAllSockets(void)
 	int i;
 	for (i = 0; i < 1024; ++i)
 	{
-		if (0 == shutdown(i, SHUT_RDWR))
+		if (shutdown(i, SHUT_RDWR) == 0)
 		{
 			/* yes, I know that this is not good practice and I know what this could cause
 			 * but in this use case it can be accepted.
@@ -182,7 +182,7 @@ finish:
 
 static void map_inter_file_path(char *filename)
 {
-	if (0 == strncmp(filename, "iptv://", 7))
+	if (strncmp(filename, "iptv://", 7) == 0)
 	{
 		FILE *f = fopen(filename + 7, "r");
 		if (NULL != f)
@@ -587,7 +587,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 		}
 	}
 
-	if (0 == ret && optind < argc)
+	if (ret == 0 && optind < argc)
 	{
 		ret = 0;
 		playbackFiles->szFirstFile = malloc(IPTV_MAX_FILE_PATH);
@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
 		if (fcntl(g_pfd[1], F_SETFL, flags) == -1)
 			break;
 
-		if (0 == pthread_create(&termThread, NULL, TermThreadFun, NULL))
+		if (pthread_create(&termThread, NULL, TermThreadFun, NULL) == 0)
 			isTermThreadStarted = 1;
 	}
 	while (0);
@@ -781,7 +781,7 @@ int main(int argc, char *argv[])
 			HandleTracks(g_player->manager->subtitle, (PlaybackCmd_t) -1, "sc");
 		}
 
-		while (g_player->playback->isPlaying && 0 == PlaybackDieNow(0))
+		while (g_player->playback->isPlaying && PlaybackDieNow(0) == 0)
 		{
 			/* we made fgets non blocking */
 			if (NULL == fgets(argvBuff, sizeof(argvBuff) - 1, stdin))
@@ -791,7 +791,7 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
-			if (0 == argvBuff[0])
+			if (argvBuff[0] == 0)
 			{
 				continue;
 			}
@@ -911,12 +911,12 @@ int main(int argc, char *argv[])
 					commandRetVal = g_player->playback->Command(g_player, PLAYBACK_PTS, &pts);
 					CurrentSec = (int32_t)(pts / 90000);
 
-					if (0 == commandRetVal)
+					if (commandRetVal == 0)
 					{
 						E2iSendMsg("{\"J\":{\"ms\":%"PRId64"}}\n", pts / 90);
 					}
 
-					if (0 == commandRetVal || force)
+					if (commandRetVal == 0 || force)
 					{
 						commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void *)&length);
 						E2iSendMsg("{\"PLAYBACK_LENGTH\":{\"length\":%"PRId64", \"sts\":%d}}\n", length, commandRetVal);
@@ -958,7 +958,7 @@ int main(int argc, char *argv[])
 				{
 					int64_t pts = 0;
 					commandRetVal = g_player->playback->Command(g_player, PLAYBACK_PTS, &pts);
-					if (0 == commandRetVal)
+					if (commandRetVal == 0)
 					{
 						int64_t lastPts = 0;
 						commandRetVal = 1;
@@ -968,7 +968,7 @@ int main(int argc, char *argv[])
 							commandRetVal = g_player->container->selectedContainer->Command((Context_t *)g_player->container, CONTAINER_LAST_PTS, &lastPts);
 						}
 
-						if (0 == commandRetVal && lastPts != INVALID_PTS_VALUE)
+						if (commandRetVal == 0 && lastPts != INVALID_PTS_VALUE)
 						{
 							E2iSendMsg("{\"J\":{\"ms\":%"PRId64",\"lms\":%"PRId64"}}\n", pts / 90, lastPts / 90);
 						}

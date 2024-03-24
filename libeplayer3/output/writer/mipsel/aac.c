@@ -154,7 +154,7 @@ static int _writeData(WriterAVCallData_t *call, int type)
 	}
 
 	/* simple validation */
-	if (0 == type) // check ADTS header
+	if (type == 0) // check ADTS header
 	{
 		if (0xFF != call->data[0] || 0xF0 != (0xF0 & call->data[1]))
 		{
@@ -163,7 +163,7 @@ static int _writeData(WriterAVCallData_t *call, int type)
 		}
 
 		// STB can handle only AAC LC profile
-		if (0 == (call->data[2] & 0xC0))
+		if ((call->data[2] & 0xC0) == 0)
 		{
 			// change profile AAC Main -> AAC LC (Low Complexity)
 			aac_printf(1, "change profile AAC Main -> AAC LC (Low Complexity) in the ADTS header");
@@ -204,7 +204,7 @@ static int writeDataADTS(WriterAVCallData_t *call)
 		return 0;
 	}
 
-	if ((call->private_data && 0 == strncmp("ADTS", (const char *)call->private_data, call->private_size)) ||
+	if ((call->private_data && strncmp("ADTS", (const char *)call->private_data, call->private_size) == 0) ||
 		HasADTSHeader(call->data, call->len))
 	{
 		//printf("%hhx %hhx %hhx %hhx %hhx %hhx %hhx %hhx\n", call->data[0], call->data[1], call->data[2], call->data[3], call->data[4], call->data[5], call->data[6], call->data[7]);
@@ -269,7 +269,7 @@ static int writeDataLATM(WriterAVCallData_t *call)
 		return 0;
 	}
 
-	if (call->private_data && 0 == strncmp("LATM", (const char *)call->private_data, call->private_size))
+	if (call->private_data && strncmp("LATM", (const char *)call->private_data, call->private_size) == 0)
 	{
 		return _writeData(call, 1);
 	}

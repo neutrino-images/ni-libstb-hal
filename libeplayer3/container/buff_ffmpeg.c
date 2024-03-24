@@ -53,7 +53,7 @@ static int64_t update_max_injected_pts(int64_t pts)
 {
 	if (pts > 0 && pts != INVALID_PTS_VALUE)
 	{
-		if (maxInjectedPTS == INVALID_PTS_VALUE || pts > maxInjectedPTS || 0 == PlaybackDieNow(0))
+		if (maxInjectedPTS == INVALID_PTS_VALUE || pts > maxInjectedPTS || PlaybackDieNow(0) == 0)
 		{
 			maxInjectedPTS = pts;
 		}
@@ -89,7 +89,7 @@ static int8_t is_finish_timeout()
 
 static void update_finish_timeout()
 {
-	if (0 == pauseTimeout)
+	if (pauseTimeout == 0)
 	{
 		int64_t maxInjectedPts = update_max_injected_pts(-1);
 		int64_t currPts = -1;
@@ -106,14 +106,14 @@ static void update_finish_timeout()
 		/* On some STBs PTS readed from decoder is invalid after seek or at start
 		 * this is the reason for additional validation when we what to close immediately
 		 */
-		if (!progressive_playback && 0 == ret && currPts >= maxInjectedPts &&
+		if (!progressive_playback && ret == 0 && currPts >= maxInjectedPts &&
 			((currPts - maxInjectedPts) / 90000) < 2)
 		{
 			/* close immediately
 			 */
 			finishTimeout = TIMEOUT_MAX_ITERS + 1;
 		}
-		else if (0 == ret && (playPts != currPts && maxInjectedPts > currPts))
+		else if (ret == 0 && (playPts != currPts && maxInjectedPts > currPts))
 		{
 			playPts = currPts;
 			finishTimeout = 0;
@@ -124,10 +124,10 @@ static void update_finish_timeout()
 static int32_t ffmpeg_read_wrapper_base(void *opaque, uint8_t *buf, int32_t buf_size, uint8_t type)
 {
 	int32_t len = 0;
-	if (0 == PlaybackDieNow(0))
+	if (PlaybackDieNow(0) == 0)
 	{
 		len = ffmpeg_real_read_org(opaque, buf, buf_size);
-		while (len < buf_size && g_context && 0 == PlaybackDieNow(0))
+		while (len < buf_size && g_context && PlaybackDieNow(0) == 0)
 		{
 			if (type && len > 0)
 			{
@@ -273,7 +273,7 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t *inpause, int3
 	while ((flag == 0 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF) ||
 		(flag == 1 && hasfillerThreadStarted[id] == 1 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF))
 	{
-		if (0 == PlaybackDieNow(0))
+		if (PlaybackDieNow(0) == 0)
 		{
 			break;
 		}
@@ -533,7 +533,7 @@ static int32_t ffmpeg_read(void *opaque, uint8_t *buf, int32_t buf_size)
 	int32_t len = 0;
 	int32_t count = 2000;
 
-	while (sumlen < buf_size && (--count) > 0 && 0 == PlaybackDieNow(0))
+	while (sumlen < buf_size && (--count) > 0 && PlaybackDieNow(0) == 0)
 	{
 		len = ffmpeg_read_real(opaque, buf, buf_size - sumlen);
 		sumlen += len;

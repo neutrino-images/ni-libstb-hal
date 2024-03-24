@@ -74,7 +74,7 @@ static AVCodecContext *get_codecpar(AVStream *stream)
 static AVRational get_frame_rate(AVStream *stream)
 {
 	AVRational rateRational = stream->avg_frame_rate;
-	if (0 == rateRational.den)
+	if (rateRational.den == 0)
 	{
 		rateRational = stream->r_frame_rate;
 	}

@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -41,7 +42,6 @@
 #include <sys/poll.h>
 #include <pthread.h>
 #include <sys/prctl.h>
-#include <stdint.h>
 
 #include <ffmpeg/mpeg4audio.h>
 
@@ -764,12 +764,6 @@ static void FFMPEGThread(Context_t *context)
 					}
 				}
 				reset_finish_timeout();
-				/*
-				if (bufferSize > 0)
-				{
-					context->output->Command(context, OUTPUT_CLEAR, NULL);
-				}
-				*/
 			}
 			else
 			{
@@ -1035,6 +1029,7 @@ static void FFMPEGThread(Context_t *context)
 				pcmExtradata.bit_rate              = get_codecpar(audioTrack->stream)->bit_rate;
 				pcmExtradata.block_align           = get_codecpar(audioTrack->stream)->block_align;
 				pcmExtradata.frame_size            = get_codecpar(audioTrack->stream)->frame_size;
+
 				pcmExtradata.codec_id              = get_codecpar(audioTrack->stream)->codec_id;
 				pcmExtradata.bResampling           = restart_audio_resampling;
 
@@ -1297,8 +1292,10 @@ static void FFMPEGThread(Context_t *context)
 					avOut.width      = 0;
 					avOut.height     = 0;
 					avOut.type       = "audio";
+
 					pcmExtradata.private_data = pAudioExtradata;
 					pcmExtradata.private_size = audioExtradataSize;
+
 					if (!context->playback->BackWard && Write(context->output->audio->Write, context, &avOut, pts) < 0)
 					{
 						ffmpeg_err("writing data to audio device failed\n");
@@ -1492,7 +1489,7 @@ int SAM_ReadFunc(void *ptr, uint8_t *buffer, int lSize)
 	{
 		ret = (int)fread((void *) buffer, (size_t) 1, (size_t) lSize, io->pFile);
 #if (LIBAVFORMAT_VERSION_MAJOR > 58) || ((LIBAVFORMAT_VERSION_MAJOR == 58) && (LIBAVFORMAT_VERSION_MINOR > 79))
-		if(ret==0)
+		if (ret==0)
 			ret = AVERROR_EOF;
 #endif
 	}
@@ -2492,11 +2489,13 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 								if (off >= 0 && chan_config == 0)   // channel config must be send in the inband PCE
 								{
 									track.aacbuf = malloc(AAC_HEADER_LENGTH + MAX_PCE_SIZE);
+
 									GetBitContext gb;
 									PutBitContext pb;
 									init_put_bits(&pb, track.aacbuf + AAC_HEADER_LENGTH, MAX_PCE_SIZE);
 									init_get_bits8(&gb, get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size);
 									skip_bits_long(&gb, off + 3);
+
 									put_bits(&pb, 3, 5); //ID_PCE
 									track.aacbuflen = AAC_HEADER_LENGTH + (avpriv_copy_pce_data(&pb, &gb) + 3) / 8;
 									flush_put_bits(&pb);
@@ -2509,6 +2508,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 								// https://wiki.multimedia.cx/index.php/ADTS
 								object_type -= 1; //ADTS - profile, the MPEG-4 Audio Object Type minus 1
+
 								track.aacbuf[0] = 0xFF;
 								track.aacbuf[1] = 0xF1;
 								//track.aacbuf[1] |=0x8;
@@ -2537,6 +2537,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 							get_codecpar(stream)->codec_id == AV_CODEC_ID_WMALOSSLESS) //if (get_codecpar(stream)->extradata_size > 0)
 						{
 							ffmpeg_printf(10, "Create WMA ExtraData\n");
+
 							// type_specific_data
 							uint16_t codec_id = 0;
 							switch (get_codecpar(stream)->codec_id)
@@ -2625,10 +2626,10 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 							memcpy(track.aacbuf + 96, get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size);
 							ffmpeg_printf(1, "aacbuf:\n");
+
 							track.have_aacheader = 1;
 						}
 #endif
-
 						if (context->manager->audio)
 						{
 							ffmpeg_printf(1, "cAVIdx[%d]: MANAGER_ADD track AUDIO\n", cAVIdx);

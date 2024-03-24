@@ -63,7 +63,7 @@ static void printOutputCapabilities()
 {
 	int i, j;
 
-	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	output_printf(10, "\n");
 	output_printf(10, "Capabilities:\n");
 
 	for (i = 0; AvailableOutput[i] != NULL; i++)
@@ -86,7 +86,7 @@ static void OutputAdd(Context_t *context, char *port)
 {
 	int i, j;
 
-	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	output_printf(10, "\n");
 
 	for (i = 0; AvailableOutput[i] != NULL; i++)
 	{
@@ -116,7 +116,7 @@ static void OutputAdd(Context_t *context, char *port)
 
 static void OutputDel(Context_t *context, char *port)
 {
-	output_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	output_printf(10, "\n");
 
 	if (!strcmp("audio", port))
 	{
@@ -136,7 +136,7 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
 {
 	int ret = cERR_OUTPUT_NO_ERROR;
 
-	output_printf(10, "%s::%s Command %d\n", __FILE__, __FUNCTION__, command);
+	output_printf(10, "Command %d\n", command);
 
 	switch (command)
 	{
@@ -584,12 +584,12 @@ static int Command(Context_t *context, OutputCmd_t command, void *argument)
 			break;
 		}
 		default:
-			output_err("%s::%s OutputCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
+			output_err("OutputCmd %d not supported!\n", command);
 			ret = cERR_OUTPUT_INTERNAL_ERROR;
 			break;
 	}
 
-	output_printf(10, "%s::%s exiting with value %d\n", __FILE__, __FUNCTION__, ret);
+	output_printf(10, "exiting with value %d\n", ret);
 
 	return ret;
 }

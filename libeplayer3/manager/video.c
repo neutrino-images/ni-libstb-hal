@@ -144,7 +144,7 @@ static TrackDescription_t *ManagerList(Context_t *context __attribute__((unused)
 		tracklist[j].Id = -1;
 	}
 
-	video_mgr_printf(10, "return %p (%d - %d)\n", tracklist, j, TrackCount);
+	video_mgr_printf(10, "return %p %d\n", tracklist, TrackCount);
 
 	return tracklist;
 }

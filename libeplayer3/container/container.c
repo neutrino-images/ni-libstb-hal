@@ -36,7 +36,7 @@ static void printContainerCapabilities()
 	int32_t i = 0;
 	int32_t j = 0;
 
-	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	container_printf(10, "\n");
 	container_printf(10, "Capabilities: ");
 
 	for (i = 0; AvailableContainer[i] != NULL; i++)
@@ -55,7 +55,7 @@ static int32_t selectContainer(Context_t *context, char *extension)
 	int32_t j = 0;
 	int32_t ret = -1;
 
-	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	container_printf(10, "\n");
 
 	for (i = 0; AvailableContainer[i] != NULL; i++)
 	{
@@ -89,7 +89,7 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument __
 {
 	int ret = 0;
 
-	container_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
+	container_printf(10, "\n");
 
 	switch (command)
 	{
@@ -109,7 +109,7 @@ static int Command(Context_t *context, ContainerCmd_t command, void *argument __
 			break;
 		}
 		default:
-			container_err("%s::%s ContainerCmd %d not supported!\n", __FILE__, __FUNCTION__, command);
+			container_err("ContainerCmd %d not supported!\n", command);
 			break;
 	}
 

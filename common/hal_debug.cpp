@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/prctl.h>
 #include <string.h>
+#include "config.h"
 
 
 int cnxt_debug = 0; /* compat, unused */
@@ -22,9 +23,13 @@ static const char *hal_facility[] =
 	"init  ",
 	"ca    ",
 	"record",
+	"player",
 	NULL
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void _hal_info(int facility, const void *func, const char *fmt, ...)
 {
 	/* %p does print "(nil)" instead of 0x00000000 for NULL */
@@ -50,6 +55,9 @@ void _hal_debug(int facility, const void *func, const char *fmt, ...)
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 }
+#ifdef __cplusplus
+}
+#endif
 
 void hal_debug_init(void)
 {

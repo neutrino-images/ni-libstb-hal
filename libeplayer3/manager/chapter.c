@@ -26,35 +26,17 @@
 
 #include "manager.h"
 #include "common.h"
+#include "debug.h"
 
 /* ***************************** */
 /* Makros/Constants              */
 /* ***************************** */
-#define TRACKWRAP 64
 
-#define CHAPTER_MGR_DEBUG
-
-#ifdef CHAPTER_MGR_DEBUG
-
-static short debug_level = 0;
-
-#define chapter_mgr_printf(level, x...) do { \
-		if (debug_level >= level) printf(x); } while (0)
-#else
-#define chapter_mgr_printf(level, x...)
-#endif
-
-#ifndef CHAPTER_MGR_SILENT
-#define chapter_mgr_err(x...) do { printf(x); } while (0)
-#else
-#define chapter_mgr_err(x...)
-#endif
+#define TRACKWRAP 20
 
 /* Error Constants */
 #define cERR_CHAPTER_MGR_NO_ERROR        0
 #define cERR_CHAPTER_MGR_ERROR          -1
-
-static const char FILENAME[] = __FILE__;
 
 /* ***************************** */
 /* Types                         */
@@ -78,19 +60,21 @@ static int CurrentTrack = 0;    //TRACK[0] as default.
 
 static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 {
-	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "name=\"%s\" encoding=\"%s\" id=%d\n", track.Name, track.Encoding, track.Id);
 
 	if (Tracks == NULL)
 	{
 		Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
 		int i;
 		for (i = 0; i < TRACKWRAP; i++)
+		{
 			Tracks[i].Id = -1;
+		}
 	}
 
 	if (Tracks == NULL)
 	{
-		chapter_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+		chapter_mgr_err("malloc failed\n");
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
@@ -112,11 +96,11 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 	}
 	else
 	{
-		chapter_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
+		chapter_mgr_err("TrackCount out if range %d - %d\n", TrackCount, TRACKWRAP);
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
-	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "\n");
 
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }
@@ -126,23 +110,25 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 	int i = 0, j = 0;
 	char **tracklist = NULL;
 
-	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "\n");
 
 	if (Tracks != NULL)
 	{
-
 		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
 
 		if (tracklist == NULL)
 		{
-			chapter_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
+			chapter_mgr_err("malloc failed\n");
 			return NULL;
 		}
 
 		for (i = 0, j = 0; i < TrackCount; i++, j += 2)
 		{
 			if (Tracks[i].pending)
+			{
 				continue;
+			}
+
 			char tmp[20];
 			snprintf(tmp, sizeof(tmp), "%d", (int)Tracks[i].chapter_start);
 			tracklist[j] = strdup(tmp);
@@ -151,7 +137,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 		tracklist[j] = NULL;
 	}
 
-	chapter_mgr_printf(10, "%s::%s return %p (%d - %d)\n", FILENAME, __FUNCTION__, tracklist, j, TrackCount);
+	chapter_mgr_printf(10, "return %p (%d - %d)\n", tracklist, j, TrackCount);
 
 	return tracklist;
 }
@@ -160,7 +146,7 @@ static int ManagerDel(Context_t *context __attribute__((unused)))
 {
 	int i = 0;
 
-	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "\n");
 
 	if (Tracks != NULL)
 	{
@@ -173,14 +159,14 @@ static int ManagerDel(Context_t *context __attribute__((unused)))
 	}
 	else
 	{
-		chapter_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
+		chapter_mgr_err("nothing to delete!\n");
 		return cERR_CHAPTER_MGR_ERROR;
 	}
 
 	TrackCount = 0;
 	CurrentTrack = 0;
 
-	chapter_mgr_printf(10, "%s::%s return no error\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "return no error\n");
 
 	return cERR_CHAPTER_MGR_NO_ERROR;
 }
@@ -189,7 +175,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 {
 	int ret = cERR_CHAPTER_MGR_NO_ERROR;
 
-	chapter_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
+	chapter_mgr_printf(10, "\n");
 
 	switch (command)
 	{
@@ -214,16 +200,18 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		{
 			int i;
 			for (i = 0; i < TrackCount; i++)
+			{
 				Tracks[i].pending = 1;
+			}
 			break;
 		}
 		default:
-			chapter_mgr_err("%s::%s ContainerCmd %d not supported!\n", FILENAME, __FUNCTION__, command);
+			chapter_mgr_err("ContainerCmd %d not supported!\n", command);
 			ret = cERR_CHAPTER_MGR_ERROR;
 			break;
 	}
 
-	chapter_mgr_printf(10, "%s:%s: returning %d\n", FILENAME, __FUNCTION__, ret);
+	chapter_mgr_printf(10, "returning %d\n", ret);
 
 	return ret;
 }

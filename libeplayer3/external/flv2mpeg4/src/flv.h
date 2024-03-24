@@ -87,6 +87,7 @@ void encode_I_mb(BW *bw, MICROBLOCK *mb, int escape_type);
 void encode_P_mb(BW *bw, MICROBLOCK *mb, int escape_type);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const uint16 rl_inter_vlc[103][2] =
 {
 	{ 0x2, 2 }, { 0xf, 4 }, { 0x15, 6 }, { 0x17, 7 },

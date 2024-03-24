@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "manager.h"
 #include "common.h"
@@ -33,7 +32,7 @@
 /* Makros/Constants              */
 /* ***************************** */
 
-#define TRACKWRAP 10
+#define TRACKWRAP 20
 
 /* Error Constants */
 #define cERR_SUBTITLE_MGR_NO_ERROR        0
@@ -48,7 +47,6 @@
 /* ***************************** */
 
 static Track_t *Tracks = NULL;
-static int TrackSlotCount = 0;
 static int TrackCount = 0;
 static int CurrentTrack = -1;   //no as default.
 
@@ -62,26 +60,15 @@ static int CurrentTrack = -1;   //no as default.
 
 static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 {
-	int i = 0;
 	subtitle_mgr_printf(10, "%s::%s %s %s %d\n", __FILE__, __FUNCTION__, track.Name, track.Encoding, track.Id);
 
-	if (TrackCount == TrackSlotCount)
+	if (Tracks == NULL)
 	{
-		static Track_t *t;
-		t = realloc(Tracks, (TrackSlotCount + TRACKWRAP) * sizeof(Track_t));
-		if (t)
+		Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
+		int i;
+		for (i = 0; i < TRACKWRAP; i++)
 		{
-			Tracks = t;
-			TrackSlotCount += TRACKWRAP;
-			for (i = TrackCount; i < TrackSlotCount; ++i)
-			{
-				Tracks[i].Id = -1;
-			}
-		}
-		else
-		{
-			subtitle_mgr_err("%s:%s realloc failed\n", __FILE__, __FUNCTION__);
-			return cERR_SUBTITLE_MGR_ERROR;
+			Tracks[i].Id = -1;
 		}
 	}
 
@@ -91,7 +78,8 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
 
-	for (i = 0; i < TrackSlotCount; i++)
+	int i;
+	for (i = 0; i < TRACKWRAP; i++)
 	{
 		if (Tracks[i].Id == track.Id)
 		{
@@ -100,14 +88,14 @@ static int ManagerAdd(Context_t *context __attribute__((unused)), Track_t track)
 		}
 	}
 
-	if (TrackCount < TrackSlotCount)
+	if (TrackCount < TRACKWRAP)
 	{
 		copyTrack(&Tracks[TrackCount], &track);
 		TrackCount++;
 	}
 	else
 	{
-		subtitle_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TrackSlotCount);
+		subtitle_mgr_err("%s::%s TrackCount out if range %d - %d\n", __FILE__, __FUNCTION__, TrackCount, TRACKWRAP);
 		return cERR_SUBTITLE_MGR_ERROR;
 	}
 
@@ -159,33 +147,32 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 	return tracklist;
 }
 
-static int ManagerDel(Context_t *context __attribute__((unused)), int32_t onlycurrent)
+static int ManagerDel(Context_t *context __attribute__((unused)))
 {
 	int i = 0;
+
 	subtitle_mgr_printf(10, "%s::%s\n", __FILE__, __FUNCTION__);
 
-	if (onlycurrent == 0)
+	if (Tracks != NULL)
 	{
-		if (Tracks != NULL)
+		for (i = 0; i < TrackCount; i++)
 		{
-			for (i = 0; i < TrackCount; i++)
-			{
-				freeTrack(&Tracks[i]);
-			}
-			free(Tracks);
-			Tracks = NULL;
+			freeTrack(&Tracks[i]);
 		}
-		else
-		{
-			subtitle_mgr_err("%s::%s nothing to delete!\n", __FILE__, __FUNCTION__);
-			return cERR_SUBTITLE_MGR_ERROR;
-		}
-		TrackCount = 0;
-		TrackSlotCount = 0;
-		context->playback->isSubtitle = 0;
+
+		free(Tracks);
+		Tracks = NULL;
+	}
+	else
+	{
+		subtitle_mgr_err("%s::%s nothing to delete!\n", __FILE__, __FUNCTION__);
+		return cERR_SUBTITLE_MGR_ERROR;
 	}
 
+	TrackCount = 0;
 	CurrentTrack = -1;
+//	context->playback->isSubtitle = 0;
+
 	subtitle_mgr_printf(10, "%s::%s return no error\n", __FILE__, __FUNCTION__);
 
 	return cERR_SUBTITLE_MGR_NO_ERROR;
@@ -213,7 +200,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET:
 		{
-			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", __FILE__, __FUNCTION__);
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
 
 			if (TrackCount > 0 && CurrentTrack >= 0)
 			{
@@ -247,7 +234,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_GET_TRACK:
 		{
-			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", __FILE__, __FUNCTION__);
+			subtitle_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
 
 			if ((TrackCount > 0) && (CurrentTrack >= 0))
 			{
@@ -285,21 +272,19 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_SET:
 		{
-			int i = 0;
-			int32_t requestedTrackId = *((int *)argument);
+			int i;
 
 			subtitle_mgr_printf(20, "%s::%s MANAGER_SET id=%d\n", __FILE__, __FUNCTION__, *((int *)argument));
 
-			if (requestedTrackId == -1)
+			if (*((int *)argument) < 0)
 			{
-				// track id -1 mean disable subtitle
 				CurrentTrack = -1;
 				break;
 			}
 
 			for (i = 0; i < TrackCount; i++)
 			{
-				if (Tracks[i].Id == requestedTrackId)
+				if (Tracks[i].Id == *((int *)argument))
 				{
 					CurrentTrack = i;
 					break;
@@ -315,14 +300,7 @@ static int Command(Context_t *context, ManagerCmd_t command, void *argument)
 		}
 		case MANAGER_DEL:
 		{
-			if (argument == NULL)
-			{
-				ret = ManagerDel(context, 0);
-			}
-			else
-			{
-				ret = ManagerDel(context, *((int *)argument));
-			}
+			ret = ManagerDel(context);
 			break;
 		}
 		case MANAGER_INIT_UPDATE:

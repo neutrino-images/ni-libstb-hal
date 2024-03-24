@@ -248,6 +248,8 @@ static int PlaybackClose(Context_t *context)
 		context->manager->video->Command(context, MANAGER_DEL, NULL);
 	if (context->manager->chapter)
 		context->manager->chapter->Command(context, MANAGER_DEL, NULL);
+	if (context->manager->subtitle)
+		context->manager->subtitle->Command(context, MANAGER_DEL, NULL);
 
 	context->playback->isPaused     = 0;
 	context->playback->isPlaying    = 0;

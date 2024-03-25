@@ -573,7 +573,7 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 				{
 					int _pid;
 					char _lang[strlen(TrackList[i])];
-					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang))
+					if (sscanf(TrackList[i], "%d %s\n", &_pid, _lang) == 2)
 					{
 						apids[j] = _pid;
 						// atUnknown, atMPEG, atMP3, atAC3, atDTS, atAAC, atPCM, atOGG, atFLAC
@@ -639,7 +639,7 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 				{
 					int _pid;
 					char _lang[strlen(TrackList[i])];
-					if (2 == sscanf(TrackList[i], "%d %s\n", &_pid, _lang))
+					if (sscanf(TrackList[i], "%d %s\n", &_pid, _lang) == 2)
 					{
 						pids[j] = _pid;
 						language[j] = std::string(_lang);

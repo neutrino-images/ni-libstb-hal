@@ -276,7 +276,7 @@ static int32_t writeData(void *_call)
 		iov[2].iov_len = SubFrameLen;
 
 		//write the PCM data
-		if (16 == pcmPrivateData->bits_per_coded_sample)
+		if (pcmPrivateData->bits_per_coded_sample == 16)
 		{
 			for (n = 0; n < SubFrameLen; n += 2)
 			{

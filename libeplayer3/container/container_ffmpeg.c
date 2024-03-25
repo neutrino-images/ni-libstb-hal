@@ -1393,7 +1393,7 @@ static void FFMPEGThread(Context_t *context)
 					do_seek_target_bytes = 1;
 					bEndProcess = 0;
 				}
-				else if (1 == context->playback->isLoopMode)
+				else if (context->playback->isLoopMode == 1)
 				{
 					int64_t tmpLength = 0;
 					if (container_ffmpeg_get_length(context, &tmpLength) == 0 && tmpLength > 0 && get_play_pts() > 0)
@@ -1676,11 +1676,11 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		rtmpProtoImplType = RTMP_NATIVE;
 	}
 
-	if (1 == rtmp_proto_impl)
+	if (rtmp_proto_impl == 1)
 	{
 		rtmpProtoImplType = RTMP_NATIVE;
 	}
-	else if (2 == rtmp_proto_impl)
+	else if (rtmp_proto_impl == 2)
 	{
 		rtmpProtoImplType = RTMP_LIBRTMP;
 	}
@@ -1864,7 +1864,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 				free(swfVfy);
 			}
 
-			if (2 == haveNativeProto)
+			if (haveNativeProto == 2)
 			{
 				int len = strlen(baseUri) + 2 + 1;
 				filename = malloc(len);

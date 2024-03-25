@@ -99,7 +99,7 @@ int InsertPesHeader(unsigned char *data, int size, unsigned char stream_id, unsi
 	PutBits(&ld2, 0x1, 8);  // Start Code
 	PutBits(&ld2, stream_id, 8); // Stream_id = Audio Stream
 	//4
-	if (-1 == size)
+	if (size == -1)
 	{
 		PutBits(&ld2, 0x0, 16);
 	}

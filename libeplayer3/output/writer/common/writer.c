@@ -53,7 +53,7 @@
 void FlushPipe(int pipefd)
 {
 	char tmp;
-	while (1 == read(pipefd, &tmp, 1));
+	while (read(pipefd, &tmp, 1) == 1);
 }
 
 ssize_t WriteExt(WriteV_t _call, int fd, void *data, size_t size)

@@ -283,11 +283,11 @@ int32_t LinuxDvbBuffOpen(Context_t *context, char *type, int outfd, void *mtx)
 
 	if (!ret)
 	{
-		if (!strcmp("video", type) && -1 == videofd)
+		if (!strcmp("video", type) && videofd == -1)
 		{
 			videofd = outfd;
 		}
-		else if (!strcmp("audio", type) && -1 == audiofd)
+		else if (!strcmp("audio", type) && audiofd == -1)
 		{
 			audiofd = outfd;
 		}

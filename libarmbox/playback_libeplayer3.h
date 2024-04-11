@@ -36,6 +36,7 @@ class cPlayback
 		off64_t last_size;
 		int init_jump;
 		AVFormatContext *avft;
+		std::string extractParam(const std::string &hdrs, const std::string &paramName);
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();

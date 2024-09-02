@@ -790,7 +790,19 @@ void hdmi_cec::rc_sync(int fd)
 {
 	struct input_event ev;
 
+	// Check if the input_event_sec macro is defined and use appropriate fields for setting time values.
+	// This ensures compatibility with both older and newer versions of the input_event structure.
+	// Newer versions use input_event_sec and input_event_usec macros for 64-bit time values,
+	// while older versions use the time field directly, which is a timeval structure.
+#ifdef input_event_sec
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	ev.input_event_sec = tv.tv_sec;
+	ev.input_event_usec = tv.tv_usec;
+#else
 	gettimeofday(&ev.time, NULL);
+#endif
+
 	ev.type = EV_SYN;
 	ev.code = SYN_REPORT;
 	ev.value = 0;

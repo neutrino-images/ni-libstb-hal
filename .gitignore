@@ -66,3 +66,6 @@ go_*
 
 ### header files that fall out of the build
 libstb-hal-config.h
+
+### Python environment fallout
+venv

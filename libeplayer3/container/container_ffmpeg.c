@@ -1022,7 +1022,7 @@ static void FFMPEGThread(Context_t *context)
 				}
 
 				pcmPrivateData_t pcmExtradata;
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 				pcmExtradata.channels              = get_codecpar(audioTrack->stream)->ch_layout.nb_channels;
 #else
 				pcmExtradata.channels              = get_codecpar(audioTrack->stream)->channels;
@@ -1168,7 +1168,7 @@ static void FFMPEGThread(Context_t *context)
 							}
 
 							swr = swr_alloc();
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 							out_channels = c->ch_layout.nb_channels;
 
 							if (c->ch_layout.u.mask == 0)
@@ -1200,7 +1200,7 @@ static void FFMPEGThread(Context_t *context)
 								out_channel_layout = AV_CH_LAYOUT_STEREO_DOWNMIX;
 								out_channels = 2;
 							}
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 							av_opt_set_int(swr, "in_channel_layout",    c->ch_layout.u.mask,  0);
 #else
 							av_opt_set_int(swr, "in_channel_layout",    c->channel_layout,  0);
@@ -1242,7 +1242,7 @@ static void FFMPEGThread(Context_t *context)
 
 						//////////////////////////////////////////////////////////////////////
 						// Update pcmExtradata according to decode parameters
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 						pcmExtradata.channels              = c->ch_layout.nb_channels;
 #else
 						pcmExtradata.channels              = av_get_channel_layout_nb_channels(out_channel_layout);
@@ -2477,7 +2477,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 								int32_t object_type = 2; // LC
 								int32_t sample_index = aac_get_sample_rate_index(get_codecpar(stream)->sample_rate);
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 								int32_t chan_config = get_chan_config(get_codecpar(stream)->ch_layout.nb_channels);
 #else
 								int32_t chan_config = get_chan_config(get_codecpar(stream)->channels);

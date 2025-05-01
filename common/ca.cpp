@@ -61,7 +61,7 @@ uint32_t cCA::GetNumberSmartCardSlots(void)
 
 void cCA::ModuleName(enum CA_SLOT_TYPE, uint32_t p, char * /*Name*/)
 {
-	/* TODO: waht to do with *Name? */
+	/* TODO: what to do with *Name? */
 	hal_debug("%s param:%d\n", __FUNCTION__, (int)p);
 }
 

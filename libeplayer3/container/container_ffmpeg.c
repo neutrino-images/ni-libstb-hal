@@ -2868,9 +2868,10 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 	uint32_t i = 0;
 	for (i = 0; i < IPTV_AV_CONTEXT_MAX_NUM; i += 1)
 	{
-		if (NULL != avContextTab[i])
+		if (avContextTab[i] != NULL)
 		{
-			if (0 != use_custom_io[i])
+#ifdef USE_CUSTOM_IO
+			if (use_custom_io[i] != 0)
 			{
 				/*
 				 * Free custom IO independently to avoid segfault/bus error
@@ -2891,6 +2892,10 @@ static int32_t container_ffmpeg_stop(Context_t *context)
 				av_freep(&(avContextTab[i]->pb));
 				use_custom_io[i] = 0;
 			}
+#else
+			av_freep(&(avContextTab[i]->pb->buffer));
+			av_freep(&(avContextTab[i]->pb));
+#endif
 			avformat_close_input(&avContextTab[i]);
 			avContextTab[i] = NULL;
 		}

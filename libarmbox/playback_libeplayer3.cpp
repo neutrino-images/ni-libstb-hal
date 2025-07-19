@@ -129,7 +129,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 {
 	bool ret = false;
 	bool isHTTP = false;
-	no_probe = false;
 
 	hal_info("%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d\n", __func__, filename, vpid, vtype, apid, ac3);
 
@@ -144,9 +143,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		file = "file://";
 	file += filename;
 
-	if ((file.find(":31339/id=") != std::string::npos) || (file.find(":17999/1:") != std::string::npos) || (file.find(":10000") != std::string::npos) || (file.find(":8001/") != std::string::npos)) // for LocalTV and Entertain-TV streaming
-		no_probe = true;
-
 	if (file.substr(0, 7) == "file://")
 	{
 		if (file.substr(file.length() - 3) == ".ts")
@@ -154,7 +150,6 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			fn_ts = file.substr(7);
 			fn_xml = file.substr(7, file.length() - 9);
 			fn_xml += "xml";
-			no_probe = true;
 		}
 	}
 	else

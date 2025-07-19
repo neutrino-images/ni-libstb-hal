@@ -21,7 +21,6 @@ class cPlayback
 		static OpenThreads::Mutex mutex;
 		bool enabled;
 		bool playing, first;
-		bool no_probe;
 		bool got_vpts_ts;
 		int nPlaybackSpeed;
 		int mAudioStream;

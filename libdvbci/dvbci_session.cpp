@@ -191,7 +191,9 @@ eDVBCISession *eDVBCISession::createSession(eDVBCISlot *slot, const unsigned cha
 			printf("[CI SESS] RESOURCE MANAGER\n");
 			break;
 		case 0x00020041:
+		case 0x00020042:
 		case 0x00020043:
+		case 0x00020045:
 			sessions[session_nb - 1] = new eDVBCIApplicationManagerSession(slot);
 			printf("[CI SESS] APPLICATION MANAGER\n");
 			break;

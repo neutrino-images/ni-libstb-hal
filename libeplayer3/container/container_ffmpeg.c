@@ -61,7 +61,7 @@
  * due to this we set own which use fopen/fread from
  * std library.
  */
-#define USE_CUSTOM_IO
+#define USE_CUSTOM_IO 1
 
 /* Error Constants */
 #define cERR_CONTAINER_FFMPEG_NO_ERROR        0
@@ -93,7 +93,9 @@ static pthread_t PlayThread;
 static int32_t hasPlayThreadStarted = 0;
 
 static AVFormatContext *avContextTab[IPTV_AV_CONTEXT_MAX_NUM] = {NULL, NULL};
+#ifdef USE_CUSTOM_IO
 static int32_t use_custom_io[IPTV_AV_CONTEXT_MAX_NUM] = {0, 0};
+#endif
 static AVDictionary *g_avio_opts = NULL;
 
 static int64_t latestPts = 0;

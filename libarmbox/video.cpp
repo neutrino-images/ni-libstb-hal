@@ -320,8 +320,12 @@ void write_frame(AVFrame *in_frame, int fd)
 					}
 				}
 			}
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(57, 83, 100)
 			avcodec_close(codec_context);
 			av_free(codec_context);
+#else
+			avcodec_free_context(&codec_context);
+#endif
 		}
 	}
 }
@@ -458,8 +462,12 @@ int image_to_mpeg2(const char *image_name, int fd)
 				}
 				av_packet_unref(&packet);
 			}
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(57, 83, 100)
 			avcodec_close(codecContext);
 			av_free(codecContext);
+#else
+			avcodec_free_context(&codecContext);
+#endif
 		}
 		avformat_close_input(&formatContext);
 	}

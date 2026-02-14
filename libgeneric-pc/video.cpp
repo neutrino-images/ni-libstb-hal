@@ -87,6 +87,31 @@ static const AVRational aspect_ratios[6] =
 	{ -1, -1 }
 };
 
+static AVCodecID fallback_codec_for_format(VIDEO_FORMAT format)
+{
+	switch (format)
+	{
+		case VIDEO_FORMAT_MPEG2:
+			return AV_CODEC_ID_MPEG2VIDEO;
+		case VIDEO_FORMAT_MPEG4_H264:
+			return AV_CODEC_ID_H264;
+		case VIDEO_FORMAT_VC1:
+			return AV_CODEC_ID_VC1;
+		case VIDEO_FORMAT_JPEG:
+			return AV_CODEC_ID_MJPEG;
+		case VIDEO_FORMAT_GIF:
+			return AV_CODEC_ID_GIF;
+		case VIDEO_FORMAT_PNG:
+			return AV_CODEC_ID_PNG;
+		case VIDEO_FORMAT_MPEG4_H265:
+			return AV_CODEC_ID_HEVC;
+		case VIDEO_FORMAT_AVS:
+			return AV_CODEC_ID_AVS;
+		default:
+			return AV_CODEC_ID_NONE;
+	}
+}
+
 cVideo::cVideo(int, void *, void *, unsigned int)
 {
 	hal_debug("%s\n", __func__);
@@ -581,6 +606,17 @@ void cVideo::run(void)
 	if (p->codec_type != AVMEDIA_TYPE_VIDEO)
 		hal_info("%s: no video codec? 0x%x\n", __func__, p->codec_type);
 
+	if (p->codec_id == AV_CODEC_ID_NONE || p->codec_type != AVMEDIA_TYPE_VIDEO)
+	{
+		AVCodecID forced = fallback_codec_for_format(v_format);
+		if (forced != AV_CODEC_ID_NONE && forced != p->codec_id)
+		{
+			hal_info("%s: codec id missing, forcing %s from stream type %d\n",
+				__func__, avcodec_get_name(forced), v_format);
+			p->codec_id = forced;
+			p->codec_type = AVMEDIA_TYPE_VIDEO;
+		}
+	}
 	codec = avcodec_find_decoder(p->codec_id);
 	if (!codec)
 	{

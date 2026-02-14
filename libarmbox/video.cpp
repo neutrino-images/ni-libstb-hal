@@ -47,6 +47,7 @@ extern "C"
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
 }
 
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_VIDEO, this, args)
@@ -367,7 +368,10 @@ int decode_frame(AVCodecContext *codecContext, AVPacket &packet, int fd)
 			dest_frame->format = AV_PIX_FMT_YUV420P;
 			av_frame_get_buffer(dest_frame, 32);
 			struct SwsContext *convert = NULL;
-			convert = sws_getContext(frame->width, frame->height, (AVPixelFormat)frame->format, dest_frame->width, dest_frame->height, AV_PIX_FMT_YUVJ420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+			/* validate pixel format before swscale */
+			AVPixelFormat src_fmt = (AVPixelFormat)frame->format;
+			if (src_fmt >= 0 && src_fmt < AV_PIX_FMT_NB && av_pix_fmt_desc_get(src_fmt) != NULL)
+				convert = sws_getContext(frame->width, frame->height, src_fmt, dest_frame->width, dest_frame->height, AV_PIX_FMT_YUVJ420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 			if (convert)
 			{
 				sws_scale(convert, frame->data, frame->linesize, 0, frame->height, dest_frame->data, dest_frame->linesize);
@@ -1293,6 +1297,19 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 	bool ret = false;
 	int len = 0;
 	struct SwsContext *scale = NULL;
+
+	/* validate parameters to prevent assertion failure in FFmpeg */
+	if (sw <= 0 || sh <= 0 || dw <= 0 || dh <= 0)
+	{
+		hal_info_c("%s: invalid dimensions sw=%d sh=%d dw=%d dh=%d\n", __func__, sw, sh, dw, dh);
+		return ret;
+	}
+	if (sfmt < 0 || sfmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(sfmt) == NULL)
+	{
+		hal_info_c("%s: invalid pixel format %d\n", __func__, sfmt);
+		return ret;
+	}
+
 	scale = sws_getCachedContext(scale, sw, sh, sfmt, dw, dh, AV_PIX_FMT_RGB32, SWS_BICUBIC, 0, 0, 0);
 	if (!scale)
 	{

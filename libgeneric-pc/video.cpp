@@ -32,6 +32,7 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 #include <libavcodec/avcodec.h>
 }
@@ -347,6 +348,12 @@ bool cVideo::ShowPicture(const char *fname)
 
 	if (got_frame)
 	{
+		/* validate pixel format before swscale */
+		if (c->pix_fmt < 0 || c->pix_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(c->pix_fmt) == NULL)
+		{
+			hal_info("%s: invalid pixel format %d\n", __func__, c->pix_fmt);
+			goto out_free;
+		}
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
 				c->width, c->height, VDEC_PIXFMT,
@@ -637,6 +644,14 @@ void cVideo::run(void)
 		still_m.lock();
 		if (got_frame && ! stillpicture)
 		{
+			/* validate pixel format before swscale */
+			if (c->pix_fmt < 0 || c->pix_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(c->pix_fmt) == NULL)
+			{
+				hal_info("%s: invalid pixel format %d\n", __func__, c->pix_fmt);
+				still_m.unlock();
+				av_packet_unref(&avpkt);
+				continue;
+			}
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
 					c->width, c->height, c->pix_fmt,
@@ -736,6 +751,19 @@ static bool swscale(unsigned char *src, unsigned char *dst, int sw, int sh, int 
 	bool ret = false;
 	int len = 0;
 	struct SwsContext *scale = NULL;
+
+	/* validate parameters to prevent assertion failure in FFmpeg */
+	if (sw <= 0 || sh <= 0 || dw <= 0 || dh <= 0)
+	{
+		hal_info_c("%s: invalid dimensions sw=%d sh=%d dw=%d dh=%d\n", __func__, sw, sh, dw, dh);
+		return ret;
+	}
+	if (sfmt < 0 || sfmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(sfmt) == NULL)
+	{
+		hal_info_c("%s: invalid pixel format %d\n", __func__, sfmt);
+		return ret;
+	}
+
 	scale = sws_getCachedContext(scale, sw, sh, sfmt, dw, dh, AV_PIX_FMT_RGB32, SWS_BICUBIC, 0, 0, 0);
 	if (!scale)
 	{

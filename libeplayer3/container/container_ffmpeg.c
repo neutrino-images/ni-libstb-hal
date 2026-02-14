@@ -1957,7 +1957,6 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 			{
 				av_dict_free(&avio_opts);
 			}
-			releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 			return cERR_CONTAINER_FFMPEG_OPEN;
 		}
 	}
@@ -3043,7 +3042,6 @@ static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t ab
 
 	if (!context->playback || !context->playback->isPlaying)
 	{
-		releaseMutex(__FILE__, __FUNCTION__, __LINE__);
 		return cERR_CONTAINER_FFMPEG_NO_ERROR;
 	}
 

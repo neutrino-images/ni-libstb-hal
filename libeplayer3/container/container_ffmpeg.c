@@ -2206,7 +2206,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				if (context->manager->chapter->Command(context, MANAGER_ADD, &track) < 0)
 				{
 					/* konfetti: fixme: is this a reason to return with error? */
-					ffmpeg_err("failed to add track %d\n", n);
+					ffmpeg_err("failed to add track %d\n", i);
 				}
 			}
 		}

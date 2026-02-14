@@ -1796,9 +1796,9 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 			// check if uri have additional params
 			if ((token = strtok(baseUri, " ")) != NULL)
 			{
-				char *conn = malloc(strlen(filename));
-				char *swfUrl = malloc(strlen(filename));
-				char *swfVfy = malloc(strlen(filename));
+				char *conn = malloc(strlen(filename) + 1);
+				char *swfUrl = malloc(strlen(filename) + 1);
+				char *swfVfy = malloc(strlen(filename) + 1);
 				char *poseq, *key, *value;
 				conn[0] = '\0';
 				swfUrl[0] = '\0';

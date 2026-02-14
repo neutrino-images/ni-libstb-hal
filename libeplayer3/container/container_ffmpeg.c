@@ -116,6 +116,20 @@ static int32_t mutexInitialized = 0;
 /* ***************************** */
 /* Prototypes                    */
 /* ***************************** */
+typedef struct HlsPlaylistInfo_s
+{
+	int is_endlist;
+	int is_vod;
+	int is_event;
+	int is_master;
+	int is_iframe;
+	int is_llhls;
+	int has_extinf;
+	double dvr_window_sec;
+	int found;
+} HlsPlaylistInfo_t;
+
+static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlaylistInfo_t *info);
 static int32_t container_ffmpeg_seek_bytes(off_t pos);
 static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t absolute);
 static int32_t container_ffmpeg_get_length(Context_t *context, int64_t *length);
@@ -123,6 +137,7 @@ static int64_t calcPts(uint32_t avContextIdx, AVStream *stream, int64_t pts);
 static int64_t doCalcPts(int64_t start_time, const AVRational time_base, int64_t pts);
 void LinuxDvbBuffSetStamp(void *stamp);
 static int32_t container_ffmpeg_stop(Context_t *context);
+static int32_t isHlsInput(const AVFormatContext *ctx);
 
 static char *g_graphic_sub_path;
 
@@ -540,6 +555,190 @@ static int64_t doCalcPts(int64_t start_time, const AVRational time_base, int64_t
 	}
 
 	return pts;
+}
+
+static int32_t isHlsInput(const AVFormatContext *ctx)
+{
+	if (!ctx || !ctx->iformat || !ctx->iformat->name)
+	{
+		return 0;
+	}
+	return (strstr(ctx->iformat->name, "hls") != NULL) || (strstr(ctx->iformat->name, "applehttp") != NULL);
+}
+
+static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlaylistInfo_t *info)
+{
+	if (!url || !info)
+	{
+		return 0;
+	}
+
+	memset(info, 0, sizeof(*info));
+
+	AVIOContext *pb = NULL;
+	AVDictionary *opts = NULL;
+	if (timeout_ms > 0)
+	{
+		char num[16];
+		snprintf(num, sizeof(num), "%u000", timeout_ms);
+		av_dict_set(&opts, "timeout", num, 0);
+	}
+
+	if (avio_open2(&pb, url, AVIO_FLAG_READ, NULL, &opts) < 0 || !pb)
+	{
+		if (opts)
+		{
+			av_dict_free(&opts);
+		}
+		return 0;
+	}
+
+	char *buf = NULL;
+	size_t buf_size = 0;
+	size_t cap = 0;
+	uint8_t tmp[4096];
+
+	while (1)
+	{
+		int len = avio_read(pb, tmp, sizeof(tmp));
+		if (len <= 0)
+		{
+			break;
+		}
+		if (buf_size + (size_t)len + 1 > cap)
+		{
+			size_t newcap = cap ? cap * 2 : 8192;
+			while (newcap < buf_size + (size_t)len + 1)
+			{
+				newcap *= 2;
+			}
+			if (newcap > 256 * 1024)
+			{
+				newcap = 256 * 1024;
+			}
+			if (newcap <= cap)
+			{
+				size_t copy_len = cap > buf_size ? (cap - buf_size) : 0;
+				if (copy_len > 0)
+				{
+					memcpy(buf + buf_size, tmp, copy_len);
+					buf_size += copy_len;
+				}
+				break;
+			}
+			char *newbuf = realloc(buf, newcap);
+			if (!newbuf)
+			{
+				break;
+			}
+			buf = newbuf;
+			cap = newcap;
+		}
+
+		size_t copy_len = (size_t)len;
+		if (buf_size + copy_len + 1 > cap)
+		{
+			copy_len = cap > buf_size ? (cap - buf_size) : 0;
+		}
+		if (copy_len > 0)
+		{
+			memcpy(buf + buf_size, tmp, copy_len);
+			buf_size += copy_len;
+		}
+		if (buf_size + 1 >= cap)
+		{
+			break;
+		}
+	}
+
+	avio_close(pb);
+	if (opts)
+	{
+		av_dict_free(&opts);
+	}
+
+	if (!buf || buf_size == 0)
+	{
+		free(buf);
+		return 0;
+	}
+	buf[buf_size] = '\0';
+
+	double sum = 0.0;
+	char *saveptr = NULL;
+	char *line = strtok_r(buf, "\n", &saveptr);
+	int found = 0;
+	while (line)
+	{
+		size_t l = strlen(line);
+		if (l > 0 && line[l - 1] == '\r')
+		{
+			line[l - 1] = '\0';
+		}
+
+		if (strncmp(line, "#EXT-X-PLAYLIST-TYPE:", 21) == 0)
+		{
+			char *val = line + 21;
+			while (*val == ' ' || *val == '\t')
+			{
+				val++;
+			}
+			if (!strncasecmp(val, "VOD", 3))
+			{
+				info->is_vod = 1;
+			}
+			else if (!strncasecmp(val, "EVENT", 5))
+			{
+				info->is_event = 1;
+			}
+			found = 1;
+		}
+		else if (strncmp(line, "#EXT-X-STREAM-INF", 17) == 0 || strncmp(line, "#EXT-X-MEDIA", 12) == 0)
+		{
+			info->is_master = 1;
+			found = 1;
+		}
+		else if (strncmp(line, "#EXT-X-I-FRAME-STREAM-INF", 26) == 0)
+		{
+			info->is_master = 1;
+			info->is_iframe = 1;
+			found = 1;
+		}
+		else if (strncmp(line, "#EXT-X-PART", 11) == 0 ||
+			strncmp(line, "#EXT-X-SERVER-CONTROL", 22) == 0 ||
+			strncmp(line, "#EXT-X-PRELOAD-HINT", 20) == 0)
+		{
+			info->is_llhls = 1;
+			found = 1;
+		}
+		else if (strncmp(line, "#EXT-X-ENDLIST", 14) == 0)
+		{
+			info->is_endlist = 1;
+			found = 1;
+		}
+		else if (strncmp(line, "#EXTINF:", 8) == 0)
+		{
+			char *val = line + 8;
+			char *end = NULL;
+			double d = strtod(val, &end);
+			if (d > 0.0)
+			{
+				sum += d;
+				info->has_extinf = 1;
+			}
+		}
+
+		line = strtok_r(NULL, "\n", &saveptr);
+	}
+
+	if (sum > 0.0)
+	{
+		info->dvr_window_sec = sum;
+	}
+	info->found = found || info->has_extinf;
+
+	free(buf);
+	return info->found;
 }
 
 static int64_t calcPts(uint32_t avContextIdx, AVStream *stream, int64_t pts)
@@ -1481,24 +1680,9 @@ static void FFMPEGThread(Context_t *context)
 /* **************************** */
 
 static int32_t terminating = 0;
-static int64_t g_interrupt_deadline_us = 0;
-static int32_t g_interrupt_timeout_logged = 0;
 static int32_t interrupt_cb(void *ctx)
 {
 	PlaybackHandler_t *p = (PlaybackHandler_t *)ctx;
-	if (g_interrupt_deadline_us > 0)
-	{
-		int64_t now = av_gettime();
-		if (now >= g_interrupt_deadline_us)
-		{
-			if (!g_interrupt_timeout_logged)
-			{
-				ffmpeg_printf(1, "timeout waiting for stream info\n");
-				g_interrupt_timeout_logged = 1;
-			}
-			return 1;
-		}
-	}
 	return p->abortRequested || PlaybackDieNow(0);
 }
 
@@ -1974,31 +2158,129 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		wrapped_set_max_analyze_duration(avContextTab[AVIdx], 1);
 	}
 
-	if ((strstr(filename, "127.0.0.1") == 0) || (strstr(filename, "localhost") == 0))
-	{
-		uint32_t timeout_ms = context->playback ? context->playback->httpTimeout : 0;
-		if (timeout_ms > 0)
-		{
-			g_interrupt_timeout_logged = 0;
-			g_interrupt_deadline_us = av_gettime() + ((int64_t)timeout_ms * 1000);
-			ffmpeg_printf(1, "init_av_context: stream_info timeout %u ms\n", timeout_ms);
-		}
 
+	int seekable = 0;
+	int is_probable_live = 0;
+	int is_local_file = (strstr(filename, "://") == NULL) || (strncmp(filename, "file://", 7) == 0);
+	HlsPlaylistInfo_t hls_info;
+	int have_hls_info = 0;
+	int is_hls_input = 0;
+	const char *hls_type = "n/a";
+	if (avContextTab[AVIdx] != NULL && avContextTab[AVIdx]->pb != NULL)
+	{
+		seekable = (avContextTab[AVIdx]->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0;
+		if (seekable)
+		{
+			// Verify seekable by doing a no-op seek on the current position.
+			int64_t pos = avio_tell(avContextTab[AVIdx]->pb);
+			if (pos < 0 || avio_seek(avContextTab[AVIdx]->pb, pos, SEEK_SET) < 0)
+			{
+				seekable = 0;
+			}
+		}
+	}
+	if (avContextTab[AVIdx] != NULL)
+	{
+		is_hls_input = isHlsInput(avContextTab[AVIdx]) || (filename && strstr(filename, ".m3u8") != NULL);
+		if (is_hls_input)
+		{
+			have_hls_info = read_hls_playlist_info(filename, context->playback ? context->playback->httpTimeout : 0, &hls_info);
+			if (have_hls_info)
+			{
+				if (hls_info.is_master)
+				{
+					hls_type = hls_info.is_iframe ? "master-iframe" : "master";
+				}
+				else if (hls_info.is_vod && hls_info.is_endlist)
+				{
+					hls_type = "vod-endlist";
+				}
+				else if (hls_info.is_vod)
+				{
+					hls_type = "vod";
+				}
+				else if (hls_info.is_event)
+				{
+					hls_type = "event";
+				}
+				else if (hls_info.is_endlist)
+				{
+					hls_type = "endlist";
+				}
+				else if (hls_info.is_llhls)
+				{
+					hls_type = "llhls";
+				}
+				else if (hls_info.dvr_window_sec > 0.0)
+				{
+					hls_type = "live-dvr";
+				}
+				else
+				{
+					hls_type = "unknown";
+				}
+			}
+		}
+	}
+	if (avContextTab[AVIdx] != NULL)
+	{
+		if (!is_local_file)
+		{
+			if (!seekable)
+			{
+				is_probable_live = 1;
+			}
+			if (avContextTab[AVIdx]->duration == AV_NOPTS_VALUE)
+			{
+				is_probable_live = 1;
+			}
+			if (avContextTab[AVIdx]->iformat && (avContextTab[AVIdx]->iformat->flags & AVFMT_TS_DISCONT))
+			{
+				is_probable_live = 1;
+			}
+			if (isHlsInput(avContextTab[AVIdx]))
+			{
+				is_probable_live = 1;
+			}
+			if (have_hls_info)
+			{
+				if (hls_info.is_vod || hls_info.is_endlist)
+				{
+					is_probable_live = 0;
+				}
+				else if (hls_info.is_event || hls_info.dvr_window_sec > 0.0)
+				{
+					is_probable_live = 1;
+				}
+			}
+		}
+	}
+	printf("stream seekable: %d\n", seekable);
+	printf("stream live=%d, local=%d, hls_info=%d, hls_type=%s, endlist=%d, dvr=%.3f, master=%d, iframe=%d, llhls=%d\n",
+		is_probable_live,
+		is_local_file,
+		have_hls_info,
+		hls_type,
+		have_hls_info ? hls_info.is_endlist : 0,
+		have_hls_info ? hls_info.dvr_window_sec : 0.0,
+		have_hls_info ? hls_info.is_master : 0,
+		have_hls_info ? hls_info.is_iframe : 0,
+		have_hls_info ? hls_info.is_llhls : 0);
+
+	if (!is_probable_live)
+	{
 		ffmpeg_printf(1, "avformat_find_stream_info\n");
 		if (avformat_find_stream_info(avContextTab[AVIdx], NULL) < 0)
 		{
 			ffmpeg_err("Error avformat_find_stream_info\n");
 		}
-		g_interrupt_deadline_us = 0;
-		g_interrupt_timeout_logged = 0;
-		ffmpeg_printf(1, "after avformat_find_stream_info\n");
 	}
 //for buffered io
 	if (avContextTab[AVIdx] != NULL && avContextTab[AVIdx]->pb != NULL && !context->playback->isTSLiveMode)
 	{
 		ffmpeg_real_read_org = avContextTab[AVIdx]->pb->read_packet;
 
-		if (AVIdx == 0 && strstr(filename, "://") != 0 && strncmp(filename, "file://", 7) != 0)
+		if (AVIdx == 0 && !is_local_file)
 		{
 			if (ffmpeg_buf_size > 0 && ffmpeg_buf_size > FILLBUFDIFF + FILLBUFPAKET)
 			{
@@ -2470,12 +2752,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 						}
 						else if (get_codecpar(stream)->codec_id == AV_CODEC_ID_AAC)
 						{
-#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 58,27,102 ))
-							const char *ifmt = "applehttp";
-#else
-							const char *ifmt = "hls";
-#endif
-							if (strstr(avContext->iformat->name, "mpegts") || strstr(avContext->iformat->name, ifmt))
+							if (strstr(avContext->iformat->name, "mpegts") || isHlsInput(avContext))
 							{
 								const char marker[] = "ADTS";
 								track.aacbuflen = sizeof(marker) / sizeof(char);

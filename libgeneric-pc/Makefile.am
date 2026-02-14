@@ -40,13 +40,24 @@ libgeneric_la_SOURCES += glfb.cpp
 endif
 
 if ENABLE_GSTREAMER
-libgeneric_la_SOURCES += \
-	playback_gst.cpp
+AM_CPPFLAGS += \
+	@GSTREAMER_CFLAGS@ \
+	@GSTREAMER_AUDIO_CFLAGS@ \
+	@GSTREAMER_VIDEO_CFLAGS@ \
+	@GSTREAMER_TAG_CFLAGS@ \
+	@GSTREAMER_PBUTILS_CFLAGS@ \
+	@GSTREAMER_MPEGTS_CFLAGS@
 
 AM_LDFLAGS += \
-	-lgstreamer-1.0 \
-	-lgsttag-1.0 \
-	-lgstmpegts-1.0
+	@GSTREAMER_LIBS@ \
+	@GSTREAMER_AUDIO_LIBS@ \
+	@GSTREAMER_VIDEO_LIBS@ \
+	@GSTREAMER_TAG_LIBS@ \
+	@GSTREAMER_PBUTILS_LIBS@ \
+	@GSTREAMER_MPEGTS_LIBS@
+
+libgeneric_la_SOURCES += \
+	playback_gst.cpp
 else
 libgeneric_la_SOURCES += \
 	playback.cpp

@@ -59,6 +59,9 @@ if test "$enable_gstreamer" = "yes"; then
 	PKG_CHECK_MODULES([GSTREAMER], [gstreamer-1.0])
 	PKG_CHECK_MODULES([GSTREAMER_AUDIO], [gstreamer-audio-1.0])
 	PKG_CHECK_MODULES([GSTREAMER_VIDEO], [gstreamer-video-1.0])
+	PKG_CHECK_MODULES([GSTREAMER_TAG], [gstreamer-tag-1.0])
+	PKG_CHECK_MODULES([GSTREAMER_PBUTILS], [gstreamer-pbutils-1.0])
+	PKG_CHECK_MODULES([GSTREAMER_MPEGTS], [gstreamer-mpegts-1.0])
 fi
 
 if test x$BOXTYPE = xgeneric -a x$BOXMODEL != xraspi; then

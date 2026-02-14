@@ -505,10 +505,19 @@ void cAudio::run()
 					av_packet_unref(&avpkt);
 					continue;
 				}
-				/* output sample rate, channels, layout could be set here if necessary */
-				o_ch = in_ch;
+				/* downmix multichannel (AC3 5.1 etc.) to stereo so that
+				   center/LFE/surround channels are properly mixed into L/R */
 				o_sr = in_sr;
-				o_layout = in_layout;
+				if (in_ch > 2)
+				{
+					o_ch = 2;
+					o_layout = AV_CH_LAYOUT_STEREO;
+				}
+				else
+				{
+					o_ch = in_ch;
+					o_layout = in_layout;
+				}
 				if (sformat.channels != o_ch || sformat.rate != o_sr || sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 				{
 					driver = ao_default_driver_id();

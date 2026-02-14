@@ -2446,7 +2446,12 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 						}
 						else if (get_codecpar(stream)->codec_id == AV_CODEC_ID_AAC)
 						{
-							if (strncmp(avContext->iformat->name, "mpegts", 6) == 0 || strncmp(avContext->iformat->name, "hls,", 4) == 0)
+#if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT( 58,27,102 ))
+							const char *ifmt = "applehttp";
+#else
+							const char *ifmt = "hls";
+#endif
+							if (strstr(avContext->iformat->name, "mpegts") || strstr(avContext->iformat->name, ifmt))
 							{
 								const char marker[] = "ADTS";
 								track.aacbuflen = sizeof(marker) / sizeof(char);

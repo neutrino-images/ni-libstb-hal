@@ -382,6 +382,12 @@ bool cVideo::ShowPicture(const char *fname)
 			hal_info("%s: invalid pixel format frame=%d ctx=%d\n", __func__, frame->format, c->pix_fmt);
 			goto out_free;
 		}
+		/* validate dimensions before swscale to prevent assertion failure */
+		if (c->width <= 0 || c->height <= 0)
+		{
+			hal_info("%s: invalid dimensions %dx%d\n", __func__, c->width, c->height);
+			goto out_free;
+		}
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 		struct SwsContext *convert = sws_getContext(c->width, c->height, src_fmt,
 				c->width, c->height, VDEC_PIXFMT,
@@ -690,6 +696,14 @@ void cVideo::run(void)
 			if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
 			{
 				hal_info("%s: invalid pixel format frame=%d ctx=%d\n", __func__, frame->format, c->pix_fmt);
+				still_m.unlock();
+				av_packet_unref(&avpkt);
+				continue;
+			}
+			/* validate dimensions before swscale to prevent assertion failure */
+			if (c->width <= 0 || c->height <= 0)
+			{
+				hal_info("%s: invalid dimensions %dx%d\n", __func__, c->width, c->height);
 				still_m.unlock();
 				av_packet_unref(&avpkt);
 				continue;

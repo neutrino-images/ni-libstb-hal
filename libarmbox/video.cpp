@@ -366,6 +366,13 @@ int decode_frame(AVCodecContext *codecContext, AVPacket &packet, int fd)
 			dest_frame->height = (frame->height / 2) * 2;
 			dest_frame->width = (frame->width / 2) * 2;
 			dest_frame->format = AV_PIX_FMT_YUV420P;
+			/* validate dimensions before swscale to prevent assertion failure */
+			if (frame->width <= 0 || frame->height <= 0 || dest_frame->width <= 0 || dest_frame->height <= 0)
+			{
+				av_frame_free(&dest_frame);
+				av_frame_free(&frame);
+				return -1;
+			}
 			av_frame_get_buffer(dest_frame, 32);
 			struct SwsContext *convert = NULL;
 			/* validate pixel format before swscale */

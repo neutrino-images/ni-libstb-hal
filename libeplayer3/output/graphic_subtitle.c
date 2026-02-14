@@ -280,6 +280,13 @@ static int32_t Write(WriterSubCallData_t *subPacket)
 					desc_tab[j].h = av_rescale(rec->h, GetGraphicWindowHeight(), height);
 					subtitle_printf(50, "SUB_REC: src  x[%d], y[%d], %dx%d\n", rec->x, rec->y, rec->w, rec->h);
 					subtitle_printf(50, "SUB_REC: dest x[%d], y[%d], %dx%d\n", desc_tab[j].x, desc_tab[j].y, desc_tab[j].w, desc_tab[j].h);
+					/* validate dimensions before swscale to prevent assertion failure */
+					if (rec->w <= 0 || rec->h <= 0 || desc_tab[j].w <= 0 || desc_tab[j].h <= 0)
+					{
+						subtitle_err("invalid dimensions src=%dx%d dst=%dx%d\n", rec->w, rec->h, desc_tab[j].w, desc_tab[j].h);
+						free(filepath);
+						break;
+					}
 					uint8_t *data[AV_NUM_DATA_POINTERS] = {NULL};
 					int linesize[AV_NUM_DATA_POINTERS] = {0};
 					data[0] = av_malloc(desc_tab[j].w * desc_tab[j].h * 4);

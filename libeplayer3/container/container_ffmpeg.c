@@ -1481,9 +1481,24 @@ static void FFMPEGThread(Context_t *context)
 /* **************************** */
 
 static int32_t terminating = 0;
+static int64_t g_interrupt_deadline_us = 0;
+static int32_t g_interrupt_timeout_logged = 0;
 static int32_t interrupt_cb(void *ctx)
 {
 	PlaybackHandler_t *p = (PlaybackHandler_t *)ctx;
+	if (g_interrupt_deadline_us > 0)
+	{
+		int64_t now = av_gettime();
+		if (now >= g_interrupt_deadline_us)
+		{
+			if (!g_interrupt_timeout_logged)
+			{
+				ffmpeg_printf(1, "timeout waiting for stream info\n");
+				g_interrupt_timeout_logged = 1;
+			}
+			return 1;
+		}
+	}
 	return p->abortRequested || PlaybackDieNow(0);
 }
 
@@ -1962,12 +1977,22 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 	if ((strstr(filename, "127.0.0.1") == 0) || (strstr(filename, "localhost") == 0))
 	{
-		ffmpeg_printf(20, "find_streaminfo\n");
+		uint32_t timeout_ms = context->playback ? context->playback->httpTimeout : 0;
+		if (timeout_ms > 0)
+		{
+			g_interrupt_timeout_logged = 0;
+			g_interrupt_deadline_us = av_gettime() + ((int64_t)timeout_ms * 1000);
+			ffmpeg_printf(1, "init_av_context: stream_info timeout %u ms\n", timeout_ms);
+		}
 
+		ffmpeg_printf(1, "avformat_find_stream_info\n");
 		if (avformat_find_stream_info(avContextTab[AVIdx], NULL) < 0)
 		{
 			ffmpeg_err("Error avformat_find_stream_info\n");
 		}
+		g_interrupt_deadline_us = 0;
+		g_interrupt_timeout_logged = 0;
+		ffmpeg_printf(1, "after avformat_find_stream_info\n");
 	}
 //for buffered io
 	if (avContextTab[AVIdx] != NULL && avContextTab[AVIdx]->pb != NULL && !context->playback->isTSLiveMode)

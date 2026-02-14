@@ -181,6 +181,11 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 		const char hkey[] = "headers";
 		ffmpeg_av_dict_set(hkey, headers.c_str(), 0);
 	}
+	else if (isHTTP)
+	{
+		const char hkey[] = "headers";
+		ffmpeg_av_dict_set(hkey, "", 0);
+	}
 
 	std::string szSecondFile;
 	char *file2 = NULL;
@@ -312,7 +317,11 @@ bool cPlayback::Stop(void)
 	}
 
 	if (player && player->playback)
+	{
 		player->playback->Command(player, PLAYBACK_CLOSE, NULL);
+		player->playback->abortRequested = 0;
+		player->playback->readCount = 0;
+	}
 
 	playing = false;
 	return true;

@@ -349,13 +349,16 @@ bool cVideo::ShowPicture(const char *fname)
 	if (got_frame)
 	{
 		/* validate pixel format before swscale */
-		if (c->pix_fmt < 0 || c->pix_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(c->pix_fmt) == NULL)
+		AVPixelFormat src_fmt = (AVPixelFormat)frame->format;
+		if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
+			src_fmt = c->pix_fmt;
+		if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
 		{
-			hal_info("%s: invalid pixel format %d\n", __func__, c->pix_fmt);
+			hal_info("%s: invalid pixel format frame=%d ctx=%d\n", __func__, frame->format, c->pix_fmt);
 			goto out_free;
 		}
 		unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
-		struct SwsContext *convert = sws_getContext(c->width, c->height, c->pix_fmt,
+		struct SwsContext *convert = sws_getContext(c->width, c->height, src_fmt,
 				c->width, c->height, VDEC_PIXFMT,
 				SWS_BICUBIC, 0, 0, 0);
 		if (!convert)
@@ -645,16 +648,19 @@ void cVideo::run(void)
 		if (got_frame && ! stillpicture)
 		{
 			/* validate pixel format before swscale */
-			if (c->pix_fmt < 0 || c->pix_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(c->pix_fmt) == NULL)
+			AVPixelFormat src_fmt = (AVPixelFormat)frame->format;
+			if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
+				src_fmt = c->pix_fmt;
+			if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
 			{
-				hal_info("%s: invalid pixel format %d\n", __func__, c->pix_fmt);
+				hal_info("%s: invalid pixel format frame=%d ctx=%d\n", __func__, frame->format, c->pix_fmt);
 				still_m.unlock();
 				av_packet_unref(&avpkt);
 				continue;
 			}
 			unsigned int need = av_image_get_buffer_size(VDEC_PIXFMT, c->width, c->height, 1);
 			convert = sws_getCachedContext(convert,
-					c->width, c->height, c->pix_fmt,
+					c->width, c->height, src_fmt,
 					c->width, c->height, VDEC_PIXFMT,
 					SWS_BICUBIC, 0, 0, 0);
 			if (!convert)

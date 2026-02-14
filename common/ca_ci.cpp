@@ -73,6 +73,7 @@ void cs_register_messenger(cs_messenger messenger)
 cCA::cCA(void)
 {
 	printf("%s -> %s\n", FILENAME, __func__);
+	memset(op, 0, sizeof(op));
 }
 
 cCA::~cCA()
@@ -1106,6 +1107,7 @@ cCA::cCA(int Slots)
 {
 	printf("%s -> %s %d\n", FILENAME, __func__, Slots);
 
+	memset(op, 0, sizeof(op));
 	zapitReady = false;
 	num_slots = Slots;
 #if HAVE_ARM_HARDWARE || HAVE_MIPS_HARDWARE

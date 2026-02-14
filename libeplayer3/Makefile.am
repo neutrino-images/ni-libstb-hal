@@ -18,6 +18,7 @@ SOURCE_FILES += manager/audio.c
 SOURCE_FILES += manager/video.c
 SOURCE_FILES += manager/chapter.c
 SOURCE_FILES += manager/subtitle.c
+SOURCE_FILES += output/graphic_window.c
 SOURCE_FILES += output/graphic_subtitle.c
 SOURCE_FILES += output/output_subtitle.c
 SOURCE_FILES += output/output.c

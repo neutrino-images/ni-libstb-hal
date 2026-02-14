@@ -35,6 +35,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 #include <libavutil/samplefmt.h>
+#include <libavutil/channel_layout.h>
 #include <libswresample/swresample.h>
 #include <libavcodec/avcodec.h>
 #include <ao/ao.h>
@@ -382,6 +383,11 @@ void cAudio::run()
 	int o_ch, o_sr; /* output channels and sample rate */
 	uint64_t o_layout; /* output channels layout */
 	char tmp[64] = "unknown";
+	int audio_stream_index = -1;
+	int in_ch = 0;
+	int in_sr = 0;
+	uint64_t in_layout = 0;
+	bool output_ready = false;
 
 	curr_pts = 0;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
@@ -411,12 +417,24 @@ void cAudio::run()
 	hal_debug("%s: avformat_find_stream_info: %d\n", __func__, ret);
 	if (avfc->nb_streams != 1)
 	{
-		hal_info("%s: nb_streams: %d, should be 1!\n", __func__, avfc->nb_streams);
+		hal_info("%s: nb_streams: %d, selecting audio stream\n", __func__, avfc->nb_streams);
+	}
+	for (unsigned int i = 0; i < avfc->nb_streams; i++)
+	{
+		if (avfc->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
+		{
+			audio_stream_index = i;
+			break;
+		}
+	}
+	if (audio_stream_index < 0)
+	{
+		hal_info("%s: no audio stream found\n", __func__);
 		goto out;
 	}
-	p = avfc->streams[0]->codecpar;
+	p = avfc->streams[audio_stream_index]->codecpar;
 	if (p->codec_type != AVMEDIA_TYPE_AUDIO)
-		hal_info("%s: stream 0 no audio codec? 0x%x\n", __func__, p->codec_type);
+		hal_info("%s: stream %d no audio codec? 0x%x\n", __func__, audio_stream_index, p->codec_type);
 
 	codec = avcodec_find_decoder(p->codec_id);
 	if (!codec)
@@ -432,61 +450,22 @@ void cAudio::run()
 		hal_info("%s: avcodec_open2() failed\n", __func__);
 		goto out;
 	}
-	if (p->sample_rate == 0 || p->channels == 0)
-	{
-		av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
-		hal_info("Header missing %s, sample_fmt %d (%s) sample_rate %d channels %d\n", avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
-		goto out2;
-	}
 	frame = av_frame_alloc();
 	if (!frame)
 	{
 		hal_info("%s: av_frame_alloc failed\n", __func__);
 		goto out2;
 	}
-	/* output sample rate, channels, layout could be set here if necessary */
-	o_ch = p->channels; /* 2 */
-	o_sr = p->sample_rate; /* 48000 */
-	o_layout = p->channel_layout; /* AV_CH_LAYOUT_STEREO */
-	if (sformat.channels != o_ch || sformat.rate != o_sr || sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
-	{
-		driver = ao_default_driver_id();
-		sformat.bits = 16;
-		sformat.channels = o_ch;
-		sformat.rate = o_sr;
-		sformat.byte_format = AO_FMT_NATIVE;
-		sformat.matrix = 0;
-		if (adevice)
-			ao_close(adevice);
-		adevice = ao_open_live(driver, &sformat, NULL);
-		ai = ao_driver_info(driver);
-		hal_info("%s: changed params ch %d srate %d bits %d adevice %p\n", __func__, o_ch, o_sr, 16, adevice);
-		if (ai)
-			hal_info("libao driver: %d name '%s' short '%s' author '%s'\n", driver, ai->name, ai->short_name, ai->author);
-	}
-#if 0
-	hal_info(" driver options:");
-	for (int i = 0; i < ai->option_count; ++i)
-		fprintf(stderr, " %s", ai->options[i]);
-	fprintf(stderr, "\n");
-#endif
-	av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
-	hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n", avcodec_get_name(p->codec_id), c->sample_fmt, tmp, p->sample_rate, p->channels);
-	swr = swr_alloc_set_opts(swr,
-			o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
-			p->channel_layout, c->sample_fmt, p->sample_rate, /* input */
-			0, NULL);
-	if (! swr)
-	{
-		hal_info("could not alloc resample context\n");
-		goto out3;
-	}
-	swr_init(swr);
 	while (thread_started)
 	{
 		int gotframe = 0;
 		if (av_read_frame(avfc, &avpkt) < 0)
 			break;
+		if (avpkt.stream_index != audio_stream_index)
+		{
+			av_packet_unref(&avpkt);
+			continue;
+		}
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,37,100)
 		avcodec_decode_audio4(c, frame, &gotframe, &avpkt);
 #else
@@ -511,8 +490,65 @@ void cAudio::run()
 
 		if (gotframe && thread_started)
 		{
+			if (!output_ready)
+			{
+				in_sr = frame->sample_rate ? frame->sample_rate : (c->sample_rate ? c->sample_rate : p->sample_rate);
+				in_ch = frame->channels ? frame->channels : (c->channels ? c->channels : p->channels);
+				in_layout = frame->channel_layout ? frame->channel_layout : (c->channel_layout ? c->channel_layout : p->channel_layout);
+				if (in_layout == 0 && in_ch > 0)
+					in_layout = av_get_default_channel_layout(in_ch);
+				if (in_sr == 0 || in_ch == 0)
+				{
+					av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
+					hal_info("Header missing %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
+						avcodec_get_name(p->codec_id), c->sample_fmt, tmp, in_sr, in_ch);
+					av_packet_unref(&avpkt);
+					continue;
+				}
+				/* output sample rate, channels, layout could be set here if necessary */
+				o_ch = in_ch;
+				o_sr = in_sr;
+				o_layout = in_layout;
+				if (sformat.channels != o_ch || sformat.rate != o_sr || sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
+				{
+					driver = ao_default_driver_id();
+					sformat.bits = 16;
+					sformat.channels = o_ch;
+					sformat.rate = o_sr;
+					sformat.byte_format = AO_FMT_NATIVE;
+					sformat.matrix = 0;
+					if (adevice)
+						ao_close(adevice);
+					adevice = ao_open_live(driver, &sformat, NULL);
+					ai = ao_driver_info(driver);
+					hal_info("%s: changed params ch %d srate %d bits %d adevice %p\n", __func__, o_ch, o_sr, 16, adevice);
+					if (ai)
+						hal_info("libao driver: %d name '%s' short '%s' author '%s'\n", driver, ai->name, ai->short_name, ai->author);
+				}
+#if 0
+				hal_info(" driver options:");
+				for (int i = 0; i < ai->option_count; ++i)
+					fprintf(stderr, " %s", ai->options[i]);
+				fprintf(stderr, "\n");
+#endif
+				av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
+				hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
+					avcodec_get_name(p->codec_id), c->sample_fmt, tmp, in_sr, in_ch);
+				swr = swr_alloc_set_opts(swr,
+						o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
+						in_layout, c->sample_fmt, in_sr, /* input */
+						0, NULL);
+				if (! swr)
+				{
+					hal_info("could not alloc resample context\n");
+					av_packet_unref(&avpkt);
+					break; /* while (thread_started) */
+				}
+				swr_init(swr);
+				output_ready = true;
+			}
 			int out_linesize;
-			obuf_sz = av_rescale_rnd(swr_get_delay(swr, p->sample_rate) + frame->nb_samples, o_sr, p->sample_rate, AV_ROUND_UP);
+			obuf_sz = av_rescale_rnd(swr_get_delay(swr, in_sr) + frame->nb_samples, o_sr, in_sr, AV_ROUND_UP);
 			if (obuf_sz > obuf_sz_max)
 			{
 				hal_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);

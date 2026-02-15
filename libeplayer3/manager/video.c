@@ -111,16 +111,16 @@ static int ManagerAdd(Context_t *context, Track_t track)
 	return cERR_VIDEO_MGR_NO_ERROR;
 }
 
-static TrackDescription_t *ManagerList(Context_t *context __attribute__((unused)))
+static char **ManagerList(Context_t *context __attribute__((unused)))
 {
-	int i = 0;
-	TrackDescription_t *tracklist = NULL;
+	int i = 0, j = 0;
+	char **tracklist = NULL;
 
 	video_mgr_printf(10, "\n");
 
 	if (Tracks != NULL)
 	{
-		tracklist = malloc(sizeof(TrackDescription_t) * ((TrackCount) + 1));
+		tracklist = calloc((TrackCount * 2) + 1, sizeof(char *));
 
 		if (tracklist == NULL)
 		{
@@ -128,23 +128,24 @@ static TrackDescription_t *ManagerList(Context_t *context __attribute__((unused)
 			return NULL;
 		}
 
-		int j = 0;
-		for (i = 0; i < TrackCount; ++i)
+		for (i = 0, j = 0; i < TrackCount; i++)
 		{
 			if (Tracks[i].pending || Tracks[i].Id < 0)
 			{
 				continue;
 			}
 
-			tracklist[j].Id = Tracks[i].Id;
-			tracklist[j].Name = strdup(Tracks[i].Name);
-			tracklist[j].Encoding = strdup(Tracks[i].Encoding);
-			++j;
+			size_t len = strlen(Tracks[i].Name) + 20;
+			char tmp[len];
+			snprintf(tmp, len, "%d %s", Tracks[i].Id, Tracks[i].Name);
+			tracklist[j] = strdup(tmp);
+			tracklist[j + 1] = strdup(Tracks[i].Encoding);
+			j += 2;
 		}
-		tracklist[j].Id = -1;
+		tracklist[j] = NULL;
 	}
 
-	video_mgr_printf(10, "return %p %d\n", tracklist, TrackCount);
+	video_mgr_printf(10, "return %p (%d - %d)\n", tracklist, j, TrackCount);
 
 	return tracklist;
 }

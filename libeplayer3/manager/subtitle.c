@@ -118,7 +118,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 
 	if (Tracks != NULL)
 	{
-		tracklist = malloc(sizeof(char *) * ((TrackCount * 2) + 1));
+		tracklist = calloc((TrackCount * 2) + 1, sizeof(char *));
 
 		if (tracklist == NULL)
 		{
@@ -126,7 +126,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 			return NULL;
 		}
 
-		for (i = 0, j = 0; i < TrackCount; i++, j += 2)
+		for (i = 0, j = 0; i < TrackCount; i++)
 		{
 			if (Tracks[i].pending)
 			{
@@ -138,6 +138,7 @@ static char **ManagerList(Context_t *context __attribute__((unused)))
 			snprintf(tmp, len, "%d %s", Tracks[i].Id, Tracks[i].Name);
 			tracklist[j] = strdup(tmp);
 			tracklist[j + 1] = strdup(Tracks[i].Encoding);
+			j += 2;
 		}
 		tracklist[j] = NULL;
 	}

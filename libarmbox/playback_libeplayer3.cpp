@@ -218,7 +218,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 				{
 					printf("AudioTrack List\n");
 					int i = 0;
-					for (i = 0; TrackList[i] != NULL; i += 2)
+					for (i = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2)
 					{
 						printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 						free(TrackList[i]);
@@ -237,7 +237,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 				{
 					printf("SubtitleTrack List\n");
 					int i = 0;
-					for (i = 0; TrackList[i] != NULL; i += 2)
+					for (i = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2)
 					{
 						printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 						free(TrackList[i]);
@@ -257,7 +257,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 				{
 					printf("TeletextTrack List\n");
 					int i = 0;
-					for (i = 0; TrackList[i] != NULL; i += 2)
+					for (i = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2)
 					{
 						printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 						free(TrackList[i]);
@@ -277,7 +277,7 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 				{
 					printf("Chapter List\n");
 					int i = 0;
-					for (i = 0; TrackList[i] != NULL; i += 2)
+					for (i = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2)
 					{
 						printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 						free(TrackList[i]);
@@ -600,13 +600,13 @@ void cPlayback::FindAllPids(uint16_t *apids, unsigned short *ac3flags, uint16_t 
 		{
 			printf("AudioTrack List\n");
 			int i = 0, j = 0;
-			for (i = 0, j = 0; TrackList[i] != NULL; i += 2, j++)
+			for (i = 0, j = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2, j++)
 			{
 				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 				if (j < max_numpida)
 				{
 					int _pid;
-					char _lang[strlen(TrackList[i])];
+					char _lang[strlen(TrackList[i]) + 1];
 					if (sscanf(TrackList[i], "%d %s\n", &_pid, _lang) == 2)
 					{
 						apids[j] = _pid;
@@ -666,13 +666,13 @@ void cPlayback::FindAllSubtitlePids(int *pids, unsigned int *numpids, std::strin
 		{
 			printf("SubtitleTrack List\n");
 			int i = 0, j = 0;
-			for (i = 0, j = 0; TrackList[i] != NULL; i += 2, j++)
+			for (i = 0, j = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2, j++)
 			{
 				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 				if (j < max_numpids)
 				{
 					int _pid;
-					char _lang[strlen(TrackList[i])];
+					char _lang[strlen(TrackList[i]) + 1];
 					if (sscanf(TrackList[i], "%d %s\n", &_pid, _lang) == 2)
 					{
 						pids[j] = _pid;
@@ -789,7 +789,7 @@ void cPlayback::GetChapters(std::vector<int> &positions, std::vector<std::string
 		{
 			printf("%s: Chapter List\n", __func__);
 			int i = 0;
-			for (i = 0; TrackList[i] != NULL; i += 2)
+			for (i = 0; TrackList[i] != NULL && TrackList[i + 1] != NULL; i += 2)
 			{
 				printf("\t%s - %s\n", TrackList[i], TrackList[i + 1]);
 				int pos = atoi(TrackList[i]);

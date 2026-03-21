@@ -1684,7 +1684,19 @@ static int32_t terminating = 0;
 static int32_t interrupt_cb(void *ctx)
 {
 	PlaybackHandler_t *p = (PlaybackHandler_t *)ctx;
-	return p->abortRequested || PlaybackDieNow(0);
+	if (p->abortRequested || PlaybackDieNow(0))
+		return 1;
+	if (p->openStartTimeUs > 0 && p->httpTimeout > 0)
+	{
+		int64_t elapsed_us = av_gettime() - p->openStartTimeUs;
+		if (elapsed_us > (int64_t)p->httpTimeout * 1000)
+		{
+			ffmpeg_err("interrupt_cb: open/probe timeout after %" PRId64 " ms (limit %u ms)\n",
+				elapsed_us / 1000, p->httpTimeout);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 #ifdef USE_CUSTOM_IO
@@ -2119,6 +2131,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 	pavio_opts = &avio_opts;
 
+	context->playback->openStartTimeUs = av_gettime();
 	if (avContextTab[AVIdx] != NULL && ((err = avformat_open_input(&avContextTab[AVIdx], filename, fmt, pavio_opts)) != 0))
 	{
 		if (rtmp_proto_impl == 0 && //err == AVERROR_UNKNOWN &&
@@ -2132,6 +2145,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 		if (err != 0)
 		{
+			context->playback->openStartTimeUs = 0;
 			char error[512];
 
 			ffmpeg_err("avformat_open_input failed %d (%s)\n", err, filename);
@@ -2145,6 +2159,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 			return cERR_CONTAINER_FFMPEG_OPEN;
 		}
 	}
+	context->playback->openStartTimeUs = 0;
 	if (avContextTab[AVIdx] != NULL)
 	{
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(59, 0, 100)
@@ -2271,10 +2286,12 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	if (!is_probable_live)
 	{
 		ffmpeg_printf(1, "avformat_find_stream_info\n");
+		context->playback->openStartTimeUs = av_gettime();
 		if (avformat_find_stream_info(avContextTab[AVIdx], NULL) < 0)
 		{
 			ffmpeg_err("Error avformat_find_stream_info\n");
 		}
+		context->playback->openStartTimeUs = 0;
 	}
 //for buffered io
 	if (avContextTab[AVIdx] != NULL && avContextTab[AVIdx]->pb != NULL && !context->playback->isTSLiveMode)

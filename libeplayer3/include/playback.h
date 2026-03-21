@@ -67,6 +67,7 @@ typedef struct PlaybackHandler_s
 	uint8_t isLoopMode;
 	uint8_t isTSLiveMode;
 	uint32_t httpTimeout; // in ms
+	int64_t openStartTimeUs; // av_gettime() at start of blocking open/probe, 0 = inactive
 
 	void *stamp;
 } PlaybackHandler_t;

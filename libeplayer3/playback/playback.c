@@ -1030,5 +1030,6 @@ PlaybackHandler_t PlaybackHandler =
 	0,          //isLoopMode
 	0,          //isTSLiveMode
 	4000,       //httpTimeout
+	0,          //openStartTimeUs
 	NULL        //stamp
 };

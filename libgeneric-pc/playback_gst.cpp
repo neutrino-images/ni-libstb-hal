@@ -267,6 +267,18 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			g_free(debug);
 			gchar *sourceName = gst_object_get_name(source);
 			hal_info_c("%s:%s - GST_MESSAGE_ERROR: %s (%i) from %s\n", FILENAME, __FUNCTION__, err->message, err->code, sourceName);
+			bool nonfatal_window_close = false;
+			if (sourceName && err && err->message)
+			{
+				// Closing the external video sink window must not terminate
+				// movie playback loop.
+				if (g_strrstr(err->message, "Output window was closed") &&
+					(g_strrstr(sourceName, "xvimagesink") || g_strrstr(sourceName, "ximagesink") || g_strrstr(sourceName, "glimagesink")))
+				{
+					nonfatal_window_close = true;
+					hal_info_c("%s:%s - GST_MESSAGE_ERROR: ignore non-fatal sink window close from %s\n", FILENAME, __FUNCTION__, sourceName);
+				}
+			}
 			if (err->domain == GST_STREAM_ERROR)
 			{
 				if (err->code == GST_STREAM_ERROR_CODEC_NOT_FOUND)
@@ -281,7 +293,8 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			if (sourceName)
 				g_free(sourceName);
 
-			end_eof = 1; // NOTE: just to exit
+			if (!nonfatal_window_close)
+				end_eof = 1; // NOTE: just to exit
 
 			break;
 		}
@@ -816,9 +829,14 @@ bool cPlayback::SetSpeed(int speed)
 		// play/continue
 		else if (speed == 1)
 		{
-			trickSeek(1);
-			//gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
-			//
+			// Avoid an unconditional flush-seek when simply starting/resuming
+			// playback. On some TS streams this can trigger visible stalls
+			// and green frames at startup.
+			if (mSpeed > 1 || mSpeed < 0 || playstate == STATE_FF || playstate == STATE_REW || playstate == STATE_SLOW)
+				trickSeek(1);
+			else
+				gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
+
 			playstate = STATE_PLAY;
 		}
 		//ff
@@ -838,9 +856,15 @@ bool cPlayback::SetSpeed(int speed)
 
 		if (init_jump > -1)
 		{
-			SetPosition(init_jump, true);
-			init_jump = -1;
+			// Keep pending seek if playbin is still transitioning and
+			// SetPosition() defers it.
+			if (SetPosition(init_jump, true))
+				init_jump = -1;
 		}
+
+		// Initial startup phase ends once no deferred seek is pending.
+		if (speed == 1 && init_jump < 0)
+			first = false;
 	}
 
 	mSpeed = speed;
@@ -879,6 +903,21 @@ bool cPlayback::GetPosition(int &position, int &duration, bool /*isWebChannel*/)
 {
 	if (playing == false)
 		return false;
+
+	// Retry deferred startup seek once playbin left ASYNC transition.
+	if (m_gst_playbin && init_jump > -1 && first)
+	{
+		GstState state = GST_STATE_NULL;
+		GstStateChangeReturn ret = gst_element_get_state(m_gst_playbin, &state, NULL, 0);
+		if (ret != GST_STATE_CHANGE_ASYNC && state >= GST_STATE_PAUSED)
+		{
+			if (SetPosition(init_jump, true))
+			{
+				init_jump = -1;
+				first = false;
+			}
+		}
+	}
 
 	//EOF
 	if (end_eof)
@@ -933,14 +972,22 @@ bool cPlayback::SetPosition(int position, bool absolute)
 	{
 		if (first)
 		{
-			GstState state;
-			gst_element_get_state(m_gst_playbin, &state, NULL, GST_CLOCK_TIME_NONE);
-			if ((state == GST_STATE_PAUSED) && first)
+			GstState state = GST_STATE_NULL;
+			GstStateChangeReturn ret = gst_element_get_state(m_gst_playbin, &state, NULL, 0);
+			// Never block indefinitely here. During startup we may still be
+			// transitioning asynchronously.
+			if (ret == GST_STATE_CHANGE_ASYNC)
 			{
-				init_jump = position;
-				first = false;
+				if (position > 0)
+				{
+					init_jump = position;
+				}
 				return false;
 			}
+
+			// A "seek to start" while still prerolled in PAUSED is a no-op.
+			if (state == GST_STATE_PAUSED && position == 0)
+				return false;
 		}
 
 		gint64 time_nanoseconds;
@@ -959,6 +1006,8 @@ bool cPlayback::SetPosition(int position, bool absolute)
 		}
 
 		gst_element_seek(m_gst_playbin, 1.0, GST_FORMAT_TIME, (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE), GST_SEEK_TYPE_SET, time_nanoseconds, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+		if (first)
+			first = false;
 	}
 
 	return true;

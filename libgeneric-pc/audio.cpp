@@ -251,11 +251,17 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 		}
 		freq = c->sample_rate;
 		bitrate = c->bit_rate;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+		uint64_t ch_mask = (c->ch_layout.order == AV_CHANNEL_ORDER_NATIVE) ? c->ch_layout.u.mask : 0;
+		if (c->ch_layout.nb_channels == 1)
+#else
+		uint64_t ch_mask = c->channel_layout;
 		if (c->channels == 1)
+#endif
 			mode = 3; /* for AV_CODEC_ID_MP2, only stereo / mono is detected for now */
 		if (c->codec_id != AV_CODEC_ID_MP2)
 		{
-			switch (c->channel_layout)
+			switch (ch_mask)
 			{
 				case AV_CH_LAYOUT_MONO:
 					mode = 1; // "C"
@@ -282,7 +288,7 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 					mode = 7; // "L/C/R/SL/SR"
 					break;
 				default:
-					hal_info("%s: unknown ch_layout 0x%" PRIx64 "\n", __func__, c->channel_layout);
+					hal_info("%s: unknown ch_layout 0x%" PRIx64 "\n", __func__, ch_mask);
 			}
 		}
 	}
@@ -370,7 +376,7 @@ void cAudio::run()
 	const AVCodec *codec;
 #endif
 	AVFormatContext *avfc = NULL;
-	AVFrame *frame;
+	AVFrame *frame = NULL;
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;
 	int ret, driver;
@@ -385,12 +391,16 @@ void cAudio::run()
 	int obuf_sz = 0; /* in samples */
 	int obuf_sz_max = 0;
 	int o_ch, o_sr; /* output channels and sample rate */
-	uint64_t o_layout; /* output channels layout */
+	uint64_t o_layout; /* output channels layout (legacy) */
 	char tmp[64] = "unknown";
 	int audio_stream_index = -1;
 	int in_ch = 0;
 	int in_sr = 0;
 	uint64_t in_layout = 0;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+	AVChannelLayout in_chlayout = {};
+	AVChannelLayout o_chlayout = {};
+#endif
 	int swr_fmt = AV_SAMPLE_FMT_NONE;
 	bool output_ready = false;
 
@@ -407,10 +417,20 @@ void cAudio::run()
 			_my_read,	// read callback
 			NULL,		// write callback
 			NULL);		// seek callback
+	if (!pIOCtx)
+	{
+		hal_info("%s: avio_alloc_context failed\n", __func__);
+		goto out;
+	}
 	avfc = avformat_alloc_context();
+	if (!avfc)
+	{
+		hal_info("%s: avformat_alloc_context failed\n", __func__);
+		goto out;
+	}
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
-	avfc->probesize = 188 * 50;
+	avfc->probesize = 188 * 100;
 	thread_started = true;
 
 	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0)
@@ -449,14 +469,21 @@ void cAudio::run()
 	}
 	{
 		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(c_mutex);
-		if (c)
-			av_free(c);
+		avcodec_free_context(&c);
 		c = avcodec_alloc_context3(codec);
-		avcodec_parameters_to_context(c, p);
-		if (avcodec_open2(c, codec, NULL) < 0)
+		if (!c)
+		{
+			hal_info("%s: avcodec_alloc_context3() failed\n", __func__);
+		}
+		else if (avcodec_parameters_to_context(c, p) < 0)
+		{
+			hal_info("%s: avcodec_parameters_to_context() failed\n", __func__);
+			avcodec_free_context(&c);
+		}
+		else if (avcodec_open2(c, codec, NULL) < 0)
 		{
 			hal_info("%s: avcodec_open2() failed\n", __func__);
-			c = NULL;
+			avcodec_free_context(&c);
 		}
 	}
 	if (!c)
@@ -505,7 +532,11 @@ void cAudio::run()
 			if (output_ready)
 			{
 				int cur_sr = frame->sample_rate ? frame->sample_rate : in_sr;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+				int cur_ch = frame->ch_layout.nb_channels ? frame->ch_layout.nb_channels : in_ch;
+#else
 				int cur_ch = frame->channels ? frame->channels : in_ch;
+#endif
 				if (cur_sr != in_sr || cur_ch != in_ch || (int)c->sample_fmt != swr_fmt)
 				{
 					hal_info("audio format changed: sr %d->%d ch %d->%d fmt %d->%d\n",
@@ -516,10 +547,24 @@ void cAudio::run()
 			if (!output_ready)
 			{
 				in_sr = frame->sample_rate ? frame->sample_rate : (c->sample_rate ? c->sample_rate : p->sample_rate);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+				in_ch = frame->ch_layout.nb_channels ? frame->ch_layout.nb_channels
+					: (c->ch_layout.nb_channels ? c->ch_layout.nb_channels : p->ch_layout.nb_channels);
+				if (frame->ch_layout.order != AV_CHANNEL_ORDER_UNSPEC)
+					av_channel_layout_copy(&in_chlayout, &frame->ch_layout);
+				else if (c->ch_layout.order != AV_CHANNEL_ORDER_UNSPEC)
+					av_channel_layout_copy(&in_chlayout, &c->ch_layout);
+				else if (p->ch_layout.order != AV_CHANNEL_ORDER_UNSPEC)
+					av_channel_layout_copy(&in_chlayout, &p->ch_layout);
+				else
+					av_channel_layout_default(&in_chlayout, in_ch);
+				in_layout = (in_chlayout.order == AV_CHANNEL_ORDER_NATIVE) ? in_chlayout.u.mask : 0;
+#else
 				in_ch = frame->channels ? frame->channels : (c->channels ? c->channels : p->channels);
 				in_layout = frame->channel_layout ? frame->channel_layout : (c->channel_layout ? c->channel_layout : p->channel_layout);
 				if (in_layout == 0 && in_ch > 0)
 					in_layout = av_get_default_channel_layout(in_ch);
+#endif
 				if (in_sr == 0 || in_ch == 0)
 				{
 					av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
@@ -535,11 +580,17 @@ void cAudio::run()
 				{
 					o_ch = 2;
 					o_layout = AV_CH_LAYOUT_STEREO;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+					o_chlayout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+#endif
 				}
 				else
 				{
 					o_ch = in_ch;
 					o_layout = in_layout;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+					av_channel_layout_copy(&o_chlayout, &in_chlayout);
+#endif
 				}
 				if (sformat.channels != o_ch || sformat.rate != o_sr || sformat.byte_format != AO_FMT_NATIVE || sformat.bits != 16 || adevice == NULL)
 				{
@@ -566,11 +617,19 @@ void cAudio::run()
 				av_get_sample_fmt_string(tmp, sizeof(tmp), c->sample_fmt);
 				hal_info("decoding %s, sample_fmt %d (%s) sample_rate %d channels %d\n",
 					avcodec_get_name(p->codec_id), c->sample_fmt, tmp, in_sr, in_ch);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+				swr_free(&swr);
+				if (swr_alloc_set_opts2(&swr,
+						&o_chlayout, AV_SAMPLE_FMT_S16, o_sr, /* output */
+						&in_chlayout, c->sample_fmt, in_sr, /* input */
+						0, NULL) < 0 || !swr)
+#else
 				swr = swr_alloc_set_opts(swr,
 						o_layout, AV_SAMPLE_FMT_S16, o_sr, /* output */
 						in_layout, c->sample_fmt, in_sr, /* input */
 						0, NULL);
-				if (! swr)
+				if (!swr)
+#endif
 				{
 					hal_info("could not alloc resample context\n");
 					av_packet_unref(&avpkt);
@@ -615,13 +674,22 @@ out3:
 out2:
 	{
 		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(c_mutex);
-		avcodec_close(c);
-		av_free(c);
-		c = NULL;
+		avcodec_free_context(&c);
 	}
 out:
 	avformat_close_input(&avfc);
-	av_free(pIOCtx->buffer);
-	av_free(pIOCtx);
+	if (pIOCtx)
+	{
+		av_free(pIOCtx->buffer);
+		av_free(pIOCtx);
+	}
+	else
+	{
+		av_free(inbuf);
+	}
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+	av_channel_layout_uninit(&in_chlayout);
+	av_channel_layout_uninit(&o_chlayout);
+#endif
 	hal_info("======================== end decoder thread ================================\n");
 }

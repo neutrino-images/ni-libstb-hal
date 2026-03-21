@@ -471,12 +471,20 @@ cPlayback::cPlayback(int num)
 cPlayback::~cPlayback()
 {
 	hal_info("%s:%s\n", FILENAME, __FUNCTION__);
-	//FIXME: all deleting stuff is done in Close()
+	// Ensure pipeline is torn down
+	Close();
 	pthread_mutex_lock(&mutex_tag_ist);
 	if (m_stream_tags)
+	{
 		gst_tag_list_unref(m_stream_tags);
+		m_stream_tags = NULL;
+	}
 	pthread_mutex_unlock(&mutex_tag_ist);
-	gst_deinit();
+	pthread_mutex_destroy(&mutex_tag_ist);
+	// Note: gst_deinit() intentionally omitted. It tears down all global
+	// GStreamer state and is unsafe when called from a signal handler or
+	// when other threads may still reference GStreamer objects. The OS
+	// reclaims all resources on process exit anyway.
 }
 
 //Used by Fileplay
@@ -493,45 +501,39 @@ void cPlayback::Close(void)
 {
 	hal_info("%s:%s\n", FILENAME, __FUNCTION__);
 
+	if (!m_gst_playbin)
+		return;
+
+	// Disconnect bus handler FIRST to prevent callbacks from racing
+	// with our cleanup (e.g. double-unref of audioSink/videoSink
+	// when PAUSED_TO_READY fires concurrently).
+	GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_playbin));
+	if (bus)
+	{
+		gst_bus_set_sync_handler(bus, NULL, NULL, NULL);
+		gst_object_unref(bus);
+	}
+	hal_info("%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
+
 	Stop();
 
-	// disconnect bus handler
-	if (m_gst_playbin)
+	if (audioSink)
 	{
-		// disconnect sync handler callback
-		GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_gst_playbin));
-		gst_bus_set_sync_handler(bus, NULL, NULL, NULL);
-		if (bus)
-			gst_object_unref(bus);
-		hal_info("%s:%s - GST bus handler closed\n", FILENAME, __FUNCTION__);
+		gst_object_unref(GST_OBJECT(audioSink));
+		audioSink = NULL;
+		hal_info("%s:%s - GST audio Sink closed\n", FILENAME, __FUNCTION__);
 	}
 
-	// close gst
-	if (m_gst_playbin)
+	if (videoSink)
 	{
-		if (audioSink)
-		{
-			gst_object_unref(GST_OBJECT(audioSink));
-			audioSink = NULL;
-
-			hal_info("%s:%s - GST audio Sink closed\n", FILENAME, __FUNCTION__);
-		}
-
-		if (videoSink)
-		{
-			gst_object_unref(GST_OBJECT(videoSink));
-			videoSink = NULL;
-
-			hal_info("%s:%s - GST video Sink closed\n", FILENAME, __FUNCTION__);
-		}
-
-		// unref m_gst_playbin
-		gst_object_unref(GST_OBJECT(m_gst_playbin));
-		hal_info("%s:%s - GST playbin closed\n", FILENAME, __FUNCTION__);
-
-		m_gst_playbin = NULL;
-
+		gst_object_unref(GST_OBJECT(videoSink));
+		videoSink = NULL;
+		hal_info("%s:%s - GST video Sink closed\n", FILENAME, __FUNCTION__);
 	}
+
+	gst_object_unref(GST_OBJECT(m_gst_playbin));
+	hal_info("%s:%s - GST playbin closed\n", FILENAME, __FUNCTION__);
+	m_gst_playbin = NULL;
 
 }
 

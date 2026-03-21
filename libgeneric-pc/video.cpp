@@ -193,7 +193,11 @@ int cVideo::Start(void *, unsigned short, unsigned short, void *)
 {
 	hal_debug("%s running %d >\n", __func__, thread_running);
 	if (!thread_running && !HAL_nodec)
-		OpenThreads::Thread::start();
+	{
+		thread_running = true;
+		if (OpenThreads::Thread::start() != 0)
+			thread_running = false;
+	}
 	hal_debug("%s running %d <\n", __func__, thread_running);
 	return 0;
 }
@@ -297,7 +301,7 @@ bool cVideo::ShowPicture(const char *fname)
 	AVCodecContext *c = NULL;
 	AVCodecParameters *p = NULL;
 	const AVCodec *codec;
-	AVFrame *frame, *rgbframe;
+	AVFrame *frame = NULL, *rgbframe = NULL;
 	AVPacket avpkt;
 
 	if (avformat_open_input(&avfc, fname, NULL, NULL) < 0)
@@ -323,11 +327,26 @@ bool cVideo::ShowPicture(const char *fname)
 		goto out_close;
 	p = avfc->streams[stream_id]->codecpar;
 	codec = avcodec_find_decoder(p->codec_id);
+	if (!codec)
+	{
+		hal_info("%s: Could not find codec, id 0x%x\n", __func__, p->codec_id);
+		goto out_close;
+	}
 	c = avcodec_alloc_context3(codec);
+	if (!c)
+	{
+		hal_info("%s: Could not allocate codec context\n", __func__);
+		goto out_close;
+	}
+	if (avcodec_parameters_to_context(c, p) < 0)
+	{
+		hal_info("%s: Could not copy codec parameters\n", __func__);
+		goto out_free;
+	}
 	if (avcodec_open2(c, codec, NULL) < 0)
 	{
 		hal_info("%s: Could not find/open the codec, id 0x%x\n", __func__, p->codec_id);
-		goto out_close;
+		goto out_free;
 	}
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
@@ -426,8 +445,7 @@ bool cVideo::ShowPicture(const char *fname)
 	}
 	av_packet_unref(&avpkt);
 out_free:
-	avcodec_close(c);
-	av_free(c);
+	avcodec_free_context(&c);
 	av_frame_free(&frame);
 	av_frame_free(&rgbframe);
 out_close:
@@ -561,7 +579,7 @@ void cVideo::run(void)
 	AVCodecParameters *p = NULL;
 	AVCodecContext *c = NULL;
 	AVFormatContext *avfc = NULL;
-	AVFrame *frame, *rgbframe;
+	AVFrame *frame = NULL, *rgbframe = NULL;
 	uint8_t *inbuf = (uint8_t *)av_malloc(INBUF_SIZE);
 	AVPacket avpkt;
 	struct SwsContext *convert = NULL;
@@ -597,12 +615,21 @@ void cVideo::run(void)
 			my_read,	// read callback
 			NULL,		// write callback
 			NULL);		// seek callback
+	if (!pIOCtx)
+	{
+		hal_info("%s: Could not allocate AVIO context\n", __func__);
+		goto out;
+	}
 	avfc = avformat_alloc_context();
+	if (!avfc)
+	{
+		hal_info("%s: Could not allocate AVFormat context\n", __func__);
+		goto out;
+	}
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
-	avfc->probesize = 188 * 50;
+	avfc->probesize = 188 * 100;
 
-	thread_running = true;
 	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0)
 	{
 		hal_info("%s: Could not open input\n", __func__);
@@ -653,11 +680,22 @@ void cVideo::run(void)
 		goto out;
 	}
 	c = avcodec_alloc_context3(codec);
+	if (!c)
+	{
+		hal_info("%s: Could not allocate codec context\n", __func__);
+		goto out;
+	}
 	/* only copy stream parameters when genuinely detected as video.
 	   when stream was misdetected as audio and we forced the codec,
 	   p still contains audio parameters that would corrupt the decoder */
 	if (found_video_stream)
-		avcodec_parameters_to_context(c, p);
+	{
+		if (avcodec_parameters_to_context(c, p) < 0)
+		{
+			hal_info("%s: Could not copy codec parameters\n", __func__);
+			goto out2;
+		}
+	}
 	/* enable multi-threaded decoding for CPU-intensive codecs.
 	   MPEG-2 stays single-threaded to avoid frame corruption from
 	   thread race conditions with skip_frame changes during warmup */
@@ -670,12 +708,16 @@ void cVideo::run(void)
 	}
 	/* initialize frame rate from stream info for PTS interpolation.
 	   without this, dec_r stays 0 until the first frame is output,
-	   making PTS interpolation impossible during warmup */
-	if (c->time_base.num > 0 && c->time_base.den > 0 && c->ticks_per_frame > 0)
-		dec_r = c->time_base.den / (c->time_base.num * c->ticks_per_frame);
-	else
+	   making PTS interpolation impossible during warmup.
+	   use stream-level frame rate instead of codec time_base / ticks_per_frame
+	   because ticks_per_frame is deprecated in newer FFmpeg and returns 1,
+	   which gives wrong rate for interlaced MPEG-2 (50 instead of 25) */
 	{
 		AVRational fr = avfc->streams[video_stream_idx]->avg_frame_rate;
+		if (fr.num <= 0 || fr.den <= 0)
+			fr = avfc->streams[video_stream_idx]->r_frame_rate;
+		if (fr.num <= 0 || fr.den <= 0)
+			fr = c->framerate;
 		if (fr.num > 0 && fr.den > 0)
 			dec_r = fr.num / fr.den;
 	}
@@ -913,7 +955,15 @@ void cVideo::run(void)
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;
 				}
-				dec_r = c->time_base.den / (c->time_base.num * c->ticks_per_frame);
+				{
+					AVRational fr = avfc->streams[video_stream_idx]->avg_frame_rate;
+					if (fr.num <= 0 || fr.den <= 0)
+						fr = avfc->streams[video_stream_idx]->r_frame_rate;
+					if (fr.num <= 0 || fr.den <= 0)
+						fr = c->framerate;
+					if (fr.num > 0 && fr.den > 0)
+						dec_r = fr.num / fr.den;
+				}
 				buf_m.unlock();
 			}
 			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n",
@@ -932,14 +982,20 @@ void cVideo::run(void)
 	}
 	sws_freeContext(convert);
 out2:
-	avcodec_close(c);
-	av_free(c);
+	avcodec_free_context(&c);
 	av_frame_free(&frame);
 	av_frame_free(&rgbframe);
 out:
 	avformat_close_input(&avfc);
-	av_free(pIOCtx->buffer);
-	av_free(pIOCtx);
+	if (pIOCtx)
+	{
+		av_free(pIOCtx->buffer);
+		av_free(pIOCtx);
+	}
+	else
+	{
+		av_free(inbuf);
+	}
 	/* reset output buffers */
 	bufpos = 0;
 	still_m.lock();

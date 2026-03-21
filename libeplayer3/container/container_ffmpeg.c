@@ -19,8 +19,9 @@
  *
  */
 
-/* Support Large File */
-#define _FILE_OFFSET_BITS 64
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 /* ***************************** */
 /* Includes                      */

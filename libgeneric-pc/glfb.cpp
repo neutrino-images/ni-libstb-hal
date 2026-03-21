@@ -639,27 +639,47 @@ void GLFbPC::bltDisplayBuffer()
 	 * better this than nothing... :-) */
 	int64_t apts = 0;
 	/* 18000 is the magic value for A/V sync in my libao->pulseaudio->intel_hda setup */
-	int64_t vpts = buf->pts() + 18000;
+	int64_t vpts = buf->pts();
 	if (audioDecoder)
 		apts = audioDecoder->getPts();
-	if (apts != last_apts)
+	/* skip A/V sync if PTS is invalid (AV_NOPTS_VALUE = INT64_MIN or
+	   any negative value) or audio hasn't started yet (apts == 0) -
+	   use frame rate based timing instead */
+	if (vpts < 0 || apts <= 0)
 	{
 		int rate, dummy1, dummy2;
-		if (apts < vpts)
-			sleep_us = (sleep_us * 2 + (vpts - apts) * 10 / 9) / 3;
-		else if (sleep_us > 1000)
-			sleep_us -= 1000;
-		last_apts = apts;
 		videoDecoder->getPictureInfo(dummy1, dummy2, rate);
 		if (rate > 0)
-			rate = 2000000 / rate; /* limit to half the frame rate */
+			sleep_us = 1000000 / rate;
 		else
-			rate = 50000; /* minimum 20 fps */
-		if (sleep_us > rate)
-			sleep_us = rate;
-		else if (sleep_us < 1)
-			sleep_us = 1;
+			sleep_us = 40000; /* ~25fps fallback */
 	}
+	else
+	{
+		vpts += 18000;
+		if (apts != last_apts)
+		{
+			int rate, dummy1, dummy2;
+			if (apts < vpts)
+				sleep_us = (sleep_us * 2 + (vpts - apts) * 10 / 9) / 3;
+			else if (sleep_us > 1000)
+				sleep_us -= 1000;
+			last_apts = apts;
+			videoDecoder->getPictureInfo(dummy1, dummy2, rate);
+			if (rate > 0)
+				rate = 1000000 / rate; /* limit to frame rate */
+			else
+				rate = 40000; /* ~25fps fallback */
+			if (sleep_us > rate)
+				sleep_us = rate;
+			else if (sleep_us < 1)
+				sleep_us = 1;
+		}
+	}
+	/* drain buffer when it's filling up - reduce sleep to prevent
+	   overflow and the stuttering/freezing it causes */
+	if (videoDecoder->buf_num > VDEC_MAXBUFS / 2)
+		sleep_us /= 2;
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
 		buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
 }

@@ -666,7 +666,7 @@ void cVideo::run(void)
 	if (avcodec_open2(c, codec, NULL) < 0)
 	{
 		hal_info("%s: Could not open codec\n", __func__);
-		goto out;
+		goto out2;
 	}
 	/* initialize frame rate from stream info for PTS interpolation.
 	   without this, dec_r stays 0 until the first frame is output,

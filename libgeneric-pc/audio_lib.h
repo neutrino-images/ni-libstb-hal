@@ -45,7 +45,7 @@ class cAudio : public OpenThreads::Thread
 
 	private:
 		int fd;
-		bool Muted;
+		bool Muted = false;
 
 		int clipfd; /* for pcm playback */
 		int mixer_fd; /* if we are using the OSS mixer */

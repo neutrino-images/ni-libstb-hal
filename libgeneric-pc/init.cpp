@@ -13,6 +13,10 @@ static bool initialized = false;
 GLFramebuffer *glfb = NULL;
 bool HAL_nodec = false;
 
+#ifdef ENABLE_GSTREAMER
+extern void hal_gst_global_shutdown(void);
+#endif
+
 void hal_api_init()
 {
 	if (!initialized)
@@ -52,6 +56,9 @@ void hal_api_init()
 void hal_api_exit()
 {
 	hal_info("%s, initialized = %d\n", __func__, (int)initialized);
+#ifdef ENABLE_GSTREAMER
+	hal_gst_global_shutdown();
+#endif
 	if (glfb)
 		delete glfb;
 	glfb = NULL;

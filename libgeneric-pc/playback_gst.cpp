@@ -80,7 +80,44 @@ static int end_eof = 0;
 #define REC_MAX_APIDS 20
 int real_apids[REC_MAX_APIDS];
 
+static pthread_mutex_t mutex_gst_global = PTHREAD_MUTEX_INITIALIZER;
+static unsigned int gst_user_count = 0;
+static bool gst_runtime_initialized = false;
+
 extern GLFramebuffer *glfb;
+
+static void gstRuntimeAcquire()
+{
+	pthread_mutex_lock(&mutex_gst_global);
+	if (!gst_runtime_initialized)
+	{
+		if (!gst_is_initialized())
+			gst_init(NULL, NULL);
+		gst_mpegts_initialize();
+		gst_runtime_initialized = true;
+	}
+	gst_user_count++;
+	pthread_mutex_unlock(&mutex_gst_global);
+}
+
+static void gstRuntimeRelease()
+{
+	pthread_mutex_lock(&mutex_gst_global);
+	if (gst_user_count > 0)
+		gst_user_count--;
+	pthread_mutex_unlock(&mutex_gst_global);
+}
+
+void hal_gst_global_shutdown(void)
+{
+	pthread_mutex_lock(&mutex_gst_global);
+	if (gst_runtime_initialized && gst_user_count == 0 && gst_is_initialized())
+	{
+		gst_deinit();
+		gst_runtime_initialized = false;
+	}
+	pthread_mutex_unlock(&mutex_gst_global);
+}
 
 gint match_sinktype(const GValue *velement, const gchar *type)
 {
@@ -439,13 +476,9 @@ cPlayback::cPlayback(int num)
 	const gchar *nano_str;
 	guint major, minor, micro, nano;
 
-	if (!gst_init_check(NULL, NULL, NULL))
-		gst_deinit();
-	gst_init(NULL, NULL);
+	gstRuntimeAcquire();
 
 	gst_version(&major, &minor, &micro, &nano);
-
-	gst_mpegts_initialize();
 
 	pthread_mutex_init(&mutex_tag_ist, NULL);
 
@@ -481,6 +514,7 @@ cPlayback::~cPlayback()
 	}
 	pthread_mutex_unlock(&mutex_tag_ist);
 	pthread_mutex_destroy(&mutex_tag_ist);
+	gstRuntimeRelease();
 	// Note: gst_deinit() intentionally omitted. It tears down all global
 	// GStreamer state and is unsafe when called from a signal handler or
 	// when other threads may still reference GStreamer objects. The OS

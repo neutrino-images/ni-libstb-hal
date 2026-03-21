@@ -680,6 +680,7 @@ void GLFbPC::bltDisplayBuffer()
 	   overflow and the stuttering/freezing it causes */
 	if (videoDecoder->buf_num > VDEC_MAXBUFS / 2)
 		sleep_us /= 2;
+	const double av_diff = ((double)buf->pts() - (double)apts) / 90000.0;
 	hal_debug("vpts: 0x%" PRIx64 " apts: 0x%" PRIx64 " diff: %6.3f sleep_us %d buf %d\n",
-		buf->pts(), apts, (buf->pts() - apts) / 90000.0, sleep_us, videoDecoder->buf_num);
+		  buf->pts(), apts, av_diff, sleep_us, videoDecoder->buf_num);
 }

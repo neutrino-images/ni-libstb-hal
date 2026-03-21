@@ -37,10 +37,10 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-/* ffmpeg buf 32k */
-#define INBUF_SIZE 0x8000
-/* my own buf 256k */
-#define DMX_BUF_SZ 0x20000
+/* ffmpeg buf 256k - needs to be large enough for high-bitrate UHD HEVC */
+#define INBUF_SIZE 0x40000
+/* my own buf 2MB - UHD HEVC I-frames can be very large */
+#define DMX_BUF_SZ 0x200000
 
 #if USE_OPENGL
 #define VDEC_PIXFMT AV_PIX_FMT_RGB32
@@ -569,11 +569,21 @@ void cVideo::run(void)
 	time_t warn_r = 0; /* last read error */
 	time_t warn_d = 0; /* last decode error */
 	int av_ret = 0;
+	int keyframe_count = 0;  /* counts keyframes seen so far */
+	int frame_count = 0; /* diagnostic frame counter */
+	int64_t last_pts = AV_NOPTS_VALUE; /* for PTS interpolation */
+	int video_stream_idx = 0;
+	bool found_video_stream = false;
 
 	bufpos = 0;
+	/* clear all buffers to prevent stale frames from previous channel */
+	buf_m.lock();
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;
+	for (int i = 0; i < VDEC_MAXBUFS; i++)
+		buffers[i].clear();
+	buf_m.unlock();
 	dec_r = 0;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(&avpkt);
@@ -590,7 +600,7 @@ void cVideo::run(void)
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
-	avfc->probesize = 188 * 5;
+	avfc->probesize = 188 * 50;
 
 	thread_running = true;
 	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0)
@@ -607,9 +617,22 @@ void cVideo::run(void)
 		if (! thread_running)
 			goto out;
 	}
+	/* analyze stream to properly set up PTS handling and codec parameters.
+	   without this, best_effort_timestamp is often AV_NOPTS_VALUE */
+	avformat_find_stream_info(avfc, NULL);
 
-	p = avfc->streams[0]->codecpar;
-	if (p->codec_type != AVMEDIA_TYPE_VIDEO)
+	/* find video stream - don't assume it's always stream 0 */
+	for (unsigned int i = 0; i < avfc->nb_streams; i++)
+	{
+		if (avfc->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+		{
+			video_stream_idx = i;
+			found_video_stream = true;
+			break;
+		}
+	}
+	p = avfc->streams[video_stream_idx]->codecpar;
+	if (!found_video_stream)
 		hal_info("%s: no video codec? 0x%x\n", __func__, p->codec_type);
 
 	if (p->codec_id == AV_CODEC_ID_NONE || p->codec_type != AVMEDIA_TYPE_VIDEO)
@@ -630,11 +653,36 @@ void cVideo::run(void)
 		goto out;
 	}
 	c = avcodec_alloc_context3(codec);
+	/* only copy stream parameters when genuinely detected as video.
+	   when stream was misdetected as audio and we forced the codec,
+	   p still contains audio parameters that would corrupt the decoder */
+	if (found_video_stream)
+		avcodec_parameters_to_context(c, p);
+	/* enable multi-threaded decoding for CPU-intensive codecs.
+	   MPEG-2 stays single-threaded to avoid frame corruption from
+	   thread race conditions with skip_frame changes during warmup */
+	if (p->codec_id == AV_CODEC_ID_HEVC || p->codec_id == AV_CODEC_ID_H264)
+		c->thread_count = 0; /* auto-detect number of cores */
 	if (avcodec_open2(c, codec, NULL) < 0)
 	{
 		hal_info("%s: Could not open codec\n", __func__);
 		goto out;
 	}
+	/* initialize frame rate from stream info for PTS interpolation.
+	   without this, dec_r stays 0 until the first frame is output,
+	   making PTS interpolation impossible during warmup */
+	if (c->time_base.num > 0 && c->time_base.den > 0 && c->ticks_per_frame > 0)
+		dec_r = c->time_base.den / (c->time_base.num * c->ticks_per_frame);
+	else
+	{
+		AVRational fr = avfc->streams[video_stream_idx]->avg_frame_rate;
+		if (fr.num > 0 && fr.den > 0)
+			dec_r = fr.num / fr.den;
+	}
+	/* tell decoder to skip non-key frames until first keyframe arrives.
+	   this prevents corrupt P/B reference frames from polluting the
+	   decoder's internal state when joining a stream mid-GOP */
+	c->skip_frame = AVDISCARD_NONKEY;
 	frame = av_frame_alloc();
 	rgbframe = av_frame_alloc();
 	if (!frame || !rgbframe)
@@ -642,7 +690,8 @@ void cVideo::run(void)
 		hal_info("%s: Could not allocate video frame\n", __func__);
 		goto out2;
 	}
-	hal_info("decoding %s\n", avcodec_get_name(c->codec_id));
+	hal_info("decoding %s, has_b_frames=%d, skip_frame=%d\n",
+		avcodec_get_name(c->codec_id), c->has_b_frames, c->skip_frame);
 	while (thread_running)
 	{
 		if (av_read_frame(avfc, &avpkt) < 0)
@@ -653,6 +702,13 @@ void cVideo::run(void)
 				warn_r = time(NULL);
 			}
 			usleep(10000);
+			continue;
+		}
+		/* skip non-video packets (avformat_find_stream_info may
+		   have discovered additional streams like audio) */
+		if (avpkt.stream_index != video_stream_idx)
+		{
+			av_packet_unref(&avpkt);
 			continue;
 		}
 		int got_frame = 0;
@@ -689,6 +745,80 @@ void cVideo::run(void)
 		still_m.lock();
 		if (got_frame && ! stillpicture)
 		{
+			frame_count++;
+			static const char pict_types[] = "?IPBSsi";
+			char pt = (frame->pict_type >= 0 && frame->pict_type < 7)
+				? pict_types[frame->pict_type] : '?';
+
+			/* log first 30 frames for diagnostics */
+			if (frame_count <= 30)
+				hal_info("%s: frame #%d type=%c key=%d %dx%d pts=%" PRId64
+					" dts=%" PRId64 " fmt=%d buf_num=%d\n",
+					__func__, frame_count, pt, frame->key_frame,
+					c->width, c->height,
+					frame->best_effort_timestamp,
+					frame->pkt_dts,
+					frame->format, buf_num);
+
+			/* Three-stage decoder warmup to avoid artifacts:
+			   Stage 1 (keyframe_count==0): AVDISCARD_NONKEY active,
+			     decoder only processes I-frames internally, preventing
+			     corrupt P/B references from polluting decoder state.
+			   Stage 2 (keyframe_count==1): AVDISCARD_BIDIR active,
+			     skip B-frames (may reference previous GOP via open-GOP)
+			     but decode P-frames (they reference the clean I-frame).
+			   Stage 3 (keyframe_count>=2): AVDISCARD_DEFAULT,
+			     all references are clean, normal decoding. */
+			if (keyframe_count < 2)
+			{
+				if (frame->key_frame || frame->pict_type == AV_PICTURE_TYPE_I)
+				{
+					keyframe_count++;
+					if (keyframe_count == 1)
+					{
+						/* first keyframe: allow P-frames, skip B-frames */
+						c->skip_frame = AVDISCARD_BIDIR;
+						hal_info("%s: 1st keyframe at frame #%d %dx%d pts=%" PRId64
+							", skip_frame=BIDIR\n",
+							__func__, frame_count, c->width, c->height,
+							frame->best_effort_timestamp);
+						/* don't output this I-frame yet - open-GOP B-frames
+						   may follow that would cause artifacts.
+						   capture PTS for interpolation of later frames */
+						{
+							int64_t wpts = frame->best_effort_timestamp;
+							if (wpts == AV_NOPTS_VALUE || wpts < 0)
+								wpts = frame->pkt_dts;
+							if (wpts != AV_NOPTS_VALUE && wpts >= 0)
+								last_pts = wpts;
+						}
+						still_m.unlock();
+						av_packet_unref(&avpkt);
+						continue;
+					}
+					else
+					{
+						/* second keyframe: all references clean */
+						c->skip_frame = AVDISCARD_DEFAULT;
+						hal_info("%s: 2nd keyframe at frame #%d %dx%d pts=%" PRId64
+							", decoder set to normal mode\n",
+							__func__, frame_count, c->width, c->height,
+							frame->best_effort_timestamp);
+					}
+				}
+				else
+				{
+					/* capture PTS even from skipped frames */
+					int64_t wpts = frame->best_effort_timestamp;
+					if (wpts == AV_NOPTS_VALUE || wpts < 0)
+						wpts = frame->pkt_dts;
+					if (wpts != AV_NOPTS_VALUE && wpts >= 0)
+						last_pts = wpts;
+					still_m.unlock();
+					av_packet_unref(&avpkt);
+					continue;
+				}
+			}
 			/* validate pixel format before swscale */
 			AVPixelFormat src_fmt = (AVPixelFormat)frame->format;
 			if (src_fmt < 0 || src_fmt >= AV_PIX_FMT_NB || av_pix_fmt_desc_get(src_fmt) == NULL)
@@ -737,27 +867,48 @@ void cVideo::run(void)
 #else
 				int64_t vpts = frame->best_effort_timestamp;
 #endif
-				/* a/v delay determined experimentally :-) */
+				/* fix missing PTS - AV_NOPTS_VALUE causes integer overflow
+				   in the renderer's A/V sync calculation */
+				if (vpts == AV_NOPTS_VALUE || vpts < 0)
+				{
+					/* try pkt_dts as fallback (more reliably set in MPEG-TS) */
+					if (frame->pkt_dts != AV_NOPTS_VALUE && frame->pkt_dts >= 0)
+						vpts = frame->pkt_dts;
+					else if (last_pts != AV_NOPTS_VALUE && dec_r > 0)
+						vpts = last_pts + 90000 / dec_r;
+					else if (last_pts != AV_NOPTS_VALUE)
+						vpts = last_pts + 3600; /* ~25fps fallback */
+					/* else: no valid PTS yet, keep AV_NOPTS_VALUE */
+				}
+				if (vpts != AV_NOPTS_VALUE && vpts >= 0)
+					last_pts = vpts;
+				/* a/v delay - reduced from 400ms/300ms to minimize offset */
 #if USE_OPENGL
-				if (v_format == VIDEO_FORMAT_MPEG2)
-					vpts += 90000 * 4 / 10; /* 400ms */
-				else
-					vpts += 90000 * 3 / 10; /* 300ms */
+				if (vpts != AV_NOPTS_VALUE && vpts >= 0)
+				{
+					if (v_format == VIDEO_FORMAT_MPEG2)
+						vpts += 90000 * 2 / 10; /* 200ms */
+					else
+						vpts += 90000 * 15 / 100; /* 150ms */
+				}
 #endif
 #if USE_CLUTTER
 				/* no idea why there's a difference between OpenGL and clutter rendering... */
-				if (v_format == VIDEO_FORMAT_MPEG2)
-					vpts += 90000 * 3 / 10; /* 300ms */
+				if (vpts != AV_NOPTS_VALUE && vpts >= 0)
+				{
+					if (v_format == VIDEO_FORMAT_MPEG2)
+						vpts += 90000 * 3 / 10; /* 300ms */
+				}
 #endif
 				f->pts(vpts);
-				AVRational a = av_guess_sample_aspect_ratio(avfc, avfc->streams[0], frame);
+				AVRational a = av_guess_sample_aspect_ratio(avfc, avfc->streams[video_stream_idx], frame);
 				f->AR(a);
 				buf_in++;
 				buf_in %= VDEC_MAXBUFS;
 				buf_num++;
 				if (buf_num > (VDEC_MAXBUFS - 1))
 				{
-					hal_debug("%s: buf_num overflow\n", __func__);
+					hal_info("%s: buf_num overflow (%d), dropping oldest\n", __func__, buf_num);
 					buf_out++;
 					buf_out %= VDEC_MAXBUFS;
 					buf_num--;

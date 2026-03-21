@@ -30,6 +30,8 @@
 #define hal_info(args...) _hal_info(HAL_DEBUG_AUDIO, this, args)
 
 #include <OpenThreads/Thread>
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -59,6 +61,7 @@ static ao_sample_format sformat;
 
 static AVCodecContext *c = NULL;
 static AVCodecParameters *p = NULL;
+static OpenThreads::Mutex c_mutex;
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(58, 133, 100)
 static void get_packet_defaults(AVPacket *pkt)
 {
@@ -215,7 +218,8 @@ void cAudio::getAudioInfo(int &type, int &layer, int &freq, int &bitrate, int &m
 	freq = 0;
 	bitrate = 0; /* not used, but easy to get :-) */
 	mode = 0; /* default: stereo */
-	printf("cAudio::getAudioInfo c %p\n", c);
+	OpenThreads::ScopedLock<OpenThreads::Mutex> lock(c_mutex);
+	hal_debug("cAudio::getAudioInfo c %p\n", c);
 	if (c)
 	{
 		switch (c->codec_id)
@@ -387,6 +391,7 @@ void cAudio::run()
 	int in_ch = 0;
 	int in_sr = 0;
 	uint64_t in_layout = 0;
+	int swr_fmt = AV_SAMPLE_FMT_NONE;
 	bool output_ready = false;
 
 	curr_pts = 0;
@@ -405,7 +410,7 @@ void cAudio::run()
 	avfc = avformat_alloc_context();
 	avfc->pb = pIOCtx;
 	avfc->iformat = inp;
-	avfc->probesize = 188 * 5;
+	avfc->probesize = 188 * 50;
 	thread_started = true;
 
 	if (avformat_open_input(&avfc, NULL, inp, NULL) < 0)
@@ -442,14 +447,20 @@ void cAudio::run()
 		hal_info("%s: Codec for %s not found\n", __func__, avcodec_get_name(p->codec_id));
 		goto out;
 	}
-	if (c)
-		av_free(c);
-	c = avcodec_alloc_context3(codec);
-	if (avcodec_open2(c, codec, NULL) < 0)
 	{
-		hal_info("%s: avcodec_open2() failed\n", __func__);
-		goto out;
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(c_mutex);
+		if (c)
+			av_free(c);
+		c = avcodec_alloc_context3(codec);
+		avcodec_parameters_to_context(c, p);
+		if (avcodec_open2(c, codec, NULL) < 0)
+		{
+			hal_info("%s: avcodec_open2() failed\n", __func__);
+			c = NULL;
+		}
 	}
+	if (!c)
+		goto out;
 	frame = av_frame_alloc();
 	if (!frame)
 	{
@@ -490,6 +501,18 @@ void cAudio::run()
 
 		if (gotframe && thread_started)
 		{
+			/* detect audio format changes mid-stream */
+			if (output_ready)
+			{
+				int cur_sr = frame->sample_rate ? frame->sample_rate : in_sr;
+				int cur_ch = frame->channels ? frame->channels : in_ch;
+				if (cur_sr != in_sr || cur_ch != in_ch || (int)c->sample_fmt != swr_fmt)
+				{
+					hal_info("audio format changed: sr %d->%d ch %d->%d fmt %d->%d\n",
+						in_sr, cur_sr, in_ch, cur_ch, swr_fmt, c->sample_fmt);
+					output_ready = false;
+				}
+			}
 			if (!output_ready)
 			{
 				in_sr = frame->sample_rate ? frame->sample_rate : (c->sample_rate ? c->sample_rate : p->sample_rate);
@@ -554,6 +577,7 @@ void cAudio::run()
 					break; /* while (thread_started) */
 				}
 				swr_init(swr);
+				swr_fmt = (int)c->sample_fmt;
 				output_ready = true;
 			}
 			int out_linesize;
@@ -562,7 +586,7 @@ void cAudio::run()
 			{
 				hal_info("obuf_sz: %d old: %d\n", obuf_sz, obuf_sz_max);
 				av_free(obuf);
-				if (av_samples_alloc(&obuf, &out_linesize, o_ch, frame->nb_samples, AV_SAMPLE_FMT_S16, 1) < 0)
+				if (av_samples_alloc(&obuf, &out_linesize, o_ch, obuf_sz, AV_SAMPLE_FMT_S16, 1) < 0)
 				{
 					hal_info("av_samples_alloc failed\n");
 					av_packet_unref(&avpkt);
@@ -589,9 +613,12 @@ void cAudio::run()
 out3:
 	av_frame_free(&frame);
 out2:
-	avcodec_close(c);
-	av_free(c);
-	c = NULL;
+	{
+		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(c_mutex);
+		avcodec_close(c);
+		av_free(c);
+		c = NULL;
+	}
 out:
 	avformat_close_input(&avfc);
 	av_free(pIOCtx->buffer);

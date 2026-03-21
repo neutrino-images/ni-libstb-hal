@@ -83,6 +83,7 @@ int real_apids[REC_MAX_APIDS];
 static pthread_mutex_t mutex_gst_global = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int gst_user_count = 0;
 static bool gst_runtime_initialized = false;
+static bool gst_shutdown_requested = false;
 
 extern GLFramebuffer *glfb;
 
@@ -96,6 +97,7 @@ static void gstRuntimeAcquire()
 		gst_mpegts_initialize();
 		gst_runtime_initialized = true;
 	}
+	gst_shutdown_requested = false;
 	gst_user_count++;
 	pthread_mutex_unlock(&mutex_gst_global);
 }
@@ -105,16 +107,24 @@ static void gstRuntimeRelease()
 	pthread_mutex_lock(&mutex_gst_global);
 	if (gst_user_count > 0)
 		gst_user_count--;
+	if (gst_shutdown_requested && gst_runtime_initialized && gst_user_count == 0 && gst_is_initialized())
+	{
+		gst_deinit();
+		gst_runtime_initialized = false;
+		gst_shutdown_requested = false;
+	}
 	pthread_mutex_unlock(&mutex_gst_global);
 }
 
 void hal_gst_global_shutdown(void)
 {
 	pthread_mutex_lock(&mutex_gst_global);
+	gst_shutdown_requested = true;
 	if (gst_runtime_initialized && gst_user_count == 0 && gst_is_initialized())
 	{
 		gst_deinit();
 		gst_runtime_initialized = false;
+		gst_shutdown_requested = false;
 	}
 	pthread_mutex_unlock(&mutex_gst_global);
 }
@@ -208,12 +218,12 @@ void playbinNotifySource(GObject *object, GParamSpec *param_spec, gpointer user_
 				}
 				if (!name.empty() && !value.empty())
 				{
-					GValue header;
+					GValue header = G_VALUE_INIT;
 					hal_info_c("%s:%s setting extra-header '%s:%s'\n", FILENAME, __FUNCTION__, name.c_str(), value.c_str());
-					memset(&header, 0, sizeof(GValue));
 					g_value_init(&header, G_TYPE_STRING);
 					g_value_set_string(&header, value.c_str());
 					gst_structure_set_value(extras, name.c_str(), &header);
+					g_value_unset(&header);
 				}
 				else
 				{
@@ -304,7 +314,10 @@ GstBusSyncReply Gst_bus_call(GstBus *bus, GstMessage *msg, gpointer user_data)
 			if (tags == NULL)
 				break;
 			if (!GST_IS_TAG_LIST(tags))
+			{
+				gst_tag_list_unref(tags);
 				break;
+			}
 
 			pthread_mutex_lock(&mutex_tag_ist);
 
@@ -690,11 +703,17 @@ bool cPlayback::Start(char *filename, int /*vpid*/, int /*vtype*/, int /*apid*/,
 	{
 		hal_info("%s:%s - failed to create GStreamer pipeline!, sorry we can not play\n", FILENAME, __FUNCTION__);
 		playing = false;
+		if (uri)
+		{
+			g_free(uri);
+			uri = NULL;
+		}
 
 		return false;
 	}
 
 	g_free(uri);
+	uri = NULL;
 
 	return true;
 }

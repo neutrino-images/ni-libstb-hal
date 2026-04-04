@@ -1223,38 +1223,27 @@ static void FFMPEGThread(Context_t *context)
 					continue;
 				}
 
-				/* build a clean pcmExtradata structure before using it */
 				pcmPrivateData_t pcmExtradata;
 				memset(&pcmExtradata, 0, sizeof(pcmExtradata));
+				pcmExtradata.bResampling = restart_audio_resampling;
 
+				__typeof__(get_codecpar(audioTrack->stream)) par = audioTrack->stream ? get_codecpar(audioTrack->stream) : NULL;
+				if (par)
+				{
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
-				if (audioTrack->stream && get_codecpar(audioTrack->stream))
-					pcmExtradata.channels              = get_codecpar(audioTrack->stream)->ch_layout.nb_channels;
+					pcmExtradata.channels              = par->ch_layout.nb_channels;
 #else
-				if (audioTrack->stream && get_codecpar(audioTrack->stream))
-					pcmExtradata.channels              = get_codecpar(audioTrack->stream)->channels;
+					pcmExtradata.channels              = par->channels;
 #endif
-				if (audioTrack->stream && get_codecpar(audioTrack->stream))
-				{
-					pcmExtradata.bits_per_coded_sample = get_codecpar(audioTrack->stream)->bits_per_coded_sample;
-					pcmExtradata.sample_rate           = get_codecpar(audioTrack->stream)->sample_rate;
-					pcmExtradata.bit_rate              = get_codecpar(audioTrack->stream)->bit_rate;
-					pcmExtradata.block_align           = get_codecpar(audioTrack->stream)->block_align;
-					pcmExtradata.frame_size            = get_codecpar(audioTrack->stream)->frame_size;
-					pcmExtradata.codec_id              = get_codecpar(audioTrack->stream)->codec_id;
+					pcmExtradata.bits_per_coded_sample = par->bits_per_coded_sample;
+					pcmExtradata.sample_rate           = par->sample_rate;
+					pcmExtradata.bit_rate              = par->bit_rate;
+					pcmExtradata.block_align           = par->block_align;
+					pcmExtradata.frame_size            = par->frame_size;
+					pcmExtradata.codec_id              = par->codec_id;
+					pcmExtradata.private_data          = par->extradata;
+					pcmExtradata.private_size          = par->extradata_size;
 				}
-				pcmExtradata.bResampling           = restart_audio_resampling;
-
-				uint8_t *pAudioExtradata           = NULL;
-				uint32_t audioExtradataSize        = 0;
-				if (audioTrack->stream && get_codecpar(audioTrack->stream))
-				{
-					pAudioExtradata = get_codecpar(audioTrack->stream)->extradata;
-					audioExtradataSize = get_codecpar(audioTrack->stream)->extradata_size;
-				}
-				/* propagate codec extradata if any; writer may inspect it */
-				pcmExtradata.private_data = pAudioExtradata;
-				pcmExtradata.private_size = audioExtradataSize;
 
 				/* output decision: raw vs encoded pcm */
 				ffmpeg_printf(200, "AudioTrack index = %d\n", pid);
@@ -1457,11 +1446,8 @@ static void FFMPEGThread(Context_t *context)
 						currentAudioPts = audioTrack->pts = pts = calcPts(cAVIdx, audioTrack->stream, next_out_pts);
 						out_samples = swr_convert(swr, &output[0], out_samples, (const uint8_t **) &decoded_frame->data[0], in_samples);
 
-						//////////////////////////////////////////////////////////////////////
-						/* make sure the structure is clean before updating it */
+						/* resampled PCM: rebuild pcmExtradata from decode context */
 						memset(&pcmExtradata, 0, sizeof(pcmExtradata));
-
-						// Update pcmExtradata according to decode parameters
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
 						pcmExtradata.channels              = c->ch_layout.nb_channels;
 #else
@@ -1469,16 +1455,12 @@ static void FFMPEGThread(Context_t *context)
 #endif
 						pcmExtradata.bits_per_coded_sample = 16;
 						pcmExtradata.sample_rate           = out_sample_rate;
-						/* The data described by the sample format is always in native-endian order */
+						/* sample format data is always in native-endian order */
 #ifdef WORDS_BIGENDIAN
-						pcmExtradata.codec_id       = AV_CODEC_ID_PCM_S16BE;
+						pcmExtradata.codec_id              = AV_CODEC_ID_PCM_S16BE;
 #else
-						pcmExtradata.codec_id       = AV_CODEC_ID_PCM_S16LE;
+						pcmExtradata.codec_id              = AV_CODEC_ID_PCM_S16LE;
 #endif
-
-						/* no extra data for converted PCM */
-						pcmExtradata.private_data = NULL;
-						pcmExtradata.private_size = 0;
 
 						avOut.data       = output[0];
 						avOut.len        = out_samples * sizeof(int16_t) * out_channels;
@@ -1535,9 +1517,6 @@ static void FFMPEGThread(Context_t *context)
 					avOut.height     = 0;
 					avOut.type       = "audio";
 
-					pcmExtradata.private_data = pAudioExtradata;
-					pcmExtradata.private_size = audioExtradataSize;
-
 					if (!context->playback->BackWard && Write(context->output->audio->Write, context, &avOut, pts) < 0)
 					{
 						ffmpeg_err("writing data to audio device failed\n");
@@ -1548,8 +1527,8 @@ static void FFMPEGThread(Context_t *context)
 					avOut.data       = packet.data;
 					avOut.len        = packet.size;
 					avOut.pts        = pts;
-					avOut.extradata  = pAudioExtradata;
-					avOut.extralen   = audioExtradataSize;
+					avOut.extradata  = pcmExtradata.private_data;
+					avOut.extralen   = pcmExtradata.private_size;
 					avOut.frameRate  = 0;
 					avOut.timeScale  = 0;
 					avOut.width      = 0;

@@ -2282,7 +2282,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		have_hls_info ? hls_info.is_iframe : 0,
 		have_hls_info ? hls_info.is_llhls : 0);
 
-	if (!is_probable_live)
+	if (!is_probable_live || !isHlsInput(avContextTab[AVIdx]))
 	{
 		ffmpeg_printf(1, "avformat_find_stream_info\n");
 		context->playback->openStartTimeUs = av_gettime();

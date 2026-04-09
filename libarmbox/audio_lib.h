@@ -51,6 +51,7 @@ class cAudio
 		/* used internally by playback */
 		void openDevice(void);
 		void closeDevice(void);
+		int getFD(void) { return fd; }; /* needed by SoftCSA for AUDIO_SOURCE_MEMORY ioctls */
 
 		void open_AVInput_Device(void);
 		void close_AVInput_Device(void);

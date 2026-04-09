@@ -79,7 +79,7 @@ static const char *DMX_T[] =
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 #define NUM_DEMUX 16
 #else
-#define NUM_DEMUX 4
+#define NUM_DEMUX 8
 #endif
 #endif
 /* the current source of each cDemux unit */
@@ -89,7 +89,7 @@ static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 #else
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
+static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 #endif
 #endif
 
@@ -187,7 +187,15 @@ static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_
 		close(fd);
 	}
 
-	if (dmx_type != DMX_PSI_CHANNEL)
+	/* Decode-path filters (VIDEO/AUDIO/PCR → DMX_OUT_DECODER) send data
+	 * directly to the hardware decoder, not to a userspace read buffer.
+	 * O_NONBLOCK and DMX_SET_BUFFER_SIZE are only needed for filters
+	 * that deliver data to userspace (section, PES tap, TS tap). */
+	bool is_decode = (dmx_type == DMX_VIDEO_CHANNEL ||
+			  dmx_type == DMX_AUDIO_CHANNEL ||
+			  dmx_type == DMX_PCR_ONLY_CHANNEL);
+
+	if (!is_decode && dmx_type != DMX_PSI_CHANNEL)
 		flags |= O_NONBLOCK;
 
 	fd = open(devname(0, devnum), flags);
@@ -211,13 +219,15 @@ static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_
 		else
 			init[devnum] = true;
 	}
-	if (buffersize == 0)
-		buffersize = 0xffff; // may or may not be reasonable --martii
-	if (buffersize > 0)
+	if (!is_decode)
 	{
-		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
-		if (ioctl(fd, DMX_SET_BUFFER_SIZE, buffersize) < 0)
-			hal_info_z("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
+		if (buffersize == 0)
+			buffersize = 0xffff;
+		if (buffersize > 0)
+		{
+			if (ioctl(fd, DMX_SET_BUFFER_SIZE, buffersize) < 0)
+				hal_info_z("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
+		}
 	}
 
 	last_source = devnum;
@@ -649,9 +659,29 @@ bool cDemux::SetSource(int unit, int source)
 		return false;
 	}
 	hal_debug_c("%s(%d, %d) => %d to %d\n", __func__, unit, source, dmx_source[unit], source);
-	if (source < 0 || source >= NUM_DEMUXDEV)
+	if (source < 0)
+	{
 		hal_info_c("%s(%d, %d) ERROR: source %d out of range!\n", __func__, unit, source, source);
-	else
+		return false;
+	}
+
+	int dmx_fd = open(devname(0, unit), O_RDWR | O_CLOEXEC);
+	if (dmx_fd < 0)
+	{
+		hal_info_c("%s: open %s failed: %m\n", __func__, devname(0, unit));
+		return false;
+	}
+	if (ioctl(dmx_fd, DMX_SET_SOURCE, &source) < 0)
+	{
+		hal_info_c("%s: DMX_SET_SOURCE unit %d source %d failed: %m\n", __func__, unit, source);
+		close(dmx_fd);
+		return false;
+	}
+	close(dmx_fd);
+
+	/* Only update dmx_source[] for frontend sources (used by _open() for device routing).
+	 * DVR source values (DMX_SOURCE_DVR0+) are kernel ioctl values, not device indices. */
+	if (source < NUM_DEMUXDEV)
 		dmx_source[unit] = source;
 	return true;
 }

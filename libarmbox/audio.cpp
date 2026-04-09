@@ -227,6 +227,7 @@ int cAudio::setVolume(unsigned int left, unsigned int right)
 int cAudio::Start(void)
 {
 	int ret;
+	ioctl(fd, AUDIO_SELECT_SOURCE, AUDIO_SOURCE_DEMUX);
 	ret = ioctl(fd, AUDIO_PLAY);
 #if BOXMODEL_HISILICON
 	ioctl(fd, AUDIO_CONTINUE);

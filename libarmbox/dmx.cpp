@@ -75,22 +75,26 @@ static const char *DMX_T[] =
  * /dev/dvb/.../demuxX devices! */
 #if BOXMODEL_VUULTIMO4K
 #define NUM_DEMUX 24
-#else
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
+#elif BOXMODEL_BRE2ZE4K || BOXMODEL_E4HDULTRA || BOXMODEL_PROTEK4K || BOXMODEL_MULTIBOXSE || BOXMODEL_H7
+#define NUM_DEMUX 5
+#elif BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 #define NUM_DEMUX 16
+#elif BOXMODEL_HD51 || BOXMODEL_HD60 || BOXMODEL_HD61
+#define NUM_DEMUX 8
 #else
 #define NUM_DEMUX 4
-#endif
 #endif
 /* the current source of each cDemux unit */
 #if BOXMODEL_VUULTIMO4K
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-#else
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
+#elif BOXMODEL_BRE2ZE4K || BOXMODEL_E4HDULTRA || BOXMODEL_PROTEK4K || BOXMODEL_MULTIBOXSE || BOXMODEL_H7
+static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0 };
+#elif BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+#elif BOXMODEL_HD51 || BOXMODEL_HD60 || BOXMODEL_HD61
+static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 #else
 static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
-#endif
 #endif
 
 char dmxdev[32];

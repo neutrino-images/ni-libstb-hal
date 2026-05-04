@@ -71,30 +71,17 @@ static const char *DMX_T[] =
 	"DMX_PCR"
 };
 
-/* this is the number of different cDemux() units, not the number of
- * /dev/dvb/.../demuxX devices! */
-#if BOXMODEL_VUULTIMO4K
-#define NUM_DEMUX 24
-#elif BOXMODEL_BRE2ZE4K || BOXMODEL_E4HDULTRA || BOXMODEL_PROTEK4K || BOXMODEL_MULTIBOXSE || BOXMODEL_H7
-#define NUM_DEMUX 5
-#elif BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
-#define NUM_DEMUX 16
-#elif BOXMODEL_HD51 || BOXMODEL_HD60 || BOXMODEL_HD61
-#define NUM_DEMUX 8
-#else
-#define NUM_DEMUX 4
-#endif
 /* the current source of each cDemux unit */
 #if BOXMODEL_VUULTIMO4K
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-#elif BOXMODEL_BRE2ZE4K || BOXMODEL_E4HDULTRA || BOXMODEL_PROTEK4K || BOXMODEL_MULTIBOXSE || BOXMODEL_H7
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0 };
+static int dmx_source[MAX_DMX_UNITS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 #elif BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUUNO4KSE || BOXMODEL_VUUNO4K
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-#elif BOXMODEL_HD51 || BOXMODEL_HD60 || BOXMODEL_HD61
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static int dmx_source[MAX_DMX_UNITS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+#elif BOXMODEL_HD51
+static int dmx_source[MAX_DMX_UNITS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+#elif BOXMODEL_BRE2ZE4K || BOXMODEL_H7 || BOXMODEL_E4HDULTRA || BOXMODEL_PROTEK4K || BOXMODEL_MULTIBOX || BOXMODEL_MULTIBOXSE  || BOXMODEL_HD60 || BOXMODEL_HD61
+static int dmx_source[MAX_DMX_UNITS] = { 0, 0, 0, 0, 0 };
 #else
-static int dmx_source[NUM_DEMUX] = { 0, 0, 0, 0 };
+static int dmx_source[MAX_DMX_UNITS] = { 0, 0, 0, 0 };
 #endif
 
 char dmxdev[32];
@@ -135,7 +122,7 @@ typedef struct dmx_pdata
 
 cDemux::cDemux(int n)
 {
-	if (n < 0 || n >= NUM_DEMUX)
+	if (n < 0 || n >= MAX_DMX_UNITS)
 	{
 		hal_info("%s ERROR: n invalid (%d)\n", __FUNCTION__, n);
 		num = 0;
@@ -650,14 +637,15 @@ int cDemux::getUnit(void)
 
 bool cDemux::SetSource(int unit, int source)
 {
-	if (unit >= NUM_DEMUX || unit < 0)
+	if (unit >= MAX_DMX_UNITS || unit < 0)
 	{
-		hal_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
+		hal_info_c("%s: unit (%d) out of range, MAX_DMX_UNITS %d\n", __func__, unit, MAX_DMX_UNITS);
 		return false;
 	}
 	hal_debug_c("%s(%d, %d) => %d to %d\n", __func__, unit, source, dmx_source[unit], source);
+
 	if (source < 0 || source >= NUM_DEMUXDEV)
-		hal_info_c("%s(%d, %d) ERROR: source %d out of range!\n", __func__, unit, source, source);
+		hal_info_c("%s(%d, %d) ERROR: source %d out of range, NUM_DEMUXDEV %d\n", __func__, unit, source, source, NUM_DEMUXDEV);
 	else
 		dmx_source[unit] = source;
 	return true;
@@ -665,9 +653,9 @@ bool cDemux::SetSource(int unit, int source)
 
 int cDemux::GetSource(int unit)
 {
-	if (unit >= NUM_DEMUX || unit < 0)
+	if (unit >= MAX_DMX_UNITS || unit < 0)
 	{
-		hal_info_c("%s: unit (%d) out of range, NUM_DEMUX %d\n", __func__, unit, NUM_DEMUX);
+		hal_info_c("%s: unit (%d) out of range, MAX_DMX_UNITS %d\n", __func__, unit, MAX_DMX_UNITS);
 		return -1;
 	}
 	hal_debug_c("%s(%d) => %d\n", __func__, unit, dmx_source[unit]);

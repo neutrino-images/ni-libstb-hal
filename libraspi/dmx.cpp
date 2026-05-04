@@ -508,3 +508,8 @@ int cDemux::GetSource(int unit)
 	hal_info_c("%s(%d): not implemented yet\n", __func__, unit);
 	return 0;
 }
+
+void cDemux::markSourceInitialized(int unit)
+{
+	hal_info_c("%s(%d): not implemented yet\n", __func__, unit);
+}

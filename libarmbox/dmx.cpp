@@ -526,6 +526,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 				case 1: p_flt.pes_type = DMX_PES_VIDEO1; break;
 				case 2: p_flt.pes_type = DMX_PES_VIDEO2; break;
 				case 3: p_flt.pes_type = DMX_PES_VIDEO3; break;
+				default: p_flt.pes_type = DMX_PES_VIDEO0; break;
 			}
 			break;
 		case DMX_AUDIO_CHANNEL:
@@ -535,6 +536,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 				case 1: p_flt.pes_type = DMX_PES_AUDIO1; break;
 				case 2: p_flt.pes_type = DMX_PES_AUDIO2; break;
 				case 3: p_flt.pes_type = DMX_PES_AUDIO3; break;
+				default: p_flt.pes_type = DMX_PES_AUDIO0; break;
 			}
 			break;
 		case DMX_PES_CHANNEL:
@@ -556,6 +558,7 @@ bool cDemux::pesFilter(const unsigned short _pid)
 				case 1: p_flt.pes_type = DMX_PES_PCR1; break;
 				case 2: p_flt.pes_type = DMX_PES_PCR2; break;
 				case 3: p_flt.pes_type = DMX_PES_PCR3; break;
+				default: p_flt.pes_type = DMX_PES_PCR0; break;
 			}
 			break;
 		default:
@@ -669,4 +672,15 @@ int cDemux::GetSource(int unit)
 	}
 	hal_debug_c("%s(%d) => %d\n", __func__, unit, dmx_source[unit]);
 	return dmx_source[unit];
+}
+
+void cDemux::markSourceInitialized(int unit)
+{
+	if (unit < 0 || unit >= NUM_DEMUXDEV)
+	{
+		hal_info_c("%s: unit (%d) out of range, NUM_DEMUXDEV %d\n", __func__, unit, NUM_DEMUXDEV);
+		return;
+	}
+	hal_debug_c("%s(%d)\n", __func__, unit);
+	init[unit] = true;
 }

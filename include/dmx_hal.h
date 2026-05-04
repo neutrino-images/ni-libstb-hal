@@ -100,6 +100,11 @@ class cDemux
 		int getUnit(void);
 		static bool SetSource(int unit, int source);
 		static int GetSource(int unit);
+		/* Mark a unit as already source-bound externally so the next
+		 * _open() on it skips its automatic DMX_SET_SOURCE call. Use
+		 * when DVR-loopback or another non-FRONT source has been
+		 * configured directly via raw ioctl. */
+		static void markSourceInitialized(int unit);
 		int getFD(void) { return fd; }; /* needed by cPlayback class */
 		cDemux(int num = 0);
 		~cDemux();

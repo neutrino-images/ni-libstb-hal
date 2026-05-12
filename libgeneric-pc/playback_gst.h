@@ -66,6 +66,7 @@ class cPlayback
 		bool SyncAV(void);
 
 		bool Stop(void);
+		bool IsPlaying(void) const { return playing; }
 		bool SetAPid(int pid, bool ac3);
 		bool SetSubtitlePid(int pid);
 		bool SetTeletextPid(int pid);

@@ -92,6 +92,7 @@ class cPlayback
 		void GetTitles(std::vector<int> &playlists, std::vector<std::string> &titles, int &current);
 		void SetTitle(int title);
 		uint64_t GetReadCount(void);
+		bool GetLastOpenError(int &code, std::string &message) { code = 0; message.clear(); return false; }
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);
 		AVFormatContext *GetAVFormatContext();

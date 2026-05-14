@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define PLAYBACK_LAST_ERROR_MSG_SIZE 512
+
 typedef void(* PlaybackDieNowCallback)();
 bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback);
 
@@ -68,6 +70,8 @@ typedef struct PlaybackHandler_s
 	uint8_t isTSLiveMode;
 	uint32_t httpTimeout; // in ms
 	int64_t openStartTimeUs; // av_gettime() at start of blocking open/probe, 0 = inactive
+	int32_t lastOpenErrorCode;
+	char lastOpenErrorMessage[PLAYBACK_LAST_ERROR_MSG_SIZE];
 
 	void *stamp;
 } PlaybackHandler_t;

@@ -65,6 +65,7 @@ class cPlayback
 		void RequestAbort(void);
 		bool IsPlaying(void);
 		uint64_t GetReadCount(void);
+		bool GetLastOpenError(int &code, std::string &message);
 
 		void GetChapters(std::vector<int> &positions, std::vector<std::string> &titles);
 		void GetMetadata(std::vector<std::string> &keys, std::vector<std::string> &values);

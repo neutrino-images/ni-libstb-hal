@@ -47,6 +47,7 @@ class cPlayback
 		void RequestAbort(void);
 		bool IsPlaying(void) { return false; }
 		uint64_t GetReadCount(void);
+		bool GetLastOpenError(int &code, std::string &message) { code = 0; message.clear(); return false; }
 		void FindAllSubs(int *pids, unsigned int *supported, unsigned int *numpida, std::string *language);
 		void FindAllSubs(uint16_t *pids, unsigned short *supported, uint16_t *numpida, std::string *language) { FindAllSubs((int *) pids, (unsigned int *) supported, (unsigned int *) numpida, language); };
 		bool SelectSubtitles(int pid, std::string charset = "");

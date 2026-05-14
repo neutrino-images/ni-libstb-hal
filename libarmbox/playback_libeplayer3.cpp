@@ -901,6 +901,21 @@ uint64_t cPlayback::GetReadCount()
 	return 0;
 }
 
+bool cPlayback::GetLastOpenError(int &code, std::string &message)
+{
+	code = 0;
+	message.clear();
+
+	if (player && player->playback && player->playback->lastOpenErrorCode)
+	{
+		code = player->playback->lastOpenErrorCode;
+		message = player->playback->lastOpenErrorMessage;
+		return true;
+	}
+
+	return false;
+}
+
 AVFormatContext *cPlayback::GetAVFormatContext()
 {
 	if (player && player->container && player->container->selectedContainer)

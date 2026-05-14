@@ -141,6 +141,9 @@ static int PlaybackOpen(Context_t *context, PlayFiles_t *pFiles)
 		PlaybackStop(context);
 	}
 
+	context->playback->lastOpenErrorCode = 0;
+	context->playback->lastOpenErrorMessage[0] = '\0';
+
 	char *uri = pFiles->szFirstFile;
 
 	playback_printf(10, "URI=%s\n", uri);
@@ -1031,5 +1034,7 @@ PlaybackHandler_t PlaybackHandler =
 	0,          //isTSLiveMode
 	4000,       //httpTimeout
 	0,          //openStartTimeUs
+	0,          //lastOpenErrorCode
+	"",         //lastOpenErrorMessage
 	NULL        //stamp
 };

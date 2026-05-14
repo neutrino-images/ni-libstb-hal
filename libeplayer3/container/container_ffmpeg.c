@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -78,6 +79,11 @@
 #define cERR_CONTAINER_FFMPEG_END_OF_FILE    -10
 
 #define IPTV_AV_CONTEXT_MAX_NUM 2
+
+#define HLS_AD_DEBUG_DRIFT_WARN_PTS          22500LL  /* 250 ms at 90 kHz */
+#define HLS_AD_DEBUG_DRIFT_RECOVERY_PTS      45000LL  /* 500 ms at 90 kHz */
+#define HLS_AD_DEBUG_JUMP_PTS                180000LL /* 2 s at 90 kHz */
+#define HLS_AD_DEBUG_LOG_INTERVAL_US         1000000LL
 
 /* ***************************** */
 /* Types                         */
@@ -130,6 +136,27 @@ typedef struct HlsPlaylistInfo_s
 	int found;
 } HlsPlaylistInfo_t;
 
+typedef struct HlsAdDebugState_s
+{
+	int enabled;
+	int verbose;
+	int announced;
+	int64_t last_video_pts;
+	int64_t last_video_dts;
+	int64_t last_audio_pts;
+	int64_t last_audio_dts;
+	int64_t current_video_pts;
+	int64_t current_audio_pts;
+	int64_t last_drift_log_us;
+	uint32_t packet_count;
+	int video_codec_id;
+	int video_width;
+	int video_height;
+	int audio_codec_id;
+	int audio_sample_rate;
+	int audio_channels;
+} HlsAdDebugState_t;
+
 static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlaylistInfo_t *info);
 static int32_t container_ffmpeg_seek_bytes(off_t pos);
 static int32_t container_ffmpeg_seek(Context_t *context, int64_t sec, uint8_t absolute);
@@ -139,6 +166,11 @@ static int64_t doCalcPts(int64_t start_time, const AVRational time_base, int64_t
 void LinuxDvbBuffSetStamp(void *stamp);
 static int32_t container_ffmpeg_stop(Context_t *context);
 static int32_t isHlsInput(const AVFormatContext *ctx);
+static int hls_ad_debug_enabled(void);
+static int hls_ad_debug_uri_matches(const char *uri);
+static int hls_ad_debug_probable_live(const AVFormatContext *ctx, const char *uri);
+static void hls_ad_debug_init(HlsAdDebugState_t *state, Context_t *context);
+static void hls_ad_debug_packet(HlsAdDebugState_t *state, const char *type, int cAVIdx, int pid, int stream_index, int64_t pts, int64_t dts, int64_t duration, int codec_id, int sample_rate, int channels, int width, int height);
 
 static char *g_graphic_sub_path;
 
@@ -567,6 +599,270 @@ static int32_t isHlsInput(const AVFormatContext *ctx)
 	return (strstr(ctx->iformat->name, "hls") != NULL) || (strstr(ctx->iformat->name, "applehttp") != NULL);
 }
 
+static int hls_ad_debug_enabled(void)
+{
+	static int initialized = 0;
+	static int enabled = 0;
+	const char *env = getenv("LIBEPLAYER3_HLS_AD_DEBUG");
+
+	if (!initialized)
+	{
+		if (env && env[0] && strcmp(env, "0") != 0)
+		{
+			enabled = atoi(env);
+			if (enabled <= 0)
+			{
+				enabled = 1;
+			}
+		}
+		initialized = 1;
+	}
+	return enabled;
+}
+
+static void hls_ad_debug_log(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	fflush(stdout);
+}
+
+static void hls_ad_debug_redact_uri(const char *uri, char *buf, size_t len)
+{
+	const char *query = NULL;
+	size_t prefix_len = 0;
+
+	if (!buf || !len)
+	{
+		return;
+	}
+	buf[0] = '\0';
+	if (!uri)
+	{
+		return;
+	}
+
+	query = strchr(uri, '?');
+	if (!query)
+	{
+		snprintf(buf, len, "%s", uri);
+		return;
+	}
+
+	prefix_len = (size_t)(query - uri);
+	if (prefix_len >= len)
+	{
+		prefix_len = len - 1;
+	}
+	memcpy(buf, uri, prefix_len);
+	buf[prefix_len] = '\0';
+	snprintf(buf + prefix_len, len - prefix_len, "?<redacted>");
+}
+
+static int hls_ad_debug_uri_matches(const char *uri)
+{
+	if (!uri)
+	{
+		return 0;
+	}
+	return strstr(uri, "pluto.tv") != NULL ||
+	       strstr(uri, "jmp2.uk/plu-") != NULL ||
+	       strstr(uri, "serverSideAds=true") != NULL ||
+	       strstr(uri, "serversideads=true") != NULL ||
+	       strstr(uri, "stitcher") != NULL;
+}
+
+static int hls_ad_debug_probable_live(const AVFormatContext *ctx, const char *uri)
+{
+	int is_local_file = (!uri || strstr(uri, "://") == NULL || strncmp(uri, "file://", 7) == 0);
+
+	if (!ctx || is_local_file || !isHlsInput(ctx))
+	{
+		return 0;
+	}
+	if (hls_ad_debug_uri_matches(uri))
+	{
+		return 1;
+	}
+	if (ctx->duration == AV_NOPTS_VALUE)
+	{
+		return 1;
+	}
+	if (ctx->iformat && (ctx->iformat->flags & AVFMT_TS_DISCONT))
+	{
+		return 1;
+	}
+	if (!ctx->pb || !(ctx->pb->seekable & AVIO_SEEKABLE_NORMAL))
+	{
+		return 1;
+	}
+	return 0;
+}
+
+static int64_t hls_ad_debug_abs_i64(int64_t value)
+{
+	return value < 0 ? -value : value;
+}
+
+static int64_t hls_ad_debug_duration_pts(AVStream *stream, int64_t duration)
+{
+	if (!stream || duration <= 0)
+	{
+		return INVALID_PTS_VALUE;
+	}
+	return av_rescale(duration, (int64_t)stream->time_base.num * 90000, stream->time_base.den);
+}
+
+static void hls_ad_debug_init(HlsAdDebugState_t *state, Context_t *context)
+{
+	const char *uri = NULL;
+	char redacted_uri[512];
+	AVFormatContext *ctx = avContextTab[0];
+	int enabled = hls_ad_debug_enabled();
+
+	memset(state, 0, sizeof(*state));
+	state->last_video_pts = INVALID_PTS_VALUE;
+	state->last_video_dts = INVALID_PTS_VALUE;
+	state->last_audio_pts = INVALID_PTS_VALUE;
+	state->last_audio_dts = INVALID_PTS_VALUE;
+	state->current_video_pts = INVALID_PTS_VALUE;
+	state->current_audio_pts = INVALID_PTS_VALUE;
+	state->video_codec_id = -1;
+	state->audio_codec_id = -1;
+
+	if (!enabled || !context || !context->playback)
+	{
+		return;
+	}
+
+	uri = context->playback->uri;
+	if (!hls_ad_debug_uri_matches(uri) || !hls_ad_debug_probable_live(ctx, uri))
+	{
+		return;
+	}
+
+	state->enabled = enabled;
+	state->verbose = enabled > 1;
+	state->announced = 1;
+	hls_ad_debug_redact_uri(uri, redacted_uri, sizeof(redacted_uri));
+	hls_ad_debug_log("[hls-ad-debug] enabled level=%d uri=%s iformat=%s duration=%" PRId64 " seekable=%d ts_discont=%d\n",
+		enabled,
+		redacted_uri,
+		(ctx && ctx->iformat && ctx->iformat->name) ? ctx->iformat->name : "",
+		ctx ? ctx->duration : (int64_t)AV_NOPTS_VALUE,
+		(ctx && ctx->pb) ? ((ctx->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0) : 0,
+		(ctx && ctx->iformat) ? ((ctx->iformat->flags & AVFMT_TS_DISCONT) != 0) : 0);
+}
+
+static void hls_ad_debug_stream_change(HlsAdDebugState_t *state, const char *type, int codec_id, int sample_rate, int channels, int width, int height)
+{
+	if (strcmp(type, "video") == 0)
+	{
+		if (state->video_codec_id != -1 &&
+		    (state->video_codec_id != codec_id || state->video_width != width || state->video_height != height))
+		{
+			hls_ad_debug_log("[hls-ad-debug] stream_change type=video old_codec=%d new_codec=%d old_size=%dx%d new_size=%dx%d\n",
+				state->video_codec_id, codec_id, state->video_width, state->video_height, width, height);
+		}
+		state->video_codec_id = codec_id;
+		state->video_width = width;
+		state->video_height = height;
+	}
+	else
+	{
+		if (state->audio_codec_id != -1 &&
+		    (state->audio_codec_id != codec_id || state->audio_sample_rate != sample_rate || state->audio_channels != channels))
+		{
+			hls_ad_debug_log("[hls-ad-debug] stream_change type=audio old_codec=%d new_codec=%d old_rate=%d new_rate=%d old_channels=%d new_channels=%d\n",
+				state->audio_codec_id, codec_id, state->audio_sample_rate, sample_rate, state->audio_channels, channels);
+		}
+		state->audio_codec_id = codec_id;
+		state->audio_sample_rate = sample_rate;
+		state->audio_channels = channels;
+	}
+}
+
+static void hls_ad_debug_packet(HlsAdDebugState_t *state, const char *type, int cAVIdx, int pid, int stream_index, int64_t pts, int64_t dts, int64_t duration, int codec_id, int sample_rate, int channels, int width, int height)
+{
+	int64_t *last_pts = NULL;
+	int64_t *last_dts = NULL;
+	int64_t drift = INVALID_PTS_VALUE;
+	int64_t now = av_gettime();
+	int anomaly = 0;
+
+	if (!state || !state->enabled)
+	{
+		return;
+	}
+
+	state->packet_count++;
+	hls_ad_debug_stream_change(state, type, codec_id, sample_rate, channels, width, height);
+
+	if (strcmp(type, "video") == 0)
+	{
+		last_pts = &state->last_video_pts;
+		last_dts = &state->last_video_dts;
+		state->current_video_pts = pts;
+	}
+	else
+	{
+		last_pts = &state->last_audio_pts;
+		last_dts = &state->last_audio_dts;
+		state->current_audio_pts = pts;
+	}
+
+	if (*last_pts != INVALID_PTS_VALUE && pts != INVALID_PTS_VALUE &&
+	    hls_ad_debug_abs_i64(pts - *last_pts) > HLS_AD_DEBUG_JUMP_PTS)
+	{
+		anomaly = 1;
+		hls_ad_debug_log("[hls-ad-debug] pts_jump type=%s ctx=%d stream=%d pid=%d old=%" PRId64 " new=%" PRId64 " delta=%" PRId64 "\n",
+			type, cAVIdx, stream_index, pid, *last_pts, pts, pts - *last_pts);
+	}
+
+	if (*last_dts != INVALID_PTS_VALUE && dts != INVALID_PTS_VALUE && dts <= *last_dts)
+	{
+		anomaly = 1;
+		hls_ad_debug_log("[hls-ad-debug] dts_non_monotonic type=%s ctx=%d stream=%d pid=%d old=%" PRId64 " new=%" PRId64 "\n",
+			type, cAVIdx, stream_index, pid, *last_dts, dts);
+		*last_dts = dts;
+	}
+
+	if (state->current_video_pts != INVALID_PTS_VALUE && state->current_audio_pts != INVALID_PTS_VALUE)
+	{
+		drift = hls_ad_debug_abs_i64(state->current_video_pts - state->current_audio_pts);
+		if (drift >= HLS_AD_DEBUG_DRIFT_WARN_PTS &&
+		    (now - state->last_drift_log_us >= HLS_AD_DEBUG_LOG_INTERVAL_US))
+		{
+			anomaly = 1;
+			state->last_drift_log_us = now;
+			hls_ad_debug_log("[hls-ad-debug] av_drift video=%" PRId64 " audio=%" PRId64 " drift=%" PRId64 "ms=%" PRId64 " recovery_candidate=%d\n",
+				state->current_video_pts,
+				state->current_audio_pts,
+				drift,
+				drift / 90,
+				drift >= HLS_AD_DEBUG_DRIFT_RECOVERY_PTS);
+		}
+	}
+
+	if (state->verbose || anomaly || state->packet_count <= 20)
+	{
+		hls_ad_debug_log("[hls-ad-debug] packet type=%s ctx=%d stream=%d pid=%d pts=%" PRId64 " dts=%" PRId64 " duration=%" PRId64 " codec=%d rate=%d channels=%d size=%dx%d\n",
+			type, cAVIdx, stream_index, pid, pts, dts, duration, codec_id, sample_rate, channels, width, height);
+	}
+
+	if (pts != INVALID_PTS_VALUE)
+	{
+		*last_pts = pts;
+	}
+	if (dts != INVALID_PTS_VALUE && (*last_dts == INVALID_PTS_VALUE || dts > *last_dts))
+	{
+		*last_dts = dts;
+	}
+}
+
 static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlaylistInfo_t *info)
 {
 	if (!url || !info)
@@ -824,6 +1120,8 @@ static void FFMPEGThread(Context_t *context)
 	uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
 	uint32_t cAVIdx = 0;
 	void *stamp = 0;
+	HlsAdDebugState_t hls_ad_debug;
+	memset(&hls_ad_debug, 0, sizeof(hls_ad_debug));
 
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 34, 100)
 #ifdef __sh__
@@ -844,6 +1142,7 @@ static void FFMPEGThread(Context_t *context)
 		usleep(1000);
 	}
 	ffmpeg_printf(10, "Running!\n");
+	hls_ad_debug_init(&hls_ad_debug, context);
 
 	uint32_t bufferSize = 0;
 	context->output->Command(context, OUTPUT_GET_BUFFER_SIZE, &bufferSize);
@@ -1118,6 +1417,14 @@ static void FFMPEGThread(Context_t *context)
 						bool skipPacket = false;
 						currentVideoPts = videoTrack->pts = pts = calcPts(cAVIdx, videoTrack->stream, packet.pts);
 						videoTrack->dts = dts = calcPts(cAVIdx, videoTrack->stream, packet.dts);
+						if (hls_ad_debug.enabled)
+						{
+							__typeof__(get_codecpar(videoTrack->stream)) videoPar = videoTrack->stream ? get_codecpar(videoTrack->stream) : NULL;
+							hls_ad_debug_packet(&hls_ad_debug, "video", cAVIdx, pid, packet.stream_index, pts, dts,
+								hls_ad_debug_duration_pts(videoTrack->stream, packet.duration),
+								videoPar ? videoPar->codec_id : -1,
+								0, 0, videoTrack->width, videoTrack->height);
+						}
 
 						if ((currentVideoPts != INVALID_PTS_VALUE) && (currentVideoPts > latestPts))
 						{
@@ -1186,6 +1493,24 @@ static void FFMPEGThread(Context_t *context)
 				uint8_t skipPacket = 0;
 				currentAudioPts = audioTrack->pts = pts = calcPts(cAVIdx, audioTrack->stream, packet.pts);
 				dts = calcPts(cAVIdx, audioTrack->stream, packet.dts);
+				if (hls_ad_debug.enabled)
+				{
+					__typeof__(get_codecpar(audioTrack->stream)) audioPar = audioTrack->stream ? get_codecpar(audioTrack->stream) : NULL;
+					int audioChannels = 0;
+					if (audioPar)
+					{
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+						audioChannels = audioPar->ch_layout.nb_channels;
+#else
+						audioChannels = audioPar->channels;
+#endif
+					}
+					hls_ad_debug_packet(&hls_ad_debug, "audio", cAVIdx, pid, packet.stream_index, pts, dts,
+						hls_ad_debug_duration_pts(audioTrack->stream, packet.duration),
+						audioPar ? audioPar->codec_id : -1,
+						audioPar ? audioPar->sample_rate : 0,
+						audioChannels, 0, 0);
+				}
 
 				if ((currentAudioPts != INVALID_PTS_VALUE) && (currentAudioPts > latestPts) && (!videoTrack))
 				{
@@ -2149,6 +2474,9 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 
 			ffmpeg_err("avformat_open_input failed %d (%s)\n", err, filename);
 			av_strerror(err, error, 512);
+			context->playback->lastOpenErrorCode = err;
+			strncpy(context->playback->lastOpenErrorMessage, error, PLAYBACK_LAST_ERROR_MSG_SIZE - 1);
+			context->playback->lastOpenErrorMessage[PLAYBACK_LAST_ERROR_MSG_SIZE - 1] = '\0';
 			E2iSendMsg("{\"FF_ERROR\":{\"msg\":\"%s\",\"code\":%i}}\n", error, err);
 
 			if (avio_opts != NULL)

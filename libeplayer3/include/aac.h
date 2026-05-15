@@ -20,14 +20,44 @@
 #ifndef acc_123
 #define acc_123
 
+#include <stdlib.h>
+#include <string.h>
+
 #define AAC_HEADER_LENGTH       7
+#define ADTS_MARKER             "ADTS"
+#define AAC_DEBUG_LOG_LIMIT     8
+
+static inline int aac_debug_enabled(void)
+{
+	static int initialized = 0;
+	static int enabled = 0;
+
+	if (!initialized)
+	{
+		const char *env = getenv("LIBEPLAYER3_AAC_DEBUG");
+		if (env && env[0] && strcmp(env, "0") != 0)
+		{
+			enabled = atoi(env);
+			if (enabled <= 0)
+			{
+				enabled = 1;
+			}
+		}
+		initialized = 1;
+	}
+	return enabled;
+}
 
 static inline int HasADTSHeader(uint8_t *data, int size)
 {
-	if (size >= AAC_HEADER_LENGTH && 0xFF == data[0] && 0xF0 == (0xF0 & data[1]) &&
-		size == ((data[3] & 0x3) << 11 | data[4] << 3 | data[5] >> 5))
+	if (data && size >= AAC_HEADER_LENGTH && 0xFF == data[0] && 0xF0 == (0xF0 & data[1]) &&
+		(data[1] & 0x06) == 0 && ((data[2] >> 2) & 0x0F) <= 12)
 	{
-		return 1;
+		int frame_length = ((data[3] & 0x3) << 11) | (data[4] << 3) | (data[5] >> 5);
+		if (frame_length >= AAC_HEADER_LENGTH && frame_length <= size)
+		{
+			return 1;
+		}
 	}
 
 	return 0;

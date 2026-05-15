@@ -68,6 +68,7 @@
 /* ***************************** */
 
 static bool needInitHeader = true;
+static int adtsMissingSyncLogCount = 0;
 
 /// ** AAC ADTS format **
 ///
@@ -134,6 +135,7 @@ static int reset()
 		pLATMCtx = NULL;
 	}
 	needInitHeader = true;
+	adtsMissingSyncLogCount = 0;
 	return 0;
 }
 
@@ -158,6 +160,21 @@ static int _writeData(WriterAVCallData_t *call, int type)
 	{
 		if (0xFF != call->data[0] || 0xF0 != (0xF0 & call->data[1]))
 		{
+			if (aac_debug_enabled() && adtsMissingSyncLogCount < AAC_DEBUG_LOG_LIMIT)
+			{
+				aac_printf(1, "AAC ADTS passthrough rejected: missing syncword len=%d private=%s first=%02x %02x %02x %02x %02x %02x %02x %02x\n",
+					call->len,
+					(call->private_data && call->private_size >= 4 && !strncmp(ADTS_MARKER, (const char *)call->private_data, 4)) ? "ADTS-marker" : "none",
+					call->len > 0 ? call->data[0] : 0,
+					call->len > 1 ? call->data[1] : 0,
+					call->len > 2 ? call->data[2] : 0,
+					call->len > 3 ? call->data[3] : 0,
+					call->len > 4 ? call->data[4] : 0,
+					call->len > 5 ? call->data[5] : 0,
+					call->len > 6 ? call->data[6] : 0,
+					call->len > 7 ? call->data[7] : 0);
+				adtsMissingSyncLogCount++;
+			}
 			aac_err("parsing Data with missing syncword. ignoring...\n");
 			return 0;
 		}
@@ -204,7 +221,7 @@ static int writeDataADTS(WriterAVCallData_t *call)
 		return 0;
 	}
 
-	if ((call->private_data && strncmp("ADTS", (const char *)call->private_data, call->private_size) == 0) ||
+	if ((call->private_data && strncmp(ADTS_MARKER, (const char *)call->private_data, call->private_size) == 0) ||
 		HasADTSHeader(call->data, call->len))
 	{
 		//printf("%hhx %hhx %hhx %hhx %hhx %hhx %hhx %hhx\n", call->data[0], call->data[1], call->data[2], call->data[3], call->data[4], call->data[5], call->data[6], call->data[7]);

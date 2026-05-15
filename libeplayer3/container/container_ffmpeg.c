@@ -1121,6 +1121,7 @@ static void FFMPEGThread(Context_t *context)
 	uint32_t cAVIdx = 0;
 	void *stamp = 0;
 	HlsAdDebugState_t hls_ad_debug;
+	uint32_t aac_packet_log_count[IPTV_AV_CONTEXT_MAX_NUM] = {0};
 	memset(&hls_ad_debug, 0, sizeof(hls_ad_debug));
 
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 34, 100)
@@ -1568,6 +1569,44 @@ static void FFMPEGThread(Context_t *context)
 					pcmExtradata.codec_id              = par->codec_id;
 					pcmExtradata.private_data          = par->extradata;
 					pcmExtradata.private_size          = par->extradata_size;
+				}
+				if (aac_debug_enabled() && par && par->codec_id == AV_CODEC_ID_AAC && cAVIdx < IPTV_AV_CONTEXT_MAX_NUM)
+				{
+					const char *iformat_name = (avContextTab[cAVIdx]->iformat && avContextTab[cAVIdx]->iformat->name) ? avContextTab[cAVIdx]->iformat->name : "";
+					int is_hls = isHlsInput(avContextTab[cAVIdx]);
+					int is_mpegts = strstr(iformat_name, "mpegts") != NULL;
+					if ((is_hls || is_mpegts) && aac_packet_log_count[cAVIdx] < AAC_DEBUG_LOG_LIMIT)
+					{
+						const char *private_kind = "none";
+						if (audioTrack->aacbuf && audioTrack->aacbuflen >= 4 && !strncmp((const char *)audioTrack->aacbuf, ADTS_MARKER, 4))
+						{
+							private_kind = "ADTS-marker";
+						}
+						else if (audioTrack->aacbuf)
+						{
+							private_kind = "ADTS-header";
+						}
+						ffmpeg_printf(1, "AAC packet ctx=%d stream=%d pid=%d iformat=%s hls=%d mpegts=%d len=%d has_adts=%d private=%s private_size=%u first=%02x %02x %02x %02x %02x %02x %02x %02x\n",
+							(int)cAVIdx,
+							packet.stream_index,
+							pid,
+							iformat_name,
+							is_hls,
+							is_mpegts,
+							packet.size,
+							HasADTSHeader(packet.data, packet.size),
+							private_kind,
+							audioTrack->aacbuflen,
+							packet.size > 0 ? packet.data[0] : 0,
+							packet.size > 1 ? packet.data[1] : 0,
+							packet.size > 2 ? packet.data[2] : 0,
+							packet.size > 3 ? packet.data[3] : 0,
+							packet.size > 4 ? packet.data[4] : 0,
+							packet.size > 5 ? packet.data[5] : 0,
+							packet.size > 6 ? packet.data[6] : 0,
+							packet.size > 7 ? packet.data[7] : 0);
+						aac_packet_log_count[cAVIdx]++;
+					}
 				}
 
 				/* output decision: raw vs encoded pcm */
@@ -3097,69 +3136,102 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 						}
 						else if (get_codecpar(stream)->codec_id == AV_CODEC_ID_AAC)
 						{
-							if (strstr(avContext->iformat->name, "mpegts") || isHlsInput(avContext))
-							{
-								const char marker[] = "ADTS";
-								track.aacbuflen = sizeof(marker) / sizeof(char);
-								track.aacbuf = malloc(track.aacbuflen);
-								memcpy(track.aacbuf, marker, track.aacbuflen);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+							int audio_channels = get_codecpar(stream)->ch_layout.nb_channels;
+#else
+							int audio_channels = get_codecpar(stream)->channels;
+#endif
 
-								ffmpeg_printf(10, "AV_CODEC_ID_AAC no extradata ACC header should be available in each frame\n");
+							if (aac_debug_enabled())
+							{
+								const char *iformat_name = (avContext->iformat && avContext->iformat->name) ? avContext->iformat->name : "";
+								ffmpeg_printf(1, "AAC track ctx=%d stream=%d iformat=%s hls=%d mpegts=%d extradata_size=%d sample_rate=%d channels=%d profile=%d\n",
+									(int)cAVIdx,
+									stream->index,
+									iformat_name,
+									isHlsInput(avContext),
+									strstr(iformat_name, "mpegts") != NULL,
+									get_codecpar(stream)->extradata_size,
+									get_codecpar(stream)->sample_rate,
+									audio_channels,
+									get_codecpar(stream)->profile);
+							}
+							ffmpeg_printf(10, "Create AAC ExtraData\n");
+							ffmpeg_printf(10, "get_codecpar(stream)->extradata_size %d\n", get_codecpar(stream)->extradata_size);
+							//Hexdump(get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size);
+
+							/*  extradata:
+							    13 10 56 e5 9d 48 00 (anderen cops)
+							    object_type: 00010 2 = LC
+							    sample_rate: 011 0 6 = 24000
+							    chan_config: 0010 2 = Stereo
+							    000 0
+							    1010110 111 = 0x2b7
+							    00101 = SBR
+							    1
+							    0011 = 48000
+							    101 01001000 = 0x548
+							    ps = 0
+							    0000000
+							*/
+
+							int32_t object_type = 2; // LC
+							int32_t sample_index = aac_get_sample_rate_index(get_codecpar(stream)->sample_rate);
+							int32_t chan_config = get_chan_config(audio_channels);
+							if (aac_debug_enabled())
+							{
+								ffmpeg_printf(1, "aac object_type %d\n", object_type);
+								ffmpeg_printf(1, "aac sample_index %d\n", sample_index);
+								ffmpeg_printf(1, "aac chan_config %d\n", chan_config);
+							}
+
+							int off = -1;
+							if (get_codecpar(stream)->extradata_size >= 2)
+							{
+								MPEG4AudioConfig m4ac;
+								off = avpriv_mpeg4audio_get_config(&m4ac, get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size * 8, 1);
+								if (off >= 0)
+								{
+									object_type  = m4ac.object_type;
+									sample_index = m4ac.sampling_index;
+									if (sample_index == 0x0f)
+									{
+										sample_index = aac_get_sample_rate_index(m4ac.sample_rate);
+									}
+									chan_config  = m4ac.chan_config;
+								}
+							}
+
+							if (aac_debug_enabled())
+							{
+								ffmpeg_printf(1, "aac object_type %d\n", object_type);
+								ffmpeg_printf(1, "aac sample_index %d\n", sample_index);
+								ffmpeg_printf(1, "aac chan_config %d\n", chan_config);
+							}
+
+							if (sample_index >= 13 || (chan_config == 0 && off < 0))
+							{
+								/*
+								 * FFmpeg may not have probed MPEG-TS/HLS codecpar yet. A generated
+								 * header with a reserved sample index or unknown channel config can
+								 * mute hardware decoders, so keep the marker and require inline ADTS.
+								 */
+								track.aacbuflen = sizeof(ADTS_MARKER);
+								track.aacbuf = malloc(track.aacbuflen);
+								memcpy(track.aacbuf, ADTS_MARKER, track.aacbuflen);
 								track.have_aacheader = 1;
+								if (aac_debug_enabled())
+								{
+									ffmpeg_printf(1, "AAC track fallback to inline ADTS ctx=%d stream=%d sample_index=%d chan_config=%d off=%d\n",
+										(int)cAVIdx,
+										stream->index,
+										sample_index,
+										chan_config,
+										off);
+								}
 							}
 							else
 							{
-								ffmpeg_printf(10, "Create AAC ExtraData\n");
-								ffmpeg_printf(10, "get_codecpar(stream)->extradata_size %d\n", get_codecpar(stream)->extradata_size);
-								//Hexdump(get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size);
-
-								/*  extradata:
-								    13 10 56 e5 9d 48 00 (anderen cops)
-								    object_type: 00010 2 = LC
-								    sample_rate: 011 0 6 = 24000
-								    chan_config: 0010 2 = Stereo
-								    000 0
-								    1010110 111 = 0x2b7
-								    00101 = SBR
-								    1
-								    0011 = 48000
-								    101 01001000 = 0x548
-								    ps = 0
-								    0000000
-								*/
-
-								int32_t object_type = 2; // LC
-								int32_t sample_index = aac_get_sample_rate_index(get_codecpar(stream)->sample_rate);
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
-								int32_t chan_config = get_chan_config(get_codecpar(stream)->ch_layout.nb_channels);
-#else
-								int32_t chan_config = get_chan_config(get_codecpar(stream)->channels);
-#endif
-								ffmpeg_printf(1, "aac object_type %d\n", object_type);
-								ffmpeg_printf(1, "aac sample_index %d\n", sample_index);
-								ffmpeg_printf(1, "aac chan_config %d\n", chan_config);
-
-								int off = -1;
-								if (get_codecpar(stream)->extradata_size >= 2)
-								{
-									MPEG4AudioConfig m4ac;
-									off = avpriv_mpeg4audio_get_config(&m4ac, get_codecpar(stream)->extradata, get_codecpar(stream)->extradata_size * 8, 1);
-									if (off >= 0)
-									{
-										object_type  = m4ac.object_type;
-										sample_index = m4ac.sampling_index;
-										if (sample_index == 0x0f)
-										{
-											sample_index = aac_get_sample_rate_index(m4ac.sample_rate);
-										}
-										chan_config  = m4ac.chan_config;
-									}
-								}
-
-								ffmpeg_printf(1, "aac object_type %d\n", object_type);
-								ffmpeg_printf(1, "aac sample_index %d\n", sample_index);
-								ffmpeg_printf(1, "aac chan_config %d\n", chan_config);
-
 								if (off >= 0 && chan_config == 0)   // channel config must be send in the inband PCE
 								{
 									track.aacbuf = malloc(AAC_HEADER_LENGTH + MAX_PCE_SIZE);
@@ -3197,12 +3269,6 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 								//Hexdump(track.aacbuf,7);
 								track.have_aacheader = 1;
 							}
-							/*
-							else
-							{
-							    ffmpeg_err("AV_CODEC_ID_AAC extradata not available\n");
-							}
-							*/
 						}
 #ifdef __sh__
 						else if (get_codecpar(stream)->codec_id == AV_CODEC_ID_WMAV1 ||

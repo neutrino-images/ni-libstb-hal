@@ -1,3 +1,19 @@
+VERSION_H = version.h
+$(VERSION_H):
+	@rm -f $@
+	@echo "#define BUILT_DATE \"$$(date)\"" > $@
+	@if test -d $(top_srcdir)/.git; then \
+		pushd $(top_srcdir); \
+		GITTAG=$$(git tag -l "NI-*" | tail -n1); \
+		GITDESCRIBE=$$(git describe --always --long --tags --match $$GITTAG | sed 's/-/./2' || echo "VCS failed"); \
+		popd; \
+		echo "#define VCS \"$${GITDESCRIBE}\"" >> $@; \
+	fi
+
+BUILT_SOURCES = $(VERSION_H)
+noinst_HEADERS = $(VERSION_H)
+.PHONY: $(VERSION_H)
+
 noinst_LTLIBRARIES = libcommon.la
 
 AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing

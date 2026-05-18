@@ -17,6 +17,7 @@
 #include <libstb-hal-config.h>
 
 #include <version_hal.h>
+#include <version.h>
 
 
 void hal_get_lib_version(hal_libversion_t *ver)
@@ -27,8 +28,12 @@ void hal_get_lib_version(hal_libversion_t *ver)
 	//init struct
 	*ver = {"", 0, 0, 0, "", "", ""};
 
+#ifdef VCS
+	ver->vVersion = VCS;
+#else
 #ifdef VERSION
 	ver->vVersion = VERSION;
+#endif
 #endif
 #ifdef PACKAGE_VERSION_MAJOR
 	ver->vMajor = PACKAGE_VERSION_MAJOR;

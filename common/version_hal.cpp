@@ -30,10 +30,8 @@ void hal_get_lib_version(hal_libversion_t *ver)
 
 #ifdef VCS
 	ver->vVersion = VCS;
-#else
-#ifdef VERSION
-	ver->vVersion = VERSION;
-#endif
+#elif defined PACKAGE_VERSION
+	ver->vVersion = PACKAGE_VERSION;
 #endif
 #ifdef PACKAGE_VERSION_MAJOR
 	ver->vMajor = PACKAGE_VERSION_MAJOR;

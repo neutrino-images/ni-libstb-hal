@@ -163,6 +163,11 @@ void GLFbPC::initKeys()
 	mKeyMap[CLUTTER_KEY_Return] = KEY_OK;
 	mKeyMap[CLUTTER_KEY_Escape] = KEY_EXIT;
 
+	/* text editing inside input dialogs; the table looks up keysyms,
+	 * so backspace is CLUTTER_KEY_BackSpace (0xff08), not ASCII 0x08 */
+	mKeyMap[CLUTTER_KEY_BackSpace] = KEY_BACKSPACE;
+	mKeyMap[CLUTTER_KEY_space]     = KEY_SPACE;
+
 	mKeyMap['0'] = KEY_0;
 	mKeyMap['1'] = KEY_1;
 	mKeyMap['2'] = KEY_2;

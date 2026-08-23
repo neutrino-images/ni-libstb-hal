@@ -193,6 +193,12 @@ void GLFbPC::initKeys()
 	mKeyMap['v'] = KEY_VIDEO;
 	mKeyMap['z'] = KEY_SLEEP;
 
+	/* text editing inside input dialogs: raw codes, turned back into
+	 * glyphs and edit actions by neutrino (CRCInput::getUnicodeValue()
+	 * and the RC_backspace handlers) */
+	mKeyMap[0x08] = KEY_BACKSPACE;
+	mKeyMap[0x20] = KEY_SPACE;
+
 	/* shift keys */
 	mKeyMap['F'] = KEY_FAVORITES;
 	mKeyMap['M'] = KEY_MODE;

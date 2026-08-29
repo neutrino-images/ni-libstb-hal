@@ -8,8 +8,8 @@ typedef struct hal_libversion_t
 {
 	std::string vVersion;
 	int         vMajor;
-	int         vMinor;
-	int         vPatch;;
+	std::string vMinor;
+	int         vPatch;
 	std::string vName;
 	std::string vStr;
 	std::string vGitDescribe;

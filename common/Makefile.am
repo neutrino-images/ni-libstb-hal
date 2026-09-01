@@ -16,10 +16,14 @@ noinst_HEADERS = $(VERSION_H)
 
 noinst_LTLIBRARIES = libcommon.la
 
-AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
-
-AM_CXXFLAGS += \
+# The include path lives in AM_CPPFLAGS so that C sources see it too
+# (AM_CXXFLAGS never reaches the C compiler).
+AM_CPPFLAGS = \
 	-I $(top_srcdir)/include
+
+AM_CFLAGS = -Wall
+
+AM_CXXFLAGS = -fno-rtti -fno-exceptions -fno-strict-aliasing
 
 AM_LDFLAGS = -lpthread
 
@@ -75,4 +79,5 @@ libcommon_la_SOURCES += \
 	hal_debug.cpp \
 	proc_tools.c \
 	pwrmngr.cpp \
+	streaminput.c \
 	version_hal.cpp

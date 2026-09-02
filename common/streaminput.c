@@ -303,7 +303,7 @@ stream_failure_class_t streaminput_classify(stream_error_code_t code, int http_s
 
 size_t streaminput_redact_url(const char *url, char *out, size_t outlen)
 {
-	static const char redacted[] = "?<redacted>";
+	static const char redacted[] = STREAMINPUT_REDACTED_MARKER;
 	const char *query;
 	size_t plen, n;
 
@@ -341,6 +341,26 @@ size_t streaminput_redact_url(const char *url, char *out, size_t outlen)
 		out[n] = '\0';
 	}
 	return n;
+}
+
+const char *streaminput_protocol_name(stream_protocol_t protocol)
+{
+	switch (protocol)
+	{
+		case STREAM_PROTOCOL_UNKNOWN:
+			return "unknown";
+		case STREAM_PROTOCOL_HTTP:
+			return "http";
+		case STREAM_PROTOCOL_HLS:
+			return "hls";
+		case STREAM_PROTOCOL_DASH:
+			return "dash";
+		case STREAM_PROTOCOL_RTSP:
+			return "rtsp";
+		case STREAM_PROTOCOL_FILE:
+			return "file";
+	}
+	return "unknown";
 }
 
 const char *streaminput_stage_name(stream_stage_t stage)

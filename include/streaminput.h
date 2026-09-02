@@ -185,8 +185,12 @@ int streaminput_policy_build(const stream_source_t *src, stream_input_profile_t 
  * an explicit http_status wins. */
 stream_failure_class_t streaminput_classify(stream_error_code_t code, int http_status);
 
+/* The marker streaminput_redact_url() writes; callers size their buffer
+ * as strlen(url) + sizeof(STREAMINPUT_REDACTED_MARKER) to never truncate. */
+#define STREAMINPUT_REDACTED_MARKER "?<redacted>"
+
 /* Copy url into out with everything from the first '?' on replaced by
- * "?<redacted>" (tokens, signatures and session ids live there -- spec
+ * STREAMINPUT_REDACTED_MARKER (tokens, signatures and session ids live there -- spec
  * section 12); a fragment behind the query is hidden with it, which
  * errs on the safe side. Generalizes libeplayer3's
  * hls_ad_debug_redact_uri with one deliberate difference: a bare
@@ -200,6 +204,7 @@ stream_failure_class_t streaminput_classify(stream_error_code_t code, int http_s
 size_t streaminput_redact_url(const char *url, char *out, size_t outlen);
 
 /* Stable lowercase token names for logging, never NULL. */
+const char *streaminput_protocol_name(stream_protocol_t protocol);
 const char *streaminput_stage_name(stream_stage_t stage);
 const char *streaminput_error_code_name(stream_error_code_t code);
 const char *streaminput_failure_class_name(stream_failure_class_t failure);

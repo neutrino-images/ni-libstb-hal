@@ -123,7 +123,7 @@ cVideo::cVideo(int, void *, void *, unsigned int)
 	bufpos = 0;
 	thread_running = false;
 	w_h_changed = false;
-	dec_w = dec_h = 0;
+	dec_w = dec_h = dec_r = 0;
 	buf_num = 0;
 	buf_in = 0;
 	buf_out = 0;

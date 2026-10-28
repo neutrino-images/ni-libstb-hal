@@ -35,6 +35,14 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/version.h>
+
+/* AVFrame.key_frame was removed in FFmpeg 8 (lavu 60) */
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(58, 7, 100)
+#define AVFRAME_IS_KEY(f) (!!((f)->flags & AV_FRAME_FLAG_KEY))
+#else
+#define AVFRAME_IS_KEY(f) ((f)->key_frame)
+#endif
 }
 
 /* ffmpeg buf 256k - needs to be large enough for high-bitrate UHD HEVC */
@@ -796,7 +804,7 @@ void cVideo::run(void)
 			if (frame_count <= 30)
 				hal_info("%s: frame #%d type=%c key=%d %dx%d pts=%" PRId64
 					" dts=%" PRId64 " fmt=%d buf_num=%d\n",
-					__func__, frame_count, pt, frame->key_frame,
+					__func__, frame_count, pt, AVFRAME_IS_KEY(frame),
 					c->width, c->height,
 					frame->best_effort_timestamp,
 					frame->pkt_dts,
@@ -813,7 +821,7 @@ void cVideo::run(void)
 			     all references are clean, normal decoding. */
 			if (keyframe_count < 2)
 			{
-				if (frame->key_frame || frame->pict_type == AV_PICTURE_TYPE_I)
+				if (AVFRAME_IS_KEY(frame) || frame->pict_type == AV_PICTURE_TYPE_I)
 				{
 					keyframe_count++;
 					if (keyframe_count == 1)
@@ -966,8 +974,8 @@ void cVideo::run(void)
 				}
 				buf_m.unlock();
 			}
-			hal_debug("%s: time_base: %d/%d, ticks: %d rate: %d pts 0x%" PRIx64 "\n",
-				__func__, c->time_base.num, c->time_base.den, c->ticks_per_frame, dec_r,
+			hal_debug("%s: time_base: %d/%d, rate: %d pts 0x%" PRIx64 "\n",
+				__func__, c->time_base.num, c->time_base.den, dec_r,
 #if (LIBAVUTIL_VERSION_MAJOR < 54)
 				av_frame_get_best_effort_timestamp(frame)
 #else

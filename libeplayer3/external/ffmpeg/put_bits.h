@@ -33,6 +33,13 @@
 #include "libavutil/intreadwrite.h"
 #include "libavutil/avassert.h"
 #include "libavutil/common.h"
+#include "libavutil/version.h"
+
+/* av_mod_uintp2() was replaced by av_zero_extend() in lavu 59.22.100
+   and removed in FFmpeg 9 (lavu 61) */
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(59, 22, 100)
+#define av_zero_extend av_mod_uintp2
+#endif
 
 typedef struct PutBitContext
 {
@@ -213,7 +220,7 @@ static inline void put_sbits(PutBitContext *pb, int n, int32_t value)
 {
 	av_assert2(n >= 0 && n <= 31);
 
-	put_bits(pb, n, av_mod_uintp2(value, n));
+	put_bits(pb, n, av_zero_extend(value, n));
 }
 
 /**

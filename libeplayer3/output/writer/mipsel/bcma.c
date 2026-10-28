@@ -88,7 +88,7 @@ static int writeData(WriterAVCallData_t *call)
 
 	bcma_printf(10, "AudioPts %lld\n", call->Pts);
 	uint8_t PesHeader[PES_MAX_HEADER_SIZE + 22];
-	uint32_t i;
+	uint32_t i, j;
 	uint32_t private_size = 0;
 	const uint8_t *vorbis_header_start[3];
 	int vorbis_header_len[3];
@@ -190,7 +190,7 @@ static int writeData(WriterAVCallData_t *call)
 
 	PesHeader[6] |= 1;
 	UpdatePesHeaderPayloadSize(PesHeader, headerSize - 6 + private_size + call->len);
-	struct iovec iov[5];
+	struct iovec iov[8]; /* PES header + 3 x (length + vorbis header) + payload */
 	i = 0;
 	iov[i].iov_base = PesHeader;
 	iov[i++].iov_len  = headerSize;
@@ -199,12 +199,12 @@ static int writeData(WriterAVCallData_t *call)
 	{
 		if (pcmPrivateData->codec_id == AV_CODEC_ID_VORBIS)
 		{
-			for (i = 0; i < 3; ++i)
+			for (j = 0; j < 3; ++j)
 			{
-				iov[i].iov_base = vorbis_header_len_raw[i];
+				iov[i].iov_base = vorbis_header_len_raw[j];
 				iov[i++].iov_len  = 2;
-				iov[i].iov_base = vorbis_header_start;
-				iov[i++].iov_len  = vorbis_header_len[i];
+				iov[i].iov_base = (void *)vorbis_header_start[j];
+				iov[i++].iov_len  = vorbis_header_len[j];
 			}
 		}
 		else

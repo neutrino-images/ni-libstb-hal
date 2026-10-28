@@ -1423,7 +1423,7 @@ static void FFMPEGThread(Context_t *context)
 							__typeof__(get_codecpar(videoTrack->stream)) videoPar = videoTrack->stream ? get_codecpar(videoTrack->stream) : NULL;
 							hls_ad_debug_packet(&hls_ad_debug, "video", cAVIdx, pid, packet.stream_index, pts, dts,
 								hls_ad_debug_duration_pts(videoTrack->stream, packet.duration),
-								videoPar ? videoPar->codec_id : -1,
+								videoPar ? (int)videoPar->codec_id : -1,
 								0, 0, videoTrack->width, videoTrack->height);
 						}
 
@@ -1508,7 +1508,7 @@ static void FFMPEGThread(Context_t *context)
 					}
 					hls_ad_debug_packet(&hls_ad_debug, "audio", cAVIdx, pid, packet.stream_index, pts, dts,
 						hls_ad_debug_duration_pts(audioTrack->stream, packet.duration),
-						audioPar ? audioPar->codec_id : -1,
+						audioPar ? (int)audioPar->codec_id : -1,
 						audioPar ? audioPar->sample_rate : 0,
 						audioChannels, 0, 0);
 				}
@@ -2514,8 +2514,7 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 			ffmpeg_err("avformat_open_input failed %d (%s)\n", err, filename);
 			av_strerror(err, error, 512);
 			context->playback->lastOpenErrorCode = err;
-			strncpy(context->playback->lastOpenErrorMessage, error, PLAYBACK_LAST_ERROR_MSG_SIZE - 1);
-			context->playback->lastOpenErrorMessage[PLAYBACK_LAST_ERROR_MSG_SIZE - 1] = '\0';
+			snprintf(context->playback->lastOpenErrorMessage, PLAYBACK_LAST_ERROR_MSG_SIZE, "%s", error);
 			E2iSendMsg("{\"FF_ERROR\":{\"msg\":\"%s\",\"code\":%i}}\n", error, err);
 
 			if (avio_opts != NULL)

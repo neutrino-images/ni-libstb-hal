@@ -1,8 +1,12 @@
+# Regenerated only by "make" / "make all". Other goals ("make install", and
+# the all-am pass automake runs after compiling) keep an existing one, so
+# nothing that includes it is rebuilt. Not .PHONY: make would always
+# rebuild its dependents.
 VERSION_H = version.h
-$(VERSION_H):
-	@rm -f $@
-	@echo "#define BUILT_DATE \"$$(date)\"" > $@
-	@if test -d $(top_srcdir)/.git; then \
+$(VERSION_H): FORCE
+	@case "$(MAKECMDGOALS)" in ""|all) ;; *) test -f $@ && exit 0;; esac; \
+	echo "#define BUILT_DATE \"$$(date)\"" > $@; \
+	if test -d $(top_srcdir)/.git; then \
 		pushd $(top_srcdir); \
 		GITTAG=$$(git tag -l "NI-*" --sort=version:refname | tail -n1); \
 		GITDESCRIBE=$$(git describe --always --long --tags --match $$GITTAG | sed 's/-/./2' || echo "VCS failed"); \
@@ -12,7 +16,8 @@ $(VERSION_H):
 
 BUILT_SOURCES = $(VERSION_H)
 noinst_HEADERS = $(VERSION_H)
-.PHONY: $(VERSION_H)
+
+FORCE:
 
 noinst_LTLIBRARIES = libcommon.la
 

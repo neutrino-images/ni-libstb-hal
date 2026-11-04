@@ -272,6 +272,7 @@ void cRecord::RecordThread()
 
 	dmx->Start();
 	int overflow_count = 0;
+	int dmx_overflow_count = 0;
 	bool overflow = false;
 	int r = 0;
 	while (exit_flag == RECORD_RUNNING)
@@ -290,8 +291,21 @@ void cRecord::RecordThread()
 			hal_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
 			if (s < 0)
 			{
-				if (errno != EAGAIN && (errno != EOVERFLOW || !overflow))
+				int err = errno;
+				if (err == EOVERFLOW)
 				{
+					/* The demux had more than its buffer holds and
+					 * dropped the rest. It says so once and then goes
+					 * on delivering, so the recording goes on as well:
+					 * a gap in the file is better than a file that ends
+					 * here while the recording is still shown running. */
+					if (!(dmx_overflow_count++ % 10))
+						hal_info("%s: demux buffer overflow, data lost (%d)\n", __func__, dmx_overflow_count);
+					state = REC_STATUS_OVERFLOW;
+				}
+				else if (err != EAGAIN)
+				{
+					errno = err;
 					hal_info("%s: read failed: %m\n", __func__);
 					exit_flag = RECORD_FAILED_READ;
 					state = REC_STATUS_OVERFLOW;

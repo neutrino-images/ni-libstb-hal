@@ -338,7 +338,13 @@ retry:
 	rc = ::read(fd, buff, len);
 	//fprintf(stderr, "fd %d ret: %d\n", fd, rc);
 	if (rc < 0)
-		dmx_err("read: %s", strerror(errno), 0);
+	{
+		/* the caller decides by errno whether to go on, so the log
+		 * line must not be the one to set it */
+		int err = errno;
+		dmx_err("read: %s", strerror(err), 0);
+		errno = err;
+	}
 
 	return rc;
 }

@@ -27,6 +27,7 @@
 
 #include <pthread.h>
 #include <aio.h>
+#include <time.h>
 
 #include "record_lib.h"
 #include "hal_debug.h"
@@ -93,10 +94,23 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 		dmx = new cDemux(dmx_num);
 
 	dmx->Open(DMX_TP_CHANNEL, NULL, bufsize_dmx);
-	dmx->pesFilter(vpid);
+	/* Say what the demux took. Two recordings of one channel share a
+	 * demux device, and some drivers do not hand the same PIDs to both:
+	 * the filter calls are where that would show. */
+	errno = 0;
+	if (dmx->pesFilter(vpid))
+		hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x ok\n",
+			__func__, dmx_num, cDemux::GetSource(dmx_num), vpid);
+	else
+		hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x FAILED (%m)\n",
+			__func__, dmx_num, cDemux::GetSource(dmx_num), vpid);
 
+	int pids_failed = 0;
 	for (i = 0; i < numpids; i++)
-		dmx->addPid(apids[i]);
+		if (!dmx->addPid(apids[i]))
+			pids_failed++;
+	hal_info("%s: dmx unit %d (demux%d): %d more pids, %d failed\n",
+		__func__, dmx_num, cDemux::GetSource(dmx_num), numpids, pids_failed);
 
 	file_fd = fd;
 	exit_flag = RECORD_RUNNING;
@@ -271,6 +285,12 @@ void cRecord::RecordThread()
 	a.aio_sigevent.sigev_notify = SIGEV_NONE;
 
 	dmx->Start();
+	/* How much the demux delivers, every 10 seconds: a recording that
+	 * gets nothing shows here, where nothing else says so. */
+	uint64_t bytes_total = 0;
+	uint64_t bytes_period = 0;
+	struct timespec period_start;
+	clock_gettime(CLOCK_MONOTONIC, &period_start);
 	int overflow_count = 0;
 	int dmx_overflow_count = 0;
 	bool overflow = false;
@@ -289,6 +309,23 @@ void cRecord::RecordThread()
 				toread = readsize;
 			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
 			hal_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
+			int read_errno = errno;
+			if (s > 0)
+			{
+				bytes_total += s;
+				bytes_period += s;
+			}
+			struct timespec now;
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			if (now.tv_sec - period_start.tv_sec >= 10)
+			{
+				hal_info("%s: dmx unit %d (demux%d): %" PRIu64 " bytes in %ld s, %" PRIu64 " in all\n",
+					__func__, dmx_num, cDemux::GetSource(dmx_num), bytes_period,
+					(long)(now.tv_sec - period_start.tv_sec), bytes_total);
+				bytes_period = 0;
+				period_start = now;
+			}
+			errno = read_errno; /* the log above must not decide below */
 			if (s < 0)
 			{
 				int err = errno;
@@ -371,6 +408,8 @@ void cRecord::RecordThread()
 		}
 	}
 	dmx->Stop();
+	hal_info("%s: dmx unit %d (demux%d): %" PRIu64 " bytes in all\n",
+		__func__, dmx_num, cDemux::GetSource(dmx_num), bytes_total);
 	while (true) /* write out the unwritten buffer content */
 	{
 		hal_debug("%s: run-out write, buf_pos %d\n", __func__, buf_pos);

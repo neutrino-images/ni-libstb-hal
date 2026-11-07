@@ -52,7 +52,7 @@
  * its own PIDs, in a buffer of its own. A recording that leaves takes
  * nothing from the others; the tap is closed with the last one.
  */
-#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUZERO4K
+#if BOXMODEL_VUPLUS_ARM
 #define RECORD_SHARED_TAP 1
 #else
 #define RECORD_SHARED_TAP 0

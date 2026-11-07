@@ -38,6 +38,12 @@ class cRecord
 #define RECORD_WRITER_CHUNKS 16
 		unsigned char *io_buf[RECORD_WRITER_CHUNKS];
 		size_t io_len[RECORD_WRITER_CHUNKS];
+
+		/* where the recording reads from when it shares the demux of
+		 * another recording, NULL when it reads from dmx (record.cpp) */
+		struct record_feed *feed;
+		ssize_t ReadSource(unsigned char *buf, int len, int timeout);
+		void LeaveTap();
 	public:
 		cRecord(int num = 0, int bs_dmx = 2048 * 1024, int bs = 4096 * 1024);
 		void setFailureCallback(void (*f)(void *), void *d) { failureCallback = f; failureData = d; }

@@ -29,10 +29,183 @@
 #include <aio.h>
 #include <time.h>
 
+#include <map>
+#include <set>
+#include <vector>
+
 #include "record_lib.h"
 #include "hal_debug.h"
 #define hal_debug(args...) _hal_debug(HAL_DEBUG_RECORD, this, args)
 #define hal_info(args...) _hal_info(HAL_DEBUG_RECORD, this, args)
+#define hal_info_c(args...) _hal_info(HAL_DEBUG_RECORD, NULL, args)
+
+/*
+ * Recordings that share one demux device share one tap on it.
+ *
+ * On VU+ boxes a second TS tap on a demux device that already has one
+ * delivers nothing: two overlapping recordings of a channel both set up
+ * their filter without an error, the first gets the stream, the second
+ * not a byte from its start to its end, even after the first stopped.
+ * So there the first recording on a device opens the tap, and every
+ * recording on that device reads from it: a thread reads the tap, cuts
+ * the stream into TS packets and hands each recording the packets of
+ * its own PIDs, in a buffer of its own. A recording that leaves takes
+ * nothing from the others; the tap is closed with the last one.
+ */
+#if BOXMODEL_VUSOLO4K || BOXMODEL_VUDUO4K || BOXMODEL_VUDUO4KSE || BOXMODEL_VUULTIMO4K || BOXMODEL_VUUNO4K || BOXMODEL_VUUNO4KSE || BOXMODEL_VUZERO4K
+#define RECORD_SHARED_TAP 1
+#else
+#define RECORD_SHARED_TAP 0
+#endif
+
+#define TS_SIZE 188
+#define TS_SYNC 0x47
+
+struct record_tap;
+
+struct record_feed
+{
+	record_tap *tap;
+	std::set<unsigned short> pids;
+	unsigned short vpid;
+	std::vector<uint8_t> ring;	/* packets for this recording, not yet read */
+	size_t rpos;
+	size_t fill;
+	bool overflow;			/* packets dropped since the last read */
+	int error;			/* the tap failed: errno for the next read */
+};
+
+struct record_tap
+{
+	int device;
+	cDemux *dmx;
+	pthread_t thread;
+	bool running;
+	std::set<unsigned short> pids;	/* what the demux filters; only grows */
+	std::vector<record_feed *> feeds;
+	uint8_t carry[TS_SIZE];		/* a packet cut by the end of a read */
+	int carry_len;
+};
+
+static pthread_mutex_t tap_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t tap_cond = PTHREAD_COND_INITIALIZER;
+static std::map<int, record_tap *> taps;
+
+/* with tap_mutex held */
+static void feed_put(record_feed *f, const uint8_t *pkt)
+{
+	if (f->ring.size() - f->fill < TS_SIZE)
+	{
+		f->overflow = true;
+		return;
+	}
+	size_t wpos = (f->rpos + f->fill) % f->ring.size();
+	for (int i = 0; i < TS_SIZE; i++)
+		f->ring[(wpos + i) % f->ring.size()] = pkt[i];
+	f->fill += TS_SIZE;
+}
+
+/* with tap_mutex held */
+static void tap_deliver(record_tap *t, const uint8_t *pkt)
+{
+	unsigned short pid = ((pkt[1] & 0x1f) << 8) | pkt[2];
+	for (std::vector<record_feed *>::iterator i = t->feeds.begin(); i != t->feeds.end(); ++i)
+		if ((*i)->pids.count(pid))
+			feed_put(*i, pkt);
+}
+
+static void *tap_thread(void *c)
+{
+	record_tap *t = (record_tap *)c;
+	char threadname[17] = "RecordTap";
+	prctl(PR_SET_NAME, (unsigned long)&threadname);
+	const int len = TS_SIZE * 512;
+	uint8_t *buf = (uint8_t *)malloc(len);
+	if (!buf)
+	{
+		pthread_mutex_lock(&tap_mutex);
+		for (std::vector<record_feed *>::iterator i = t->feeds.begin(); i != t->feeds.end(); ++i)
+			(*i)->error = ENOMEM;
+		pthread_cond_broadcast(&tap_cond);
+		pthread_mutex_unlock(&tap_mutex);
+		return NULL;
+	}
+	hal_info_c("RecordTap: demux%d: begin\n", t->device);
+	while (t->running)
+	{
+		ssize_t s = t->dmx->Read(buf, len, 50);
+		int err = errno;
+		if (s <= 0)
+		{
+			if (s < 0 && err != EAGAIN)
+			{
+				pthread_mutex_lock(&tap_mutex);
+				for (std::vector<record_feed *>::iterator i = t->feeds.begin(); i != t->feeds.end(); ++i)
+				{
+					if (err == EOVERFLOW)
+						(*i)->overflow = true;
+					else
+						(*i)->error = err;
+				}
+				t->carry_len = 0;
+				pthread_cond_broadcast(&tap_cond);
+				pthread_mutex_unlock(&tap_mutex);
+				if (err != EOVERFLOW)
+				{
+					errno = err;
+					hal_info_c("RecordTap: demux%d: read failed: %m\n", t->device);
+					break;
+				}
+			}
+			continue;
+		}
+		pthread_mutex_lock(&tap_mutex);
+		int pos = 0;
+		if (t->carry_len)
+		{
+			int need = TS_SIZE - t->carry_len;
+			if (need > s)
+				need = s;
+			memcpy(t->carry + t->carry_len, buf, need);
+			t->carry_len += need;
+			pos = need;
+			if (t->carry_len == TS_SIZE)
+			{
+				if (t->carry[0] == TS_SYNC)
+					tap_deliver(t, t->carry);
+				t->carry_len = 0;
+			}
+		}
+		while (pos < s)
+		{
+			if (buf[pos] != TS_SYNC)	/* out of step: find the next packet */
+			{
+				pos++;
+				continue;
+			}
+			if (s - pos < TS_SIZE)
+			{
+				t->carry_len = s - pos;
+				memcpy(t->carry, buf + pos, t->carry_len);
+				break;
+			}
+			tap_deliver(t, buf + pos);
+			pos += TS_SIZE;
+		}
+		pthread_cond_broadcast(&tap_cond);
+		pthread_mutex_unlock(&tap_mutex);
+	}
+	free(buf);
+	hal_info_c("RecordTap: demux%d: end\n", t->device);
+	return NULL;
+}
+
+/* with tap_mutex held */
+static void tap_add_pid(record_tap *t, unsigned short pid)
+{
+	if (t->pids.insert(pid).second)
+		t->dmx->addPid(pid);
+}
 
 /* helper function to call the cpp thread loop */
 void *execute_record_thread(void *c)
@@ -61,6 +234,86 @@ cRecord::cRecord(int num, int bs_dmx, int bs)
 	bufsize_dmx = bs_dmx;
 	failureCallback = NULL;
 	failureData = NULL;
+	feed = NULL;
+}
+
+/* Leave the shared tap, and close it when this was the last recording on
+ * it. The PIDs it added stay on the demux until then: the others do not
+ * get them, as each one takes only its own. */
+void cRecord::LeaveTap()
+{
+	if (!feed)
+		return;
+	pthread_mutex_lock(&tap_mutex);
+	record_tap *t = feed->tap;
+	for (std::vector<record_feed *>::iterator i = t->feeds.begin(); i != t->feeds.end(); ++i)
+	{
+		if (*i == feed)
+		{
+			t->feeds.erase(i);
+			break;
+		}
+	}
+	delete feed;
+	feed = NULL;
+	bool last = t->feeds.empty();
+	if (last)
+	{
+		taps.erase(t->device);
+		t->running = false;
+	}
+	pthread_mutex_unlock(&tap_mutex);
+	if (!last)
+		return;
+	pthread_join(t->thread, NULL);
+	t->dmx->Stop();
+	delete t->dmx;
+	hal_info("%s: demux%d: tap closed\n", __func__, t->device);
+	delete t;
+}
+
+/* Read for the recording: from its feed of the shared tap, or from its
+ * own demux. A feed answers as the demux does: 0 after timeout ms with
+ * nothing, -1 with EOVERFLOW once when packets were dropped. */
+ssize_t cRecord::ReadSource(unsigned char *buf, int len, int timeout)
+{
+	if (!feed)
+		return dmx->Read(buf, len, timeout);
+
+	pthread_mutex_lock(&tap_mutex);
+	if (!feed->fill && !feed->overflow && !feed->error)
+	{
+		struct timespec until;
+		clock_gettime(CLOCK_REALTIME, &until);
+		until.tv_nsec += (long)timeout * 1000000L;
+		until.tv_sec += until.tv_nsec / 1000000000L;
+		until.tv_nsec %= 1000000000L;
+		pthread_cond_timedwait(&tap_cond, &tap_mutex, &until);
+	}
+	ssize_t n;
+	if (feed->error)
+	{
+		errno = feed->error;
+		n = -1;
+	}
+	else if (feed->overflow)
+	{
+		feed->overflow = false;
+		errno = EOVERFLOW;
+		n = -1;
+	}
+	else
+	{
+		n = (ssize_t)feed->fill < len ? (ssize_t)feed->fill : len;
+		for (ssize_t i = 0; i < n; i++)
+			buf[i] = feed->ring[(feed->rpos + i) % feed->ring.size()];
+		feed->rpos = (feed->rpos + n) % feed->ring.size();
+		feed->fill -= n;
+		if (!n)
+			errno = EAGAIN;
+	}
+	pthread_mutex_unlock(&tap_mutex);
+	return n;
 }
 
 cRecord::~cRecord()
@@ -94,6 +347,65 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 	printf("[record] cRecord::Start: diag: DMX_START is checked\n");
 	int i;
 
+	if (RECORD_SHARED_TAP)
+	{
+		int device = cDemux::GetSource(dmx_num);
+		printf("[record] cRecord::Start: diag: shared tap on demux%d\n", device);
+		pthread_mutex_lock(&tap_mutex);
+		record_tap *t;
+		std::map<int, record_tap *>::iterator it = taps.find(device);
+		if (it != taps.end())
+			t = it->second;
+		else
+		{
+			t = new record_tap;
+			t->device = device;
+			t->carry_len = 0;
+			t->dmx = new cDemux(dmx_num);
+			t->dmx->Open(DMX_TP_CHANNEL, NULL, bufsize_dmx);
+			errno = 0;
+			if (t->dmx->pesFilter(vpid))
+				hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x ok\n",
+					__func__, dmx_num, device, vpid);
+			else
+				hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x FAILED (%m)\n",
+					__func__, dmx_num, device, vpid);
+			t->pids.insert(vpid);
+			t->dmx->Start();
+			t->running = true;
+			if (pthread_create(&t->thread, 0, tap_thread, t))
+			{
+				hal_info("%s: error creating tap thread! (%m)\n", __func__);
+				delete t->dmx;
+				delete t;
+				pthread_mutex_unlock(&tap_mutex);
+				exit_flag = RECORD_FAILED_READ;
+				return false;
+			}
+			taps[device] = t;
+		}
+		feed = new record_feed;
+		feed->tap = t;
+		feed->vpid = vpid;
+		feed->ring.resize(bufsize_dmx > TS_SIZE ? bufsize_dmx : 2048 * 1024);
+		feed->rpos = 0;
+		feed->fill = 0;
+		feed->overflow = false;
+		feed->error = 0;
+		feed->pids.insert(vpid);
+		tap_add_pid(t, vpid);
+		for (i = 0; i < numpids; i++)
+		{
+			feed->pids.insert(apids[i]);
+			tap_add_pid(t, apids[i]);
+		}
+		t->feeds.push_back(feed);
+		hal_info("%s: dmx unit %d (demux%d): %d pids, %d recordings on the tap\n",
+			__func__, dmx_num, device, (int)feed->pids.size(), (int)t->feeds.size());
+		pthread_mutex_unlock(&tap_mutex);
+	}
+	else
+	{
 	if (!dmx)
 		dmx = new cDemux(dmx_num);
 
@@ -115,6 +427,7 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 			pids_failed++;
 	hal_info("%s: dmx unit %d (demux%d): %d more pids, %d failed\n",
 		__func__, dmx_num, cDemux::GetSource(dmx_num), numpids, pids_failed);
+	}
 
 	file_fd = fd;
 	exit_flag = RECORD_RUNNING;
@@ -127,6 +440,7 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 		exit_flag = RECORD_FAILED_READ;
 		errno = i;
 		hal_info("%s: error creating thread! (%m)\n", __func__);
+		LeaveTap();
 		delete dmx;
 		dmx = NULL;
 		return false;
@@ -147,8 +461,9 @@ bool cRecord::Stop(void)
 		pthread_join(record_thread, NULL);
 	record_thread_running = false;
 
+	LeaveTap();
 	/* We should probably do that from the destructor... */
-	if (!dmx)
+	if (!dmx && !RECORD_SHARED_TAP)
 		hal_info("%s: dmx == NULL?\n", __func__);
 	else
 		delete dmx;
@@ -169,6 +484,20 @@ bool cRecord::ChangePids(unsigned short /*vpid*/, unsigned short *apids, int num
 	bool found;
 	unsigned short pid;
 	hal_info("%s\n", __func__);
+	if (feed)
+	{
+		/* the video PID stays, as below; the demux keeps what it has */
+		pthread_mutex_lock(&tap_mutex);
+		feed->pids.clear();
+		feed->pids.insert(feed->vpid);
+		for (j = 0; j < numapids; j++)
+		{
+			feed->pids.insert(apids[j]);
+			tap_add_pid(feed->tap, apids[j]);
+		}
+		pthread_mutex_unlock(&tap_mutex);
+		return true;
+	}
 	if (!dmx)
 	{
 		hal_info("%s: DMX = NULL\n", __func__);
@@ -212,6 +541,14 @@ bool cRecord::AddPid(unsigned short pid)
 {
 	std::vector<pes_pids> pids;
 	hal_info("%s: \n", __func__);
+	if (feed)
+	{
+		pthread_mutex_lock(&tap_mutex);
+		feed->pids.insert(pid);
+		tap_add_pid(feed->tap, pid);
+		pthread_mutex_unlock(&tap_mutex);
+		return true;
+	}
 	if (!dmx)
 	{
 		hal_info("%s: DMX = NULL\n", __func__);
@@ -288,7 +625,8 @@ void cRecord::RecordThread()
 	a.aio_fildes = file_fd;
 	a.aio_sigevent.sigev_notify = SIGEV_NONE;
 
-	dmx->Start();
+	if (!feed)
+		dmx->Start();
 	/* How much the demux delivers, every 10 seconds: a recording that
 	 * gets nothing shows here, where nothing else says so. */
 	uint64_t bytes_total = 0;
@@ -311,7 +649,7 @@ void cRecord::RecordThread()
 			int toread = bufsize - buf_pos;
 			if (toread > readsize)
 				toread = readsize;
-			ssize_t s = dmx->Read(buf + buf_pos, toread, 50);
+			ssize_t s = ReadSource(buf + buf_pos, toread, 50);
 			hal_debug("%s: buf_pos %6d s %6d / %6d\n", __func__, buf_pos, (int)s, bufsize - buf_pos);
 			int read_errno = errno;
 			if (s > 0)
@@ -411,7 +749,8 @@ void cRecord::RecordThread()
 			break;
 		}
 	}
-	dmx->Stop();
+	if (!feed)
+		dmx->Stop();
 	hal_info("%s: dmx unit %d (demux%d): %" PRIu64 " bytes in all\n",
 		__func__, dmx_num, cDemux::GetSource(dmx_num), bytes_total);
 	while (true) /* write out the unwritten buffer content */

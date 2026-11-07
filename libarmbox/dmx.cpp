@@ -208,7 +208,7 @@ static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_
 	{
 		/* probably uBufferSize == 0 means "use default size". TODO: find a reasonable default */
 		if (ioctl(fd, DMX_SET_BUFFER_SIZE, buffersize) < 0)
-			hal_info_z("%s DMX_SET_BUFFER_SIZE failed (%m)\n", __func__);
+			hal_info_z("%s DMX_SET_BUFFER_SIZE %d failed (%m)\n", __func__, buffersize);
 	}
 
 	last_source = devnum;
@@ -238,7 +238,10 @@ bool cDemux::Start(bool)
 		hal_info("%s #%d: not open!\n", __FUNCTION__, num);
 		return false;
 	}
-	ioctl(fd, DMX_START);
+	/* the result is not passed on, as before, but said: a filter that
+	 * does not start delivers nothing, and nothing else tells */
+	if (ioctl(fd, DMX_START) < 0)
+		hal_info("%s #%d fd: %d type: %s: DMX_START failed (%m)\n", __func__, num, fd, DMX_T[dmx_type]);
 	return true;
 }
 

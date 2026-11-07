@@ -88,6 +88,10 @@ void cRecord::Close(void)
 bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int numpids, uint64_t)
 {
 	hal_info("%s: fd %d, vpid 0x%03x\n", __func__, fd, vpid);
+	/* Marks the image for the hunt for the empty second recording on
+	 * VU+ boxes: a log with this line was made with DMX_START checked
+	 * (cDemux::Start() says when it fails), and one without it was not. */
+	printf("[record] cRecord::Start: diag: DMX_START is checked\n");
 	int i;
 
 	if (!dmx)

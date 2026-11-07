@@ -94,48 +94,23 @@ bool cRecord::Start(int fd, unsigned short vpid, unsigned short *apids, int nump
 		dmx = new cDemux(dmx_num);
 
 	dmx->Open(DMX_TP_CHANNEL, NULL, bufsize_dmx);
-
-	/* Set the tap up the way enigma2 does (eDVBTSRecorder::start()): the
-	 * filter on the lowest PID, started at once, the other PIDs added to
-	 * the running filter. On VU+ boxes a second recording of a channel
-	 * that is already recorded got no data at all, on the same demux
-	 * device, when the filter was set on the video PID and all PIDs were
-	 * added before it was started; enigma2 records both there. */
-	unsigned short first = vpid;
-	for (i = 0; i < numpids; i++)
-		if (apids[i] < first)
-			first = apids[i];
-
+	/* Say what the demux took. Two recordings of one channel share a
+	 * demux device, and some drivers do not hand the same PIDs to both:
+	 * the filter calls are where that would show. */
 	errno = 0;
-	if (dmx->pesFilter(first))
+	if (dmx->pesFilter(vpid))
 		hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x ok\n",
-			__func__, dmx_num, cDemux::GetSource(dmx_num), first);
+			__func__, dmx_num, cDemux::GetSource(dmx_num), vpid);
 	else
 		hal_info("%s: dmx unit %d (demux%d): pes filter pid 0x%04x FAILED (%m)\n",
-			__func__, dmx_num, cDemux::GetSource(dmx_num), first);
-	dmx->Start();
+			__func__, dmx_num, cDemux::GetSource(dmx_num), vpid);
 
-	int pids_added = 0;
 	int pids_failed = 0;
-	if (vpid != first)
-	{
-		pids_added++;
-		if (!dmx->addPid(vpid))
-			pids_failed++;
-	}
 	for (i = 0; i < numpids; i++)
-	{
-		bool seen = (apids[i] == first || apids[i] == vpid);
-		for (int j = 0; j < i && !seen; j++)
-			seen = (apids[j] == apids[i]);
-		if (seen)
-			continue;
-		pids_added++;
 		if (!dmx->addPid(apids[i]))
 			pids_failed++;
-	}
 	hal_info("%s: dmx unit %d (demux%d): %d more pids, %d failed\n",
-		__func__, dmx_num, cDemux::GetSource(dmx_num), pids_added, pids_failed);
+		__func__, dmx_num, cDemux::GetSource(dmx_num), numpids, pids_failed);
 
 	file_fd = fd;
 	exit_flag = RECORD_RUNNING;
@@ -309,7 +284,7 @@ void cRecord::RecordThread()
 	a.aio_fildes = file_fd;
 	a.aio_sigevent.sigev_notify = SIGEV_NONE;
 
-	/* the filter was started in Start(), before its further PIDs */
+	dmx->Start();
 	/* How much the demux delivers, every 10 seconds: a recording that
 	 * gets nothing shows here, where nothing else says so. */
 	uint64_t bytes_total = 0;

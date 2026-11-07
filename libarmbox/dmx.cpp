@@ -162,8 +162,7 @@ bool cDemux::Open(DMX_CHANNEL_TYPE pes_type, void * /*hVideoBuffer*/, int uBuffe
 
 static bool _open(cDemux *thiz, int num, int &fd, int &last_source, DMX_CHANNEL_TYPE dmx_type, int buffersize)
 {
-	/* a recording tap is only read from, and enigma2 opens it so */
-	int flags = (dmx_type == DMX_TP_CHANNEL ? O_RDONLY : O_RDWR) | O_CLOEXEC;
+	int flags = O_RDWR | O_CLOEXEC;
 	int devnum = dmx_source[num];
 	if (last_source == devnum)
 	{

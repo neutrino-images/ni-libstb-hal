@@ -136,7 +136,18 @@ typedef struct HlsPlaylistInfo_s
 	int has_extinf;
 	double dvr_window_sec;
 	int found;
+	/* master playlist: BANDWIDTH/RESOLUTION of the variants; ffmpeg does not
+	 * export RESOLUTION and the stream size is 0 without find_stream_info */
+	int nb_variants;
+	struct
+	{
+		int64_t bandwidth;
+		int width;
+		int height;
+	} variants[32];
 } HlsPlaylistInfo_t;
+
+static HlsPlaylistInfo_t g_hls_info[IPTV_AV_CONTEXT_MAX_NUM]; /* per AV context */
 
 typedef struct HlsAdDebugState_s
 {
@@ -1008,6 +1019,29 @@ static void hls_ad_debug_packet(HlsAdDebugState_t *state, const char *type, int 
 	}
 }
 
+/* value of attribute name= in an attribute list, NULL if missing */
+static const char *hls_attr(const char *line, const char *name)
+{
+	size_t n = strlen(name);
+	const char *p = strchr(line, ':');
+	int quoted = 0;
+
+	while (p && *p)
+	{
+		if (!quoted && (*p == ':' || *p == ','))
+		{
+			if (!strncmp(p + 1, name, n) && p[1 + n] == '=')
+				return p + 2 + n;
+		}
+		else if (*p == '"')
+		{
+			quoted = !quoted;
+		}
+		p++;
+	}
+	return NULL;
+}
+
 static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlaylistInfo_t *info)
 {
 	if (!url || !info)
@@ -1019,6 +1053,8 @@ static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlayl
 
 	AVIOContext *pb = NULL;
 	AVDictionary *opts = NULL;
+	/* same http headers, user agent, cookies as the stream itself */
+	av_dict_copy(&opts, g_avio_opts, 0);
 	if (timeout_ms > 0)
 	{
 		char num[16];
@@ -1139,6 +1175,21 @@ static int read_hls_playlist_info(const char *url, uint32_t timeout_ms, HlsPlayl
 		{
 			info->is_master = 1;
 			found = 1;
+			if (strncmp(line, "#EXT-X-STREAM-INF:", 18) == 0 && info->nb_variants < (int)(sizeof(info->variants) / sizeof(info->variants[0])))
+			{
+				const char *bw = hls_attr(line, "BANDWIDTH");
+				const char *res = hls_attr(line, "RESOLUTION");
+				if (bw)
+				{
+					int w = 0, h = 0;
+					if (res && sscanf(res, "%dx%d", &w, &h) != 2)
+						w = h = 0;
+					info->variants[info->nb_variants].bandwidth = strtoll(bw, NULL, 10);
+					info->variants[info->nb_variants].width = w;
+					info->variants[info->nb_variants].height = h;
+					info->nb_variants++;
+				}
+			}
 		}
 		else if (strncmp(line, "#EXT-X-I-FRAME-STREAM-INF", 26) == 0)
 		{
@@ -2693,6 +2744,11 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	}
 
 
+	if (AVIdx >= 0 && AVIdx < (int32_t)(sizeof(g_hls_info) / sizeof(g_hls_info[0])))
+	{
+		memset(&g_hls_info[AVIdx], 0, sizeof(g_hls_info[AVIdx]));
+	}
+
 	int seekable = 0;
 	int is_probable_live = 0;
 	int is_local_file = (strstr(filename, "://") == NULL) || (strncmp(filename, "file://", 7) == 0);
@@ -2719,6 +2775,10 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 		if (is_hls_input)
 		{
 			have_hls_info = read_hls_playlist_info(filename, context->playback ? context->playback->httpTimeout : 0, &hls_info);
+			if (AVIdx >= 0 && AVIdx < (int32_t)(sizeof(g_hls_info) / sizeof(g_hls_info[0])))
+			{
+				g_hls_info[AVIdx] = hls_info;
+			}
 			if (have_hls_info)
 			{
 				if (hls_info.is_master)
@@ -3034,6 +3094,34 @@ static int stream_audio_channels(AVStream *st)
 #endif
 }
 
+/* video size, from the master playlist if ffmpeg does not know it yet */
+static void video_stream_size(const AVFormatContext *ctx, AVStream *st, int *width, int *height)
+{
+	uint32_t i;
+	*width = get_codecpar(st)->width;
+	*height = get_codecpar(st)->height;
+	if (*width > 0 && *height > 0)
+		return;
+	for (i = 0; i < IPTV_AV_CONTEXT_MAX_NUM; i++)
+	{
+		if (avContextTab[i] == ctx)
+		{
+			int64_t bw = dict_int64(st->metadata, "variant_bitrate");
+			int v;
+			for (v = 0; bw > 0 && v < g_hls_info[i].nb_variants; v++)
+			{
+				if (g_hls_info[i].variants[v].bandwidth == bw && g_hls_info[i].variants[v].width > 0)
+				{
+					*width = g_hls_info[i].variants[v].width;
+					*height = g_hls_info[i].variants[v].height;
+					return;
+				}
+			}
+			break;
+		}
+	}
+}
+
 static int video_stream_usable(AVStream *st)
 {
 	int32_t version = 0;
@@ -3052,10 +3140,12 @@ static int video_within_limits(const AVFormatContext *ctx, AVStream *st)
 	int32_t max_h = g_video_max_height ? g_video_max_height : (int32_t)env_int64("LIBEPLAYER3_MAX_VIDEO_HEIGHT", 0);
 	int64_t max_b = g_video_max_bitrate ? g_video_max_bitrate : env_int64("LIBEPLAYER3_MAX_VIDEO_BITRATE", 0);
 	int64_t bitrate = stream_bitrate(ctx, st);
+	int w, h;
 
-	if (max_w > 0 && get_codecpar(st)->width > max_w)
+	video_stream_size(ctx, st, &w, &h);
+	if (max_w > 0 && w > max_w)
 		return 0;
-	if (max_h > 0 && get_codecpar(st)->height > max_h)
+	if (max_h > 0 && h > max_h)
 		return 0;
 	if (max_b > 0 && bitrate > max_b)
 		return 0;
@@ -3065,8 +3155,13 @@ static int video_within_limits(const AVFormatContext *ctx, AVStream *st)
 /* > 0 if a is a better video choice than b, < 0 if worse, 0 if equal */
 static int compare_video_quality(const AVFormatContext *ctx, AVStream *a, AVStream *b)
 {
-	int64_t pa = (int64_t)get_codecpar(a)->width * get_codecpar(a)->height;
-	int64_t pb = (int64_t)get_codecpar(b)->width * get_codecpar(b)->height;
+	int wa, ha, wb, hb;
+	int64_t pa, pb;
+
+	video_stream_size(ctx, a, &wa, &ha);
+	video_stream_size(ctx, b, &wb, &hb);
+	pa = (int64_t)wa * ha;
+	pb = (int64_t)wb * hb;
 	int64_t ba = stream_bitrate(ctx, a);
 	int64_t bb = stream_bitrate(ctx, b);
 
@@ -3200,8 +3295,10 @@ static void select_best_adaptive_streams(uint32_t cAVIdx, AVFormatContext *ctx, 
 	if (best_video >= 0)
 	{
 		AVStream *st = ctx->streams[best_video];
+		int w, h;
+		video_stream_size(ctx, st, &w, &h);
 		ffmpeg_printf(1, "cAVIdx[%d]: best video stream %d: %dx%d, bitrate %" PRId64 "%s\n", cAVIdx, best_video,
-			get_codecpar(st)->width, get_codecpar(st)->height, stream_bitrate(ctx, st),
+			w, h, stream_bitrate(ctx, st),
 			video_within_limits(ctx, st) ? "" : " (above limits, nothing smaller available)");
 	}
 	if (best_prog >= 0)
@@ -3888,6 +3985,8 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 							!GetGraphicSubPath() || !GetGraphicSubPath()[0]))
 					{
 						ffmpeg_printf(10, "subtitle with not supported codec codec_id[%u]\n", (uint32_t)get_codecpar(stream)->codec_id);
+						/* not shown anyway: do not download it (e.g. DASH/HLS TTML tracks) */
+						stream->discard = AVDISCARD_ALL;
 					}
 					else if (initial && context->manager->subtitle)
 					{

@@ -2774,6 +2774,315 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
 	return res;
 }
 
+/* ***************************** */
+/* best stream selection (HLS/DASH)   */
+/* ***************************** */
+
+/*
+ * Adaptive inputs (HLS master playlists, DASH manifests) expose every
+ * variant/representation as its own stream (HLS additionally groups them
+ * into one AVProgram per variant). Instead of taking the first one, pick
+ * the best one like ffmpeg does: prefer the default/non-impaired
+ * disposition, then the highest resolution, then the highest bandwidth.
+ *
+ * Optional limits (0 = unlimited), e.g. for boxes without a 4K decoder:
+ *   video_max_resolution_set() / video_max_bitrate_set(), or the env vars
+ *   LIBEPLAYER3_MAX_VIDEO_WIDTH, LIBEPLAYER3_MAX_VIDEO_HEIGHT,
+ *   LIBEPLAYER3_MAX_VIDEO_BITRATE (bit/s).
+ * Variants above a limit are only used if nothing else is available.
+ */
+static int32_t g_video_max_width = 0;
+static int32_t g_video_max_height = 0;
+static int64_t g_video_max_bitrate = 0;
+
+/* selection cache, so repeated track updates do not switch the variant */
+static int32_t g_best_video_idx[IPTV_AV_CONTEXT_MAX_NUM] = {-1, -1};
+static int32_t g_best_program_idx[IPTV_AV_CONTEXT_MAX_NUM] = {-1, -1};
+
+void video_max_resolution_set(const int32_t width, const int32_t height)
+{
+	g_video_max_width = width > 0 ? width : 0;
+	g_video_max_height = height > 0 ? height : 0;
+}
+
+void video_max_bitrate_set(const int64_t bitrate)
+{
+	g_video_max_bitrate = bitrate > 0 ? bitrate : 0;
+}
+
+static int64_t env_int64(const char *name, int64_t def)
+{
+	const char *v = getenv(name);
+	if (v && *v)
+	{
+		long long n = strtoll(v, NULL, 10);
+		if (n > 0)
+			return (int64_t)n;
+	}
+	return def;
+}
+
+static int32_t isDashInput(const AVFormatContext *ctx)
+{
+	if (!ctx || !ctx->iformat || !ctx->iformat->name)
+		return 0;
+	return strncmp(ctx->iformat->name, "dash", 4) == 0;
+}
+
+static int32_t isAdaptiveInput(const AVFormatContext *ctx)
+{
+	return isHlsInput(ctx) || isDashInput(ctx);
+}
+
+static int64_t dict_int64(AVDictionary *metadata, const char *key)
+{
+	AVDictionaryEntry *e = av_dict_get(metadata, key, NULL, 0);
+	if (e && e->value)
+	{
+		long long n = strtoll(e->value, NULL, 10);
+		if (n > 0)
+			return (int64_t)n;
+	}
+	return 0;
+}
+
+/* bandwidth announced in the playlist/manifest, else the codec bitrate */
+static int64_t stream_bitrate(const AVFormatContext *ctx, const AVStream *st)
+{
+	int64_t bitrate = dict_int64(st->metadata, "variant_bitrate");
+	if (bitrate <= 0)
+	{
+		AVProgram *p = NULL;
+		while ((p = av_find_program_from_stream((AVFormatContext *)ctx, p, st->index)) != NULL)
+		{
+			int64_t b = dict_int64(p->metadata, "variant_bitrate");
+			if (b > bitrate)
+				bitrate = b;
+		}
+	}
+	if (bitrate <= 0)
+		bitrate = get_codecpar((AVStream *)st)->bit_rate;
+	return bitrate > 0 ? bitrate : 0;
+}
+
+static int stream_disposition_score(const AVStream *st)
+{
+	/* same weighting as av_find_best_stream() */
+	return !(st->disposition & (AV_DISPOSITION_HEARING_IMPAIRED | AV_DISPOSITION_VISUAL_IMPAIRED))
+	       + !!(st->disposition & AV_DISPOSITION_DEFAULT);
+}
+
+static int stream_audio_channels(AVStream *st)
+{
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 37, 100)
+	return get_codecpar(st)->ch_layout.nb_channels;
+#else
+	return get_codecpar(st)->channels;
+#endif
+}
+
+static int video_stream_usable(AVStream *st)
+{
+	int32_t version = 0;
+	if (get_codecpar(st)->codec_type != AVMEDIA_TYPE_VIDEO)
+		return 0;
+	if (st->disposition & AV_DISPOSITION_ATTACHED_PIC)
+		return 0;
+	return Codec2Encoding((int32_t)get_codecpar(st)->codec_id, (int32_t)get_codecpar(st)->codec_type,
+			(uint8_t *)get_codecpar(st)->extradata, (int)get_codecpar(st)->extradata_size,
+			(int)get_codecpar(st)->profile, &version) != NULL;
+}
+
+static int video_within_limits(const AVFormatContext *ctx, AVStream *st)
+{
+	int32_t max_w = g_video_max_width ? g_video_max_width : (int32_t)env_int64("LIBEPLAYER3_MAX_VIDEO_WIDTH", 0);
+	int32_t max_h = g_video_max_height ? g_video_max_height : (int32_t)env_int64("LIBEPLAYER3_MAX_VIDEO_HEIGHT", 0);
+	int64_t max_b = g_video_max_bitrate ? g_video_max_bitrate : env_int64("LIBEPLAYER3_MAX_VIDEO_BITRATE", 0);
+	int64_t bitrate = stream_bitrate(ctx, st);
+
+	if (max_w > 0 && get_codecpar(st)->width > max_w)
+		return 0;
+	if (max_h > 0 && get_codecpar(st)->height > max_h)
+		return 0;
+	if (max_b > 0 && bitrate > max_b)
+		return 0;
+	return 1;
+}
+
+/* > 0 if a is a better video choice than b, < 0 if worse, 0 if equal */
+static int compare_video_quality(const AVFormatContext *ctx, AVStream *a, AVStream *b)
+{
+	int64_t pa = (int64_t)get_codecpar(a)->width * get_codecpar(a)->height;
+	int64_t pb = (int64_t)get_codecpar(b)->width * get_codecpar(b)->height;
+	int64_t ba = stream_bitrate(ctx, a);
+	int64_t bb = stream_bitrate(ctx, b);
+
+	/* resolution is only meaningful if known for both (live HLS is opened
+	 * without avformat_find_stream_info, so it may still be 0) */
+	if (pa > 0 && pb > 0 && pa != pb)
+		return pa > pb ? 1 : -1;
+	if (ba != bb)
+		return ba > bb ? 1 : -1;
+	if (pa != pb)
+		return pa > pb ? 1 : -1;
+	return 0;
+}
+
+static int video_stream_better(const AVFormatContext *ctx, AVStream *a, AVStream *b)
+{
+	int fa = video_within_limits(ctx, a);
+	int fb = video_within_limits(ctx, b);
+	int da, db;
+
+	if (fa != fb)
+		return fa;
+	if (!fa)
+		/* nothing fits the limits: take the smallest one */
+		return compare_video_quality(ctx, a, b) < 0;
+
+	da = stream_disposition_score(a);
+	db = stream_disposition_score(b);
+	if (da != db)
+		return da > db;
+	return compare_video_quality(ctx, a, b) > 0;
+}
+
+/* best video stream, optionally restricted to the given program */
+static int32_t find_best_video_stream(const AVFormatContext *ctx, const AVProgram *prog)
+{
+	int32_t best = -1;
+	uint32_t n, count = prog ? prog->nb_stream_indexes : ctx->nb_streams;
+
+	for (n = 0; n < count; n++)
+	{
+		uint32_t idx = prog ? prog->stream_index[n] : n;
+		AVStream *st;
+		if (idx >= ctx->nb_streams)
+			continue;
+		st = ctx->streams[idx];
+		if (!video_stream_usable(st))
+			continue;
+		if (best < 0 || video_stream_better(ctx, st, ctx->streams[best]))
+			best = (int32_t)idx;
+	}
+	return best;
+}
+
+static int program_has_stream(const AVProgram *p, uint32_t idx)
+{
+	uint32_t m;
+	for (m = 0; m < p->nb_stream_indexes; m++)
+		if (p->stream_index[m] == idx)
+			return 1;
+	return 0;
+}
+
+static int program_has_media(const AVFormatContext *ctx, const AVProgram *p, enum AVMediaType type)
+{
+	uint32_t m;
+	for (m = 0; m < p->nb_stream_indexes; m++)
+		if (p->stream_index[m] < ctx->nb_streams &&
+			get_codecpar(ctx->streams[p->stream_index[m]])->codec_type == type)
+			return 1;
+	return 0;
+}
+
+/*
+ * Select program and video stream of an adaptive input.
+ * HLS: every variant is a program -> take the program of the best video
+ *      stream (or the highest bandwidth audio-only variant).
+ * DASH: one program with all representations -> best video stream.
+ */
+static void select_best_adaptive_streams(uint32_t cAVIdx, AVFormatContext *ctx, int32_t initial)
+{
+	int32_t best_video = -1;
+	int32_t best_prog = -1;
+	uint32_t n;
+
+	if (!initial && g_best_video_idx[cAVIdx] < (int32_t)ctx->nb_streams &&
+		g_best_program_idx[cAVIdx] < (int32_t)ctx->nb_programs &&
+		(g_best_video_idx[cAVIdx] >= 0 || g_best_program_idx[cAVIdx] >= 0))
+	{
+		return; /* keep the current selection */
+	}
+
+	if (g_sel_program_id > 0)
+	{
+		for (n = 0; n < ctx->nb_programs; n++)
+		{
+			if (ctx->programs[n]->id == g_sel_program_id && ctx->programs[n]->nb_stream_indexes)
+			{
+				best_prog = (int32_t)n;
+				break;
+			}
+		}
+	}
+
+	best_video = find_best_video_stream(ctx, best_prog >= 0 ? ctx->programs[best_prog] : NULL);
+
+	if (best_prog < 0 && ctx->nb_programs > 0)
+	{
+		int64_t best_bw = -1;
+		for (n = 0; n < ctx->nb_programs; n++)
+		{
+			AVProgram *p = ctx->programs[n];
+			int64_t bw;
+			if (!p->nb_stream_indexes)
+				continue;
+			if (best_video >= 0 ? !program_has_stream(p, (uint32_t)best_video)
+				: !program_has_media(ctx, p, AVMEDIA_TYPE_AUDIO))
+				continue;
+			bw = dict_int64(p->metadata, "variant_bitrate");
+			if (bw > best_bw)
+			{
+				best_bw = bw;
+				best_prog = (int32_t)n;
+			}
+		}
+	}
+
+	g_best_video_idx[cAVIdx] = best_video;
+	g_best_program_idx[cAVIdx] = best_prog;
+
+	if (best_video >= 0)
+	{
+		AVStream *st = ctx->streams[best_video];
+		ffmpeg_printf(1, "cAVIdx[%d]: best video stream %d: %dx%d, bitrate %" PRId64 "%s\n", cAVIdx, best_video,
+			get_codecpar(st)->width, get_codecpar(st)->height, stream_bitrate(ctx, st),
+			video_within_limits(ctx, st) ? "" : " (above limits, nothing smaller available)");
+	}
+	if (best_prog >= 0)
+	{
+		ffmpeg_printf(1, "cAVIdx[%d]: best program %d (id %d), variant_bitrate %" PRId64 "\n", cAVIdx, best_prog,
+			ctx->programs[best_prog]->id, dict_int64(ctx->programs[best_prog]->metadata, "variant_bitrate"));
+	}
+}
+
+/* > 0 if audio stream a is a better default than b */
+static int audio_stream_better(const AVFormatContext *ctx, AVStream *a, AVStream *b, const char *lang)
+{
+	AVDictionaryEntry *la = av_dict_get(a->metadata, "language", NULL, 0);
+	AVDictionaryEntry *lb = av_dict_get(b->metadata, "language", NULL, 0);
+	int ma = lang ? (la && !strcmp(la->value, lang)) : 1;
+	int mb = lang ? (lb && !strcmp(lb->value, lang)) : 1;
+	int da = stream_disposition_score(a);
+	int db = stream_disposition_score(b);
+	int ca = stream_audio_channels(a);
+	int cb = stream_audio_channels(b);
+	int64_t ba = stream_bitrate(ctx, a);
+	int64_t bb = stream_bitrate(ctx, b);
+
+	/* stay with the language of the first track, the frontend chooses
+	 * the language itself; only pick the best rendition of it */
+	if (ma != mb)
+		return ma > mb;
+	if (da != db)
+		return da > db;
+	if (ca != cb)
+		return ca > cb;
+	return ba > bb;
+}
+
 int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32_t initial)
 {
 	Track_t *currAudioTrack = NULL;
@@ -2829,10 +3138,23 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 		AVFormatContext *avContext = avContextTab[cAVIdx];
 		uint32_t *stream_index = NULL;
 		uint32_t nb_stream_indexes = 0;
+		int32_t best_video_idx = -1;
+		int32_t is_adaptive = isAdaptiveInput(avContext);
 
 		ffmpeg_printf(1, "cAVIdx[%d]: number of streams: %d\n", cAVIdx, avContext->nb_streams);
 
-		if (avContext->nb_programs > 0)
+		if (is_adaptive)
+		{
+			select_best_adaptive_streams(cAVIdx, avContext, initial);
+			best_video_idx = g_best_video_idx[cAVIdx];
+			if (g_best_program_idx[cAVIdx] >= 0)
+			{
+				AVProgram *p = avContext->programs[g_best_program_idx[cAVIdx]];
+				stream_index = p->stream_index;
+				nb_stream_indexes = p->nb_stream_indexes;
+			}
+		}
+		else if (avContext->nb_programs > 0)
 		{
 			uint32_t n = 0;
 			ffmpeg_printf(1, "cAVIdx[%d]: stream with multi programs: num of programs %d\n", cAVIdx, avContext->nb_programs);
@@ -2961,6 +3283,14 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 					ffmpeg_printf(10, "CODEC_TYPE_VIDEO %d\n", get_codecpar(stream)->codec_type);
 					// do not discard any stream from second context
 					stream->discard = cAVIdx == 0 ? AVDISCARD_ALL : AVDISCARD_DEFAULT; /* by default we discard all video streams */
+
+					if (best_video_idx >= 0 && (int32_t)n != best_video_idx)
+					{
+						/* other variant/representation of an adaptive stream: do not download it */
+						stream->discard = AVDISCARD_ALL;
+						ffmpeg_printf(1, "cAVIdx[%d]: skip video stream %d, using best stream %d\n", cAVIdx, n, best_video_idx);
+						break;
+					}
 
 					if (encoding != NULL)
 					{
@@ -3466,6 +3796,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 		if (Tracks && TrackCount)
 		{
 			int32_t i;
+			int32_t foundCurrent = 0;
 			for (i = 0; i < TrackCount; ++i)
 			{
 				if (Tracks[i].pending || Tracks[i].Id < 0)
@@ -3477,7 +3808,35 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 				if (currAudioTrack && currAudioTrack->Id == Tracks[i].Id)
 				{
 					selTrackIdx = i;
+					foundCurrent = 1;
 					break;
+				}
+			}
+
+			if (!foundCurrent && selTrackIdx > -1 && Tracks[selTrackIdx].stream &&
+				Tracks[selTrackIdx].AVIdx >= 0 && Tracks[selTrackIdx].AVIdx < IPTV_AV_CONTEXT_MAX_NUM &&
+				isAdaptiveInput(avContextTab[Tracks[selTrackIdx].AVIdx]))
+			{
+				/* like ffmpeg: take the best rendition (default disposition,
+				 * channels, bandwidth) of the first track's language */
+				AVDictionaryEntry *lang = av_dict_get(((AVStream *)Tracks[selTrackIdx].stream)->metadata, "language", NULL, 0);
+				const char *first_lang = lang ? lang->value : NULL;
+				int32_t first = selTrackIdx;
+
+				for (i = first + 1; i < TrackCount; ++i)
+				{
+					if (Tracks[i].pending || Tracks[i].Id < 0 || !Tracks[i].stream ||
+						Tracks[i].AVIdx != Tracks[first].AVIdx)
+						continue;
+
+					if (audio_stream_better(avContextTab[Tracks[i].AVIdx], (AVStream *)Tracks[i].stream,
+						(AVStream *)Tracks[selTrackIdx].stream, first_lang))
+						selTrackIdx = i;
+				}
+
+				if (selTrackIdx != first)
+				{
+					ffmpeg_printf(1, "best audio track Id %d instead of first Id %d\n", Tracks[selTrackIdx].Id, Tracks[first].Id);
 				}
 			}
 

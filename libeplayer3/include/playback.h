@@ -80,6 +80,13 @@ typedef struct PlaybackHandler_s
 	 * "kid:key[,kid:key...]" and/or a single default "key",
 	 * hex or base64url, "" = none */
 	char decryptionKeys[PLAYBACK_DECRYPTION_KEYS_SIZE];
+
+	/* limits for choosing the variant/representation of HLS and DASH
+	 * streams, 0 = unlimited; above-limit streams are only used if
+	 * nothing else is available */
+	int32_t maxVideoWidth;
+	int32_t maxVideoHeight;
+	int64_t maxVideoBitrate; // bit/s
 } PlaybackHandler_t;
 
 #endif

@@ -37,6 +37,8 @@ class cPlayback
 		AVFormatContext *avft;
 		std::string extractParam(const std::string &hdrs, const std::string &paramName);
 		std::string decryption_keys;
+		int max_video_width;
+		int max_video_height;
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();
@@ -49,6 +51,9 @@ class cPlayback
 		 * a single default "key", hex or base64url; "#decryption_keys=" in the
 		 * url takes precedence */
 		void SetDecryptionKeys(const std::string &keys) { decryption_keys = keys; }
+		/* max. video size when choosing the variant/representation of
+		 * HLS/DASH streams, 0 = unlimited; kept for all following Start() */
+		void SetMaxVideoResolution(int width, int height = 0) { max_video_width = width; max_video_height = height; }
 		bool SetAPid(int pid, bool ac3 = false);
 		bool SetVPid(int /*pid*/);
 		bool SetSubtitlePid(int pid);

@@ -2998,11 +2998,11 @@ int32_t container_ffmpeg_init(Context_t *context, PlayFiles_t *playFilesNames)
  * the best one like ffmpeg does: prefer the default/non-impaired
  * disposition, then the highest resolution, then the highest bandwidth.
  *
- * Optional limits (0 = unlimited), e.g. for boxes without a 4K decoder:
- *   video_max_resolution_set() / video_max_bitrate_set(), or the env vars
- *   LIBEPLAYER3_MAX_VIDEO_WIDTH, LIBEPLAYER3_MAX_VIDEO_HEIGHT,
- *   LIBEPLAYER3_MAX_VIDEO_BITRATE (bit/s).
- * Variants above a limit are only used if nothing else is available.
+ * Optional limits (0 = unlimited), e.g. the WebTV resolution setting of
+ * the frontend or a box without 4K decoder: PlaybackHandler_t
+ * maxVideoWidth / maxVideoHeight / maxVideoBitrate, taken over in
+ * container_ffmpeg_update_tracks(). Variants above a limit are only used
+ * if nothing else is available.
  */
 static int32_t g_video_max_width = 0;
 static int32_t g_video_max_height = 0;
@@ -3012,27 +3012,11 @@ static int64_t g_video_max_bitrate = 0;
 static int32_t g_best_video_idx[IPTV_AV_CONTEXT_MAX_NUM] = {-1, -1};
 static int32_t g_best_program_idx[IPTV_AV_CONTEXT_MAX_NUM] = {-1, -1};
 
-void video_max_resolution_set(const int32_t width, const int32_t height)
+static void set_video_limits(const PlaybackHandler_t *playback)
 {
-	g_video_max_width = width > 0 ? width : 0;
-	g_video_max_height = height > 0 ? height : 0;
-}
-
-void video_max_bitrate_set(const int64_t bitrate)
-{
-	g_video_max_bitrate = bitrate > 0 ? bitrate : 0;
-}
-
-static int64_t env_int64(const char *name, int64_t def)
-{
-	const char *v = getenv(name);
-	if (v && *v)
-	{
-		long long n = strtoll(v, NULL, 10);
-		if (n > 0)
-			return (int64_t)n;
-	}
-	return def;
+	g_video_max_width = playback && playback->maxVideoWidth > 0 ? playback->maxVideoWidth : 0;
+	g_video_max_height = playback && playback->maxVideoHeight > 0 ? playback->maxVideoHeight : 0;
+	g_video_max_bitrate = playback && playback->maxVideoBitrate > 0 ? playback->maxVideoBitrate : 0;
 }
 
 static int32_t isDashInput(const AVFormatContext *ctx)
@@ -3136,9 +3120,9 @@ static int video_stream_usable(AVStream *st)
 
 static int video_within_limits(const AVFormatContext *ctx, AVStream *st)
 {
-	int32_t max_w = g_video_max_width ? g_video_max_width : (int32_t)env_int64("LIBEPLAYER3_MAX_VIDEO_WIDTH", 0);
-	int32_t max_h = g_video_max_height ? g_video_max_height : (int32_t)env_int64("LIBEPLAYER3_MAX_VIDEO_HEIGHT", 0);
-	int64_t max_b = g_video_max_bitrate ? g_video_max_bitrate : env_int64("LIBEPLAYER3_MAX_VIDEO_BITRATE", 0);
+	int32_t max_w = g_video_max_width;
+	int32_t max_h = g_video_max_height;
+	int64_t max_b = g_video_max_bitrate;
 	int64_t bitrate = stream_bitrate(ctx, st);
 	int w, h;
 
@@ -3395,6 +3379,7 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 		if (is_adaptive)
 		{
+			set_video_limits(context->playback);
 			select_best_adaptive_streams(cAVIdx, avContext, initial);
 			best_video_idx = g_best_video_idx[cAVIdx];
 			if (g_best_program_idx[cAVIdx] >= 0)

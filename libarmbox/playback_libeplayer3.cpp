@@ -211,6 +211,8 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	/* always (re)set, so keys of a previous stream are not reused */
 	if (player && player->playback)
 	{
+		player->playback->maxVideoWidth = max_video_width > 0 ? max_video_width : 0;
+		player->playback->maxVideoHeight = max_video_height > 0 ? max_video_height : 0;
 		strncpy(player->playback->decryptionKeys, keys.c_str(), sizeof(player->playback->decryptionKeys) - 1);
 		player->playback->decryptionKeys[sizeof(player->playback->decryptionKeys) - 1] = '\0';
 		if (!keys.empty())
@@ -874,6 +876,8 @@ cPlayback::cPlayback(int num __attribute__((unused)))
 	decoders_closed = false;
 	first = false;
 	player = NULL;
+	max_video_width = 0;
+	max_video_height = 0;
 }
 
 cPlayback::~cPlayback()

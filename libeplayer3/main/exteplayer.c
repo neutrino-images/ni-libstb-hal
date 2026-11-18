@@ -412,7 +412,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 {
 	int ret = 0;
 	int c;
-	while ((c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:T:K:")) != -1)
+	while ((c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:T:K:R:")) != -1)
 	{
 		switch (c)
 		{
@@ -517,6 +517,15 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 			case 'u':
 				ffmpeg_av_dict_set("user-agent", optarg, 0);
 				break;
+			case 'R':
+			{
+				int w = 0, h = 0;
+				if (sscanf(optarg, "%dx%d", &w, &h) < 1)
+					w = h = 0;
+				PlaybackHandler.maxVideoWidth = w > 0 ? w : 0;
+				PlaybackHandler.maxVideoHeight = h > 0 ? h : 0;
+				break;
+			}
 			case 'K':
 				strncpy(PlaybackHandler.decryptionKeys, optarg, sizeof(PlaybackHandler.decryptionKeys) - 1);
 				PlaybackHandler.decryptionKeys[sizeof(PlaybackHandler.decryptionKeys) - 1] = '\0';
@@ -664,6 +673,7 @@ int main(int argc, char *argv[])
 		printf("[-9 id] subtitle track ID switched on at start\n");
 		printf("[-h headers] set custom HTTP headers \"Name: value\\r\\nName: value\\r\\n\"\n");
 		printf("[-u user-agent] set custom http User-Agent header\n");
+		printf("[-R width[xheight]] max. video size when choosing the HLS/DASH variant (0 = unlimited)\n");
 		printf("[-K kid:key[,kid:key...]|key] CENC/ClearKey decryption keys (hex or base64url)\n");
 		printf("[-c cookies] set cookies - not working at now, please use -h instead\n");
 		printf("[-x separateAudioUri]\n");

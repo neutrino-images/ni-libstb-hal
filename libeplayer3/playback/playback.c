@@ -1037,5 +1037,8 @@ PlaybackHandler_t PlaybackHandler =
 	0,          //lastOpenErrorCode
 	"",         //lastOpenErrorMessage
 	NULL,       //stamp
-	""          //decryptionKeys
+	"",         //decryptionKeys
+	0,          //maxVideoWidth
+	0,          //maxVideoHeight
+	0           //maxVideoBitrate
 };

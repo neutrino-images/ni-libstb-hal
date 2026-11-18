@@ -158,13 +158,23 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	else
 		isHTTP = true;
 
-	if (isHTTP && headers.empty())
+	/*
+	 * parameters appended to the url: url#name=value&name=value
+	 *   User-Agent=, Referer=   http headers (only if no headers are given)
+	 *   decryption_keys=        CENC/ClearKey keys: kid:key[,kid:key...] and/or
+	 *   (license_key=)          a single default key, hex or base64url
+	 */
+	std::string keys = decryption_keys;
+	decryption_keys.clear(); /* only for this Start() */
+	size_t frag_pos = file.rfind('#');
+	if (frag_pos != std::string::npos)
 	{
-		size_t pos = file.rfind('#');
-		if (pos != std::string::npos) {
-			std::string val;
-			std::string hdrs = file.substr(pos + 1);
+		std::string val;
+		std::string hdrs = file.substr(frag_pos + 1);
+		bool strip = false;
 
+		if (isHTTP && headers.empty())
+		{
 			val = extractParam(hdrs, "User-Agent=");
 			if (!val.empty()) {
 				headers += "User-Agent: " + val + "\n";
@@ -173,10 +183,18 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 			if (!val.empty()) {
 				headers += "Referer: " + val + "\n";
 			}
-			if (!headers.empty()) {
-				file = file.substr(0, pos);
-			}
+			strip = !headers.empty();
 		}
+		val = extractParam(hdrs, "decryption_keys=");
+		if (val.empty())
+			val = extractParam(hdrs, "license_key=");
+		if (!val.empty())
+		{
+			keys = val;
+			strip = true;
+		}
+		if (strip)
+			file = file.substr(0, frag_pos);
 	}
 	if (!headers.empty())
 	{
@@ -188,6 +206,15 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	{
 		const char hkey[] = "headers";
 		ffmpeg_av_dict_set(hkey, "", 0);
+	}
+
+	/* always (re)set, so keys of a previous stream are not reused */
+	if (player && player->playback)
+	{
+		strncpy(player->playback->decryptionKeys, keys.c_str(), sizeof(player->playback->decryptionKeys) - 1);
+		player->playback->decryptionKeys[sizeof(player->playback->decryptionKeys) - 1] = '\0';
+		if (!keys.empty())
+			hal_info("%s - decryption key(s) set\n", __func__);
 	}
 
 	std::string szSecondFile;

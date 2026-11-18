@@ -36,6 +36,7 @@ class cPlayback
 		int init_jump;
 		AVFormatContext *avft;
 		std::string extractParam(const std::string &hdrs, const std::string &paramName);
+		std::string decryption_keys;
 	public:
 		cPlayback(int num = 0);
 		~cPlayback();
@@ -44,6 +45,10 @@ class cPlayback
 		void Close(void);
 		bool Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers = "", std::string filename2 = "");
 		bool Start(std::string filename, std::string headers = "", std::string filename2 = "");
+		/* CENC/ClearKey keys for the next Start(): "kid:key[,kid:key...]" and/or
+		 * a single default "key", hex or base64url; "#decryption_keys=" in the
+		 * url takes precedence */
+		void SetDecryptionKeys(const std::string &keys) { decryption_keys = keys; }
 		bool SetAPid(int pid, bool ac3 = false);
 		bool SetVPid(int /*pid*/);
 		bool SetSubtitlePid(int pid);

@@ -412,7 +412,7 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 {
 	int ret = 0;
 	int c;
-	while ((c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:T:")) != -1)
+	while ((c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:T:K:")) != -1)
 	{
 		switch (c)
 		{
@@ -516,6 +516,10 @@ static int ParseParams(int argc, char *argv[], PlayFiles_t *playbackFiles, int *
 				break;
 			case 'u':
 				ffmpeg_av_dict_set("user-agent", optarg, 0);
+				break;
+			case 'K':
+				strncpy(PlaybackHandler.decryptionKeys, optarg, sizeof(PlaybackHandler.decryptionKeys) - 1);
+				PlaybackHandler.decryptionKeys[sizeof(PlaybackHandler.decryptionKeys) - 1] = '\0';
 				break;
 			case 'c':
 				printf("For now cookies should be set via headers option!\n");
@@ -660,6 +664,7 @@ int main(int argc, char *argv[])
 		printf("[-9 id] subtitle track ID switched on at start\n");
 		printf("[-h headers] set custom HTTP headers \"Name: value\\r\\nName: value\\r\\n\"\n");
 		printf("[-u user-agent] set custom http User-Agent header\n");
+		printf("[-K kid:key[,kid:key...]|key] CENC/ClearKey decryption keys (hex or base64url)\n");
 		printf("[-c cookies] set cookies - not working at now, please use -h instead\n");
 		printf("[-x separateAudioUri]\n");
 		printf("[-0 idx] video MPEG-DASH representation index\n");

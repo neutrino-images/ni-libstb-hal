@@ -1036,5 +1036,6 @@ PlaybackHandler_t PlaybackHandler =
 	0,          //openStartTimeUs
 	0,          //lastOpenErrorCode
 	"",         //lastOpenErrorMessage
-	NULL        //stamp
+	NULL,       //stamp
+	""          //decryptionKeys
 };

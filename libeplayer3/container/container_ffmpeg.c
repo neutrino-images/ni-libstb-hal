@@ -46,6 +46,8 @@
 #include <sys/prctl.h>
 
 #include <ffmpeg/mpeg4audio.h>
+#include <libavutil/base64.h>
+#include <libavutil/bprint.h>
 
 #include "common.h"
 #include "misc.h"
@@ -383,6 +385,149 @@ void flv2mpeg4_converter_set(const int32_t val)
 int32_t ffmpeg_av_dict_set(const char *key, const char *value, int32_t flags)
 {
 	return av_dict_set(&g_avio_opts, key, value, flags);
+}
+
+/*
+ * CENC (ClearKey) decryption keys.
+ *
+ * keys: one or more "KID:KEY" pairs separated by ',', ';' or whitespace,
+ * and/or a single "KEY" without KID (default key, used if the KID is
+ * unknown). KID and KEY are 16 bytes each, given as hex (dashes as in a
+ * UUID are allowed) or base64/base64url (as in ClearKey JSON).
+ * Taken from PlaybackHandler_t.decryptionKeys and passed to ffmpeg as:
+ *   mov/mp4: decryption_keys / decryption_key
+ *   dash:    cenc_decryption_keys / cenc_decryption_key
+ *   hls:     seg_format_options (fMP4 segments)
+ *
+ * Returns the number of keys set, or < 0 if no key could be parsed.
+ */
+static int parse_key16(const char *s, size_t len, char hex[33])
+{
+	static const char digits[] = "0123456789abcdef";
+	uint8_t bin[16 + 3];
+	char tmp[64];
+	size_t i, n = 0;
+
+	/* hex, dashes allowed */
+	for (i = 0; i < len && n < 32; i++)
+	{
+		char c = s[i];
+		if (c == '-')
+			continue;
+		if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+			break;
+		hex[n++] = (c >= 'A' && c <= 'F') ? c - 'A' + 'a' : c;
+	}
+	if (i == len && n == 32)
+	{
+		hex[32] = '\0';
+		return 0;
+	}
+
+	/* base64 / base64url, padding optional */
+	if (len < 22 || len > 24)
+		return -1;
+	for (i = 0; i < len; i++)
+		tmp[i] = s[i] == '-' ? '+' : s[i] == '_' ? '/' : s[i];
+	while (i < 24)
+		tmp[i++] = '=';
+	tmp[i] = '\0';
+	if (av_base64_decode(bin, tmp, sizeof(bin)) != 16)
+		return -1;
+	for (i = 0; i < 16; i++)
+	{
+		hex[2 * i] = digits[bin[i] >> 4];
+		hex[2 * i + 1] = digits[bin[i] & 0x0f];
+	}
+	hex[32] = '\0';
+	return 0;
+}
+
+static int32_t set_decryption_keys(AVDictionary **dict, const char *keys)
+{
+	AVBPrint kid_keys, seg_opts;
+	char default_key[33] = "";
+	const char *p = keys;
+	int32_t count = 0, err = 0;
+
+	if (!keys || !*keys)
+		return 0;
+
+	av_bprint_init(&kid_keys, 0, AV_BPRINT_SIZE_UNLIMITED);
+	while (*p)
+	{
+		const char *tok, *sep;
+		size_t len;
+		char kid[33], key[33];
+
+		p += strspn(p, ",; \t\r\n");
+		if (!*p)
+			break;
+		tok = p;
+		len = strcspn(p, ",; \t\r\n");
+		p += len;
+
+		sep = memchr(tok, ':', len);
+		if (!sep)
+		{
+			/* "KID=KEY" is accepted too if the KID is hex (base64 may end with '=') */
+			sep = memchr(tok, '=', len);
+			if (sep && parse_key16(tok, sep - tok, kid) < 0)
+				sep = NULL;
+		}
+
+		if (sep)
+		{
+			if (parse_key16(tok, sep - tok, kid) < 0 || parse_key16(sep + 1, tok + len - sep - 1, key) < 0)
+			{
+				ffmpeg_err("invalid decryption key '%.*s'\n", (int)len, tok);
+				err = -1;
+				continue;
+			}
+			av_bprintf(&kid_keys, "%s%s=%s", kid_keys.len ? ":" : "", kid, key);
+		}
+		else
+		{
+			if (parse_key16(tok, len, key) < 0)
+			{
+				ffmpeg_err("invalid decryption key '%.*s'\n", (int)len, tok);
+				err = -1;
+				continue;
+			}
+			strcpy(default_key, key);
+		}
+		count++;
+	}
+
+	if (!av_bprint_is_complete(&kid_keys))
+	{
+		av_bprint_finalize(&kid_keys, NULL);
+		return AVERROR(ENOMEM);
+	}
+
+	av_bprint_init(&seg_opts, 0, AV_BPRINT_SIZE_UNLIMITED);
+	if (kid_keys.len)
+	{
+		av_dict_set(dict, "decryption_keys", kid_keys.str, 0);
+		av_dict_set(dict, "cenc_decryption_keys", kid_keys.str, 0);
+		/* quoted, the value itself contains '=' and ':' */
+		av_bprintf(&seg_opts, "decryption_keys='%s'", kid_keys.str);
+	}
+	if (default_key[0])
+	{
+		av_dict_set(dict, "decryption_key", default_key, 0);
+		av_dict_set(dict, "cenc_decryption_key", default_key, 0);
+		av_bprintf(&seg_opts, "%sdecryption_key=%s", seg_opts.len ? ":" : "", default_key);
+	}
+	if (seg_opts.len && av_bprint_is_complete(&seg_opts))
+		av_dict_set(dict, "seg_format_options", seg_opts.str, 0);
+
+	ffmpeg_printf(1, "decryption keys: %d set (kid keys: %s, default key: %s)\n", count,
+		kid_keys.len ? "yes" : "no", default_key[0] ? "yes" : "no");
+
+	av_bprint_finalize(&kid_keys, NULL);
+	av_bprint_finalize(&seg_opts, NULL);
+	return err < 0 && count == 0 ? err : count;
 }
 
 static char *Codec2Encoding(int32_t codec_id, int32_t media_type, uint8_t *extradata, int extradata_size, int profile __attribute__((unused)), int32_t *version)
@@ -2265,6 +2410,14 @@ int32_t container_ffmpeg_init_av_context(Context_t *context, char *filename, uin
 	AVDictionary *avio_opts = NULL;
 	AVDictionary **pavio_opts = NULL;
 	av_dict_copy(&avio_opts, g_avio_opts, 0);
+
+	if (context->playback && context->playback->decryptionKeys[0])
+	{
+		if (set_decryption_keys(&avio_opts, context->playback->decryptionKeys) < 0)
+		{
+			ffmpeg_err("no valid decryption key in '%s'\n", context->playback->decryptionKeys);
+		}
+	}
 
 	eRTMPProtoImplType rtmpProtoImplType = RTMP_NONE;
 	uint8_t numOfRTMPImpl = 0;

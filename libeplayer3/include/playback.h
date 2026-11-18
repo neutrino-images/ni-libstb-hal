@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #define PLAYBACK_LAST_ERROR_MSG_SIZE 512
+#define PLAYBACK_DECRYPTION_KEYS_SIZE 1024
 
 typedef void(* PlaybackDieNowCallback)();
 bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback);
@@ -74,6 +75,11 @@ typedef struct PlaybackHandler_s
 	char lastOpenErrorMessage[PLAYBACK_LAST_ERROR_MSG_SIZE];
 
 	void *stamp;
+
+	/* CENC/ClearKey decryption keys for the next PLAYBACK_OPEN:
+	 * "kid:key[,kid:key...]" and/or a single default "key",
+	 * hex or base64url, "" = none */
+	char decryptionKeys[PLAYBACK_DECRYPTION_KEYS_SIZE];
 } PlaybackHandler_t;
 
 #endif
